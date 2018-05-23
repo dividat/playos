@@ -1,0 +1,28 @@
+diff -Naur ../apk-tools-2.9.1-clean/Make.rules ./Make.rules
+--- ../apk-tools-2.9.1-clean/Make.rules	2018-01-08 15:09:49.000000000 +0100
++++ ./Make.rules	2018-05-23 10:01:17.024531397 +0200
+@@ -64,9 +64,9 @@
+ # Utilities and default flags for them.
+ 
+ CROSS_COMPILE	?=
+-CC		:= $(CROSS_COMPILE)gcc
+-AR		:= $(CROSS_COMPILE)ar
+-LD		:= $(CROSS_COMPILE)ld
++#CC		:= $(CROSS_COMPILE)gcc
++#AR		:= $(CROSS_COMPILE)ar
++#LD		:= $(CROSS_COMPILE)ld
+ INSTALL		:= install
+ INSTALLDIR	:= $(INSTALL) -d
+ 
+diff -Naur ../apk-tools-2.9.1-clean/src/Makefile ./src/Makefile
+--- ../apk-tools-2.9.1-clean/src/Makefile	2018-01-08 15:09:49.000000000 +0100
++++ ./src/Makefile	2018-05-23 10:01:30.283789940 +0200
+@@ -10,7 +10,7 @@
+ # lua module
+ ifneq ($(LUAAPK),)
+ LUA_VERSION		?= 5.2
+-LUA_PC			?= lua$(LUA_VERSION)
++LUA_PC			?= lua
+ LUA_LIBDIR		?= /usr/lib/lua/$(LUA_VERSION)
+ LIBAPK			:= YesPlease
+ shlibs-y		+= apk.so
