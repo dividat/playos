@@ -9,6 +9,9 @@ stdenv.mkDerivation {
     buildInputs = [
       proot
 
+      # apk-tools-static, prebuilt static binary of apk
+      apk-tools-static
+
       # apk-tools needs to be compiled with musl.
       ((import ./nix/apk-tools)  nixpkgs_musl)
 
