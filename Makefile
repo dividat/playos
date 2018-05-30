@@ -24,6 +24,10 @@ base-system:
 		-U --allow-untrusted --initdb \
 		-v \
 		add alpine-base
+	# Add repo and update 
+	echo $(ALPINE_REPO) > $(BASE_SYSTEM_DIR)/etc/apk/repositories
+	$(IN_TARGET) /sbin/apk update
+
 
 shell:
 	$(IN_TARGET) /bin/sh
