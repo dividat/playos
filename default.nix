@@ -9,6 +9,8 @@ stdenv.mkDerivation {
     buildInputs = [
       proot
 
+      libguestfs
+
       # apk-tools-static, prebuilt static binary of apk
       apk-tools-static
 
@@ -16,4 +18,10 @@ stdenv.mkDerivation {
       ((import ./nix/apk-tools)  nixpkgs_musl)
 
     ];
+
+    shellHook = ''
+      # Hack to fix libguestfs in nixpkgs (without recompiling it)
+      # TODO: use fix in nixpkgs (https://github.com/NixOS/nixpkgs/pull/37562)
+      export LIBGUESTFS_PATH=${libguestfs}/lib/guestfs
+    '';
 }
