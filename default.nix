@@ -17,11 +17,18 @@ stdenv.mkDerivation {
       # apk-tools needs to be compiled with musl.
       ((import ./nix/apk-tools)  nixpkgs_musl)
 
+      #((import ./barebox) {inherit stdenv fetchurl libftdi1 pkgconfig;})
+
+      qemu
+      OVMF.fd
+
     ];
 
     shellHook = ''
       # Hack to fix libguestfs in nixpkgs (without recompiling it)
       # TODO: use fix in nixpkgs (https://github.com/NixOS/nixpkgs/pull/37562)
       export LIBGUESTFS_PATH=${libguestfs}/lib/guestfs
+
+      export OVMF=${OVMF.fd}/FV/OVMF.fd
     '';
 }
