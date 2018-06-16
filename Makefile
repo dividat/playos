@@ -77,6 +77,7 @@ qemu: $(WORK_DIR)/OVMF.fd
 
 $(WORK_DIR)/OVMF.fd:
 	cp $(OVMF) $(WORK_DIR)/OVMF.fd
+	chmod +w $(WORK_DIR)/OVMF.fd
 
 .PHONY: clean
 clean:
