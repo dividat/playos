@@ -17,6 +17,7 @@ PROOT = $(shell which proot)
 
 IN_TARGET = env -i PROOT_NO_SECCOMP=1 $(PROOT) \
 						-S $(TARGET_ROOT) \
+						-b $(APK_REPO):/mnt/apk/x86_64 \
 						-w /
 
 # Bootstrap the base-system using apk.static
@@ -31,25 +32,26 @@ base-system: $(TARGET_DISK)
 	mkdir -p $(TARGET_ROOT)/sbin 
 	$(IN_TARGET) \
 		-b $(APK_STATIC):/sbin/apk.static \
-		/sbin/apk.static -X $(ALPINE_REPO) \
-		-U --allow-untrusted --initdb \
+		/sbin/apk.static \
+		-X $(ALPINE_REPO) -U \
+		--allow-untrusted --initdb \
 		-v \
 		add alpine-base
 
 	# Add repo and update 
-	echo $(ALPINE_REPO) > $(TARGET_ROOT)/etc/apk/repositories
-	$(IN_TARGET) /sbin/apk update
+	#echo $(ALPINE_REPO) > $(TARGET_ROOT)/etc/apk/repositories
+	#$(IN_TARGET) /sbin/apk update
 
 	# Install Linux kernel
-	$(IN_TARGET) /sbin/apk add linux-hardened
+	#$(IN_TARGET) /sbin/apk add linux-hardened
 
 	# bootloader
-	$(IN_TARGET) /sbin/apk add gummiboot
-	$(IN_TARGET) /bin/mkdir -p /boot/EFI/BOOT
-	$(IN_TARGET) /bin/cp /usr/lib/gummiboot/gummibootx64.efi /boot/EFI/BOOT/BOOTX64.EFI
-	$(IN_TARGET) \
-		-b ./bootloader/ESP:/ESP \
-		/bin/cp -r /ESP/loader /boot
+	#$(IN_TARGET) /sbin/apk add gummiboot
+	#$(IN_TARGET) /bin/mkdir -p /boot/EFI/BOOT
+	#$(IN_TARGET) /bin/cp /usr/lib/gummiboot/gummibootx64.efi /boot/EFI/BOOT/BOOTX64.EFI
+	#$(IN_TARGET) \
+		#-b ./bootloader/ESP:/ESP \
+		#/bin/cp -r /ESP/loader /boot
 
 	# Unmount disk image
 	guestunmount $(TARGET_ROOT)

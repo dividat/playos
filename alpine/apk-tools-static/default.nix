@@ -1,4 +1,4 @@
-{ stdenv, lib, fetchurl, libressl, zlib, lua, musl, pkgconfig, gcc, ... }:
+{ stdenv, fetchurl }:
     stdenv.mkDerivation rec {
       name = "apk-tools-${version}";
       version = "2.9.1";

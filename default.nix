@@ -3,6 +3,11 @@ let nixpkgs_musl = nixpkgs { crossSystem = { config = "x86_64-unknown-linux-musl
 with nixpkgs {
   overlays = [ (import ./nix/overlay.nix) ];
 };
+let
+  alpine = import ./alpine {
+    inherit stdenv fetchurl gzip nixpkgs_musl proot;
+  };
+in
 stdenv.mkDerivation {
     name = "divialpine";
     builder = "${bash}/bin/bash";
@@ -11,17 +16,12 @@ stdenv.mkDerivation {
 
       libguestfs
 
-      # apk-tools-static, prebuilt static binary of apk
-      apk-tools-static
-
-      # apk-tools needs to be compiled with musl.
-      ((import ./nix/apk-tools)  nixpkgs_musl)
-
       #((import ./barebox) {inherit stdenv fetchurl libftdi1 pkgconfig;})
+      alpine.apk-tools-static
+      alpine.base-system
 
       qemu
       OVMF.fd
-
     ];
 
     shellHook = ''
@@ -30,5 +30,12 @@ stdenv.mkDerivation {
       export LIBGUESTFS_PATH=${libguestfs}/lib/guestfs
 
       export OVMF=${OVMF.fd}/FV/OVMF.fd
+
+      # See https://github.com/proot-me/PRoot/issues/106
+      export PROOT_NO_SECCOMP=1
+
+      echo "A base Alpine Linux system is available at ${alpine.base-system}"
+      echo "Try it:"
+      echo "proot -S ${alpine.base-system} -w /"
     '';
 }
