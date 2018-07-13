@@ -19,6 +19,7 @@ stdenv.mkDerivation {
       #((import ./barebox) {inherit stdenv fetchurl libftdi1 pkgconfig;})
       alpine.apk-tools-static
       alpine.base-system
+      alpine.apk2nix
 
       qemu
       OVMF.fd

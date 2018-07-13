@@ -6,26 +6,16 @@ let
   # Static prebuilt version of apk
   apk-tools-static = (import ./apk-tools-static) {inherit stdenv fetchurl;};
 
-  # Helper to grab package from Alpine Linux repository
-  fetchPkg = {
-    pkg
-  , version
-  , sha256
-  , repo ? "http://dl-cdn.alpinelinux.org/alpine/v3.7/main/x86_64"
-  }:
-  fetchurl {
-    url = "${repo}/${pkg}-${version}.apk";
-    inherit sha256;
-  };
-
+  # apk2nix tool
+  apk2nix = (import ./apk2nix) {inherit stdenv proot apk-tools-static;};
 in 
   {
-    inherit apk-tools apk-tools-static;
+    inherit apk-tools apk-tools-static apk2nix;
 
     base-system = (import ./system-builder) {
       inherit stdenv apk-tools-static proot;
       name = "alpine-base-system";
-      apks = map fetchPkg (import ./base-system.nix);
+      apks = map fetchurl (import ./pkgs/alpine-base.nix);
     };
 
   }
