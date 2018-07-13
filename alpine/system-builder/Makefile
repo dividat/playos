@@ -21,7 +21,7 @@ in_target = env -i PROOT_NO_SECCOMP=1 $(PROOT) \
 						-w /
 
 # Option to mount all apks to be installed using proot
-apk_proot_mount_args := $(foreach apk,$(APKS),$(addprefix "-b ",$(addsuffix :/mnt/apk/$(notdir $(apk)),$(apk))))
+apk_proot_mount_args := $(foreach apk,$(APKS),$(addprefix -b ,$(addsuffix :/mnt/apk/$(notdir $(apk)),$(apk))))
 
 # Location of mounted apks in target system
 apks_mounted := $(foreach apk,$(APKS),$(addprefix /mnt/apk/,$(notdir $(apk))))
@@ -40,6 +40,9 @@ bootstrap:
 			--allow-untrusted \
 			--initdb \
 			add $(apks_mounted)
+
+	# remove symlink in boot directory
+	rm -f $(out)/boot/boot
 
 shell:
 	$(in_target) /bin/sh

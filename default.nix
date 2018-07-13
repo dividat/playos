@@ -17,8 +17,8 @@ stdenv.mkDerivation {
       libguestfs
 
       #((import ./barebox) {inherit stdenv fetchurl libftdi1 pkgconfig;})
+
       alpine.apk-tools-static
-      alpine.base-system
       alpine.apk2nix
 
       qemu
@@ -35,8 +35,6 @@ stdenv.mkDerivation {
       # See https://github.com/proot-me/PRoot/issues/106
       export PROOT_NO_SECCOMP=1
 
-      echo "A base Alpine Linux system is available at ${alpine.base-system}"
-      echo "Try it:"
-      echo "proot -S ${alpine.base-system} -w /"
+      export ROOT_FS=${alpine.bootable-system}
     '';
 }

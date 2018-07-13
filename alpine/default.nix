@@ -18,4 +18,10 @@ in
       apks = map fetchurl (import ./pkgs/alpine-base.nix);
     };
 
+    bootable-system = (import ./system-builder) {
+      inherit stdenv apk-tools-static proot;
+      name = "alpine-bootable-system";
+      apks = map fetchurl (import ./pkgs/bootable-system.nix);
+    };
+
   }
