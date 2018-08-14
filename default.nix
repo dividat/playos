@@ -19,7 +19,7 @@ let
   };
 in
 stdenv.mkDerivation {
-    name = "divialpine";
+    name = "dividat-linux";
     builder = "${bash}/bin/bash";
     buildInputs = [
       proot
