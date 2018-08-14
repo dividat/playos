@@ -12,6 +12,11 @@ let
     inherit fetchurl;
     apkBuilder = alpine.apkBuilder;
   };
+
+  system = alpine.systemBuilder {
+    name = "dividat-linux";
+    apks = map fetchurl (import ./system/apks.nix);
+  };
 in
 stdenv.mkDerivation {
     name = "divialpine";
@@ -40,6 +45,6 @@ stdenv.mkDerivation {
       # See https://github.com/proot-me/PRoot/issues/106
       export PROOT_NO_SECCOMP=1
 
-      export ROOT_FS=${alpine.bootable-system}
+      export ROOT_FS=${system}
     '';
 }

@@ -14,7 +14,7 @@ let
 
   apkBuilder = (import ./apk-builder) { 
     inherit stdenv proot systemBuilder;
-    alpine-sdk-pkgs = map fetchurl (import ./pkgs/alpine-sdk.nix);
+    alpine-sdk-pkgs = map fetchurl (import ./systems/alpine-sdk.nix);
   };
 
 in 
@@ -23,17 +23,17 @@ in
 
     base-system = systemBuilder {
       name = "alpine-base-system";
-      apks = map fetchurl (import ./pkgs/alpine-base.nix);
+      apks = map fetchurl (import ./systems/alpine-base.nix);
     };
 
     bootable-system = systemBuilder {
       name = "alpine-bootable-system";
-      apks = map fetchurl (import ./pkgs/bootable-system.nix);
+      apks = map fetchurl (import ./systems/bootable-system.nix);
     };
 
     sdk-system = systemBuilder {
       name = "alpine-sdk-system";
-      apks = map fetchurl (import ./pkgs/alpine-sdk.nix);
+      apks = map fetchurl (import ./systems/alpine-sdk.nix);
     };
 
   }
