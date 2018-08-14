@@ -1,8 +1,8 @@
 { stdenv
-, apks
-, name ? "alpine-system"
 , apk-tools-static
-, proot}:
+, proot }:
+{ apks
+, name ? "alpine-system" }:
 stdenv.mkDerivation {
   inherit name;
   buildInputs = [ apk-tools-static proot ];

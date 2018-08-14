@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+. /etc/profile
+export PACKAGER_PRIVKEY=/tmp/key.rsa
+
+export SRCDEST=/tmp/src
+export REPODEST=/tmp/package
+
+cd /tmp
+chmod -R +w apkbuild
+cd /tmp/apkbuild
+/usr/bin/abuild

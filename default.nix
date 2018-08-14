@@ -7,6 +7,11 @@ let
   alpine = import ./alpine {
     inherit stdenv fetchurl gzip nixpkgs_musl proot;
   };
+
+  aports = import ./aports {
+    inherit fetchurl;
+    apkBuilder = alpine.apkBuilder;
+  };
 in
 stdenv.mkDerivation {
     name = "divialpine";

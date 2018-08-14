@@ -1,0 +1,51 @@
+# Contributor: Adarsh Amirtham<adarsh@dividat.com>
+# Maintainer:
+pkgname=nodm
+pkgver=0.13
+pkgrel=0
+pkgdesc="X display manager for automatic login"
+url="https://github.com/spanezz/nodm"
+arch="x86_64"
+license="GPL2"
+depends="xorg-server libx11"
+makedepends="
+	autoconf
+	automake
+	libx11-dev
+	linux-pam-dev
+	linux-headers
+	help2man
+	"
+install=""
+subpackages=""
+source="
+	${pkgname}-${pkgver}.tar.gz::https://github.com/spanezz/nodm/archive/0.13.tar.gz
+	nodm.initd
+	nodm.confd
+	"
+builddir="$srcdir/"
+
+build() {
+	cd "$builddir/nodm-$pkgver"
+	./autogen.sh
+	./configure
+	make
+}
+
+package() {
+	cd "$builddir/nodm-$pkgver"
+
+	mkdir -p "$pkgdir"/usr/bin/
+	cp nodm "$pkgdir"/usr/bin/
+
+	install -m755 -D "$srcdir"/$pkgname.initd \
+		"$pkgdir"/etc/init.d/$pkgname
+	install -m644 -D "$srcdir"/$pkgname.confd \
+		"$pkgdir"/etc/conf.d/$pkgname
+	
+	rm -f "pkgdir"/usr/local/lib/systemd
+}
+
+sha512sums="0ccbe529c6c94e3518f4bd904147841e9929578004a87ece85cc0f8695f6a15d36cefa1ccae13aae677c93f686116e45f1387c523709d7b7bb7d12831abd4bde  nodm-0.13.tar.gz
+99dd8f3a75e0a1e13df271ef70cc13926d6a1b53c089882f8f75b81b75058cd2c3afdf732f92671de65b53ad8957bca0df991e8f76575ac67a0e5a1479cb394f  nodm.initd
+d1b8320005d87894b894ac60efdfe685bee1b9c0531e70e30af360295437ac8b7522abd5adafbd666743d944b0c31e6a0f3757a580037a814a2ab27df4d6a976  nodm.confd"

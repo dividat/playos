@@ -8,20 +8,32 @@ let
 
   # apk2nix tool
   apk2nix = (import ./apk2nix) {inherit stdenv proot apk-tools-static;};
+
+  # Build Alpine Linux systems
+  systemBuilder = (import ./system-builder) {inherit stdenv apk-tools-static proot;};
+
+  apkBuilder = (import ./apk-builder) { 
+    inherit stdenv proot systemBuilder;
+    alpine-sdk-pkgs = map fetchurl (import ./pkgs/alpine-sdk.nix);
+  };
+
 in 
   {
-    inherit apk-tools apk-tools-static apk2nix;
+    inherit apk-tools apk-tools-static apk2nix systemBuilder apkBuilder;
 
-    base-system = (import ./system-builder) {
-      inherit stdenv apk-tools-static proot;
+    base-system = systemBuilder {
       name = "alpine-base-system";
       apks = map fetchurl (import ./pkgs/alpine-base.nix);
     };
 
-    bootable-system = (import ./system-builder) {
-      inherit stdenv apk-tools-static proot;
+    bootable-system = systemBuilder {
       name = "alpine-bootable-system";
       apks = map fetchurl (import ./pkgs/bootable-system.nix);
+    };
+
+    sdk-system = systemBuilder {
+      name = "alpine-sdk-system";
+      apks = map fetchurl (import ./pkgs/alpine-sdk.nix);
     };
 
   }
