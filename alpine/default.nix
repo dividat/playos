@@ -21,6 +21,7 @@ in
   {
     inherit apk-tools apk-tools-static apk2nix systemBuilder apkBuilder;
 
+    # TODO: system definitions here are not really needed and should be removed (all of them)
     base-system = systemBuilder {
       name = "alpine-base-system";
       apks = map fetchurl (import ./systems/alpine-base.nix);

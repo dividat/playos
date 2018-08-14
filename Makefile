@@ -45,6 +45,13 @@ $(WORK_DIR)/OVMF.fd:
 	cp $(OVMF) $(WORK_DIR)/OVMF.fd
 	chmod +w $(WORK_DIR)/OVMF.fd
 
+# Helper to get latest upstream apks
+.PHONY: update-upstream-apks
+update-upstream-apks:
+	apk2nix -o alpine/systems/alpine-base.nix alpine-base
+	apk2nix -o alpine/systems/alpine-sdk.nix alpine-base alpine-sdk
+	apk2nix -o system/apks.nix alpine-base linux-hardened gummiboot
+
 .PHONY: clean
 clean:
 	rm -rf $(WORK_DIR)
