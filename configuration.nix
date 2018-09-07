@@ -7,15 +7,13 @@ with lib;
 
 {
   fileSystems."/".device = "/dev/disk/by-label/nixos";
-  boot.loader.grub.device = "/dev/sda";
+  fileSystems."/boot".device = "/dev/disk/by-label/ESP";
 
-  environment.noXlibs = mkDefault true;
+  boot.loader.grub = {
+    efiSupport = true;
+    efiInstallAsRemovable = true;
+    device = "nodev";
+  };
 
-  # This isn't perfect, but let's expect the user specifies an UTF-8 defaultLocale
-  #i18n.supportedLocales = [ (config.i18n.defaultLocale + "/UTF-8") ];
 
-  #documentation.enable = mkDefault false;
-  services.nixosManual.enable = mkDefault false;
-
-  sound.enable = mkDefault false;
 }

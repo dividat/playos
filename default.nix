@@ -8,5 +8,7 @@ in
   makeDiskImage {
     inherit pkgs lib;
     config = (nixos { inherit configuration; }).config;
+
+    partitionTableType = "efi";
     diskSize = 2048;
   }
