@@ -6,8 +6,12 @@
 with lib;
 
 {
-  fileSystems."/".device = "/dev/disk/by-label/nixos";
-  fileSystems."/boot".device = "/dev/disk/by-label/ESP";
+  fileSystems."/" = {
+    device = "/dev/disk/by-label/nixos";
+  };
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-label/ESP";
+  };
 
   boot.loader.grub = {
     efiSupport = true;
