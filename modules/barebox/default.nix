@@ -11,8 +11,8 @@ let
     inherit (cfg) defaultEnv;
   };
 
-  bareboxBootBuilder = pkgs.substituteAll {
-    src = ./barebox-boot-builder.py;
+  syncBootLoaderSpecEntries = pkgs.substituteAll {
+    src = ./sync-boot-loader-spec-entries.py;
 
     inherit barebox;
 
@@ -70,7 +70,12 @@ with lib;
     system = {
       build.installBootLoader = pkgs.writeScript "install-barebox.sh"
         ''
-          ${bareboxBootBuilder} "$@"
+          # Create Freedesktop.org Boot Loader Specification entries
+          ${syncBootLoaderSpecEntries} "$@"
+
+          # Install barebox
+          mkdir -p ${efi.efiSysMountPoint}/EFI/BOOT
+          cp ${barebox} ${efi.efiSysMountPoint}/EFI/BOOT/BOOTX64.EFI
         '';
 
       boot.loader.id = "barebox";

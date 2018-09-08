@@ -171,12 +171,6 @@ def main():
         if os.path.exists("@efiSysMountPoint@/loader/loader.conf"):
             os.unlink("@efiSysMountPoint@/loader/loader.conf")
 
-        mkdir_p("@efiSysMountPoint@/EFI/BOOT")
-
-        # Install barebox binary
-        subprocess.check_call(["cp", "@barebox@", "@efiSysMountPoint@/EFI/BOOT/BOOTX64.EFI"])
-
-
     mkdir_p("@efiSysMountPoint@/efi/nixos")
     mkdir_p("@efiSysMountPoint@/loader/entries")
 
