@@ -1,0 +1,9 @@
+diff -Naur ../barebox-2018.08.1-clean/scripts/genenv ./scripts/genenv
+--- ../barebox-2018.08.1-clean/scripts/genenv	2018-08-21 09:15:03.000000000 +0200
++++ ./scripts/genenv	2018-09-08 10:17:45.948903625 +0200
+@@ -55,4 +55,4 @@
+ 	rm ${tmpfile}
+ fi
+ 
+-rm -r $tempdir
++# rm -r $tempdir

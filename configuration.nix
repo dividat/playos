@@ -6,6 +6,11 @@
 with lib;
 
 {
+
+  imports = [
+    ./modules/barebox
+  ];
+
   fileSystems."/" = {
     device = "/dev/disk/by-label/nixos";
   };
@@ -13,11 +18,9 @@ with lib;
     device = "/dev/disk/by-label/ESP";
   };
 
-  boot.loader.grub = {
-    efiSupport = true;
-    efiInstallAsRemovable = true;
-    device = "nodev";
+  boot.loader.barebox = {
+    enable = true;
+    defaultEnv = ./system/boot/barebox-default-env;
   };
-
 
 }
