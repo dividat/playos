@@ -20,7 +20,7 @@ with lib;
 
   boot.loader.barebox = {
     enable = true;
-    defaultEnv = ./system/boot/barebox-default-env;
+    defaultEnv = ./boot/barebox-default-env;
   };
 
 }

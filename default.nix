@@ -1,9 +1,9 @@
-let nixpkgs = (import ./nixpkgs.nix).nixpkgs {}; in
-let nixos = (import ./nixpkgs.nix).nixos; in
-let makeDiskImage = (import ./nixpkgs.nix).makeDiskImage; in
+let nixpkgs = (import ./nix/nixpkgs.nix).nixpkgs {}; in
+let nixos = (import ./nix/nixpkgs.nix).nixos; in
+let makeDiskImage = (import ./nix/nixpkgs.nix).makeDiskImage; in
 with nixpkgs;
 let
-  configuration = (import ./configuration.nix) { inherit config lib; };
+  configuration = (import ./system/configuration.nix) { inherit config lib; };
 in
   makeDiskImage {
     inherit pkgs lib;
