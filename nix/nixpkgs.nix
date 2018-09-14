@@ -11,6 +11,6 @@ let
   };
 
 in 
-  { nixpkgs = import nixpkgsRepo
+  { nixpkgs = (import nixpkgsRepo) { overlays = [ (import ./overlay.nix) ]; }
   ; nixos = import (nixpkgsRepo + "/nixos")
   ; makeDiskImage = import (nixpkgsRepo + "/nixos/lib/make-disk-image.nix");}

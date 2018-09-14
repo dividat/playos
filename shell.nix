@@ -1,4 +1,4 @@
-let nixpkgs = (import ./nixpkgs.nix).nixpkgs {}; in
+let nixpkgs = (import ./nix/nixpkgs.nix).nixpkgs; in
 with nixpkgs;
 let diskImage = import ./default.nix; in
 stdenv.mkDerivation {
