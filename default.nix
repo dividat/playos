@@ -1,6 +1,10 @@
-let nixpkgs = (import ./nix/nixpkgs.nix).nixpkgs; in
-let nixos = (import ./nix/nixpkgs.nix).nixos; in
-let makeDiskImage = (import ./nix/nixpkgs.nix).makeDiskImage; in
+let nixpkgs = (import ./nixpkgs).nixpkgs {
+    overlays = [ (import ./pkgs) ];
+}; 
+in
+let importFromNixos = (import ./nixpkgs).importFromNixos; in
+let nixos = importFromNixos ""; in
+let makeDiskImage = importFromNixos "lib/make-disk-image.nix"; in
 with nixpkgs;
 let
   configuration = (import ./system/configuration.nix) { inherit config pkgs lib; };

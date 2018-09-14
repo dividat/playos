@@ -1,4 +1,4 @@
-# This pins the version of nixpkgs and imports stuff from <nixpkgs/nixos> conveniently.
+# This pins the version of nixpkgs and helper to import from <nixpkgs/nixos>.
 let
   # Bootstrap with currently available version of nixpkgs
   _nixpkgs = import <nixpkgs> {};
@@ -11,6 +11,5 @@ let
   };
 
 in 
-  { nixpkgs = (import nixpkgsRepo) { overlays = [ (import ./overlay.nix) ]; }
-  ; nixos = import (nixpkgsRepo + "/nixos")
-  ; makeDiskImage = import (nixpkgsRepo + "/nixos/lib/make-disk-image.nix");}
+  { nixpkgs = import nixpkgsRepo
+  ; importFromNixos = path: import (nixpkgsRepo + "/nixos/" + path);}
