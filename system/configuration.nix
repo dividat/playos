@@ -11,8 +11,17 @@ with lib;
     ./modules/barebox
   ];
 
+  system.activationScripts.fixedSystemLocation = ''
+    # Put components (stage 2 init script, kernel and initrd) required to boot
+    # system at a fixed location (copy and dereference symlinks).
+    cp -fL /nix/var/nix/profiles/system/init /init
+    cp -fL /nix/var/nix/profiles/system/kernel /kernel
+    cp -fL /nix/var/nix/profiles/system/initrd /initrd
+  '';
+
   fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos";
+    # This makes the stage 1 init use the `root` kernel argument as root device.
+    device = "/dev/root";
   };
   fileSystems."/boot" = {
     device = "/dev/disk/by-label/ESP";

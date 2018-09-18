@@ -11,22 +11,6 @@ let
     inherit (cfg) defaultEnv;
   };
 
-  syncBootLoaderSpecEntries = pkgs.substituteAll {
-    src = ./sync-boot-loader-spec-entries.py;
-
-    inherit barebox;
-
-    isExecutable = true;
-
-    inherit (pkgs) python3;
-
-    nix = config.nix.package.out;
-
-    timeout = if config.boot.loader.timeout != null then config.boot.loader.timeout else "";
-
-    inherit (efi) efiSysMountPoint;
-  };
-
 in
 
 with lib;
@@ -70,9 +54,6 @@ with lib;
     system = {
       build.installBootLoader = pkgs.writeScript "install-barebox.sh"
         ''
-          # Create Freedesktop.org Boot Loader Specification entries
-          ${syncBootLoaderSpecEntries} "$@"
-
           # Install barebox
           mkdir -p ${efi.efiSysMountPoint}/EFI/BOOT
           cp ${barebox} ${efi.efiSysMountPoint}/EFI/BOOT/BOOTX64.EFI
