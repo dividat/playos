@@ -2,19 +2,21 @@ let nixpkgs = (import ./nixpkgs).nixpkgs {
     overlays = [ (import ./pkgs) ];
 }; 
 in
-let importFromNixos = (import ./nixpkgs).importFromNixos; in
-let nixos = importFromNixos ""; in
-let makeDiskImage = importFromNixos "lib/make-disk-image.nix"; in
-with nixpkgs;
-let
-  configuration = (import ./system/configuration.nix) { inherit config pkgs lib; };
+let 
+  importFromNixos = (import ./nixpkgs).importFromNixos;
+  nixos = importFromNixos "";
+  makeDiskImage = importFromNixos "lib/make-disk-image.nix"; 
+
+  system = (import ./system) {
+    inherit (nixpkgs) config pkgs lib;
+    inherit nixos;
+  };
+
 in
+with nixpkgs;
   makeDiskImage {
     inherit pkgs lib;
-    config = (nixos { 
-        inherit configuration; 
-        system = "x86_64-linux";
-      }).config;
+    config = system.config;
     partitionTableType = "efi";
     diskSize = 2048;
   }
