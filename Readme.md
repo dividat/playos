@@ -5,5 +5,5 @@ A custom Linux system for running Dividat Play.
 ## Quick start
 
 ```
-nix-shell shell.nix --command "make qemu"
+nix-shell --command "make qemu"
 ```
