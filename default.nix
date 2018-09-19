@@ -6,17 +6,68 @@ let
   importFromNixos = (import ./nixpkgs).importFromNixos;
   nixos = importFromNixos "";
   makeDiskImage = importFromNixos "lib/make-disk-image.nix"; 
+  makeSystemTarball = importFromNixos "lib/make-system-tarball.nix";
+
+  gitignore = (import ./lib/gitignore.nix) {inherit (nixpkgs) lib fetchFromGitHub;};
 
   system = (import ./system) {
     inherit (nixpkgs) config pkgs lib;
     inherit nixos;
   };
 
+  systemTarball = makeSystemTarball {
+    inherit (nixpkgs) stdenv perl xz pathsFromGraph;
+
+    fileName = "system";
+
+    contents = [
+      {
+        source = system.config.system.build.initialRamdisk 
+          + "/" + system.config.system.boot.loader.initrdFile;
+        target = "/initrd";
+      }
+      {
+        source = system.config.system.build.kernel + "/bzImage";
+        target = "/kernel";
+      }
+      {
+        source = system.config.system.build.toplevel + "/init" ;
+        target = "/init";
+      }
+    ];
+
+    storeContents = [{ 
+        object = system.config.system.build.toplevel;
+        symlink = "/run/current-system";
+      }];
+  } + "/tarball/system.tar.xz";
+
+  esp = (import ./bootloader) {
+    inherit (nixpkgs) stdenv fetchurl binutils;
+  };
+
+  disk = (import ./lib/make-disk-image) {
+    inherit (nixpkgs) stdenv libguestfs;
+    inherit systemTarball esp;
+  };
 in
 with nixpkgs;
-  makeDiskImage {
-    inherit pkgs lib;
-    config = system.config;
-    partitionTableType = "efi";
-    diskSize = 2048;
-  }
+stdenv.mkDerivation {
+  name = "dividat-linux";
+
+  buildInputs = [
+    libguestfs
+  ];
+
+  phases = [];
+
+  inherit systemTarball;
+  inherit disk;
+
+  shellHook = ''
+    export LIBGUESTFS_PATH=${libguestfs}/lib/guestfs
+    # EFI firmware for qemu
+    export OVMF=${OVMF.fd}/FV/OVMF.fd
+  '';
+
+}

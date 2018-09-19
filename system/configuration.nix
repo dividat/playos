@@ -7,18 +7,6 @@ with lib;
 
 {
 
-  imports = [
-    ./modules/barebox
-  ];
-
-  system.activationScripts.fixedSystemLocation = ''
-    # Put components (stage 2 init script, kernel and initrd) required to boot
-    # system at a fixed location (copy and dereference symlinks).
-    cp -fL /nix/var/nix/profiles/system/init /init
-    cp -fL /nix/var/nix/profiles/system/kernel /kernel
-    cp -fL /nix/var/nix/profiles/system/initrd /initrd
-  '';
-
   fileSystems."/" = {
     # This makes the stage 1 init use the `root` kernel argument as root device.
     device = "/dev/root";
@@ -27,10 +15,8 @@ with lib;
     device = "/dev/disk/by-label/ESP";
   };
 
-  boot.loader.barebox = {
-    enable = true;
-    defaultEnv = ./boot/barebox-default-env;
-  };
+  # disable installation of bootloader
+  boot.loader.grub.enable = false;
 
   environment.systemPackages = with pkgs; [
     # Dev tools
