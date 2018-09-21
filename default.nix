@@ -59,7 +59,15 @@ stdenv.mkDerivation {
     libguestfs
   ];
 
-  phases = [];
+  phases = [ "buildPhase" ];
+
+  buildPhase = ''
+    mkdir -p $out/tarballs
+    cp $systemTarball $out/tarballs/system.tar.xz
+
+    mkdir -p $out/test
+    cp $disk $out/test/disk.img
+  '';
 
   inherit systemTarball;
   inherit disk;
