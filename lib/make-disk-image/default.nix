@@ -2,7 +2,7 @@
 , libguestfs
 , name ? "disk-image.img"
 , systemTarball
-, esp
+, espTarball
 }:
 stdenv.mkDerivation {
   inherit name;
@@ -22,7 +22,7 @@ stdenv.mkDerivation {
       tar-in ${systemTarball} / compress:xz xattrs:true : \
       unmount / : \
       mount /dev/sda1 / :\
-      glob copy-in ${esp}/* / : \
+      tar-in ${espTarball} / compress:xz xattrs:true : \
       unmount / : \
       quit
   '';

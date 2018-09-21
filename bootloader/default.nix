@@ -6,11 +6,13 @@ let
   };
 in
 stdenv.mkDerivation {
-  name = "esp";
+  name = "esp.tar.xz";
   phases = [ "buildPhase" ];
  
   buildPhase = ''
-    mkdir -p $out/EFI/BOOT
-    cp ${barebox} $out/EFI/BOOT/BOOTX64.EFI
+    mkdir -p $TMPDIR/EFI/BOOT
+    cp ${barebox} $TMPDIR/EFI/BOOT/BOOTX64.EFI
+    cd $TMPDIR
+    tar --sort=name --mtime='@1' --owner=0 --group=0 --numeric-owner -cvJf $out *
   '';
 }

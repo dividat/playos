@@ -42,13 +42,13 @@ let
       }];
   } + "/tarball/system.tar.xz";
 
-  esp = (import ./bootloader) {
+  espTarball = (import ./bootloader) {
     inherit (nixpkgs) stdenv fetchurl binutils;
   };
 
   disk = (import ./lib/make-disk-image) {
     inherit (nixpkgs) stdenv libguestfs;
-    inherit systemTarball esp;
+    inherit systemTarball espTarball;
   };
 in
 with nixpkgs;
@@ -59,18 +59,19 @@ stdenv.mkDerivation {
     libguestfs
   ];
 
+  inherit systemTarball espTarball;
+  inherit disk;
+
   phases = [ "buildPhase" ];
 
   buildPhase = ''
     mkdir -p $out/tarballs
     cp $systemTarball $out/tarballs/system.tar.xz
+    cp $espTarball $out/tarballs/esp.tar.xz
 
     mkdir -p $out/test
     cp $disk $out/test/disk.img
   '';
-
-  inherit systemTarball;
-  inherit disk;
 
   shellHook = ''
     export LIBGUESTFS_PATH=${libguestfs}/lib/guestfs
