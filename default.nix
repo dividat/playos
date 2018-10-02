@@ -47,7 +47,7 @@ let
   };
 
   disk = (import ./lib/make-disk-image) {
-    inherit (nixpkgs) stdenv libguestfs;
+    inherit (nixpkgs) stdenv libguestfs parted;
     inherit systemTarball espTarball;
   };
 in

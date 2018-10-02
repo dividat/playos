@@ -7,13 +7,25 @@ with lib;
 
 {
 
-  fileSystems."/" = {
-    # This makes the stage 1 init use the `root` kernel argument as root device.
-    device = "/dev/root";
+  fileSystems = {
+    "/" = {
+      # This makes the stage 1 init use the `root` kernel argument as root device.
+      device = "/dev/root";
+    };
+
+    "/boot" = {
+      device = "/dev/disk/by-label/ESP";
+      options = [ "ro" ];
+    };
+
+    "/data" = {
+      device = "/dev/disk/by-label/data";
+    };
   };
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-label/ESP";
-  };
+
+  # disable man pages and os manual
+  programs.man.enable = false;
+  services.nixosManual.enable = false;
 
   # disable installation of bootloader
   boot.loader.grub.enable = false;
@@ -25,6 +37,12 @@ with lib;
     dtc
     vim
   ];
+
+  users.users.play = {
+    isNormalUser = true;
+    home = "/data/home/play";
+    password = "123";
+  };
 
   users.users.dev = {
     isNormalUser = true;
