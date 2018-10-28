@@ -1,7 +1,0 @@
-#!/bin/sh
-
-# TODO: how to figure out which disk to use?
-global.bootm.image=/mnt/disk2.3/kernel
-global.bootm.initrd=/mnt/disk2.3/initrd
-
-global linux.bootargs.root=root=/dev/disk/by-label/system-a

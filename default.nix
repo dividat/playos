@@ -42,13 +42,9 @@ let
       }];
   } + "/tarball/system.tar.xz";
 
-  espTarball = (import ./bootloader) {
-    inherit (nixpkgs) stdenv fetchurl binutils;
-  };
-
-  disk = (import ./lib/make-disk-image) {
-    inherit (nixpkgs) stdenv libguestfs parted;
-    inherit systemTarball espTarball;
+  disk = (import ./lib/make-disk-image.nix) {
+    inherit (nixpkgs) pkgs lib;
+    inherit systemTarball;
   };
 in
 with nixpkgs;
@@ -59,7 +55,7 @@ stdenv.mkDerivation {
     libguestfs
   ];
 
-  inherit systemTarball espTarball;
+  inherit systemTarball;
   inherit disk;
 
   phases = [ "buildPhase" ];
@@ -67,10 +63,9 @@ stdenv.mkDerivation {
   buildPhase = ''
     mkdir -p $out/tarballs
     cp $systemTarball $out/tarballs/system.tar.xz
-    cp $espTarball $out/tarballs/esp.tar.xz
 
     mkdir -p $out/test
-    cp $disk $out/test/disk.img
+    cp $disk/nixos.img $out/test/disk.img
   '';
 
   shellHook = ''

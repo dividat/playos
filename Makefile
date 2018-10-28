@@ -6,7 +6,7 @@ qemu: $(WORK_DIR)/OVMF.fd $(WORK_DIR)/disk.img
 .PHONY: $(WORK_DIR)/disk.img
 $(WORK_DIR)/disk.img:
 	mkdir -p $(WORK_DIR)
-	cp $(disk) $@
+	cp $(disk)/nixos.img $@
 	chmod +w $@
 
 $(WORK_DIR)/OVMF.fd: $(OVMF)
