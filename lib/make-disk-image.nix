@@ -46,6 +46,7 @@ in pkgs.vmTools.runInLinuxVM (
     }
     ''
       # Partition disk
+      echo -n "Partitioning disk ... "
       parted --script /dev/vda -- \
         mklabel gpt \
         mkpart ESP fat32 8MiB 256MiB \
@@ -53,6 +54,7 @@ in pkgs.vmTools.runInLinuxVM (
         mkpart primary ext4 1GiB ${toString dataPartitionSize}GiB \
         mkpart primary ext2 ${toString (1 + dataPartitionSize)}GiB ${toString (1 + dataPartitionSize + systemPartitionSize)}GiB \
         mkpart primary ext2 ${toString (1 + dataPartitionSize + systemPartitionSize)}GiB ${toString (1 + dataPartitionSize + systemPartitionSize + systemPartitionSize)}GiB
+      echo "done."
 
       echo -n "Preparing disk with guestfish ... "
       export LIBGUESTFS_PATH=${pkgs.libguestfs}/lib/guestfs
@@ -98,13 +100,18 @@ in pkgs.vmTools.runInLinuxVM (
       EOF
       echo "done."
 
+      echo -n "Installing boot loader ..."
       mkdir -p /mnt/boot
       mount /dev/vda1 /mnt/boot
-      grub-install -v --no-nvram --no-bootsector --removable \
+      grub-install \
+        --no-nvram \
+        --no-bootsector \
+        --removable \
         --boot-directory /mnt/boot \
         --target x86_64-efi \
         --efi-directory /mnt/boot
-
       cp $grubCfg /mnt/boot/grub/grub.cfg
+      umount /dev/vda1
+      echo "done."
     ''
 )

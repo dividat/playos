@@ -53,6 +53,7 @@ stdenv.mkDerivation {
 
   buildInputs = [
     libguestfs
+    rauc
   ];
 
   inherit systemTarball;

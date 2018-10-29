@@ -15,7 +15,6 @@ with lib;
 
     "/boot" = {
       device = "/dev/disk/by-label/ESP";
-      options = [ "ro" ];
     };
 
     "/data" = {
@@ -33,10 +32,22 @@ with lib;
   environment.systemPackages = with pkgs; [
     # Dev tools
     sudo
-    dt-utils
-    dtc
     vim
+    rauc
   ];
+
+  services.dbus.packages = with pkgs; [ rauc ];
+
+  systemd.services.rauc = {
+    description = "RAUC Update Service";
+    serviceConfig.ExecStart = "${pkgs.rauc}/bin/rauc service";
+    serviceConfig.User = "root";
+    wantedBy = [ "multi-user.target" ];
+  };
+
+  environment.etc."rauc/system.conf" = {
+    source = ./rauc/system.conf;
+  };
 
   users.users.play = {
     isNormalUser = true;
