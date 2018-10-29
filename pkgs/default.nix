@@ -6,7 +6,7 @@ self: super: {
   };
 
   rauc = (import ./rauc) {
-    inherit (super) stdenv fetchurl glib curl json-glib pkgconfig;
+    inherit (super) stdenv fetchurl glib curl json-glib pkgconfig makeWrapper grub2;
   };
 
 }

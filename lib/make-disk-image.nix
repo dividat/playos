@@ -83,7 +83,7 @@ in pkgs.vmTools.runInLinuxVM (
         # System A partition
         part-set-gpt-type /dev/sda 3 4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709 
         part-set-gpt-guid /dev/sda 3 f08afd4e-6076-4700-b23f-893e40c80d3c
-        mkfs ext2 /dev/sda3 label:system-a
+        mkfs ext2 /dev/sda3 label:system.a
         mount /dev/sda3 /
         tar-in ${systemTarball} / compress:xz xattrs:true
         unmount /
@@ -91,7 +91,7 @@ in pkgs.vmTools.runInLinuxVM (
         # System B partition
         part-set-gpt-type /dev/sda 4 4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709 
         part-set-gpt-guid /dev/sda 4 b1672b7f-7dd9-46f4-9fb5-4d119b847809
-        mkfs ext2 /dev/sda4 label:system-b
+        mkfs ext2 /dev/sda4 label:system.b
         mount /dev/sda4 /
         tar-in ${systemTarball} / compress:xz xattrs:true
         unmount /

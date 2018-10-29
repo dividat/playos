@@ -33,6 +33,7 @@ with lib;
     # Dev tools
     sudo
     vim
+
     rauc
   ];
 
