@@ -19,7 +19,7 @@ This is a [NixOS](https://nixos.org/) based system that runs Dividat Play in a r
 
 ## Quick start
 
-Running `nix build` will create following (in `result/`):
+Running `nix-build` will create following (in `result/`):
 
 - `system.tar.xz`: Tarball of entire system as defined in [`system/configuration.nix`](system/configuration.nix) (this is a standard NixOS configuration file, see https://nixos.org/nixos/manual/index.html#ch-configuration).
 - `bundle-VERSION.raucb`: RAUC bundle that can be used to update systems. Note that it is signed with a dummy development key. Real deployments would resign the key with `rauc resign`.
