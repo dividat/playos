@@ -22,7 +22,7 @@ This is a [NixOS](https://nixos.org/) based system that runs Dividat Play in a r
 Running `nix build` will create following (in `result/`):
 
 - `system.tar.xz`: Tarball of entire system as defined in [`system/configuration.nix`](system/configuration.nix) (this is a standard NixOS configuration file, see https://nixos.org/nixos/manual/index.html#ch-configuration).
-- `bundle-VERSION.raucb`: RAUC bundle that can be used to update systems. Note that it is signed with a dummy development key. Real deployments would resign the key with `rauc resign`.
+- `bundle-VERSION.raucb`: RAUC bundle that can be used to update systems. Note that it is signed with a dummy development key. Real deployments would resign the bundle with `rauc resign`.
 - `disk.img`: Preinstalled system with A/B and data partitions for testing.
 
 ### Virtual machine
@@ -39,7 +39,7 @@ nix-shell --command "make qemu"
 
 ![GRUB](docs/screenshots/grub.png)
 
-Machine will boot and show a GRUB menu. The preferred system to boot is automatically booted after 3 seconds.
+Machine will boot and show a GRUB menu. The preferred system is automatically booted after 3 seconds.
 
 ### Login
 
