@@ -16,7 +16,7 @@ let
   };
 
   systemTarball = makeSystemTarball {
-    inherit (nixpkgs) stdenv perl xz pathsFromGraph;
+    inherit (nixpkgs) stdenv perl pixz pathsFromGraph;
 
     fileName = "system";
 
@@ -52,7 +52,6 @@ stdenv.mkDerivation {
   name = "dividat-linux";
 
   buildInputs = [
-    libguestfs
     rauc
   ];
 
@@ -70,7 +69,6 @@ stdenv.mkDerivation {
   '';
 
   shellHook = ''
-    export LIBGUESTFS_PATH=${libguestfs}/lib/guestfs
     # EFI firmware for qemu
     export OVMF=${OVMF.fd}/FV/OVMF.fd
   '';

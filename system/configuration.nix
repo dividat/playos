@@ -22,9 +22,8 @@ with lib;
     };
   };
 
-  # disable man pages and os manual
-  programs.man.enable = false;
-  services.nixosManual.enable = false;
+  # disable installation of documentation
+	documentation.enable = false;
 
   # disable installation of bootloader
   boot.loader.grub.enable = false;
