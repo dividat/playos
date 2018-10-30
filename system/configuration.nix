@@ -50,6 +50,10 @@ with lib;
     source = ./rauc/system.conf;
   };
 
+  environment.etc."rauc/cert.pem" = {
+    source = ./rauc/cert.pem;
+  };
+
   users.users.play = {
     isNormalUser = true;
     home = "/data/home/play";

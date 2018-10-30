@@ -5,8 +5,6 @@ self: super: {
     inherit (super) stdenv fetchgit autoreconfHook libudev pkgconfig;
   };
 
-  rauc = (import ./rauc) {
-    inherit (super) stdenv fetchurl glib curl json-glib pkgconfig makeWrapper grub2;
-  };
+  rauc = (import ./rauc) super;
 
 }

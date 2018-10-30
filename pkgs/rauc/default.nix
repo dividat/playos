@@ -1,4 +1,4 @@
-{stdenv, fetchurl, glib, curl, json-glib, pkgconfig, makeWrapper, grub2}:
+{stdenv, fetchurl, glib, curl, json-glib, pkgconfig, makeWrapper, grub2, utillinux, squashfsTools, e2fsprogs, gnutar, xz, ...}:
 stdenv.mkDerivation rec {
   name = "rauc-${version}";
   version = "1.0.rc1";
@@ -15,8 +15,13 @@ stdenv.mkDerivation rec {
     mkdir -p $out/etc/dbus-1
     mv $out/share/dbus-1/system.d $out/etc/dbus-1/
 
-    # Add grub2 to PATH so that rauc can use grub-editenv
+    # Add required tools to path
     wrapProgram $out/bin/rauc \
-      --prefix PATH ":" ${grub2}/bin
+      --prefix PATH ":" ${utillinux}/bin \
+      --prefix PATH ":" ${squashfsTools}/bin \
+      --prefix PATH ":" ${e2fsprogs}/bin \
+      --prefix PATH ":" ${grub2}/bin \
+      --prefix PATH ":" ${gnutar}/bin \
+      --prefix PATH ":" ${xz}/bin
   '';
 }
