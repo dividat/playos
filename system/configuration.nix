@@ -7,6 +7,14 @@ with lib;
 
 {
 
+  # Force use of already overlayed nixpkgs in modules
+  nixpkgs.pkgs = pkgs;
+
+  imports = [
+    ./modules/update-mechanism
+  ];
+
+
   fileSystems = {
     "/" = {
       # This makes the stage 1 init use the `root` kernel argument as root device.
@@ -32,26 +40,7 @@ with lib;
     # Dev tools
     sudo
     vim
-
-    rauc
   ];
-
-  services.dbus.packages = with pkgs; [ rauc ];
-
-  systemd.services.rauc = {
-    description = "RAUC Update Service";
-    serviceConfig.ExecStart = "${pkgs.rauc}/bin/rauc service";
-    serviceConfig.User = "root";
-    wantedBy = [ "multi-user.target" ];
-  };
-
-  environment.etc."rauc/system.conf" = {
-    source = ./rauc/system.conf;
-  };
-
-  environment.etc."rauc/cert.pem" = {
-    source = ./rauc/cert.pem;
-  };
 
   users.users.play = {
     isNormalUser = true;

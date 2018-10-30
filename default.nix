@@ -51,8 +51,8 @@ let
   raucBundle = (import ./lib/make-rauc-bundle.nix) {
     inherit (nixpkgs) stdenv rauc;
     inherit version;
-    cert = ./system/rauc/cert.pem;
-    key = ./system/rauc/key.pem;
+    cert = ./system/modules/update-mechanism/cert.pem;
+    key = ./system/modules/update-mechanism/key.pem;
     inherit systemTarball;
   };
 
