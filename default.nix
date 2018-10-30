@@ -8,7 +8,7 @@ let
   makeDiskImage = importFromNixos "lib/make-disk-image.nix"; 
   makeSystemTarball = importFromNixos "lib/make-system-tarball.nix";
 
-  gitignore = (import ./lib/gitignore.nix) {inherit (nixpkgs) lib fetchFromGitHub;};
+  version = "2018.10.1-dev";
 
   system = (import ./system) {
     inherit (nixpkgs) config pkgs lib;
@@ -45,11 +45,21 @@ let
   disk = (import ./lib/make-disk-image.nix) {
     inherit (nixpkgs) pkgs lib;
     inherit systemTarball;
+  } + "/nixos.img";
+
+
+  raucBundle = (import ./lib/make-rauc-bundle.nix) {
+    inherit (nixpkgs) stdenv rauc;
+    inherit version;
+    cert = ./system/rauc/cert.pem;
+    key = ./system/rauc/key.pem;
+    inherit systemTarball;
   };
+
 in
 with nixpkgs;
 stdenv.mkDerivation {
-  name = "dividat-linux";
+  name = "dividat-linux-${version}";
 
   buildInputs = [
     rauc
@@ -57,18 +67,19 @@ stdenv.mkDerivation {
 
   inherit systemTarball;
   inherit disk;
+  inherit raucBundle;
 
-  phases = [ "buildPhase" ];
-
-  buildPhase = ''
-    mkdir -p $out/tarballs
-    cp $systemTarball $out/tarballs/system.tar.xz
-
-    mkdir -p $out/test
-    cp $disk/nixos.img $out/test/disk.img
+  buildCommand = ''
+    mkdir -p $out
+    ln -s ${systemTarball} $out/system.tar.xz
+    ln -s ${disk} $out/disk.img
+    ln -s ${raucBundle} $out/bundle-${version}.raucb
   '';
 
   shellHook = ''
+    export out=./build/out
+    export TEMP=./build/temp
+
     # EFI firmware for qemu
     export OVMF=${OVMF.fd}/FV/OVMF.fd
   '';
