@@ -12,6 +12,9 @@ with lib;
 
   imports = [
     ./modules/update-mechanism
+
+    # Development helpers
+    ./modules/development
   ];
 
 
@@ -36,22 +39,11 @@ with lib;
   # disable installation of bootloader
   boot.loader.grub.enable = false;
 
-  environment.systemPackages = with pkgs; [
-    # Dev tools
-    sudo
-    vim
-  ];
+  environment.systemPackages = with pkgs; [];
 
   users.users.play = {
     isNormalUser = true;
     home = "/data/home/play";
-    password = "123";
-  };
-
-  users.users.dev = {
-    isNormalUser = true;
-    home = "/home/dev";
-    extraGroups = [ "wheel" ];
     password = "123";
   };
 
