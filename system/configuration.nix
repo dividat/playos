@@ -13,6 +13,9 @@ with lib;
   imports = [
     ./modules/update-mechanism
 
+    # Play Kiosk and Driver
+    ./modules/play
+
     # Development helpers
     ./modules/development
   ];
@@ -40,11 +43,5 @@ with lib;
   boot.loader.grub.enable = false;
 
   environment.systemPackages = with pkgs; [];
-
-  users.users.play = {
-    isNormalUser = true;
-    home = "/data/home/play";
-    password = "123";
-  };
 
 }

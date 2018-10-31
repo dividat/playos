@@ -74,7 +74,6 @@ Install a new bundle with the `rauc install` command (bundle needs to be transfe
 This is an incomplete list and is mainly here to document already planned improvements (in no particular order):
 
 - [ ] Make root file system read only
-- [ ] Move RAUC specific configuration in [`system/configuration.nix`](system/configuration.nix) to a seperate file.
 - [ ] Set up proper signing for RAUC bundles
 - [ ] Installer
   - [ ] Move installation logic from [`lib/make-disk-image.nix`](lib/make-disk-image.nix) to an installer script
