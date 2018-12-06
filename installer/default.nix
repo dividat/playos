@@ -1,47 +1,18 @@
-{ stdenv
-, substituteAll
-, makeWrapper
-, grub2
-, e2fsprogs
-, dosfstools
-, utillinux
-, gnutar
-, xz
-, python36
-
-, systemTarball
-, grubCfg
-, version
-}:
-stdenv.mkDerivation {
-  name = "install-playos-${version}";
-
-  src = substituteAll {
-    src = ./install-playos.py;
+# Build NixOS system
+{config, lib, pkgs,
+ nixos, importFromNixos,
+ version, grubCfg, systemTarball
+ }:
+let
+  install-playos = (import ./install-playos) {
+    inherit (pkgs) stdenv substituteAll makeWrapper python36 utillinux e2fsprogs dosfstools gnutar xz;
     inherit grubCfg systemTarball version;
+    grub2 = (pkgs.grub2.override { efiSupport = true; });
   };
 
-  buildInputs = [
-    makeWrapper
-    (python36.withPackages(ps: with ps; [pyparted]))
-  ];
+in
+  {
+    inherit install-playos;
 
-  buildCommand = ''
-    mkdir -p $out/bin
-    cp $src $out/bin/install-playos
-    chmod +x $out/bin/install-playos
-    
-    patchShebangs $out/bin/install-playos
-    
-    # Add required tools to path
-    wrapProgram $out/bin/install-playos \
-      --prefix PATH ":" ${utillinux}/bin \
-      --prefix PATH ":" ${e2fsprogs}/bin \
-      --prefix PATH ":" ${dosfstools}/bin \
-      --prefix PATH ":" ${grub2}/bin \
-      --prefix PATH ":" ${gnutar}/bin \
-      --prefix PATH ":" ${xz}/bin
+  }
 
-  '';
-  
-}

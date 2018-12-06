@@ -22,36 +22,36 @@ let
 
     contents = [
       {
-        source = system.config.system.build.initialRamdisk 
-          + "/" + system.config.system.boot.loader.initrdFile;
+        source = system + "/initrd";
         target = "/initrd";
       }
       {
-        source = system.config.system.build.kernel + "/bzImage";
+        source = system + "/kernel";
         target = "/kernel";
       }
       {
-        source = system.config.system.build.toplevel + "/init" ;
+        source = system + "/init" ;
         target = "/init";
       }
     ];
 
     storeContents = [{ 
-        object = system.config.system.build.toplevel;
+        object = system;
         symlink = "/run/current-system";
       }];
   } + "/tarball/system.tar.xz";
 
-  install-playos = (import ./installer) {
-    inherit (nixpkgs) stdenv substituteAll makeWrapper python36 utillinux e2fsprogs dosfstools gnutar xz;
+  installer = (import ./installer) {
+    inherit (nixpkgs) config pkgs lib;
+    inherit nixos importFromNixos;
     inherit systemTarball version;
     grubCfg = ./bootloader/grub.cfg;
-    grub2 = (nixpkgs.grub2.override { efiSupport = true; });
   };
 
   disk = (import ./lib/make-disk-image.nix) {
     inherit (nixpkgs) pkgs lib;
-    inherit systemTarball install-playos;
+    inherit systemTarball;
+    inherit (installer) install-playos;
   } + "/nixos.img";
 
   raucBundle = (import ./lib/make-rauc-bundle.nix) {
@@ -70,6 +70,7 @@ stdenv.mkDerivation {
   buildInputs = [
     rauc
     (python36.withPackages(ps: with ps; [pyparted]))
+    installer.install-playos
   ];
 
   inherit systemTarball;
@@ -86,7 +87,6 @@ stdenv.mkDerivation {
   shellHook = ''
     export out=./build/out
     export TEMP=./build/temp
-
     # EFI firmware for qemu
     export OVMF=${OVMF.fd}/FV/OVMF.fd
   '';

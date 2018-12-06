@@ -3,8 +3,8 @@
 let
   configuration = (import ./configuration.nix) { inherit config pkgs lib; };
 in
-  nixos {
+  (nixos {
     inherit configuration;
     system = "x86_64-linux";
-  }
+  }).config.system.build.toplevel
 
