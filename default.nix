@@ -81,6 +81,7 @@ stdenv.mkDerivation {
     mkdir -p $out
     ln -s ${systemTarball} $out/system.tar.xz
     ln -s ${disk} $out/disk.img
+    ln -s ${installer.isoImage}/iso/playos.iso $out/playos.iso
     ln -s ${raucBundle} $out/bundle-${version}.raucb
   '';
 
