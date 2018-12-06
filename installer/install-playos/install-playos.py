@@ -133,21 +133,14 @@ def install(disk):
     _installSystem(disk.partitions[3].path, 'system.b')
 
 # from http://code.activestate.com/recipes/577058/
-def query_yes_no(question, default="no"):
-    """Ask a yes/no question via raw_input() and return their answer.
-    "question" is a string that is presented to the user.
-    "default" is the presumed answer if the user just hits <Enter>.
-        It must be "yes" (the default), "no" or None (meaning
-        an answer is required of the user).
-    The "answer" return value is one of "yes" or "no".
-    """
-    valid = {"yes":"yes",   "y":"yes",  "ye":"yes",
-                 "no":"no",     "n":"no"}
+def _query_continue(question, default=False):
+    valid = {"yes":True,   "y":True,  "ye":True,
+                 "no":False,     "n":False}
     if default == None:
         prompt = " [y/n] "
-    elif default == "yes":
+    elif default == True:
         prompt = " [Y/n] "
-    elif default == "no":
+    elif default == False:
         prompt = " [y/N] "
     else:
         raise ValueError("invalid default answer: '%s'" % default)
@@ -170,7 +163,7 @@ def confirm(device, no_confirm):
                           device.path,
                           device.model,
                           _deviceSizeInGB(device)))
-    return (no_confirm or query_yes_no('Do you want to continue?'))
+    return (no_confirm or _query_continue('Do you want to continue?'))
 
 def _main(opts):
     
