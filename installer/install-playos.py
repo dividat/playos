@@ -1,7 +1,10 @@
 #!/usr/bin/env python
+
 import subprocess
 import os
+import sys
 import shutil
+import argparse
 import parted
 
 PARTITION_SIZE_GB_SYSTEM=5
@@ -9,30 +12,39 @@ PARTITION_SIZE_GB_DATA=2
 
 GRUB_CFG="@grubCfg@"
 SYSTEM_TARBALL="@systemTarball@"
+VERSION="@version@"
 
 
-def _to_gigabytes(value):
-    return value / (10 ** 9)
-
-def availableDevices():
-    devices = map(lambda device:
-                      { 'model': device.model,
-                        'path': device.path,
-                        'sizeInGB': _to_gigabytes(device.sectorSize * device.length)},
-                      parted.getAllDevices())
-    return devices
+def findDevice(devicePath):
+    """Return suitable device to install PlayOS on"""
+    devices = parted.getAllDevices()
+    device = None
+    if devicePath == None:
+        # Use the largest available disk
+        try:
+            device = sorted(parted.getAllDevices(),key=lambda d: d.length * d.sectorSize, reverse=True)[0]
+        except IndexError:
+            pass
+    else:
+        try:
+            device = next(device for device in devices if device.path == devicePath)
+        except StopIteration:
+            pass
+    if device == None:
+        raise ValueError('No suitable device to install on found.')
+    else:
+        return device
 
 def commit(disk):
     """Commit disk partitioning. WARNING: This will make any data on
     device unaccessible."""
     disk.commit()
 
-def createPartitioning(devicePath):
+def createPartitioning(device):
     """Returns a suitable partitioning (a disk) of the given
     device. You must specify device path (e.g. "/dev/sda"). Note that
     no changes will be made to the device. To write the partition to
     device use commit."""
-    device = parted.getDevice(devicePath)
     disk = parted.freshDisk(device, 'gpt')
     geometries = _computeGeometries(device)
     # Create ESP
@@ -119,17 +131,68 @@ def install(disk):
                         dataPartition.path], check=True)
     _installSystem(disk.partitions[2].path, 'system.a')
     _installSystem(disk.partitions[3].path, 'system.b')
-                        
 
-# Create a partitioned disk
-disk = createPartitioning('/dev/vda')
+# from http://code.activestate.com/recipes/577058/
+def query_yes_no(question, default="no"):
+    """Ask a yes/no question via raw_input() and return their answer.
+    "question" is a string that is presented to the user.
+    "default" is the presumed answer if the user just hits <Enter>.
+        It must be "yes" (the default), "no" or None (meaning
+        an answer is required of the user).
+    The "answer" return value is one of "yes" or "no".
+    """
+    valid = {"yes":"yes",   "y":"yes",  "ye":"yes",
+                 "no":"no",     "n":"no"}
+    if default == None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError("invalid default answer: '%s'" % default)
+    while 1:
+        sys.stdout.write(question + prompt)
+        choice = input().lower()
+        if default is not None and choice == '':
+            return default
+        elif choice in valid.keys():
+            return valid[choice]
+        else:
+            sys.stdout.write("Please respond with 'yes' or 'no'")
 
-# Write partition to disk. WARNING: This partitions your drive!
-commit(disk)
+def _deviceSizeInGB(device):
+    return (device.sectorSize * device.length) / (10 ** 9)
 
-# Install bootloader
-installBootloader(disk)
+def confirm(device, no_confirm):
+    print('Installing PlayOS ({}) to {} ({} - {:n}GB)'
+              .format(VERSION,
+                          device.path,
+                          device.model,
+                          _deviceSizeInGB(device)))
+    return (no_confirm or query_yes_no('Do you want to continue?'))
 
-# Install system
-install(disk)
+def _main(opts):
+    
+    device = findDevice(opts.device)
+    
+    if confirm(device, no_confirm=opts.no_confirm):
+        # Create a partitioned disk
+        disk = createPartitioning(device)
+        # Write partition to disk. WARNING: This partitions your drive!
+        commit(disk)
+        # Install bootloader
+        installBootloader(disk)
+        # Install system
+        install(disk)
+        print("Done. Please reboot.")
+        exit(0)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Install PlayOS")
+    parser.add_argument('-v','--version',action='version',version=VERSION)
+    parser.add_argument('--device',help='Device to install on (e.g. "/dev/sda"). If no device is specified a suitable device will be auto-detected.')
+    parser.add_argument('--no-confirm',action='store_true',help="Do not ask for confirmation. WARNING: THIS WILL FORMAT THE INSTALLATION DEVICE WIHTOUT CONFIRMATION.")
+    _main(parser.parse_args())
+
 

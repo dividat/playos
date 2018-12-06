@@ -44,7 +44,7 @@ let
 
   install-playos = (import ./installer) {
     inherit (nixpkgs) stdenv substituteAll makeWrapper python36 utillinux e2fsprogs dosfstools gnutar xz;
-    inherit systemTarball;
+    inherit systemTarball version;
     grubCfg = ./bootloader/grub.cfg;
     grub2 = (nixpkgs.grub2.override { efiSupport = true; });
   };
@@ -69,6 +69,7 @@ stdenv.mkDerivation {
 
   buildInputs = [
     rauc
+    (python36.withPackages(ps: with ps; [pyparted]))
   ];
 
   inherit systemTarball;

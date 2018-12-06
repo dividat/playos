@@ -42,6 +42,6 @@ in pkgs.vmTools.runInLinuxVM (
       memSize = 1024;
     }
     ''
-      install-playos
+      install-playos --device /dev/vda --no-confirm
     ''
 )

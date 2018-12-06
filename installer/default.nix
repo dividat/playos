@@ -8,15 +8,17 @@
 , gnutar
 , xz
 , python36
+
 , systemTarball
 , grubCfg
+, version
 }:
 stdenv.mkDerivation {
-  name = "install-playos";
+  name = "install-playos-${version}";
 
   src = substituteAll {
     src = ./install-playos.py;
-    inherit grubCfg systemTarball;
+    inherit grubCfg systemTarball version;
   };
 
   buildInputs = [
