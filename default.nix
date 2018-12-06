@@ -42,11 +42,17 @@ let
       }];
   } + "/tarball/system.tar.xz";
 
+  install-playos = (import ./installer) {
+    inherit (nixpkgs) stdenv substituteAll makeWrapper python36 utillinux e2fsprogs dosfstools gnutar xz;
+    inherit systemTarball;
+    grubCfg = ./bootloader/grub.cfg;
+    grub2 = (nixpkgs.grub2.override { efiSupport = true; });
+  };
+
   disk = (import ./lib/make-disk-image.nix) {
     inherit (nixpkgs) pkgs lib;
-    inherit systemTarball;
+    inherit systemTarball install-playos;
   } + "/nixos.img";
-
 
   raucBundle = (import ./lib/make-rauc-bundle.nix) {
     inherit (nixpkgs) stdenv rauc;
