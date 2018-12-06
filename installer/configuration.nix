@@ -1,4 +1,4 @@
-{ config, pkgs, lib, importFromNixos, install-playos, ... }:
+{ config, pkgs, lib, importFromNixos, install-playos, version,... }:
 
 with lib;
 
@@ -25,15 +25,30 @@ with lib;
   # Allow the user to log in as root without a password.
   users.users.root.initialHashedPassword = "";
 
-  # Some more help text.
-  services.mingetty.helpLine =
+  # A custom greeting line
+  services.mingetty.greetingLine =
   '' 
-  Type `install-playos`.
+
+    _____  _              ____   _____ 
+    |  __ \| |            / __ \ / ____|
+    | |__) | | __ _ _   _| |  | | (___  
+    |  ___/| |/ _` | | | | |  | |\___ \ 
+    | |    | | (_| | |_| | |__| |____) |
+    |_|    |_|\__,_|\__, |\____/|_____/ 
+                     __/ |              
+                    |___/               
+
+  
+  Dividat PlayOS installer (${version})
+
   '';
 
+  environment.loginShellInit = ''
+    install-playos --reboot
+  '';
 
   # ISO naming.
-  isoImage.isoName = "playos.iso";
+  isoImage.isoName = "playos-installer-${version}.iso";
 
   isoImage.volumeID = substring 0 11 "PLAYOS_ISO";
 

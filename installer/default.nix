@@ -12,7 +12,7 @@ let
   };
 
   configuration = (import ./configuration.nix) {
-    inherit config pkgs lib importFromNixos install-playos;
+    inherit config pkgs lib importFromNixos install-playos version;
   };
 
 in

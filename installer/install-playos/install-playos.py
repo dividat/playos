@@ -178,7 +178,10 @@ def _main(opts):
         installBootloader(disk)
         # Install system
         install(disk)
-        print("Done. Please reboot.")
+        if opts.reboot:
+            subprocess.run(['reboot'])
+        else:
+            print("Done. Please reboot.")
         exit(0)
 
 if __name__ == '__main__':
@@ -186,6 +189,7 @@ if __name__ == '__main__':
     parser.add_argument('-v','--version',action='version',version=VERSION)
     parser.add_argument('--device',help='Device to install on (e.g. "/dev/sda"). If no device is specified a suitable device will be auto-detected.')
     parser.add_argument('--no-confirm',action='store_true',help="Do not ask for confirmation. WARNING: THIS WILL FORMAT THE INSTALLATION DEVICE WIHTOUT CONFIRMATION.")
+    parser.add_argument('--reboot',action='store_true',help="Reboot system automatically after installation")
     _main(parser.parse_args())
 
 
