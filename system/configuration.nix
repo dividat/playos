@@ -14,7 +14,7 @@ with lib;
     ./modules/update-mechanism
 
     # Play Kiosk and Driver
-    ./modules/play
+    # ./modules/play
 
     # Development helpers
     ./modules/development
