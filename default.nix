@@ -86,10 +86,10 @@ stdenv.mkDerivation {
   '';
 
   shellHook = ''
-    export out=./build/out
-    export TEMP=./build/temp
     # EFI firmware for qemu
     export OVMF=${OVMF.fd}/FV/OVMF.fd
+    
+    export PATH=$PATH:"$(pwd)/bin"
   '';
 
 }

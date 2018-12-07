@@ -30,7 +30,7 @@ Running `nix build` will create following (in `result/`):
 A helper is available to quickly start a virtual machine (QEMU needs to be available):
 
 ```
-nix-shell --command "make qemu"
+nix-shell --command "run-in-qemu"
 ```
 
 ## Demo
