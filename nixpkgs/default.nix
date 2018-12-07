@@ -1,13 +1,13 @@
-# This pins the version of nixpkgs and helper to import from <nixpkgs/nixos>.
+# his pins the version of nixpkgs and helper to import from <nixpkgs/nixos>.
 let
   # Bootstrap with currently available version of nixpkgs
   _nixpkgs = import <nixpkgs> {};
 
   nixpkgsRepo = _nixpkgs.fetchFromGitHub { 
     owner = "NixOS"
-    ; repo = "nixpkgs"
-    ; rev = "fa3ec9c8364eb2153d794b6a38cec2f8621d0afd"
-    ; sha256 = "03c5q4mngbl8j87r7my53b261rmv1gpzp1vg1ql6s6gbjy9pbn92"; 
+    ; repo = "nixpkgs-channels"
+    ; rev = "2dc559868c94a6aad7cacbebb0ba7abdd9e08d91"
+    ; sha256 = "0hass2jk4jaijnsgvfk59kq5rli56bc7xv8gwsc9y6cff5sxfv8g";
   };
 
 in 
