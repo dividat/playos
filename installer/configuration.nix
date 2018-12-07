@@ -25,22 +25,28 @@ with lib;
   # Allow the user to log in as root without a password.
   users.users.root.initialHashedPassword = "";
 
-  # A custom greeting line
+  # Codename Dancing Bear
   services.mingetty.greetingLine =
   '' 
-
-    _____  _              ____   _____ 
-    |  __ \| |            / __ \ / ____|
-    | |__) | | __ _ _   _| |  | | (___  
-    |  ___/| |/ _` | | | | |  | |\___ \ 
-    | |    | | (_| | |_| | |__| |____) |
-    |_|    |_|\__,_|\__, |\____/|_____/ 
-                     __/ |              
-                    |___/               
-
-  
-  Dividat PlayOS installer (${version})
-
+                           _,-'^\
+                       _,-'   ,\ )
+                   ,,-'     ,'  d'
+    ,,,           J_ \    ,'
+   `\ /     __ ,-'  \ \ ,'
+   / /  _,-'  '      \ \
+  / |,-'             /  }
+  (                 ,'  /
+  '-,________         /
+             \       /
+              |      |
+             /       |                Dividat PlayOS installer (${version})
+            /        | 
+           /  /~\   (\/)
+          {  /   \     }
+          | |     |   =|
+          / |      ~\  |
+          J \,       (_o
+           '"
   '';
 
   environment.loginShellInit = ''

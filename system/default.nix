@@ -1,7 +1,7 @@
 # Build NixOS system
-{config, lib, pkgs, nixos}:
+{config, lib, pkgs, nixos, version}:
 let
-  configuration = (import ./configuration.nix) { inherit config pkgs lib; };
+  configuration = (import ./configuration.nix) { inherit config pkgs lib version; };
 in
   (nixos {
     inherit configuration;

@@ -8,11 +8,11 @@ let
   makeDiskImage = importFromNixos "lib/make-disk-image.nix"; 
   makeSystemTarball = importFromNixos "lib/make-system-tarball.nix";
 
-  version = "2018.10.1-dev";
+  version = "2018.12.0-dev";
 
   system = (import ./system) {
     inherit (nixpkgs) config pkgs lib;
-    inherit nixos;
+    inherit nixos version;
   };
 
   systemTarball = makeSystemTarball {

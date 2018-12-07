@@ -1,7 +1,7 @@
 # This module defines a small NixOS configuration.  It does not
 # contain any graphical stuff.
 
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, version,... }:
 
 with lib;
 
@@ -52,6 +52,32 @@ with lib;
     ln -s mnt/system/init init
     cd /
   '';
+
+  # Codename Dancing Bear
+  services.mingetty.greetingLine =
+  '' 
+                           _,-'^\
+                       _,-'   ,\ )
+                   ,,-'     ,'  d'
+    ,,,           J_ \    ,'
+   `\ /     __ ,-'  \ \ ,'
+   / /  _,-'  '      \ \
+  / |,-'             /  }
+  (                 ,'  /
+  '-,________         /
+             \       /
+              |      |
+             /       |                Dividat PlayOS (${version})
+            /        | 
+           /  /~\   (\/)
+          {  /   \     }
+          | |     |   =|
+          / |      ~\  |
+          J \,       (_o
+           '"
+  '';
+
+  services.mingetty.helpLine = "";
 
   # disable installation of documentation
 	documentation.enable = false;
