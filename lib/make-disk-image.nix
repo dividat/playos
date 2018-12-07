@@ -29,7 +29,6 @@ in pkgs.vmTools.runInLinuxVM (
       buildInputs = with pkgs; [ 
         install-playos
       ];
-      grubCfg = ../bootloader/grub.cfg;
       preVM = ''
         diskImage=nixos.raw
         truncate -s ${toString diskSize}G $diskImage
