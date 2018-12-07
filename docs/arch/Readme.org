@@ -1,0 +1,63 @@
+#+TITLE: PlayOS
+
+* Overview
+  
+** Build System
+
+** Development image
+  
+* System
+  
+** Disk partitioning
+  
+** Booting
+   
+*** Bootloader
+
+**** TODO Simplify Grub Script
+
+*** TODO System initializtion
+
+- Describe Stage 1/Stage 2
+- Root partition is specified with kernel argument ~root~
+- NixOS requires the kernel arguments "systemConfig" and "init" that point to the active system in the nix store. This is a pain in the ass. A quick hack would be to symlink the active to `/system` . The kernel argument now is always `/system` and `/system/init`.
+
+** Machine ID
+   
+Every machine is assigned a [[https://tools.ietf.org/html/rfc4122][Universal Unique IDentifier]] (machine-id) during installation. The machine-id is stored on the ~/boot~ partition and is persisted between [[*Update Mechanism][updates]] and [[*User data wiping][user data wiping]].
+
+The machine-id is set on boot via the ~system.machine_id~ kernel argument and then [[https://www.freedesktop.org/software/systemd/man/machine-id.html][handled by the init system]].
+
+*** TODO create Machine ID at installation
+
+** TODO Read-only filesystem
+   
+** Update Mechanism
+
+*** TODO Setup proper signing keys
+
+*** TODO Make ~update-mechanism~ a nix module exposing options that are set in ~configuration.nix~
+    
+*** TODO develop update delivery mechanism
+
+** Dividat Driver
+
+** TODO Kiosk
+
+** TODO Play Computer Controller (~pcc~)
+   
+*** TODO User data wiping
+*** TODO Network configuration
+*** TODO Logging Mechanism
+
+Important system events should be logged to ~log.dividat.com~.
+
+* Installer
+
+A bootable image is built that can be used to install systems. The installation is performed by a Python script (~install-playos.py~). It will automatically detect a suitable device to install the system to and ask for confirmation before partitioning, formatting and installing the system. Optionally the script can be used non-interactively (this is done to create the [[*Development image][development image]]).
+
+Reasons for using Python include the [[jhttps://github.com/dcantrell/pyparted][pyparted]] bindings to the [[https://www.gnu.org/software/parted/][GNU parted]] library for partitioning.
+
+** TODO Use rauc bundle during installation
+** TODO Check for latest version of bundle over network
+** TODO Check for already installed system and preserve [[*Machine ID][machine-id]]

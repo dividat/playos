@@ -1,4 +1,4 @@
-# Dividat Linux
+# PlayOS
 
 ** WORK IN PROGRESS - currently only useable as technology demonstrator **
 
@@ -68,20 +68,6 @@ Install a new bundle with the `rauc install` command (bundle needs to be transfe
 
 ![rauc install](docs/screenshots/rauc-install.png)
 
-
-## Todos
-
-This is an incomplete list and is mainly here to document already planned improvements (in no particular order):
-
-- [ ] Make root file system read only
-- [ ] Set up proper signing for RAUC bundles
-- [ ] Installer
-  - [ ] Move installation logic from [`lib/make-disk-image.nix`](lib/make-disk-image.nix) to an installer script
-  - [ ] Create a bootable SD image that runs the installer script
-- [ ] Play Computer Controller
-- [ ] High-level stuff
-  - [ ] Dividat Driver
-  - [ ] Chromium Kiosk
 
 ## Related work
 
