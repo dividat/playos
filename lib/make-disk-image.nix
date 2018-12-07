@@ -42,6 +42,10 @@ in pkgs.vmTools.runInLinuxVM (
       memSize = 1024;
     }
     ''
-      install-playos --device /dev/vda --no-confirm
+      # machine-id of development image is hardcoded
+      install-playos \
+        --device /dev/vda \
+        --machine-id "f414cca8312548d29689ebf287fb67e0" \
+        --no-confirm
     ''
 )

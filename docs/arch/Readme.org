@@ -23,8 +23,6 @@ PlayOS can only boot in UEFI mode. [[https://www.gnu.org/software/grub/][GNU Gru
 
 The bootloader chooses system to boot (A or B) based on persistent variables (GRUB environment variables on the EFI system partition). 
 
-*** TODO describe system selection logic
-
 The bootloader boots the selected system by loading the kernel and initial ram disk, which must be placed on the system partition at ~/kernel~ and ~/initrd~. The bootloader passes the system partition as well as the [[*Update Mechanism][RAUC]] slot as kernel arguments (e.g. ~root=/dev/by-label/system.a rauc.slot=a~).
 
 No further assumptions are made by the bootloader on how the system initializes.
@@ -44,11 +42,11 @@ To ensure integrity of system, the system partitions are mounted read-only. A te
    
 Every machine is assigned a [[https://tools.ietf.org/html/rfc4122][Universal Unique IDentifier]] (machine-id) during installation. The machine-id is stored on the ~/boot~ partition and is persisted between [[*Update Mechanism][updates]] and [[*User data wiping][user data wiping]].
 
-*** TODO The machine-id is set on boot via the ~system.machine_id~ kernel argument and then [[https://www.freedesktop.org/software/systemd/man/machine-id.html][handled by the init system]].
+The machine-id is set on boot via the ~system.machine_id~ kernel argument and then [[https://www.freedesktop.org/software/systemd/man/machine-id.html][handled by the init system]].
 
-*** TODO create Machine ID at installation
-   
 ** Update Mechanism
+
+*** TODO describe system selection logic
 
 *** TODO Setup proper signing keys
 

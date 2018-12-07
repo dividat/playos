@@ -6,6 +6,7 @@ import sys
 import shutil
 import argparse
 import parted
+import uuid
 
 PARTITION_SIZE_GB_SYSTEM=5
 PARTITION_SIZE_GB_DATA=2
@@ -94,7 +95,7 @@ def _computeGeometries(device):
         length=parted.sizeToSectors(PARTITION_SIZE_GB_SYSTEM, "GB", sectorSize))
     return {'esp': esp, 'data': data, 'systemA': systemA, 'systemB': systemB}
     
-def installBootloader(disk):
+def installBootloader(disk, machine_id):
     esp = disk.partitions[0]
     subprocess.run(['mkfs.vfat','-n','ESP',esp.path], check=True)
     os.makedirs('/mnt/boot', exist_ok=True)
@@ -108,7 +109,7 @@ def installBootloader(disk):
                         '--efi-directory','/mnt/boot'], check=True)
     os.makedirs('/mnt/boot/grub/', exist_ok=True)
     shutil.copyfile(GRUB_CFG,'/mnt/boot/grub/grub.cfg')
-    # TODO: set machineID
+    subprocess.run(['grub-editenv','/mnt/boot/grub/grubenv','set','machine_id=' + machine_id.hex], check=True)
     # Unmount to make this function idempotent.
     subprocess.run(['umount','/mnt/boot'], check=True)
 
@@ -154,28 +155,34 @@ def _query_continue(question, default=False):
         else:
             sys.stdout.write("Please respond with 'yes' or 'no'")
 
+def _ensureMachineID(machineID):
+    if machineID == None:
+        return uuid.uuid4()
+    else:
+        return uuid.UUID(machineID)
+
 def _deviceSizeInGB(device):
     return (device.sectorSize * device.length) / (10 ** 9)
 
-def confirm(device, no_confirm):
-    print('Installing PlayOS ({}) to {} ({} - {:n}GB)'
+def confirm(device, machine_id, no_confirm):
+    print('\n\nInstalling PlayOS ({}) to {} ({} - {:n}GB)'
               .format(VERSION,
                           device.path,
                           device.model,
                           _deviceSizeInGB(device)))
+    print('  machine-id: {}\n'.format(machine_id.hex))
     return (no_confirm or _query_continue('Do you want to continue?'))
 
 def _main(opts):
-    
     device = findDevice(opts.device)
-    
-    if confirm(device, no_confirm=opts.no_confirm):
+    machine_id = _ensureMachineID(opts.machine_id)
+    if confirm(device, machine_id, no_confirm=opts.no_confirm):
         # Create a partitioned disk
         disk = createPartitioning(device)
         # Write partition to disk. WARNING: This partitions your drive!
         commit(disk)
         # Install bootloader
-        installBootloader(disk)
+        installBootloader(disk, machine_id)
         # Install system
         install(disk)
         if opts.reboot:
@@ -190,6 +197,6 @@ if __name__ == '__main__':
     parser.add_argument('--device',help='Device to install on (e.g. "/dev/sda"). If no device is specified a suitable device will be auto-detected.')
     parser.add_argument('--no-confirm',action='store_true',help="Do not ask for confirmation. WARNING: THIS WILL FORMAT THE INSTALLATION DEVICE WIHTOUT CONFIRMATION.")
     parser.add_argument('--reboot',action='store_true',help="Reboot system automatically after installation")
+    parser.add_argument('--machine-id',help='Set system machine-id. If not specified a random id will be generated')
     _main(parser.parse_args())
-
 
