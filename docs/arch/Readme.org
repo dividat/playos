@@ -3,34 +3,50 @@
 * Overview
   
 ** Build System
-
+   
 ** Development image
   
 * System
-  
-** Disk partitioning
-  
+   
+** Disk layout
+
+A PlayOS installation has 4 partitions:
+
+- EFI system partition (ESP): Contains bootloader and persistent system configuration data.
+- Data partition: For persistent user data.
+- System A partition
+- System B partition
+
 ** Booting
    
-*** Bootloader
+PlayOS can only boot in UEFI mode. [[https://www.gnu.org/software/grub/][GNU Grub]] is used as bootloader.
 
-**** TODO Simplify Grub Script
+The bootloader chooses system to boot (A or B) based on persistent variables (GRUB environment variables on the EFI system partition). 
 
-*** TODO System initializtion
+*** TODO describe system selection logic
 
-- Describe Stage 1/Stage 2
-- Root partition is specified with kernel argument ~root~
-- NixOS requires the kernel arguments "systemConfig" and "init" that point to the active system in the nix store. This is a pain in the ass. A quick hack would be to symlink the active to `/system` . The kernel argument now is always `/system` and `/system/init`.
+The bootloader boots the selected system by loading the kernel and initial ram disk, which must be placed on the system partition at ~/kernel~ and ~/initrd~. The bootloader passes the system partition as well as the [[*Update Mechanism][RAUC]] slot as kernel arguments (e.g. ~root=/dev/by-label/system.a rauc.slot=a~).
+
+No further assumptions are made by the bootloader on how the system initializes.
+
+*** TODO Bootloader security
+*** TODO Simplify GRUB Script and don't show menu
+
+** Init system
+
+After low-level system is initialized from the initial ram disk (Stage 1) the ~/init~ script on the system partition (Stage 2) is run, which will start all necessary services to make system useable.
+
+** Read-only system partition
+
+To ensure integrity of system, the system partitions are mounted read-only. A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt][~tmpfs~]]) is mounted used as root. The system partition is mounted in the ~/mnt/system~ directory. Files and directories that are required are bind mounted or symlinked to the correct location.
 
 ** Machine ID
    
 Every machine is assigned a [[https://tools.ietf.org/html/rfc4122][Universal Unique IDentifier]] (machine-id) during installation. The machine-id is stored on the ~/boot~ partition and is persisted between [[*Update Mechanism][updates]] and [[*User data wiping][user data wiping]].
 
-The machine-id is set on boot via the ~system.machine_id~ kernel argument and then [[https://www.freedesktop.org/software/systemd/man/machine-id.html][handled by the init system]].
+*** TODO The machine-id is set on boot via the ~system.machine_id~ kernel argument and then [[https://www.freedesktop.org/software/systemd/man/machine-id.html][handled by the init system]].
 
 *** TODO create Machine ID at installation
-
-** TODO Read-only filesystem
    
 ** Update Mechanism
 
@@ -59,5 +75,13 @@ A bootable image is built that can be used to install systems. The installation 
 Reasons for using Python include the [[jhttps://github.com/dcantrell/pyparted][pyparted]] bindings to the [[https://www.gnu.org/software/parted/][GNU parted]] library for partitioning.
 
 ** TODO Use rauc bundle during installation
+
+*** [2018-12-07 Fri] Initial experimentation
+
+- Not compressing system tarball with xz increases size of rauc bundle from 180MB to 280MB (no X system).
+- Rauc has [[ https://rauc.readthedocs.io/en/latest/examples.html#write-slots-without-update-mechanics][write-slot]] option that can write an image to a slot. This still requires rauc to be properly configured on installation system (it needs to know about slots).
+- Using Rauc nicely makes the installer script more complicated. Currently not worth the effort.
+- Another idea: use rauc bundle but bypass rauc (bundle is just a squashfs image). However crypthographic verification of bundle is also bypassed.
+
 ** TODO Check for latest version of bundle over network
 ** TODO Check for already installed system and preserve [[*Machine ID][machine-id]]

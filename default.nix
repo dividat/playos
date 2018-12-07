@@ -65,7 +65,7 @@ let
 in
 with nixpkgs;
 stdenv.mkDerivation {
-  name = "dividat-linux-${version}";
+  name = "playos-${version}";
 
   buildInputs = [
     rauc

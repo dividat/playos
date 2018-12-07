@@ -23,18 +23,35 @@ with lib;
 
   fileSystems = {
     "/" = {
-      # This makes the stage 1 init use the `root` kernel argument as root device.
-      device = "/dev/root";
+      # Create a tmpfs as root
+      fsType = "tmpfs";
+      options = [ "mode=0755" ];
     };
-
+    "/mnt/system" = {
+      # Mount root read-only at /system
+      device = "/dev/root";
+      options = [ "ro" ];
+      neededForBoot = true;
+    };
+    "/nix/store" = {
+      # Bind mount nix store
+      device = "/mnt/system/nix/store";
+      options = [ "bind" ];
+    };
     "/boot" = {
       device = "/dev/disk/by-label/ESP";
     };
-
     "/data" = {
       device = "/dev/disk/by-label/data";
     };
   };
+
+  boot.initrd.postMountCommands = ''
+    # Link the stage-2 init to /, so that stage-1 can find it
+    cd $targetRoot
+    ln -s mnt/system/init init
+    cd /
+  '';
 
   # disable installation of documentation
 	documentation.enable = false;
