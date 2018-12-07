@@ -27,9 +27,6 @@ The bootloader boots the selected system by loading the kernel and initial ram d
 
 No further assumptions are made by the bootloader on how the system initializes.
 
-*** TODO Bootloader security
-*** TODO Simplify GRUB Script and don't show menu
-
 ** Init system
 
 After low-level system is initialized from the initial ram disk (Stage 1) the ~/init~ script on the system partition (Stage 2) is run, which will start all necessary services to make system useable.
