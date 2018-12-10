@@ -2,10 +2,20 @@
 
 * Overview
   
-** Build System
-   
-** Development image
+A custom Linux system for running Dividat Play.
+
+** Background
+
+Dividat Play is a web-based application used in conjunction with the Dividat Senso hardware as a game-based training system.
+
+Installations of Dividat Play and Dividat Senso usually receive a dedicated computer to run the software. PlayOS is a custom Linux system for such computers.
+
+PlayOS is a custom [[https://nixos.org/][NixOS]] system that runs Dividat Play in a restricted kiosk environment. Installations can be upgraded atomically over-the-air. Deployed machines have two system partitions (A/B), each containing a complete system. PlayOS is compatible with NixOS modules and packages, everything that is available from upstream NixOS can be used.
   
+** Build System
+
+[[https://nixos.org/nix/][Nix]] is used as build system. Running ~nix build~ in the repository root will build all artifacts required to deploy system (via fresh installation or upgrade).
+
 * System
    
 ** Disk layout
@@ -65,16 +75,16 @@ Important system events should be logged to ~log.dividat.com~.
 
 * Installer
 
-A bootable image is built that can be used to install systems. The installation is performed by a Python script (~install-playos.py~). It will automatically detect a suitable device to install the system to and ask for confirmation before partitioning, formatting and installing the system. Optionally the script can be used non-interactively (this is done to create the [[*Development image][development image]]).
+A bootable image is built that can be used to install systems. The installation is performed by a Python script (~install-playos.py~). It will automatically detect a suitable device to install the system to and ask for confirmation before partitioning, formatting and installing the system. Optionally the script can be used non-interactively.
 
-Reasons for using Python include the [[jhttps://github.com/dcantrell/pyparted][pyparted]] bindings to the [[https://www.gnu.org/software/parted/][GNU parted]] library for partitioning.
+Reasons for using Python include the [[https://github.com/dcantrell/pyparted][pyparted]] bindings to the [[https://www.gnu.org/software/parted/][GNU parted]] library for partitioning.
 
 ** TODO Use rauc bundle during installation
 
 *** [2018-12-07 Fri] Initial experimentation
 
 - Not compressing system tarball with xz increases size of rauc bundle from 180MB to 280MB (no X system).
-- Rauc has [[ https://rauc.readthedocs.io/en/latest/examples.html#write-slots-without-update-mechanics][write-slot]] option that can write an image to a slot. This still requires rauc to be properly configured on installation system (it needs to know about slots).
+- Rauc has [[https://rauc.readthedocs.io/en/latest/examples.html#write-slots-without-update-mechanics][write-slot]] option that can write an image to a slot. This still requires rauc to be properly configured on installation system (it needs to know about slots).
 - Using Rauc nicely makes the installer script more complicated. Currently not worth the effort.
 - Another idea: use rauc bundle but bypass rauc (bundle is just a squashfs image). However crypthographic verification of bundle is also bypassed.
 
