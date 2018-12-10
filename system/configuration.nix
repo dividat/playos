@@ -41,9 +41,20 @@ with lib;
     "/boot" = {
       device = "/dev/disk/by-label/ESP";
     };
+
+    # Persistent user data
     "/data" = {
       device = "/dev/disk/by-label/data";
+      # mount during stage-1, so that directories can be initialized (see `boot.postBootCommands`) before systemd bind mounts.
+      neededForBoot = true;
     };
+
+    # NetworkManager system-configurations
+    "/etc/NetworkManager/system-connections" = {
+      device = "/data/NetworkManager/system-connections";
+      options = [ "bind" ];
+    };
+
   };
 
   boot.initrd.postMountCommands = ''
@@ -51,6 +62,13 @@ with lib;
     cd $targetRoot
     ln -s mnt/system/init init
     cd /
+  '';
+
+  boot.postBootCommands = ''
+    # Make sure directories on /data partition exist
+    echo "ensuring directories exist on /data partition..."
+    mkdir -p /data/NetworkManager/system-connections/
+    chmod -R 700 /data/NetworkManager/system-connections
   '';
 
   # Codename Dancing Bear
@@ -86,5 +104,13 @@ with lib;
   boot.loader.grub.enable = false;
 
   environment.systemPackages = with pkgs; [];
+
+  environment.noXlibs = true;
+
+  # Enable non-free firmware
+  hardware.enableRedistributableFirmware = true;
+
+  networking.networkmanager.enable = true;
+  networking.hostName = "playos";
 
 }
