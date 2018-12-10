@@ -57,6 +57,8 @@ The machine-id is set on boot via the ~system.machine_id~ kernel argument and th
 
 *** TODO Setup proper signing keys
 
+See <https://github.com/OpenVPN/easy-rsa/blob/v3.0.6/README.quickstart.md> and <https://rauc.readthedocs.io/en/latest/examples.html#pki-setup>.
+
 *** TODO Make ~update-mechanism~ a nix module exposing options that are set in ~configuration.nix~
     
 *** TODO develop update delivery mechanism
@@ -67,6 +69,7 @@ The machine-id is set on boot via the ~system.machine_id~ kernel argument and th
 
 ** TODO Play Computer Controller (~pcc~)
    
+*** TODO TFTP Server to accept RAUC bundles 
 *** TODO User data wiping
 *** TODO Network configuration
 *** TODO Logging Mechanism
