@@ -25,6 +25,8 @@ Running `nix build` will create following (in `result/`):
 - `bundle-VERSION.raucb`: RAUC bundle that can be used to update systems. Note that it is signed with a dummy development key. Real deployments would resign the bundle with `rauc resign`.
 - `disk.img`: Preinstalled system with A/B and data partitions for testing.
 
+For quicker development cycles you may pass skip building the installer or RAUC bundle: `nix build --arg buildInstaller false --arg buildBundle false`.
+
 ### Virtual machine
 
 A helper is available to quickly start a virtual machine (QEMU needs to be available):

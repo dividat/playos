@@ -1,3 +1,4 @@
+{buildInstaller ? true, buildBundle ? true}:
 let nixpkgs = (import ./nixpkgs).nixpkgs {
     overlays = [ (import ./pkgs) ];
 }; 
@@ -81,7 +82,9 @@ stdenv.mkDerivation {
     mkdir -p $out
     ln -s ${systemTarball} $out/system.tar.xz
     ln -s ${disk} $out/disk.img
+  '' + nixpkgs.lib.optionalString buildInstaller ''
     ln -s ${installer.isoImage}/iso/playos-installer-${version}.iso $out/playos-installer-${version}.iso
+  '' + nixpkgs.lib.optionalString buildBundle ''
     ln -s ${raucBundle} $out/bundle-${version}.raucb
   '';
 
