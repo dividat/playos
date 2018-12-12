@@ -16,6 +16,11 @@ PlayOS is a custom [[https://nixos.org/][NixOS]] system that runs Dividat Play i
 
 [[https://nixos.org/nix/][Nix]] is used as build system. Running ~nix build~ in the repository root will build all artifacts required to deploy system (via fresh installation or upgrade).
 
+** Testing
+
+<https://nixos.org/~eelco/talks/issre-nov-2010.pdf>
+<https://nixos.org/nixos/manual/index.html#sec-nixos-tests>
+
 * System
    
 ** Disk layout
@@ -43,7 +48,7 @@ After low-level system is initialized from the initial ram disk (Stage 1) the ~/
 
 ** Read-only system partition
 
-To ensure integrity of system, the system partitions are mounted read-only. A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt][~tmpfs~]]) is mounted used as root. The system partition is mounted in the ~/mnt/system~ directory. Files and directories that are required are bind mounted or symlinked to the correct location.
+To ensure integrity of system, the system partitions are mounted read-only. A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt][tmpfs]]) is mounted used as root. The system partition is mounted in the ~/mnt/system~ directory. Files and directories that are required are bind mounted or symlinked to the correct location.
 
 ** Machine ID
    
@@ -53,7 +58,19 @@ The machine-id is set on boot via the ~system.machine_id~ kernel argument and th
 
 ** Update Mechanism
 
-*** TODO describe system selection logic
+*** System selection logic
+
+The [[*Booting][GRUB]] environment variables ~ORDER~, ~a_TRY~ and ~b_TRY~ are used to select system to boot. ~ORDER~ describes the order in which boots should be attempted (e.g. ~"a b"~). - ~a_TRY~ and ~b_TRY~ describes the number of attempts to boot the respective systems. 
+
+GRUB attempts to boot the first system in ~ORDER~ which has a value less than 3 in the respecitve ~TRY~ variable.
+
+After installing a new system on slot ~x~, RAUC sets the ~ORDER~ to contain ~x~ as first element (see [[https://rauc.readthedocs.io/en/latest/reference.html#grub][here]]) and sets the number of tries to 0. On next boot GRUB attempts to boot system ~x~ for 3 times before falling back to the next system in ~ORDER~.
+
+If system ~x~ boots successfully the [[*Mark system as good][system is marked as good]] and the ~x_TRY~ variable is set to ~0~.
+
+If GRUB fails to boot all systems in ~ORDER~ three times, GRUB will stop attempting to boot and display a boot selection menu.
+
+Note that the GRUB environment variables ~x_OK~ that are set by RAUC are not used in the system selection logic as RAUC sets ~x_OK=1~ when installing a new system even before the newly installed system has proven to be able to boot successfully (see [[https://rauc.readthedocs.io/en/latest/reference.html#grub][here]]).
 
 *** TODO Setup proper signing keys
 
@@ -68,7 +85,8 @@ See <https://github.com/OpenVPN/easy-rsa/blob/v3.0.6/README.quickstart.md> and <
 ** TODO Kiosk
 
 ** TODO Play Computer Controller (~pcc~)
-   
+
+*** TODO Mark system as good
 *** TODO TFTP Server to accept RAUC bundles 
 *** TODO User data wiping
 *** TODO Network configuration
