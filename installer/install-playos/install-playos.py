@@ -16,11 +16,11 @@ SYSTEM_TARBALL="@systemTarball@"
 VERSION="@version@"
 
 
-def findDevice(devicePath):
+def find_device(device_path):
     """Return suitable device to install PlayOS on"""
     devices = parted.getAllDevices()
     device = None
-    if devicePath == None:
+    if device_path == None:
         # Use the largest available disk
         try:
             device = sorted(parted.getAllDevices(),key=lambda d: d.length * d.sectorSize, reverse=True)[0]
@@ -28,7 +28,7 @@ def findDevice(devicePath):
             pass
     else:
         try:
-            device = next(device for device in devices if device.path == devicePath)
+            device = next(device for device in devices if device.path == device_path)
         except StopIteration:
             pass
     if device == None:
@@ -41,13 +41,13 @@ def commit(disk):
     device unaccessible."""
     disk.commit()
 
-def createPartitioning(device):
+def create_partitioning(device):
     """Returns a suitable partitioning (a disk) of the given
     device. You must specify device path (e.g. "/dev/sda"). Note that
     no changes will be made to the device. To write the partition to
     device use commit."""
     disk = parted.freshDisk(device, 'gpt')
-    geometries = _computeGeometries(device)
+    geometries = _compute_geometries(device)
     # Create ESP
     esp = parted.Partition(disk=disk,
                                type=parted.PARTITION_NORMAL,
@@ -75,7 +75,7 @@ def createPartitioning(device):
     disk.addPartition(partition=systemB, constraint=device.optimalAlignedConstraint)
     return(disk)
 
-def _computeGeometries(device):
+def _compute_geometries(device):
     sectorSize = device.sectorSize
     esp = parted.Geometry(
         device=device,
@@ -95,7 +95,7 @@ def _computeGeometries(device):
         length=parted.sizeToSectors(PARTITION_SIZE_GB_SYSTEM, "GB", sectorSize))
     return {'esp': esp, 'data': data, 'systemA': systemA, 'systemB': systemB}
     
-def installBootloader(disk, machine_id):
+def install_bootloader(disk, machine_id):
     esp = disk.partitions[0]
     subprocess.run(['mkfs.vfat','-n','ESP',esp.path], check=True)
     os.makedirs('/mnt/boot', exist_ok=True)
@@ -113,7 +113,7 @@ def installBootloader(disk, machine_id):
     # Unmount to make this function idempotent.
     subprocess.run(['umount','/mnt/boot'], check=True)
 
-def _installSystem(partitionPath, label):
+def _install_system(partitionPath, label):
     subprocess.run(['mkfs.ext4',
                         '-F',
                         '-L', label,
@@ -130,8 +130,8 @@ def install(disk):
                         '-F',
                         '-L','data',
                         dataPartition.path], check=True)
-    _installSystem(disk.partitions[2].path, 'system.a')
-    _installSystem(disk.partitions[3].path, 'system.b')
+    _install_system(disk.partitions[2].path, 'system.a')
+    _install_system(disk.partitions[3].path, 'system.b')
 
 # from http://code.activestate.com/recipes/577058/
 def _query_continue(question, default=False):
@@ -155,13 +155,13 @@ def _query_continue(question, default=False):
         else:
             sys.stdout.write("Please respond with 'yes' or 'no'")
 
-def _ensureMachineID(machineID):
-    if machineID == None:
+def _ensure_machine_id(machine_id):
+    if machine_id == None:
         return uuid.uuid4()
     else:
-        return uuid.UUID(machineID)
+        return uuid.UUID(machine_id)
 
-def _deviceSizeInGB(device):
+def _device_size_in_gb(device):
     return (device.sectorSize * device.length) / (10 ** 9)
 
 def confirm(device, machine_id, no_confirm):
@@ -169,20 +169,20 @@ def confirm(device, machine_id, no_confirm):
               .format(VERSION,
                           device.path,
                           device.model,
-                          _deviceSizeInGB(device)))
+                          _device_size_in_gb(device)))
     print('  machine-id: {}\n'.format(machine_id.hex))
     return (no_confirm or _query_continue('Do you want to continue?'))
 
 def _main(opts):
-    device = findDevice(opts.device)
-    machine_id = _ensureMachineID(opts.machine_id)
+    device = find_device(opts.device)
+    machine_id = _ensure_machine_id(opts.machine_id)
     if confirm(device, machine_id, no_confirm=opts.no_confirm):
         # Create a partitioned disk
-        disk = createPartitioning(device)
+        disk = create_partitioning(device)
         # Write partition to disk. WARNING: This partitions your drive!
         commit(disk)
         # Install bootloader
-        installBootloader(disk, machine_id)
+        install_bootloader(disk, machine_id)
         # Install system
         install(disk)
         if opts.reboot:
