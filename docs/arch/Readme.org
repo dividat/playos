@@ -36,7 +36,7 @@ A PlayOS installation has 4 partitions:
    
 PlayOS can only boot in UEFI mode. [[https://www.gnu.org/software/grub/][GNU Grub]] is used as bootloader.
 
-The bootloader chooses system to boot (A or B) based on persistent variables (GRUB environment variables on the EFI system partition). 
+The bootloader [[*Boot selection logic][chooses system to boot]] (A or B) based on persistent variables (GRUB environment variables on the EFI system partition). 
 
 The bootloader boots the selected system by loading the kernel and initial ram disk, which must be placed on the system partition at ~/kernel~ and ~/initrd~. The bootloader passes the system partition as well as the [[*Update Mechanism][RAUC]] slot as kernel arguments (e.g. ~root=/dev/by-label/system.a rauc.slot=a~).
 
@@ -58,9 +58,9 @@ The machine-id is set on boot via the ~system.machine_id~ kernel argument and th
 
 ** Update Mechanism
 
-*** System selection logic
+*** Boot selection logic
 
-The [[*Booting][GRUB]] environment variables ~ORDER~, ~a_TRY~ and ~b_TRY~ are used to select system to boot. ~ORDER~ describes the order in which boots should be attempted (e.g. ~"a b"~). - ~a_TRY~ and ~b_TRY~ describes the number of attempts to boot the respective systems. 
+The [[*Booting][GRUB]] environment variables ~ORDER~, ~a_TRY~ and ~b_TRY~ are used to select system to boot. ~ORDER~ describes the order in which boots should be attempted (e.g. ~"a b"~). ~a_TRY~ and ~b_TRY~ describes the number of attempts to boot the respective systems. 
 
 GRUB attempts to boot the first system in ~ORDER~ which has a value less than 3 in the respecitve ~TRY~ variable.
 
@@ -87,6 +87,9 @@ See <https://github.com/OpenVPN/easy-rsa/blob/v3.0.6/README.quickstart.md> and <
 ** TODO Play Computer Controller (~pcc~)
 
 *** TODO Mark system as good
+
+Currently a systemd service is setup to mark the sytem as good. This should be done by the controller after making sure things are running ok.
+
 *** TODO TFTP Server to accept RAUC bundles 
 *** TODO User data wiping
 *** TODO Network configuration
