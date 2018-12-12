@@ -74,9 +74,7 @@ stdenv.mkDerivation {
     installer.install-playos
   ];
 
-  inherit systemTarball;
   inherit disk;
-  inherit raucBundle;
 
   buildCommand = ''
     mkdir -p $out
