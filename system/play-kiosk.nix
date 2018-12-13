@@ -25,12 +25,12 @@
 
     desktopManager = {
       xterm.enable = false;
-      # Use a dummy desktop manager that does no harm
-      default = "xclock";
+      # "Boot to Gecko"
+      default = "firefox";
       session = [
-        { name = "xclock";
+        { name = "firefox";
           start = ''
-            ${pkgs.xorg.xclock}/bin/xclock
+            ${pkgs.firefox}/bin/firefox https://play.dividat.com/
             waitPID=$!
           '';
         }
@@ -43,20 +43,7 @@
         enable = true;
         user = "play";
       };
-      sessionCommands = "systemctl start --user play-kiosk";
     };
-  };
-
-  systemd.user.services."play-kiosk" = {
-    description = "Dividay Play Kiosk";
-    enable = true;
-    # TODO Use Chromium or QtWebkit
-    serviceConfig.ExecStart = "${pkgs.firefox}/bin/firefox https://play.dividat.com";
-    serviceConfig.Restart = "always";
-    # Prevent systemd from giving up on the kiosk if killed repeatedly
-    serviceConfig.StartLimitIntervalSec = "0";
-    serviceConfig.RestartSec = "1";
-    wantedBy = [ "graphical.target" ];
   };
 
   # Driver service
