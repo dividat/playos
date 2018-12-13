@@ -3,9 +3,6 @@
 
 , install-playos
 
-, # The system to be installed on the disk
-  systemTarball
-
 , # Size of data partition in GiB
   dataPartitionSize ? 5
 

@@ -5,20 +5,23 @@
 , e2fsprogs
 , dosfstools
 , utillinux
-, gnutar
-, xz
 , python36
+, pv
+, closureInfo
 
-, systemTarball
+, systemTopLevel
 , grubCfg
 , version
 }:
+let
+  systemClosureInfo = closureInfo { rootPaths = [ systemTopLevel ]; };
+in
 stdenv.mkDerivation {
   name = "install-playos-${version}";
 
   src = substituteAll {
     src = ./install-playos.py;
-    inherit grubCfg systemTarball version;
+    inherit grubCfg systemTopLevel systemClosureInfo version;
   };
 
   buildInputs = [
@@ -39,8 +42,7 @@ stdenv.mkDerivation {
       --prefix PATH ":" ${e2fsprogs}/bin \
       --prefix PATH ":" ${dosfstools}/bin \
       --prefix PATH ":" ${grub2}/bin \
-      --prefix PATH ":" ${gnutar}/bin \
-      --prefix PATH ":" ${xz}/bin
+      --prefix PATH ":" ${pv}/bin
 
   '';
   

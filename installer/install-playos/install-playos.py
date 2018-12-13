@@ -12,7 +12,8 @@ PARTITION_SIZE_GB_SYSTEM=5
 PARTITION_SIZE_GB_DATA=2
 
 GRUB_CFG="@grubCfg@"
-SYSTEM_TARBALL="@systemTarball@"
+SYSTEM_TOP_LEVEL="@systemTopLevel@"
+SYSTEM_CLOSURE_INFO="@systemClosureInfo@"
 VERSION="@version@"
 
 
@@ -120,8 +121,17 @@ def _install_system(partitionPath, label):
                         partitionPath], check=True)
     os.makedirs('/mnt/system', exist_ok=True)
     subprocess.run(['mount',partitionPath,'/mnt/system'], check=True)
-    subprocess.run(['tar','xfJ',SYSTEM_TARBALL,
-                        '-C','/mnt/system'], check=True)
+    os.makedirs('/mnt/system/nix/store', exist_ok=True)
+    with open(SYSTEM_CLOSURE_INFO + '/store-paths','r') as store_paths_file:
+        store_paths = store_paths_file.read().splitlines()
+        # Using tar is faster than cp
+        read = subprocess.Popen(['tar', 'cf', '-'] + store_paths, stdout=subprocess.PIPE)
+        status = subprocess.Popen(['pv'], stdin=read.stdout, stdout=subprocess.PIPE)
+        write = subprocess.run(['tar', 'xf', '-','-C','/mnt/system'], check=True, stdin=status.stdout)
+        read.wait()
+    subprocess.run(['cp','-av',SYSTEM_TOP_LEVEL + '/initrd','/mnt/system/initrd'], check=True)
+    subprocess.run(['cp','-av',SYSTEM_TOP_LEVEL + '/kernel','/mnt/system/kernel'], check=True)
+    subprocess.run(['cp','-av',SYSTEM_TOP_LEVEL + '/init','/mnt/system/init'], check=True)
     subprocess.run(['umount','/mnt/system'])
 
 def install(disk):

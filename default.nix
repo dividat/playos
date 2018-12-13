@@ -11,7 +11,7 @@ let
 
   version = "2018.12.0-dev";
 
-  system = (import ./system) {
+  systemTopLevel = (import ./system) {
     inherit (nixpkgs) config pkgs lib;
     inherit nixos version;
   };
@@ -23,21 +23,21 @@ let
 
     contents = [
       {
-        source = system + "/initrd";
+        source = systemTopLevel + "/initrd";
         target = "/initrd";
       }
       {
-        source = system + "/kernel";
+        source = systemTopLevel + "/kernel";
         target = "/kernel";
       }
       {
-        source = system + "/init" ;
+        source = systemTopLevel + "/init" ;
         target = "/init";
       }
     ];
 
     storeContents = [{ 
-        object = system;
+        object = systemTopLevel;
         symlink = "/run/current-system";
       }];
   } + "/tarball/system.tar.xz";
@@ -45,13 +45,12 @@ let
   installer = (import ./installer) {
     inherit (nixpkgs) config pkgs lib;
     inherit nixos importFromNixos;
-    inherit systemTarball version;
+    inherit systemTopLevel version;
     grubCfg = ./bootloader/grub.cfg;
   };
 
   disk = (import ./lib/make-disk-image.nix) {
     inherit (nixpkgs) pkgs lib;
-    inherit systemTarball;
     inherit (installer) install-playos;
   } + "/nixos.img";
 

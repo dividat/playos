@@ -1,13 +1,13 @@
 # Build NixOS system
 {config, lib, pkgs,
  nixos, importFromNixos,
- version, grubCfg, systemTarball
+ version, grubCfg, systemTopLevel
  }:
 let
 
   install-playos = (import ./install-playos) {
-    inherit (pkgs) stdenv substituteAll makeWrapper python36 utillinux e2fsprogs dosfstools gnutar xz;
-    inherit grubCfg systemTarball version;
+    inherit (pkgs) stdenv substituteAll makeWrapper python36 utillinux e2fsprogs dosfstools closureInfo pv;
+    inherit grubCfg systemTopLevel version;
     grub2 = (pkgs.grub2.override { efiSupport = true; });
   };
 
