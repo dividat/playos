@@ -22,31 +22,42 @@
 
   services.xserver = {
     enable = true;
+
+    desktopManager = {
+      xterm.enable = false;
+      # Use a dummy desktop manager that does no harm
+      default = "xclock";
+      session = [
+        { name = "xclock";
+          start = ''
+            ${pkgs.xorg.xclock}/bin/xclock
+            waitPID=$!
+          '';
+        }
+      ];
+    };
+
     displayManager = {
       # Automatically log in play user
       auto = {
         enable = true;
         user = "play";
       };
-
-      # Warning: by going into an infinite loop here certain things are not
-      # loaded properly (e.g. systemd user services). 
-      # See <nixpkgs>/nixos/modules/services/x11/display-manager/default.nix.
-      sessionCommands = ''
-        while true
-        do
-          ${pkgs.chromium}/bin/chromium \
-            --disable-infobars \
-            --kiosk \
-            --autoplay-policy=no-user-gesture-required \
-            https://play.dividat.com
-
-          sleep 3
-        done
-      '';
+      sessionCommands = "systemctl start --user play-kiosk";
     };
   };
 
+  systemd.user.services."play-kiosk" = {
+    description = "Dividay Play Kiosk";
+    enable = true;
+    # TODO Use Chromium or QtWebkit
+    serviceConfig.ExecStart = "${pkgs.firefox}/bin/firefox https://play.dividat.com";
+    serviceConfig.Restart = "always";
+    # Prevent systemd from giving up on the kiosk if killed repeatedly
+    serviceConfig.StartLimitIntervalSec = "0";
+    serviceConfig.RestartSec = "1";
+    wantedBy = [ "graphical.target" ];
+  };
 
   # Driver service
 
