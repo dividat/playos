@@ -1,25 +1,24 @@
 { config, pkgs, lib, ... }:
 {
 
-  # Cases where following is required include first run after installation or
-  # after wiping the data partition.
-  systemd.services."ensure-play-home-exists" = {
-    description = "Ensure Play users home directory exists.";
-    wantedBy = [ "multi-user.target" ];
-    before = [ "multi-user.target" ];
-    serviceConfig.Type = "oneshot";
-    script = ''
-      mkdir -p -m 0700 /data/home/play
-      chown play:users /data/home/play
-    '';
+  # Configure kiosk user with home folder on /data
+
+  users.users.play = {
+    isNormalUser = true;
+    home = "/home/play";
   };
 
-  systemd.services."dividat-driver" = {
-    description = "Dividat Driver";
-    serviceConfig.ExecStart = "${pkgs.dividat-driver}/bin/dividat-driver";
-    serviceConfig.User = "play";
-    wantedBy = [ "multi-user.target" ];
+  fileSystems."/home/play" = {
+    device = "/data/home/play";
+    options = [ "bind" ];
   };
+
+  boot.postBootCommands = lib.mkAfter ''
+    mkdir -p -m 0700 /data/home/play
+    chown play:users /data/home/play
+  '';
+
+  # Kiosk session
 
   services.xserver = {
     enable = true;
@@ -48,9 +47,14 @@
     };
   };
 
-  users.users.play = {
-    isNormalUser = true;
-    home = "/data/home/play";
+
+  # Driver service
+
+  systemd.services."dividat-driver" = {
+    description = "Dividat Driver";
+    serviceConfig.ExecStart = "${pkgs.dividat-driver}/bin/dividat-driver";
+    serviceConfig.User = "play";
+    wantedBy = [ "multi-user.target" ];
   };
 
 }
