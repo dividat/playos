@@ -38,10 +38,15 @@
     };
 
     displayManager = {
-      # Automatically log in play user
-      auto = {
+      # Always automatically log in play user
+      lightdm = {
         enable = true;
-        user = "play";
+        greeter.enable = false;
+        autoLogin = {
+          enable = true;
+          user = "play";
+          timeout = 0;
+        };
       };
     };
   };
