@@ -1,6 +1,6 @@
 # Build NixOS system
 {config, lib, pkgs,
- nixos, importFromNixos,
+ nixos,
  version, grubCfg, systemTarball
  }:
 let
@@ -12,7 +12,7 @@ let
   };
 
   configuration = (import ./configuration.nix) {
-    inherit config pkgs lib importFromNixos install-playos version;
+    inherit config pkgs lib install-playos version;
   };
 
 in

@@ -10,7 +10,7 @@ with lib;
         device = mkOption {
           default = null;
           example = "/dev/sda";
-          type = types.string;
+          type = types.nullOr types.string;
         };
 
         fsType = mkOption {

@@ -1,4 +1,4 @@
-{ config, pkgs, lib, importFromNixos, install-playos, version,... }:
+{ config, pkgs, lib, install-playos, version,... }:
 
 with lib;
 
@@ -7,14 +7,14 @@ with lib;
   nixpkgs.pkgs = pkgs;
 
   imports = [
-    (importFromNixos "modules/installer/cd-dvd/iso-image.nix")
-    (importFromNixos "modules/profiles/minimal.nix")
+    (pkgs.importFromNixos "modules/installer/cd-dvd/iso-image.nix")
+    (pkgs.importFromNixos "modules/profiles/minimal.nix")
   ];
 
   environment.systemPackages = [
     install-playos
   ];
-  
+
   # Disable some other stuff we don't need.
   security.sudo.enable = mkDefault false;
   services.udisks2.enable = mkDefault false;
@@ -27,7 +27,7 @@ with lib;
 
   # Codename Dancing Bear
   services.mingetty.greetingLine =
-  '' 
+  ''
                            _,-'^\
                        _,-'   ,\ )
                    ,,-'     ,'  d'
@@ -40,7 +40,7 @@ with lib;
              \       /
               |      |
              /       |                Dividat PlayOS installer (${version})
-            /        | 
+            /        |
            /  /~\   (\/)
           {  /   \     }
           | |     |   =|
