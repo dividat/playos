@@ -15,7 +15,7 @@ let
 
   version = "2018.12.0-dev";
 
-  system = (import ./system) {
+  systemTopLevel = (import ./system) {
     inherit (pkgs) pkgs lib;
     inherit nixos version;
   };
@@ -27,21 +27,21 @@ let
 
     contents = [
       {
-        source = system + "/initrd";
+        source = systemTopLevel + "/initrd";
         target = "/initrd";
       }
       {
-        source = system + "/kernel";
+        source = systemTopLevel + "/kernel";
         target = "/kernel";
       }
       {
-        source = system + "/init" ;
+        source = systemTopLevel + "/init" ;
         target = "/init";
       }
     ];
 
-    storeContents = [{
-        object = system;
+    storeContents = [{ 
+        object = systemTopLevel;
         symlink = "/run/current-system";
       }];
   } + "/tarball/system.tar.xz";
@@ -49,13 +49,12 @@ let
   installer = (import ./installer) {
     inherit (pkgs) config pkgs lib;
     inherit nixos;
-    inherit systemTarball version;
+    inherit systemTopLevel version;
     grubCfg = ./bootloader/grub.cfg;
   };
 
   disk = (import ./lib/make-disk-image.nix) {
     inherit (pkgs) pkgs lib;
-    inherit systemTarball;
     inherit (installer) install-playos;
   } + "/nixos.img";
 
@@ -82,7 +81,7 @@ stdenv.mkDerivation {
 
   buildCommand = ''
     mkdir -p $out
-    ln -s ${system} $out/system
+    ln -s ${systemTopLevel} $out/system
   '' + pkgs.lib.optionalString buildInstaller ''
     ln -s ${installer.isoImage}/iso/playos-installer-${version}.iso $out/playos-installer-${version}.iso
   '' + pkgs.lib.optionalString buildBundle ''
@@ -93,7 +92,6 @@ stdenv.mkDerivation {
     # EFI firmware for qemu
     export OVMF=${OVMF.fd}/FV/OVMF.fd
     export PATH=$PATH:"$(pwd)/bin"
-    echo "System toplevel: ${system}"
   '';
 
 }
