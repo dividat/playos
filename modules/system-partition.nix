@@ -9,7 +9,7 @@ in
       device = mkOption {
         default = null;
         example = "/dev/sda";
-        type = types.nullOr types.string;
+        type = types.string;
         description = "Location of the device.";
       };
 

@@ -6,7 +6,7 @@ in
 let
   importFromNixos = (import ./nixpkgs).importFromNixos;
   nixos = importFromNixos "";
-  makeDiskImage = importFromNixos "lib/make-disk-image.nix"; 
+  makeDiskImage = importFromNixos "lib/make-disk-image.nix";
   makeSystemTarball = importFromNixos "lib/make-system-tarball.nix";
 
   version = "2018.12.0-dev";
@@ -36,7 +36,7 @@ let
       }
     ];
 
-    storeContents = [{ 
+    storeContents = [{
         object = system;
         symlink = "/run/current-system";
       }];

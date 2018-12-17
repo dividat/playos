@@ -22,42 +22,25 @@ with lib;
     device = "/dev/root";
   };
 
+  volatileRoot = {
+    persistentDataPartition.device = "/dev/disk/by-label/data";
+    persistentFolders = {
+      "/etc/NetworkManager/system-connections" = {
+        mode = "0700";
+      };
+    };
+  };
 
   fileSystems = {
-    "/" = {
-      # Create a tmpfs as root
-      fsType = "tmpfs";
-      options = [ "mode=0755" ];
-    };
     "/boot" = {
       device = "/dev/disk/by-label/ESP";
     };
-
-    # Persistent user data
-    "/data" = {
-      device = "/dev/disk/by-label/data";
-      # mount during stage-1, so that directories can be initialized (see `boot.postBootCommands`) before systemd bind mounts.
-      neededForBoot = true;
-    };
-
-    # NetworkManager system-configurations
-    "/etc/NetworkManager/system-connections" = {
-      device = "/data/NetworkManager/system-connections";
-      options = [ "bind" ];
-    };
-
   };
 
-  boot.postBootCommands = ''
-    # Make sure directories on /data partition exist
-    echo "ensuring directories exist on /data partition..."
-    mkdir -p /data/NetworkManager/system-connections/
-    chmod -R 700 /data/NetworkManager/system-connections
-  '';
 
   # Codename Dancing Bear
   services.mingetty.greetingLine =
-  '' 
+  ''
                            _,-'^\
                        _,-'   ,\ )
                    ,,-'     ,'  d'
@@ -70,7 +53,7 @@ with lib;
              \       /
               |      |
              /       |                Dividat PlayOS (${config.playos.version})
-            /        | 
+            /        |
            /  /~\   (\/)
           {  /   \     }
           | |     |   =|

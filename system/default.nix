@@ -7,6 +7,7 @@ let
       imports = [
         ./configuration.nix
         ../modules/system-partition.nix
+        ../modules/volatile-root.nix
       ];
 
       options = {

@@ -55,9 +55,9 @@ A system partition contains following files:
 
 The system partition is mounted on ~/mnt/system~ (read-only).
 
-** TODO Volatile root
+** Volatile root
 
-To ensure integrity of system, the system partitions are mounted read-only. A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt][tmpfs]]) is mounted used as root. The system partition is mounted in the ~/mnt/system~ directory. Files and directories that are required are bind mounted or symlinked to the correct location.
+A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt][tmpfs]]) is used as root. Folders containing persistent user data need to be specified explicitly and are bind mounted to correct locations on root.
 
 ** Machine ID
    
