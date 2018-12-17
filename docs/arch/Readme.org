@@ -29,8 +29,8 @@ A PlayOS installation has 4 partitions:
 
 - EFI system partition (ESP): Contains bootloader and persistent system configuration data.
 - Data partition: For persistent user data.
-- System A partition
-- System B partition
+- System partition A
+- System partition B
 
 ** Booting
    
@@ -38,15 +38,24 @@ PlayOS can only boot in UEFI mode. [[https://www.gnu.org/software/grub/][GNU Gru
 
 The bootloader [[*Boot selection logic][chooses system to boot]] (A or B) based on persistent variables (GRUB environment variables on the EFI system partition). 
 
-The bootloader boots the selected system by loading the kernel and initial ram disk, which must be placed on the system partition at ~/kernel~ and ~/initrd~. The bootloader passes the system partition as well as the [[*Update Mechanism][RAUC]] slot as kernel arguments (e.g. ~root=/dev/by-label/system.a rauc.slot=a~).
-
-No further assumptions are made by the bootloader on how the system initializes.
+The bootloader boots the selected system by loading the kernel and initial ram disk from the [[*System partition][system partition]]. The bootloader passes the device the system partition is located on as well as the [[*Update Mechanism][RAUC]] slot as kernel arguments (e.g. ~root=/dev/by-label/system.a rauc.slot=a~).
 
 ** Init system
 
-After low-level system is initialized from the initial ram disk (Stage 1) the ~/init~ script on the system partition (Stage 2) is run, which will start all necessary services to make system useable.
+After low-level system is initialized from the initial ram disk (Stage 1) the ~/init~ script on the system partition (Stage 2) is run, which will start all necessary services to make system usable.
 
-** Read-only system partition
+** System partition
+
+A system partition contains following files:
+
+- ~/kernel~: Linux kernel
+- ~/initrd~: Initial ram disk
+- ~/init~: Initialization script
+- ~/nix/store~: Nix store containing all software and configuration of the system. This is bind mounted to the root file system.
+
+The system partition is mounted on ~/mnt/system~ (read-only).
+
+** TODO Volatile root
 
 To ensure integrity of system, the system partitions are mounted read-only. A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt][tmpfs]]) is mounted used as root. The system partition is mounted in the ~/mnt/system~ directory. Files and directories that are required are bind mounted or symlinked to the correct location.
 

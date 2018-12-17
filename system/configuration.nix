@@ -25,6 +25,11 @@ with lib;
   ];
 
 
+  systemPartition = {
+    device = "/dev/root";
+  };
+
+
   fileSystems = {
     "/" = {
       # Create a tmpfs as root
