@@ -1,9 +1,9 @@
 {buildInstaller ? true, buildBundle ? true}:
 let nixpkgs = (import ./nixpkgs).nixpkgs {
     overlays = [ (import ./pkgs) ];
-}; 
+};
 in
-let 
+let
   importFromNixos = (import ./nixpkgs).importFromNixos;
   nixos = importFromNixos "";
   makeDiskImage = importFromNixos "lib/make-disk-image.nix"; 
@@ -58,8 +58,8 @@ let
   raucBundle = (import ./lib/make-rauc-bundle.nix) {
     inherit (nixpkgs) stdenv rauc;
     inherit version;
-    cert = ./system/modules/update-mechanism/cert.pem;
-    key = ./system/modules/update-mechanism/key.pem;
+    cert = ./system/rauc/cert.pem;
+    key = ./system/rauc/key.pem;
     inherit systemTarball;
   };
 
@@ -78,7 +78,6 @@ stdenv.mkDerivation {
 
   buildCommand = ''
     mkdir -p $out
-    ln -s ${systemTarball} $out/system.tar.xz
     ln -s ${disk} $out/disk.img
   '' + nixpkgs.lib.optionalString buildInstaller ''
     ln -s ${installer.isoImage}/iso/playos-installer-${version}.iso $out/playos-installer-${version}.iso
@@ -89,8 +88,8 @@ stdenv.mkDerivation {
   shellHook = ''
     # EFI firmware for qemu
     export OVMF=${OVMF.fd}/FV/OVMF.fd
-    
     export PATH=$PATH:"$(pwd)/bin"
+    echo "System toplevel: ${system}"
   '';
 
 }
