@@ -33,9 +33,9 @@ stdenv.mkDerivation {
     mkdir -p $out/bin
     cp $src $out/bin/install-playos
     chmod +x $out/bin/install-playos
-    
+
     patchShebangs $out/bin/install-playos
-    
+
     # Add required tools to path
     wrapProgram $out/bin/install-playos \
       --prefix PATH ":" ${utillinux}/bin \
@@ -45,5 +45,4 @@ stdenv.mkDerivation {
       --prefix PATH ":" ${pv}/bin
 
   '';
-  
 }
