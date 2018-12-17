@@ -1,18 +1,13 @@
 # This module defines a small NixOS configuration.  It does not
 # contain any graphical stuff.
 
-{ config, pkgs, lib, version,... }:
+{ config, pkgs, lib, ... }:
 
 with lib;
 
 {
 
-  # Force use of already overlayed nixpkgs in modules
-  nixpkgs.pkgs = pkgs;
-
   imports = [
-    ../modules/system-partition.nix
-
     ./rauc
 
     # Play Kiosk and Driver
@@ -20,8 +15,6 @@ with lib;
 
     # Development helpers
     ./development.nix
-
-
   ];
 
 
@@ -76,7 +69,7 @@ with lib;
   '-,________         /
              \       /
               |      |
-             /       |                Dividat PlayOS (${version})
+             /       |                Dividat PlayOS (${config.playos.version})
             /        | 
            /  /~\   (\/)
           {  /   \     }
@@ -90,9 +83,6 @@ with lib;
 
   # disable installation of documentation
 	documentation.enable = false;
-
-  # disable installation of bootloader
-  boot.loader.grub.enable = false;
 
   environment.systemPackages = with pkgs; [];
 

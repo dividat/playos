@@ -1,7 +1,34 @@
 # Build NixOS system
-{config, lib, pkgs, nixos, version}:
+{pkgs, lib, nixos, version}:
+with lib;
 let
-  configuration = (import ./configuration.nix) { inherit config pkgs lib version; };
+  configuration = {config, ...}:
+    {
+      imports = [
+        ./configuration.nix
+        ../modules/system-partition.nix
+      ];
+
+      options = {
+        playos.version = mkOption {
+          type = types.string;
+          default = version;
+        };
+      };
+
+      config = {
+
+        # Use overlayed pkgs
+        nixpkgs.pkgs = pkgs;
+
+        # disable installation of bootloader
+        boot.loader.grub.enable = false;
+
+        playos = {
+          inherit version;
+        };
+      };
+    };
 in
   (nixos {
     inherit configuration;

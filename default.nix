@@ -12,7 +12,7 @@ let
   version = "2018.12.0-dev";
 
   system = (import ./system) {
-    inherit (nixpkgs) config pkgs lib;
+    inherit (nixpkgs) pkgs lib;
     inherit nixos version;
   };
 
