@@ -2,7 +2,6 @@
 {config, lib, pkgs, ...}:
 {
   imports = [
-    (importFromNixos "modules/testing/test-instrumentation.nix")
     (importFromNixos "modules/profiles/qemu-guest.nix")
   ];
 
