@@ -6,6 +6,7 @@ import subprocess
 import os
 import stat
 import shutil
+import argparse
 
 VERSION = "@version@"
 SYSTEM_TOP_LEVEL = "@toplevel@"
@@ -88,5 +89,27 @@ def run_disk(disk, qemu_opts=DEFAULT_QEMU_OPTS):
         input()
 
 
-# run_vm(SYSTEM_TOP_LEVEL)
-run_disk(DISK)
+def main(opts):
+    if opts.disk:
+        if DISK:
+            run_disk(DISK)
+        else:
+            print("ERROR: disk not built.")
+            exit(1)
+    else:
+        run_vm(SYSTEM_TOP_LEVEL)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description="Run PlayOS in a Virtual Machine.",
+        epilog="By default a system is started with testing instrumentation activated. This testing system does not boot via GRUB and has no disks attached. This is useful for rapidly testing higher-level system configurations. If you want to test lower-level system components use the '--disk' option which will start a system without test instrumentation."
+    )
+    parser.add_argument('-v', '--version', action='version', version=VERSION)
+    parser.add_argument(
+        '-d',
+        '--disk',
+        action='store_true',
+        help="Use disk with full system. Requires the disk to have been built."
+    )
+    main(parser.parse_args())
