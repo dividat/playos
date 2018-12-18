@@ -8,15 +8,12 @@
     home = "/home/play";
   };
 
-  fileSystems."/home/play" = {
-    device = "/data/home/play";
-    options = [ "bind" ];
+  # Note that setting up "/home" as persistent fails due to https://github.com/NixOS/nixpkgs/issues/6481
+  volatileRoot.persistentFolders."/home/play" = {
+    mode = "0700";
+    user = "play";
+    group = "users";
   };
-
-  boot.postBootCommands = lib.mkAfter ''
-    mkdir -p -m 0700 /data/home/play
-    chown play:users /data/home/play
-  '';
 
   # Kiosk session
 

@@ -59,13 +59,14 @@ with lib;
         };
     };
 
-    # TODO: allow user and group of persistent folder to be defined
     system.activationScripts = {
-      ensurePersistentFoldersExist = lib.concatStringsSep "\n"
+    ensurePersistentFoldersExist = lib.stringAfter [ "groups" ] (
+      lib.concatStringsSep "\n"
         (lib.mapAttrsToList (n: config: ''
           mkdir -p /mnt/data${n}
           chmod -R ${config.mode} /mnt/data${n}
-        '') cfg.persistentFolders);
+          chown ${config.user}:${config.group} /mnt/data${n}
+        '') cfg.persistentFolders));
     };
 
   };

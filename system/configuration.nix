@@ -26,6 +26,8 @@ with lib;
     persistentFolders = {
       "/etc/NetworkManager/system-connections" = {
         mode = "0700";
+        user = "root";
+        group = "root";
       };
     };
   };
@@ -67,8 +69,6 @@ with lib;
 	documentation.enable = false;
 
   environment.systemPackages = with pkgs; [];
-
-  environment.noXlibs = true;
 
   # Enable non-free firmware
   hardware.enableRedistributableFirmware = true;
