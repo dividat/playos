@@ -45,14 +45,18 @@ def system_partition(system):
             subprocess.run(["fusermount", "-u", sp + "/nix/store"])
 
 
-def run_vm(system, qemu_opts=DEFAULT_QEMU_OPTS):
+def run_vm(system, qemu_opts, kernel_arguments):
     with system_partition(system) as sp:
         kernel = sp + '/kernel'
-        kernel_arguments = 'boot.shell_on_panic'
+        kernel_arguments = (' ').join(kernel_arguments + [
+            'systemd.machine_id=f414cca8312548d29689ebf287fb67e0',
+            'rauc.slot=a',
+        ])
         initrd = sp + '/initrd'
         virtfs_opts = 'local,path={},security_model=none,mount_tag=system,readonly'.format(
             sp)
         print("system partition at: {}".format(sp))
+        print("Kernel arguments: {}".format(kernel_arguments))
         _qemu([
             '-kernel', kernel, '-initrd', initrd, '--virtfs', virtfs_opts,
             '-append', kernel_arguments
@@ -85,12 +89,13 @@ def run_disk(disk, qemu_opts=DEFAULT_QEMU_OPTS):
         print("disk overlay at {}".format(overlay))
         _qemu(['-pflash', overlay + '/OVMF.fd'] + qemu_opts +
               [overlay + '/disk-overlay.qcow2'])
-        input()
 
 
 def _qemu(opts):
     try:
-        print("Staring QEMU.")
+        print("Staring QEMU:")
+        print(' '.join([QEMU_SYSTEM_X86_64] + opts))
+        print()
         subprocess.run([QEMU_SYSTEM_X86_64] + opts, check=True)
     except KeyboardInterrupt:
         pass
@@ -99,12 +104,12 @@ def _qemu(opts):
 def main(opts):
     if opts.disk:
         if DISK:
-            run_disk(DISK)
+            run_disk(DISK, opts.qemu_options)
         else:
             print("ERROR: disk not built.")
             exit(1)
     else:
-        run_vm(SYSTEM_TOP_LEVEL)
+        run_vm(SYSTEM_TOP_LEVEL, opts.qemu_options, opts.kernel_args)
 
 
 if __name__ == '__main__':
@@ -120,4 +125,19 @@ if __name__ == '__main__':
         action='store_true',
         help="Use disk with full system. Requires the disk to have been built."
     )
+    parser.add_argument(
+        '-a',
+        action='append',
+        dest="kernel_args",
+        default=[],
+        help=
+        "Additional Kernel Arguments to pass. Note that these arguments are ignored when booting from disk (as the bootloader specifies the kernel arguments)."
+    )
+    parser.add_argument(
+        '-q',
+        dest='qemu_options',
+        metavar="QEMU_OPTION",
+        nargs=argparse.REMAINDER,
+        default=DEFAULT_QEMU_OPTS,
+        help="Pass remaining command line arguments directly to QEMU.")
     main(parser.parse_args())
