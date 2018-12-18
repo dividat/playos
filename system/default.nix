@@ -1,7 +1,9 @@
 # Build NixOS system
-{pkgs, lib, nixos, version}:
+{pkgs, lib, version}:
 with lib;
 let
+  nixos = pkgs.importFromNixos "";
+
   configuration = {config, ...}:
     {
       imports = [

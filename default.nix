@@ -1,4 +1,6 @@
-{buildInstaller ? true, buildBundle ? true}:
+{ buildInstaller ? true
+, buildBundle ? true
+, buildDisk ? true }:
 let
   pinnedNixpkgs = import ./nixpkgs;
   pkgs = pinnedNixpkgs.nixpkgs {
@@ -11,18 +13,14 @@ let
 };
 in
 let
-  nixos = pkgs.importFromNixos "";
-  makeDiskImage = pkgs.importFromNixos "lib/make-disk-image.nix";
-  makeSystemTarball = pkgs.importFromNixos "lib/make-system-tarball.nix";
-
   version = "2018.12.0-dev";
 
   toplevels = (import ./system) {
     inherit (pkgs) pkgs lib;
-    inherit nixos version;
+    inherit version;
   };
 
-  systemTarball = makeSystemTarball {
+  systemTarball = (pkgs.importFromNixos "lib/make-system-tarball.nix") {
     inherit (pkgs) stdenv perl pixz pathsFromGraph;
 
     fileName = "system";
@@ -50,16 +48,19 @@ let
 
   installer = (import ./installer) {
     inherit (pkgs) config pkgs lib;
-    inherit nixos;
     inherit version;
     toplevel = toplevels.system;
     grubCfg = ./bootloader/grub.cfg;
   };
 
-  disk = (import ./lib/make-disk-image.nix) {
-    inherit (pkgs) pkgs lib;
-    inherit (installer) install-playos;
-  } + "/nixos.img";
+  disk =
+    if buildDisk then
+      (import ./lib/make-disk-image.nix) {
+        inherit (pkgs) pkgs lib;
+        inherit (installer) install-playos;
+      } + "/nixos.img"
+    else
+      null;
 
   raucBundle = (import ./lib/make-rauc-bundle.nix) {
     inherit (pkgs) stdenv rauc;
@@ -71,8 +72,9 @@ let
 
   run-playos-in-vm = pkgs.substituteAll {
     src = ./bin/run-playos-in-vm.py;
-    inherit version;
-    bindfs = "${pkgs.bindfs}/bin/bindfs";
+    inherit version disk;
+    inherit (pkgs) bindfs qemu;
+    ovmf = "${pkgs.OVMF.fd}/FV/OVMF.fd";
     toplevel = toplevels.testing;
   };
 

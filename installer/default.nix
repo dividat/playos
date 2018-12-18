@@ -1,9 +1,10 @@
 # Build NixOS system
 {config, lib, pkgs,
- nixos,
  version, grubCfg, toplevel
  }:
 let
+
+  nixos = pkgs.importFromNixos "";
 
   install-playos = (import ./install-playos) {
     inherit (pkgs) stdenv substituteAll makeWrapper python36 utillinux e2fsprogs dosfstools closureInfo pv;

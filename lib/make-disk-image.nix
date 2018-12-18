@@ -15,15 +15,13 @@
   filename ? "nixos.img"
 }:
 with lib;
-let 
-
+let
   # disk size in GiB
   diskSize = (1 + dataPartitionSize + systemPartitionSize + systemPartitionSize + 1);
-
 in pkgs.vmTools.runInLinuxVM (
   pkgs.runCommand name
-    { 
-      buildInputs = with pkgs; [ 
+    {
+      buildInputs = with pkgs; [
         install-playos
       ];
       preVM = ''
