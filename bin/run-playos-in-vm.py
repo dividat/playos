@@ -53,10 +53,9 @@ def run_vm(system, qemu_opts=DEFAULT_QEMU_OPTS):
         virtfs_opts = 'local,path={},security_model=none,mount_tag=system,readonly'.format(
             sp)
         print("system partition at: {}".format(sp))
-        print("Starting QEMU...")
-        subprocess.run([
-            'qemu-system-x86_64', '-kernel', kernel, '-initrd', initrd,
-            '--virtfs', virtfs_opts, '-append', kernel_arguments
+        _qemu([
+            '-kernel', kernel, '-initrd', initrd, '--virtfs', virtfs_opts,
+            '-append', kernel_arguments
         ] + qemu_opts)
 
 
@@ -83,10 +82,18 @@ def disk_overlay(disk):
 
 def run_disk(disk, qemu_opts=DEFAULT_QEMU_OPTS):
     with disk_overlay(disk) as overlay:
-        print("overlay at {}".format(overlay))
-        subprocess.run([QEMU_SYSTEM_X86_64, '-pflash', overlay + '/OVMF.fd'] +
-                       qemu_opts + [overlay + '/disk-overlay.qcow2'])
+        print("disk overlay at {}".format(overlay))
+        _qemu(['-pflash', overlay + '/OVMF.fd'] + qemu_opts +
+              [overlay + '/disk-overlay.qcow2'])
         input()
+
+
+def _qemu(opts):
+    try:
+        print("Staring QEMU.")
+        subprocess.run([QEMU_SYSTEM_X86_64] + opts, check=True)
+    except KeyboardInterrupt:
+        pass
 
 
 def main(opts):
@@ -103,7 +110,8 @@ def main(opts):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Run PlayOS in a Virtual Machine.",
-        epilog="By default a system is started with testing instrumentation activated. This testing system does not boot via GRUB and has no disks attached. This is useful for rapidly testing higher-level system configurations. If you want to test lower-level system components use the '--disk' option which will start a system without test instrumentation."
+        epilog=
+        "By default a system is started with testing instrumentation activated. This testing system does not boot via GRUB and has no disks attached. This is useful for rapidly testing higher-level system configurations. If you want to test lower-level system components use the '--disk' option which will start a system without test instrumentation."
     )
     parser.add_argument('-v', '--version', action='version', version=VERSION)
     parser.add_argument(
