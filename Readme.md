@@ -1,74 +1,41 @@
 # PlayOS
 
-** WORK IN PROGRESS - currently only useable as technology demonstrator **
+A custom Linux system ([NixOS](https://nixos.org/)) for running Dividat Play.
 
-A custom Linux system for running Dividat Play.
-
-This is a [NixOS](https://nixos.org/) based system that runs Dividat Play in a restricted Kios environment. Deployed machines have two partitions (A/B) that can be updated atomically over-the-air. After succesfull update machine can reboot into the new system. System is compatible with NixOS modules and packages and everything that is available from upstream NixOS can be used.
-
-## Overview
-
-### Components
-
-- Bootloader: [GNU Grub](https://www.gnu.org/software/grub/) is used as bootloader.
-- Update Client: [RAUC](https://rauc.io/) manages installation of new system images and interfaces with Bootloader to set correct boot target.
-- Play Computer Controller (not yet implemented):
-  - Periodically checks for update and provides them to RAUC when available.
-  - Provide TUI for on-site configuration of system (Networking, wipe data partition, etc.)
-- Installer (not yet implemented): A bootable SD image for deployment.
+See the [documentation](docs/arch) for more information.
 
 ## Quick start
 
 Running `nix build` will create following (in `result/`):
 
-- `system.tar.xz`: Tarball of entire system as defined in [`system/configuration.nix`](system/configuration.nix) (this is a standard NixOS configuration file, see https://nixos.org/nixos/manual/index.html#ch-configuration).
+- `system/`: System toplevel
+- `testing/`: System toplevel with test instrumentation
+- `bin/`: Tools
 - `bundle-VERSION.raucb`: RAUC bundle that can be used to update systems. Note that it is signed with a dummy development key. Real deployments would resign the bundle with `rauc resign`.
-- `disk.img`: Preinstalled system with A/B and data partitions for testing.
+- `playos-installer-VERSION.iso`: Bootable ISO image that can install the system.
+- `disk.img`: Preinstalled disk with bootloader, system partitions A/B and data partitions for testing (but without test instrumentation).
 
-For quicker development cycles you may pass skip building the installer or RAUC bundle: `nix build --arg buildInstaller false --arg buildBundle false`.
+For quicker development cycles you may pass following arguments to the build:
+
+- `buildInstaller`: Should the installer ISO image be built.
+- `buildBundle`: Should the RAUC bundle be built.
+- `buildDisk`: Should the preinstalled disk image.
+
+For example: `nix build --arg buildInstaller false --arg buildBundle false` will only build the system toplevels and the preinstalled disk image.
+
+A virtual machine (with test instrumentation) can be started without any of the above builds.
 
 ### Virtual machine
 
-A helper is available to quickly start a virtual machine (QEMU needs to be available):
+A helper is available to quickly start a virtual machine:
+
 
 ```
-nix-shell --command "run-in-qemu"
+nix build && ./result/bin/run-playos-in-vm
 ```
 
-## Demo
 
-### GRUB
-
-![GRUB](docs/screenshots/grub.png)
-
-Machine will boot and show a GRUB menu. The preferred system is automatically booted after 3 seconds.
-
-### Login
-
-![Login](docs/screenshots/login.png)
-
-Login using user `dev` and password `123`.
-
-### Partitioning
-
-System has 4 partitions:
-
-- EFI system partition
-- `data` partition for persistent data
-- `system.a`
-- `system.b`
-
-![partitioning](docs/screenshots/partitioning.png)
-
-### RAUC
-
-RAUC status can be queried with the command `rauc status`:
-
-![RAUC status](docs/screenshots/rauc-status.png)
-
-Install a new bundle with the `rauc install` command (bundle needs to be transferred to virtual machine first):
-
-![rauc install](docs/screenshots/rauc-install.png)
+See the output of `run-playos-in-vm --help` for more information.
 
 
 ## Related work

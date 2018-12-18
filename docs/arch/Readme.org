@@ -18,6 +18,16 @@ PlayOS is a custom [[https://nixos.org/][NixOS]] system that runs Dividat Play i
 
 ** Testing
 
+*** Virtual Machines
+
+System can be run in a virtual machine. For this the tool ~run-playos-in-vm~ is provided.
+
+With minimal test instrumentation a virtual machine can be started without creating a (virtual) disk. For this a system partition is created on a folder on the host and shared to the virtual machine via [[https://wiki.qemu.org/Documentation/9psetup][9P]]. This allows for rapid development cycles as no images containing the entire system have to be built. However low-level system components (such as bootloader) are bypassed with test instrumentation.
+
+For a more complete test a virtual disk containing all necessary partitions and pre-installed systems can be used.
+
+*** TODO Automated Testing
+
 <https://nixos.org/~eelco/talks/issre-nov-2010.pdf>
 <https://nixos.org/nixos/manual/index.html#sec-nixos-tests>
 
@@ -66,6 +76,11 @@ Every machine is assigned a [[https://tools.ietf.org/html/rfc4122][Universal Uni
 The machine-id is set on boot via the ~system.machine_id~ kernel argument and then [[https://www.freedesktop.org/software/systemd/man/machine-id.html][handled by the init system]].
 
 ** Update Mechanism
+
+*** TODO Overview
+
+- [[https://rauc.io/][RAUC]] is used as update client.
+- A/B system
 
 *** Boot selection logic
 
