@@ -12,7 +12,7 @@ PARTITION_SIZE_GB_SYSTEM = 5
 PARTITION_SIZE_GB_DATA = 2
 
 GRUB_CFG = "@grubCfg@"
-SYSTEM_TOP_LEVEL = "@systemTopLevel@"
+SYSTEM_TOP_LEVEL = "@toplevel@"
 SYSTEM_CLOSURE_INFO = "@systemClosureInfo@"
 VERSION = "@version@"
 
@@ -127,7 +127,7 @@ def install_bootloader(disk, machine_id):
         ],
         check=True)
     os.makedirs('/mnt/boot/grub/', exist_ok=True)
-    shutil.copyfile(GRUB_CFG, '/mnt/boot/grub/grub.cfg')
+    shutil.copy2(GRUB_CFG, '/mnt/boot/grub/grub.cfg')
     subprocess.run(
         [
             'grub-editenv', '/mnt/boot/grub/grubenv', 'set',

@@ -17,7 +17,6 @@ with lib;
     ./development.nix
   ];
 
-
   systemPartition = {
     device = "/dev/root";
   };

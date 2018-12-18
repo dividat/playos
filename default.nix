@@ -1,9 +1,11 @@
 {buildInstaller ? true, buildBundle ? true}:
-let pkgs = (import ./nixpkgs).nixpkgs {
+let
+  pinnedNixpkgs = import ./nixpkgs;
+  pkgs = pinnedNixpkgs.nixpkgs {
     overlays = [
       (import ./pkgs)
       (self: super: {
-        importFromNixos = (import ./nixpkgs).importFromNixos;
+      inherit (pinnedNixpkgs) importFromNixos;
       })
     ];
 };
@@ -15,7 +17,7 @@ let
 
   version = "2018.12.0-dev";
 
-  systemTopLevel = (import ./system) {
+  toplevels = (import ./system) {
     inherit (pkgs) pkgs lib;
     inherit nixos version;
   };
@@ -27,21 +29,21 @@ let
 
     contents = [
       {
-        source = systemTopLevel + "/initrd";
+        source = toplevels.system + "/initrd";
         target = "/initrd";
       }
       {
-        source = systemTopLevel + "/kernel";
+        source = toplevels.system + "/kernel";
         target = "/kernel";
       }
       {
-        source = systemTopLevel + "/init" ;
+        source = toplevels.system + "/init" ;
         target = "/init";
       }
     ];
 
-    storeContents = [{ 
-        object = systemTopLevel;
+    storeContents = [{
+        object = toplevels.system;
         symlink = "/run/current-system";
       }];
   } + "/tarball/system.tar.xz";
@@ -49,7 +51,8 @@ let
   installer = (import ./installer) {
     inherit (pkgs) config pkgs lib;
     inherit nixos;
-    inherit systemTopLevel version;
+    inherit version;
+    toplevel = toplevels.system;
     grubCfg = ./bootloader/grub.cfg;
   };
 
@@ -64,6 +67,13 @@ let
     cert = ./system/rauc/cert.pem;
     key = ./system/rauc/key.pem;
     inherit systemTarball;
+  };
+
+  run-playos-in-vm = pkgs.substituteAll {
+    src = ./bin/run-playos-in-vm.py;
+    inherit version;
+    bindfs = "${pkgs.bindfs}/bin/bindfs";
+    toplevel = toplevels.testing;
   };
 
 in
@@ -81,10 +91,23 @@ stdenv.mkDerivation {
 
   buildCommand = ''
     mkdir -p $out
-    ln -s ${systemTopLevel} $out/system
-  '' + pkgs.lib.optionalString buildInstaller ''
+
+    # System toplevels
+    ln -s ${toplevels.system} $out/system
+    ln -s ${toplevels.testing} $out/testing
+
+    # Helper to run in vm
+    mkdir -p $out/bin
+    cp ${run-playos-in-vm} $out/bin/run-playos-in-vm
+    chmod +x $out/bin/run-playos-in-vm
+    patchShebangs $out/bin/run-playos-in-vm
+  ''
+  # Installer ISO image
+  + pkgs.lib.optionalString buildInstaller ''
     ln -s ${installer.isoImage}/iso/playos-installer-${version}.iso $out/playos-installer-${version}.iso
-  '' + pkgs.lib.optionalString buildBundle ''
+  ''
+  # RAUC bundle
+  + pkgs.lib.optionalString buildBundle ''
     ln -s ${raucBundle} $out/bundle-${version}.raucb
   '';
 

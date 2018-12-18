@@ -5,9 +5,10 @@ let
   configuration = {config, ...}:
     {
       imports = [
-        ./configuration.nix
         ../modules/system-partition.nix
         ../modules/volatile-root.nix
+        ./configuration.nix
+
       ];
 
       options = {
@@ -30,9 +31,25 @@ let
         };
       };
     };
+
+  testConfiguration = {...}:
+    {
+      imports = [
+        configuration
+        # FIXME: the importFromNixos should be in the pkgs anyways which is passed to the testing.nix module. But I get an infinite recursion somewhere if using from pkgs.
+        ((import ../modules/testing.nix) {inherit (pkgs) importFromNixos;})
+      ];
+    };
 in
-  (nixos {
+{
+  system = (nixos {
     inherit configuration;
     system = "x86_64-linux";
-  }).config.system.build.toplevel
+  }).config.system.build.toplevel;
 
+  testing = (nixos {
+    configuration = testConfiguration;
+    system = "x86_64-linux";
+  }).config.system.build.toplevel;
+
+}
