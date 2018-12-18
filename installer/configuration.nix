@@ -53,6 +53,12 @@ with lib;
     install-playos --reboot
   '';
 
+  # Enable non-free firmware
+  hardware.enableRedistributableFirmware = true;
+
+  networking.networkmanager.enable = true;
+  networking.hostName = "playos-installer";
+
   # ISO naming.
   isoImage.isoName = "playos-installer-${version}.iso";
 
