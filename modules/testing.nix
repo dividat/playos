@@ -3,6 +3,7 @@
 {
   imports = [
     (importFromNixos "modules/profiles/qemu-guest.nix")
+    (importFromNixos "modules/testing/test-instrumentation.nix")
   ];
 
   config = {

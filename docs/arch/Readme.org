@@ -28,8 +28,15 @@ For a more complete test a virtual disk containing all necessary partitions and 
 
 *** TODO Automated Testing
 
-<https://nixos.org/~eelco/talks/issre-nov-2010.pdf>
-<https://nixos.org/nixos/manual/index.html#sec-nixos-tests>
+NixOS has a very cool [[https://nixos.org/nixos/manual/index.html#sec-obtaining][testing framework]] (see also [[https://nixos.org/~eelco/talks/issre-nov-2010.pdf][this presentation]]). It relies on the module <nixos/modules/virtualisation/qemu-vm.nix> and <nixos/modules/testing/test-instrumentation.nix> to set up a efficient virtual machine. 
+
+However ~qemu-vm.nix~ assumes a certain filesystem layout which is incompatible with our ~system-partition~ module. Possible solutions:
+
+- Create our own test machinery (extending ~run-playos-in-vm~).
+- Do testing without ~system-partition~ (and other low-level) modules.
+- Figure out how to override filesystem assumptions in ~qemu-vm.nix~ and use the NixOS tooling machinery.
+
+Doing testing without low-level modules is not desirable. Those are exactly the things that need to be tested extensively and creating own machinery is unnecessary. We need to figure out how to override assumptions in ~qemu-vm.nix~ and possibly adapt our modules to be testable with existing machinery.
 
 * System
 ** Disk layout
@@ -144,3 +151,4 @@ Reasons for using Python include the [[https://github.com/dcantrell/pyparted][py
 
 ** TODO Check for latest version of bundle over network
 ** TODO Check for already installed system and preserve [[*Machine ID][machine-id]]
+ k

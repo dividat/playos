@@ -46,20 +46,44 @@ def system_partition(system):
 
 
 def run_vm(system, qemu_opts, kernel_arguments):
-    with system_partition(system) as sp:
+    with system_partition(system) as sp, tempfile.TemporaryDirectory(
+            prefix="playos-backdoor-") as backdoor_dir:
         kernel = sp + '/kernel'
         kernel_arguments = (' ').join(kernel_arguments + [
             'systemd.machine_id=f414cca8312548d29689ebf287fb67e0',
-            'rauc.slot=a',
+            'rauc.slot=a', 'console=tty0', 'console=hvc1'
         ])
         initrd = sp + '/initrd'
         virtfs_opts = 'local,path={},security_model=none,mount_tag=system,readonly'.format(
             sp)
         print("system partition at: {}".format(sp))
         print("Kernel arguments: {}".format(kernel_arguments))
+        print("Run  `socat STDIO,raw,echo=0,escape=27 UNIX:{}/backdoor` for a login prompt.".format(backdoor_dir))
         _qemu([
-            '-kernel', kernel, '-initrd', initrd, '--virtfs', virtfs_opts,
-            '-append', kernel_arguments
+            '-kernel',
+            kernel,
+            '-initrd',
+            initrd,
+            '--virtfs',
+            virtfs_opts,
+            '-append',
+            kernel_arguments,
+            # Unused shell. This is used by the "backdoor" in <nixos/modules/test-instrumentation.nix>.
+            # TODO: Set up a Unix Socket from Python and connect to shell
+            '-chardev',
+            'socket,id=shell,path={}/not-working-shell,server,nowait'.format(backdoor_dir),
+            '-device',
+            'virtio-serial',
+            '-device',
+            'virtconsole,chardev=shell',
+            # This is hvc1 and will show a login prompt
+            '-chardev',
+            'socket,id=backdoor,path={}/backdoor,server,nowait'.format(
+                backdoor_dir),
+            '-device',
+            'virtio-serial',
+            '-device',
+            'virtconsole,chardev=backdoor'
         ] + qemu_opts)
 
 
