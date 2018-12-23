@@ -64,13 +64,9 @@ The [[*Booting][GRUB]] environment variables ~ORDER~, ~a_TRY~, ~b_TRY~, ~a_OK~ a
 - ~a_TRY~ and ~b_TRY~ describes the number of attempts to boot the respective systems.
 - ~a_OK~ and ~b_OK~ are used to mark systems that are non-bootable.
 
-GRUB attempts to boot the first system in ~ORDER~ which has a value less than 3 in the respecitve ~TRY~ variable and where ~a_OK~ is not equal ~0~.
+GRUB attempts to boot the first system in ~ORDER~ which has a value less than 3 in the respecitve ~TRY~ variable and where ~a_OK~ is not equal ~0~. If there are no boot options available GRUB will display a boot selection menu.
 
-During installation of a new system on slot ~x~ the ~x_OK~ variable is set to ~0~, marking the system non-bootable. After successful installation, RAUC sets the ~ORDER~ to contain ~x~ as first element (see [[https://rauc.readthedocs.io/en/latest/reference.html#grub][here]]) and sets the number of tries to 0 (~x_TRY~) and marks the system bootable ~x_OK=1~. On next boot GRUB attempts to boot system ~x~ for 3 times before falling back to the next system in ~ORDER~.
-
-If system ~x~ boots successfully the [[*Mark system as good][system is marked as good]] and the ~x_TRY~ variable is set to ~0~.
-
-If GRUB fails to boot all systems in ~ORDER~ three times, GRUB will stop attempting to boot and display a boot selection menu.
+See also sections on the [[*Update Mechanism][Update Mechanism]] and [[*Mark system as good][Mark system as good]].
 
 ** Init system
 
@@ -93,7 +89,7 @@ A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Document
 
 ** Machine ID
    
-Every machine is assigned a [[https://tools.ietf.org/html/rfc4122][Universal Unique IDentifier]] (machine-id) during installation. The machine-id is stored on the ~/boot~ partition and is persisted between [[*Update Mechanism][updates]] and [[*User data wiping][user data wiping]].
+Every machine is assigned a [[https://tools.ietf.org/html/rfc4122][Universal Unique IDentifier]] (machine-id) during installation. The machine-id is stored on the ~/boot~ partition and is persisted between [[*Update Mechanism][updates]] and [[*Rescue System][user data wiping]].
 
 The machine-id is set on boot via the ~system.machine_id~ kernel argument and then [[https://www.freedesktop.org/software/systemd/man/machine-id.html][handled by the init system]].
 
@@ -124,7 +120,7 @@ Implementation details:
 
  The ~poc~ regularly checks for available updates. Updates are distributed as [[https://www.rauc.io/][RAUC]] [[https://rauc.readthedocs.io/en/latest/basic.html#update-artifacts-bundles][bundles]]. If an update is available the bundle is installed by RAUC.
 
- During installation the system being updated is marked as non-bootable. After successful installation the bootloader will attempt to boot the newly installed system on next boot (see [[*Boot selection logic][boot selection logic]]).
+During installation of a new system on slot ~x~ the ~x_OK~ variable is set to ~0~, marking the system non-bootable. After successful installation, [[https://rauc.readthedocs.io/en/latest/reference.html#grub][RAUC sets]] the ~ORDER~ to contain ~x~ as first element and sets the number of tries to 0 (~x_TRY=0~) and marks the system bootable (~x_OK=1~). On next boot GRUB attempts to boot system ~x~ for 3 times before falling back to the next system in ~ORDER~ (see [[*Boot selection logic][boot selection logic]]).
 
 **** TODO How to compare versions
 
@@ -138,12 +134,14 @@ Implementation details:
 
 Currently a systemd service is setup to mark the sytem as good. This should be done by the controller after making sure things are running ok.
 
+If system ~x~ is considered to be running satisfactory the system is marked good via RAUC, which resets the number of boot attempts (~x_TRY=0~) and marks the system bootable (~x_OK=1~) (see [[*Boot selection logic][boot selection logic]]).
+
 *** TODO Network configuration
 *** TODO Logging Mechanism
 
 Important system events should be logged to ~log.dividat.com~.
 
-** TODO User data wiping
+** TODO Rescue System
 
 User data wiping (formatting the data partition) is a hassle when the system is already running (users need to be logged out, disk needs to be unmounted and then possibly the system reboots). An easier way of implementing this is to provide a Linux kernel and a minimal initial ram disk on the ESP that can be used to wipe data.
 
