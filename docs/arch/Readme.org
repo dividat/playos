@@ -6,7 +6,7 @@ A custom Linux system for running Dividat Play.
 
 ** Background
 
-Dividat Play is a web-based application used in conjunction with the Dividat Senso hardware as a game-based training system.
+[[https://dividat.com/en/products/dividat][Dividat Play]] is a web-based application used in conjunction with the [[https://dividat.com/en/products/dividat][Dividat Senso]] hardware as a game-based training system.
 
 Installations of Dividat Play and Dividat Senso usually receive a dedicated computer to run the software. PlayOS is a custom Linux system for such computers.
 
@@ -99,8 +99,9 @@ The machine-id is set on boot via the ~system.machine_id~ kernel argument and th
 
 ** Dividat Driver
 
-** TODO Kiosk
+The [[https://github.com/dividat/driver][Dividat Driver]], which handles connectivity between Dividat Play and Dividat Senso hardware, is installed and runs as a system service.
 
+** TODO Kiosk
 ** TODO PlayOS Controller
 
 The PlayOS Controller is a system daemon handling various system management tasks:
