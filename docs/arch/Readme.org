@@ -126,7 +126,7 @@ During installation of a new system on slot ~x~ the ~x_OK~ variable is set to ~0
 
  A system partition can be updated while the other is running. The ~poc~ regularly checks for updates.
 
-**** TODO Bundle verification
+**** Bundle verification
 
 RAUC bundles are signed. Before installing an update RAUC will verify signature against keyring installed on system (see [[https://rauc.readthedocs.io/en/latest/advanced.html#security][here]]).
 

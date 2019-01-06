@@ -39,6 +39,9 @@ let
     # Installer ISO image
     installer = callPackage ./installer {};
 
+    # Script to deploy updates
+    deploy-playos-update = callPackage ./deployment/deploy-playos-update {};
+
     # RAUC bundle
     unsignedRaucBundle = callPackage ./rauc-bundle {};
 
@@ -67,13 +70,13 @@ stdenv.mkDerivation {
   buildCommand = ''
     mkdir -p $out
 
-    # Helper to run in vm
     mkdir -p $out/bin
+
     cp ${components.run-playos-in-vm} $out/bin/run-playos-in-vm
     chmod +x $out/bin/run-playos-in-vm
     patchShebangs $out/bin/run-playos-in-vm
 
-    # Certificate that is installed on system
+    # Keyring that is installed on system
     cp ${keyring} $out/cert.pem
   ''
   # Installer ISO image
@@ -83,6 +86,11 @@ stdenv.mkDerivation {
   # RAUC bundle
   + lib.optionalString buildBundle ''
     ln -s ${components.unsignedRaucBundle} $out/playos-${components.version}-UNSIGNED.raucb
+
+    cp ${components.deploy-playos-update} $out/bin/deploy-playos-update
+    chmod +x $out/bin/deploy-playos-update
+    patchShebangs $out/bin/deploy-playos-update
+
   '';
 
 }
