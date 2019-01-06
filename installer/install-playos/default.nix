@@ -9,19 +9,19 @@
 , pv
 , closureInfo
 
-, toplevel
+, systemToplevel
 , grubCfg
 , version
 }:
 let
-  systemClosureInfo = closureInfo { rootPaths = [ toplevel ]; };
+  systemClosureInfo = closureInfo { rootPaths = [ systemToplevel ]; };
 in
 stdenv.mkDerivation {
   name = "install-playos-${version}";
 
   src = substituteAll {
     src = ./install-playos.py;
-    inherit grubCfg toplevel systemClosureInfo version;
+    inherit grubCfg systemToplevel systemClosureInfo version;
   };
 
   buildInputs = [

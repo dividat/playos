@@ -12,7 +12,7 @@ PARTITION_SIZE_GB_SYSTEM = 5
 PARTITION_SIZE_GB_DATA = 2
 
 GRUB_CFG = "@grubCfg@"
-SYSTEM_TOP_LEVEL = "@toplevel@"
+SYSTEM_TOP_LEVEL = "@systemToplevel@"
 SYSTEM_CLOSURE_INFO = "@systemClosureInfo@"
 VERSION = "@version@"
 

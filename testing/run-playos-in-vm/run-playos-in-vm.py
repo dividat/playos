@@ -9,7 +9,7 @@ import shutil
 import argparse
 
 VERSION = "@version@"
-SYSTEM_TOP_LEVEL = "@toplevel@"
+TESTING_SYSTEM_TOP_LEVEL = "@testingToplevel@"
 DISK = "@disk@"
 OVMF = "@ovmf@"
 
@@ -133,7 +133,7 @@ def main(opts):
             print("ERROR: disk not built.")
             exit(1)
     else:
-        run_vm(SYSTEM_TOP_LEVEL, opts.qemu_options, opts.kernel_args)
+        run_vm(TESTING_SYSTEM_TOP_LEVEL, opts.qemu_options, opts.kernel_args)
 
 
 if __name__ == '__main__':

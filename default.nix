@@ -20,33 +20,31 @@ let
     # Set version
     version = "2018.12.0-dev";
 
-    # NixOS system toplevels (for production and testing systems)
-    # TODO: I don't like the names toplevels and the fact that the testing and production systems are bundled up together.
-    toplevels = callPackage ./system {};
+    # NixOS system toplevel
+    systemToplevel = callPackage ./system {};
 
     # Installation script
     install-playos = callPackage ./installer/install-playos {
-      toplevel = toplevels.system;
       grubCfg = ./bootloader/grub.cfg;
     };
 
     # Installer ISO image
     installer = callPackage ./installer {};
 
+    # RAUC bundle
+    raucBundle = callPackage ./rauc-bundle {};
+
+    # NixOS system toplevel with test machinery
+    testingToplevel = callPackage ./testing/system {};
+
     # Disk image containing pre-installed system
     disk = if buildDisk then callPackage ./testing/disk {} else null;
 
-    # RAUC bundle
-    raucBundle = callPackage ./rauc-bundle {
-      toplevel = toplevels.system;
-    };
-
     # Script for spinning up VMs
-    run-playos-in-vm = callPackage ./testing/run-playos-in-vm {
-      toplevel = toplevels.testing;
-    };
+    run-playos-in-vm = callPackage ./testing/run-playos-in-vm {};
 
   });
+
 in
 
 with pkgs;

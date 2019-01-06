@@ -1,8 +1,8 @@
-{stdenv, perl, pixz, pathsFromGraph
-,importFromNixos
-,rauc
-,version, cert, key
-,toplevel
+{ stdenv, perl, pixz, pathsFromGraph
+, importFromNixos
+, rauc
+, version, cert, key
+, systemToplevel
 }:
 
 let

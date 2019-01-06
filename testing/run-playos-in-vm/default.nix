@@ -1,10 +1,10 @@
 { substituteAll
-, version, disk, toplevel
+, version, disk, testingToplevel
 , bindfs, qemu, OVMF
 }:
 substituteAll {
   src = ./run-playos-in-vm.py;
-  inherit version disk toplevel;
+  inherit version disk testingToplevel;
   inherit bindfs qemu;
   ovmf = "${OVMF.fd}/FV/OVMF.fd";
 }
