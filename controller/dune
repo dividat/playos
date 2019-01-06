@@ -1,0 +1,6 @@
+(install
+ (section share_root)
+ (files
+  (gui/client.bc.js as static/client.js)
+  (gui/style.css as static/style.css)))
+

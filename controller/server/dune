@@ -1,0 +1,5 @@
+(executable
+ (name server)
+ (public_name playos-controller)
+ (modules server logging)
+ (libraries opium lwt logs logs.fmt logs.lwt fpath tyxml))

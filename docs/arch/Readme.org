@@ -103,21 +103,9 @@ System automatically logs in the user ~play~, starts an X session and launches [
 
 ** TODO PlayOS Controller
 
-The PlayOS Controller is a system daemon handling various system management tasks:
+The PlayOS Controller is an application that manages system updates, checks system health and offers a unified graphical user interface for system configuration. The PlayOS Controller runs as a system service.
 
-- Management of updates
-- Checking system health
-- Offering a unified interface for user configuration of certain system parameters
-
-A user interface for configuration is exposed via a HTTP/HTML and is accessible from within the [[*Kiosk][Kiosk]].
-
-Implementation details:
-
-- [[https://ocaml.org/][OCaml]] seems nice a like match, because I like the language, it's easy to do [[https://ocaml.github.io/ocamlunix/ocamlunix.html][Unix system programming]] and there is an nice [[https://github.com/diml/obus][D-Bus Interface]].
-  - [[https://ocsigen.org/][Ocsigen/Eliom]]: almost-magic framework for creating client/server applications. I would love to learn this. However build system seems slightly non-standard (not just ~dune~), documentation looks scary, there are hardly any example applications (open-source) and the "5 Minute Quickstart" did not work on NixOS.
-  - Combination of an [[https://github.com/rgrinberg/opium][Opium]] (a more approachable OCaml Web framework) application that exposes a Web API that is consumed by a ~js_of_ocaml~ compiled web app. This is not as nice a coupling between server and client as with Ocsigen/Eliom but has the advantage that the API is very clearly defined and consumable by other clients (e.g. a CLI utility) - a big advantage.
-- Elixir/Erlang: [[https://phoenixframework.org/][Phoenix]] looks cool. I suspect that the level of abstraction is slightly to high. I anticipate having to do some Unix level things (such as checking kernel arguments or hardware health), which might be not so straigh-forward for a BEAM application.
-- Haskell: There are some well established Web frameworks: [[https://www.yesodweb.com/][Yesod]] (seems to be capable of doing everything), [[https://www.spock.li][Spock]] (simpler) or [[https://github.com/scotty-web/scotty][Scotty]] (also simpler). Doing low-level stuff should be doable.
+PlayOS controller is implemented in [[https://ocaml.org/][OCaml]]. OCaml allows [[https://ocaml.github.io/ocamlunix/ocamlunix.html][lower-level system programming]] offers an excellent [[https://github.com/diml/obus][D-Bus interface]] and various libraries/tools for creating web-based user interfaces (e.g. [[https://github.com/rgrinberg/opium][opium]], [[https://ocsigen.org/js_of_ocaml/3.1.0/manual/overview][Js_of_ocaml]] and [[https://github.com/rgrinberg/ocaml-mustache][ocaml-mustache]]).
 
 *** TODO Update Mechanism
 

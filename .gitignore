@@ -1,2 +1,5 @@
 result
 work/
+*.merlin
+*.install
+*/_build
