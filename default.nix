@@ -13,85 +13,68 @@ let
 };
 in
 let
-  version = "2018.12.0-dev";
 
-  toplevels = (import ./system) {
-    inherit (pkgs) pkgs lib;
-    inherit version;
-  };
+  # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
+  components = pkgs.lib.makeScope pkgs.newScope (self: with self; {
 
-  install-playos = (import ./installer/install-playos) {
-    inherit (pkgs) stdenv substituteAll makeWrapper python36 utillinux e2fsprogs dosfstools closureInfo pv grub2_efi;
-    inherit version;
-    toplevel = toplevels.system;
-    grubCfg = ./bootloader/grub.cfg;
-  };
+    # Set version
+    version = "2018.12.0-dev";
 
-  installer = (import ./installer) {
-    inherit (pkgs) config pkgs lib;
-    inherit version install-playos;
-  };
+    # NixOS system toplevels (for production and testing systems)
+    # TODO: I don't like the names toplevels and the fact that the testing and production systems are bundled up together.
+    toplevels = callPackage ./system {};
 
-  disk =
-    if buildDisk then
-      (import ./testing/disk) {
-        inherit (pkgs) vmTools runCommand lib;
-        inherit install-playos;
-      }
-    else
-      null;
+    # Installation script
+    install-playos = callPackage ./installer/install-playos {
+      toplevel = toplevels.system;
+      grubCfg = ./bootloader/grub.cfg;
+    };
 
-  raucBundle = (import ./rauc-bundle) {
-    inherit (pkgs) stdenv perl pixz pathsFromGraph importFromNixos rauc;
-    inherit version;
-    cert = ./system/rauc/cert.pem;
-    key = ./system/rauc/key.pem;
-    toplevel = toplevels.system;
-  };
+    # Installer ISO image
+    installer = callPackage ./installer {};
 
-  run-playos-in-vm = (import ./testing/run-playos-in-vm) {
-    inherit version disk;
-    toplevel = toplevels.testing;
-    inherit (pkgs) substituteAll bindfs qemu OVMF;
-  };
+    # Disk image containing pre-installed system
+    disk = if buildDisk then callPackage ./testing/disk {} else null;
 
+    # RAUC bundle
+    raucBundle = callPackage ./rauc-bundle {
+      toplevel = toplevels.system;
+    };
+
+    # Script for spinning up VMs
+    run-playos-in-vm = callPackage ./testing/run-playos-in-vm {
+      toplevel = toplevels.testing;
+    };
+
+  });
 in
+
 with pkgs;
 stdenv.mkDerivation {
-  name = "playos-${version}";
+  name = "playos-${components.version}";
 
   buildInputs = [
     rauc
     (python36.withPackages(ps: with ps; [pyparted]))
-    install-playos
+    components.install-playos
   ];
 
   buildCommand = ''
     mkdir -p $out
 
-    # System toplevels
-    ln -s ${toplevels.system} $out/system
-    ln -s ${toplevels.testing} $out/testing
-
     # Helper to run in vm
     mkdir -p $out/bin
-    cp ${run-playos-in-vm} $out/bin/run-playos-in-vm
+    cp ${components.run-playos-in-vm} $out/bin/run-playos-in-vm
     chmod +x $out/bin/run-playos-in-vm
     patchShebangs $out/bin/run-playos-in-vm
   ''
   # Installer ISO image
-  + pkgs.lib.optionalString buildInstaller ''
-    ln -s ${installer}/iso/playos-installer-${version}.iso $out/playos-installer-${version}.iso
+  + lib.optionalString buildInstaller ''
+    ln -s ${components.installer}/iso/playos-installer-${components.version}.iso $out/playos-installer-${components.version}.iso
   ''
   # RAUC bundle
-  + pkgs.lib.optionalString buildBundle ''
-    ln -s ${raucBundle} $out/playos-${version}.raucb
-  '';
-
-  shellHook = ''
-    # EFI firmware for qemu
-    export OVMF=${OVMF.fd}/FV/OVMF.fd
-    export PATH=$PATH:"$(pwd)/bin"
+  + lib.optionalString buildBundle ''
+    ln -s ${components.raucBundle} $out/playos-${components.version}.raucb
   '';
 
 }
