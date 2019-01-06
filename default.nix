@@ -29,10 +29,10 @@ let
 
   disk =
     if buildDisk then
-      (import ./lib/make-disk-image.nix) {
-        inherit (pkgs) pkgs lib;
+      (import ./testing/disk) {
+        inherit (pkgs) vmTools runCommand lib;
         inherit (installer) install-playos;
-      } + "/nixos.img"
+      }
     else
       null;
 

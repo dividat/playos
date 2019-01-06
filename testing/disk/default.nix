@@ -1,4 +1,4 @@
-{ pkgs
+{ vmTools, runCommand
 , lib
 
 , install-playos
@@ -8,30 +8,25 @@
 
 , # Size of system partition in GiB
   systemPartitionSize ? 5
-
-, name ? "nixos-disk-image"
-
-, # Output filename
-  filename ? "nixos.img"
 }:
 with lib;
 let
   # disk size in GiB
   diskSize = (1 + dataPartitionSize + systemPartitionSize + systemPartitionSize + 1);
-in pkgs.vmTools.runInLinuxVM (
-  pkgs.runCommand name
+in vmTools.runInLinuxVM (
+  runCommand "build-playos-disk"
     {
-      buildInputs = with pkgs; [
-        install-playos
-      ];
+      buildInputs = [install-playos];
+
       preVM = ''
         diskImage=nixos.raw
         truncate -s ${toString diskSize}G $diskImage
       '';
+
       postVM = ''
         mkdir -p $out
-        mv $diskImage $out/${filename}
-        diskImage=$out/${filename}
+        mv $diskImage $out/playos-disk.img
+        diskImage=$out/playos-disk.img
       '';
       memSize = 1024;
     }
@@ -42,4 +37,4 @@ in pkgs.vmTools.runInLinuxVM (
         --machine-id "f414cca8312548d29689ebf287fb67e0" \
         --no-confirm
     ''
-)
+) + "/playos-disk.img"
