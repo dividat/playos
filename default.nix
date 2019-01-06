@@ -7,7 +7,7 @@ let
     overlays = [
       (import ./pkgs)
       (self: super: {
-      inherit (pinnedNixpkgs) importFromNixos;
+        inherit (pinnedNixpkgs) importFromNixos;
       })
     ];
 };
@@ -20,18 +20,23 @@ let
     inherit version;
   };
 
-  installer = (import ./installer) {
-    inherit (pkgs) config pkgs lib;
+  install-playos = (import ./installer/install-playos) {
+    inherit (pkgs) stdenv substituteAll makeWrapper python36 utillinux e2fsprogs dosfstools closureInfo pv grub2_efi;
     inherit version;
     toplevel = toplevels.system;
     grubCfg = ./bootloader/grub.cfg;
+  };
+
+  installer = (import ./installer) {
+    inherit (pkgs) config pkgs lib;
+    inherit version install-playos;
   };
 
   disk =
     if buildDisk then
       (import ./testing/disk) {
         inherit (pkgs) vmTools runCommand lib;
-        inherit (installer) install-playos;
+        inherit install-playos;
       }
     else
       null;
@@ -58,10 +63,8 @@ stdenv.mkDerivation {
   buildInputs = [
     rauc
     (python36.withPackages(ps: with ps; [pyparted]))
-    installer.install-playos
+    install-playos
   ];
-
-  # inherit disk;
 
   buildCommand = ''
     mkdir -p $out
@@ -78,7 +81,7 @@ stdenv.mkDerivation {
   ''
   # Installer ISO image
   + pkgs.lib.optionalString buildInstaller ''
-    ln -s ${installer.isoImage}/iso/playos-installer-${version}.iso $out/playos-installer-${version}.iso
+    ln -s ${installer}/iso/playos-installer-${version}.iso $out/playos-installer-${version}.iso
   ''
   # RAUC bundle
   + pkgs.lib.optionalString buildBundle ''

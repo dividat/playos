@@ -1,29 +1,18 @@
 # Build NixOS system
-{config, lib, pkgs,
- version, grubCfg, toplevel
- }:
+{ config, lib, pkgs
+, version, install-playos
+}:
 let
-
   nixos = pkgs.importFromNixos "";
 
-  install-playos = (import ./install-playos) {
-    inherit (pkgs) stdenv substituteAll makeWrapper python36 utillinux e2fsprogs dosfstools closureInfo pv;
-    inherit grubCfg toplevel version;
-    grub2 = (pkgs.grub2.override { efiSupport = true; });
-  };
-
   configuration = (import ./configuration.nix) {
+    # TODO: what is the config that goes in there?
     inherit config pkgs lib install-playos version;
   };
 
 in
-  {
-    inherit install-playos;
-
-    isoImage = (nixos {
-      inherit configuration;
-      system = "x86_64-linux";
-    }).config.system.build.isoImage;
-
-  }
+(nixos {
+  inherit configuration;
+  system = "x86_64-linux";
+}).config.system.build.isoImage
 

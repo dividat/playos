@@ -1,7 +1,7 @@
 { stdenv
 , substituteAll
 , makeWrapper
-, grub2
+, grub2_efi
 , e2fsprogs
 , dosfstools
 , utillinux
@@ -41,7 +41,7 @@ stdenv.mkDerivation {
       --prefix PATH ":" ${utillinux}/bin \
       --prefix PATH ":" ${e2fsprogs}/bin \
       --prefix PATH ":" ${dosfstools}/bin \
-      --prefix PATH ":" ${grub2}/bin \
+      --prefix PATH ":" ${grub2_efi}/bin \
       --prefix PATH ":" ${pv}/bin
 
   '';
