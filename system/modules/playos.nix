@@ -1,7 +1,7 @@
 # This is the toplevel module for all PlayOS related functionalities.
 
 # Things that are injected into the system
-{version, pkgs}:
+{pkgs, version, cert}:
 
 
 {config, lib, ...}:
@@ -17,18 +17,23 @@ with lib;
       type = types.string;
       default = version;
     };
+
+    playos.cert = mkOption {
+      type = types.package;
+    };
+
   };
 
   config = {
 
-    # Use overlayed pkgs
+    # Use overlayed pkgs.
     nixpkgs.pkgs = pkgs;
 
     # disable installation of bootloader
     boot.loader.grub.enable = false;
 
     playos = {
-      inherit version;
+      inherit version cert;
     };
   };
 }

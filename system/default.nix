@@ -1,12 +1,12 @@
 # Build NixOS system
-{pkgs, lib, version}:
+{pkgs, lib, version, cert}:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
   configuration = {...}: {
     imports = [
       # general PlayOS modules
-      ((import ./modules/playos.nix) {inherit version pkgs;})
+      ((import ./modules/playos.nix) {inherit pkgs version cert;})
 
       # system configuration
       ./configuration.nix

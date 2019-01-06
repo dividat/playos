@@ -1,11 +1,14 @@
 { stdenv, perl, pixz, pathsFromGraph
 , importFromNixos
 , rauc
-, version, cert, key
+, version, cert
 , systemToplevel
 }:
 
 let
+
+  testingKey = ../testing/pki/key.pem;
+
   systemTarball = (importFromNixos "lib/make-system-tarball.nix") {
     inherit stdenv perl pixz pathsFromGraph;
 
@@ -13,21 +16,21 @@ let
 
     contents = [
       {
-        source = toplevel + "/initrd";
+        source = systemToplevel + "/initrd";
         target = "/initrd";
       }
       {
-        source = toplevel + "/kernel";
+        source = systemToplevel + "/kernel";
         target = "/kernel";
       }
       {
-        source = toplevel + "/init" ;
+        source = systemToplevel + "/init" ;
         target = "/init";
       }
     ];
 
     storeContents = [{
-        object = toplevel;
+        object = systemToplevel;
         symlink = "/run/current-system";
       }];
   } + "/tarball/system.tar.xz";
@@ -53,7 +56,7 @@ stdenv.mkDerivation {
 
     rauc \
       --cert ${cert} \
-      --key ${key} \
+      --key ${testingKey} \
       bundle \
       $TEMP/rauc-bundle/ \
       $out

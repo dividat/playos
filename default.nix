@@ -1,6 +1,3 @@
-{ buildInstaller ? true
-, buildBundle ? true
-, buildDisk ? true }:
 let
   pinnedNixpkgs = import ./nixpkgs;
   pkgs = pinnedNixpkgs.nixpkgs {
@@ -12,13 +9,24 @@ let
     ];
 };
 in
+
+{ buildInstaller ? true
+, buildBundle ? true
+, buildDisk ? true
+, cert ? pkgs.lib.warn "Using testing certificates. Build artifacts can only be used for local development." ./testing/pki/cert.pem
+}:
+
+with pkgs;
 let
 
   # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
-  components = pkgs.lib.makeScope pkgs.newScope (self: with self; {
+  components = lib.makeScope newScope (self: with self; {
 
     # Set version
     version = "2018.12.0-dev";
+
+    # Certificate used to verify update bundles
+    cert = copyPathToStore cert;
 
     # NixOS system toplevel
     systemToplevel = callPackage ./system {};
@@ -32,7 +40,7 @@ let
     installer = callPackage ./installer {};
 
     # RAUC bundle
-    raucBundle = callPackage ./rauc-bundle {};
+    unsignedRaucBundle = callPackage ./rauc-bundle {};
 
     # NixOS system toplevel with test machinery
     testingToplevel = callPackage ./testing/system {};
@@ -47,7 +55,6 @@ let
 
 in
 
-with pkgs;
 stdenv.mkDerivation {
   name = "playos-${components.version}";
 
@@ -65,6 +72,9 @@ stdenv.mkDerivation {
     cp ${components.run-playos-in-vm} $out/bin/run-playos-in-vm
     chmod +x $out/bin/run-playos-in-vm
     patchShebangs $out/bin/run-playos-in-vm
+
+    # Certificate that is installed on system
+    cp ${cert} $out/cert.pem
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
@@ -72,7 +82,7 @@ stdenv.mkDerivation {
   ''
   # RAUC bundle
   + lib.optionalString buildBundle ''
-    ln -s ${components.raucBundle} $out/playos-${components.version}.raucb
+    ln -s ${components.unsignedRaucBundle} $out/playos-${components.version}-UNSIGNED.raucb
   '';
 
 }
