@@ -1,5 +1,4 @@
-# This module defines a small NixOS configuration.  It does not
-# contain any graphical stuff.
+# NixOS configuration file
 
 { config, pkgs, lib, ... }:
 
