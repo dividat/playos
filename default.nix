@@ -44,12 +44,10 @@ let
     toplevel = toplevels.system;
   };
 
-  run-playos-in-vm = pkgs.substituteAll {
-    src = ./bin/run-playos-in-vm.py;
+  run-playos-in-vm = (import ./testing/run-playos-in-vm) {
     inherit version disk;
-    inherit (pkgs) bindfs qemu;
-    ovmf = "${pkgs.OVMF.fd}/FV/OVMF.fd";
     toplevel = toplevels.testing;
+    inherit (pkgs) substituteAll bindfs qemu OVMF;
   };
 
 in
