@@ -20,32 +20,6 @@ let
     inherit version;
   };
 
-  systemTarball = (pkgs.importFromNixos "lib/make-system-tarball.nix") {
-    inherit (pkgs) stdenv perl pixz pathsFromGraph;
-
-    fileName = "system";
-
-    contents = [
-      {
-        source = toplevels.system + "/initrd";
-        target = "/initrd";
-      }
-      {
-        source = toplevels.system + "/kernel";
-        target = "/kernel";
-      }
-      {
-        source = toplevels.system + "/init" ;
-        target = "/init";
-      }
-    ];
-
-    storeContents = [{
-        object = toplevels.system;
-        symlink = "/run/current-system";
-      }];
-  } + "/tarball/system.tar.xz";
-
   installer = (import ./installer) {
     inherit (pkgs) config pkgs lib;
     inherit version;
@@ -62,12 +36,12 @@ let
     else
       null;
 
-  raucBundle = (import ./lib/make-rauc-bundle.nix) {
-    inherit (pkgs) stdenv rauc;
+  raucBundle = (import ./rauc-bundle) {
+    inherit (pkgs) stdenv perl pixz pathsFromGraph importFromNixos rauc;
     inherit version;
     cert = ./system/rauc/cert.pem;
     key = ./system/rauc/key.pem;
-    inherit systemTarball;
+    toplevel = toplevels.system;
   };
 
   run-playos-in-vm = pkgs.substituteAll {
@@ -110,7 +84,7 @@ stdenv.mkDerivation {
   ''
   # RAUC bundle
   + pkgs.lib.optionalString buildBundle ''
-    ln -s ${raucBundle} $out/bundle-${version}.raucb
+    ln -s ${raucBundle} $out/playos-${version}.raucb
   '';
 
   shellHook = ''
