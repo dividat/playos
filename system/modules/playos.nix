@@ -1,7 +1,7 @@
 # This is the toplevel module for all PlayOS related functionalities.
 
 # Things that are injected into the system
-{pkgs, version, cert}:
+{pkgs, version, keyring}:
 
 
 {config, lib, ...}:
@@ -18,7 +18,7 @@ with lib;
       default = version;
     };
 
-    playos.cert = mkOption {
+    playos.keyring = mkOption {
       type = types.package;
     };
 
@@ -33,7 +33,7 @@ with lib;
     boot.loader.grub.enable = false;
 
     playos = {
-      inherit version cert;
+      inherit version keyring;
     };
   };
 }

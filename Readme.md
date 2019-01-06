@@ -8,10 +8,8 @@ See the [documentation](docs/arch) for more information.
 
 Running `nix build` will create following (in `result/`):
 
-- `system/`: System toplevel
-- `testing/`: System toplevel with test instrumentation
 - `bin/`: Tools
-- `playos-VERSION.raucb`: RAUC bundle that can be used to update systems. Note that it is signed with a dummy development key. Real deployments would resign the bundle with `rauc resign`.
+- `playos-VERSION-UNSIGNED.raucb`: RAUC bundle that can be used to update systems. Note that it is signed with a dummy development key. Real deployments would resign the bundle with `rauc resign`.
 - `playos-installer-VERSION.iso`: Bootable ISO image that can install the system.
 - `disk.img`: Preinstalled disk with bootloader, system partitions A/B and data partitions for testing (but without test instrumentation).
 

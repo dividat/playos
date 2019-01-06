@@ -1,13 +1,14 @@
 { stdenv, perl, pixz, pathsFromGraph
 , importFromNixos
 , rauc
-, version, cert
+, version
 , systemToplevel
 }:
 
 let
 
   testingKey = ../testing/pki/key.pem;
+  testingCert = ../testing/pki/cert.pem;
 
   systemTarball = (importFromNixos "lib/make-system-tarball.nix") {
     inherit stdenv perl pixz pathsFromGraph;
@@ -55,7 +56,7 @@ stdenv.mkDerivation {
     EOF
 
     rauc \
-      --cert ${cert} \
+      --cert ${testingCert} \
       --key ${testingKey} \
       bundle \
       $TEMP/rauc-bundle/ \

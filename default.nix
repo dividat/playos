@@ -13,7 +13,7 @@ in
 { buildInstaller ? true
 , buildBundle ? true
 , buildDisk ? true
-, cert ? pkgs.lib.warn "Using testing certificates. Build artifacts can only be used for local development." ./testing/pki/cert.pem
+, keyring ? pkgs.lib.warn "Using testing keyring. Build artifacts can only be used for local development." ./testing/pki/cert.pem
 }:
 
 with pkgs;
@@ -25,8 +25,8 @@ let
     # Set version
     version = "2018.12.0-dev";
 
-    # Certificate used to verify update bundles
-    cert = copyPathToStore cert;
+    # Keyring used to verify update bundles
+    keyring = copyPathToStore keyring;
 
     # NixOS system toplevel
     systemToplevel = callPackage ./system {};
@@ -74,7 +74,7 @@ stdenv.mkDerivation {
     patchShebangs $out/bin/run-playos-in-vm
 
     # Certificate that is installed on system
-    cp ${cert} $out/cert.pem
+    cp ${keyring} $out/cert.pem
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
