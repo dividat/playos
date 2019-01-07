@@ -27,6 +27,9 @@
       session = [
         { name = "chromium-kiosk";
           start = ''
+            # Disable screen-saver control (screen blanking)
+            xset s off
+
             # chromium sometimes fails to load properly if immediately started
             sleep 1
             # --window-size is a hack, see here: https://unix.stackexchange.com/questions/273989/how-can-i-make-chromium-start-full-screen-under-x
