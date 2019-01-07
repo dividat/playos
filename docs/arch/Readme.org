@@ -97,7 +97,10 @@ The machine-id is set on boot via the ~system.machine_id~ kernel argument and th
 
 The [[https://github.com/dividat/driver][Dividat Driver]], which handles connectivity between Dividat Play and Dividat Senso hardware, is installed and runs as a system service.
 
-** TODO Kiosk
+** Kiosk
+
+System automatically logs in the user ~play~, starts an X session and launches [[https://www.chromium.org/Home][chromium]] in a restricted mode pointing at Dividat Play.
+
 ** TODO PlayOS Controller
 
 The PlayOS Controller is a system daemon handling various system management tasks:

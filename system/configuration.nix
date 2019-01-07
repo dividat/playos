@@ -10,7 +10,7 @@ with lib;
     ./rauc
 
     # Play Kiosk and Driver
-    # ./play-kiosk.nix
+    ./play-kiosk.nix
 
     # Development helpers
     ./development.nix

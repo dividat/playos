@@ -23,11 +23,25 @@
     desktopManager = {
       xterm.enable = false;
       # "Boot to Gecko"
-      default = "firefox";
+      default = "chromium-kiosk";
       session = [
-        { name = "firefox";
+        { name = "chromium-kiosk";
           start = ''
-            ${pkgs.firefox}/bin/firefox https://play.dividat.com/
+            # chromium sometimes fails to load properly if immediately started
+            sleep 1
+            # --window-size is a hack, see here: https://unix.stackexchange.com/questions/273989/how-can-i-make-chromium-start-full-screen-under-x
+            ${pkgs.chromium}/bin/chromium \
+              --no-sandbox \
+              --no-first-run \
+              --noerrdialogs \
+              --start-fullscreen \
+              --start-maximized \
+              --window-size=9000,9000 \
+              --disable-notifications \
+              --disable-infobars \
+              --disable-save-password-bubble \
+              --autoplay-policy=no-user-gesture-required \
+              --kiosk https://play.dividat.com/
             waitPID=$!
           '';
         }
