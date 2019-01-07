@@ -16,6 +16,8 @@
 }:
 let
   systemClosureInfo = closureInfo { rootPaths = [ systemToplevel ]; };
+
+  python = python36.withPackages(ps: with ps; [pyparted]);
 in
 stdenv.mkDerivation {
   name = "install-playos-${version}";
@@ -23,11 +25,12 @@ stdenv.mkDerivation {
   src = substituteAll {
     src = ./install-playos.py;
     inherit grubCfg systemToplevel rescueSystem systemClosureInfo version;
+    inherit python;
   };
 
   buildInputs = [
     makeWrapper
-    (python36.withPackages(ps: with ps; [pyparted]))
+    python
   ];
 
   buildCommand = ''

@@ -77,10 +77,9 @@ stdenv.mkDerivation {
 
     cp ${components.run-playos-in-vm} $out/bin/run-playos-in-vm
     chmod +x $out/bin/run-playos-in-vm
-    patchShebangs $out/bin/run-playos-in-vm
 
     # Keyring that is installed on system
-    cp ${keyring} $out/cert.pem
+    ln -s ${keyring} $out/cert.pem
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
@@ -89,11 +88,8 @@ stdenv.mkDerivation {
   # RAUC bundle
   + lib.optionalString buildBundle ''
     ln -s ${components.unsignedRaucBundle} $out/playos-${components.version}-UNSIGNED.raucb
-
     cp ${components.deploy-playos-update} $out/bin/deploy-playos-update
     chmod +x $out/bin/deploy-playos-update
-    patchShebangs $out/bin/deploy-playos-update
-
   '';
 
 }

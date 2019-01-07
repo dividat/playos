@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!@python36@/bin/python
 
 import tempfile
 from contextlib import contextmanager
