@@ -10,6 +10,7 @@
 , closureInfo
 
 , systemToplevel
+, rescueSystem
 , grubCfg
 , version
 }:
@@ -21,7 +22,7 @@ stdenv.mkDerivation {
 
   src = substituteAll {
     src = ./install-playos.py;
-    inherit grubCfg systemToplevel systemClosureInfo version;
+    inherit grubCfg systemToplevel rescueSystem systemClosureInfo version;
   };
 
   buildInputs = [

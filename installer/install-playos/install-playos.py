@@ -13,6 +13,7 @@ PARTITION_SIZE_GB_DATA = 2
 
 GRUB_CFG = "@grubCfg@"
 SYSTEM_TOP_LEVEL = "@systemToplevel@"
+RESUCE_SYSTEM = "@rescueSystem@"
 SYSTEM_CLOSURE_INFO = "@systemClosureInfo@"
 VERSION = "@version@"
 
@@ -96,7 +97,7 @@ def _compute_geometries(device):
     esp = parted.Geometry(
         device=device,
         start=parted.sizeToSectors(8, "MB", sectorSize),
-        length=parted.sizeToSectors(256, "MB", sectorSize))
+        length=parted.sizeToSectors(550, "MB", sectorSize))
     data = parted.Geometry(
         device=device,
         start=esp.end + 1,
@@ -134,6 +135,12 @@ def install_bootloader(disk, machine_id):
             'machine_id=' + machine_id.hex
         ],
         check=True)
+
+    # Install the rescue system
+    os.makedirs('/mnt/boot/rescue', exist_ok=True)
+    shutil.copy2(RESUCE_SYSTEM + '/kernel', '/mnt/boot/rescue/kernel')
+    shutil.copy2(RESUCE_SYSTEM + '/initrd', '/mnt/boot/rescue/initrd')
+
     # Unmount to make this function idempotent.
     subprocess.run(['umount', '/mnt/boot'], check=True)
 

@@ -36,6 +36,9 @@ let
       grubCfg = ./bootloader/grub.cfg;
     };
 
+    # Rescue system
+    rescueSystem = callPackage ./bootloader/rescue {};
+
     # Installer ISO image
     installer = callPackage ./installer {};
 

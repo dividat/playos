@@ -43,8 +43,8 @@ Doing testing without low-level modules is not desirable. Those are exactly the 
 
 A PlayOS installation has 4 partitions:
 
-- EFI system partition (ESP): Contains bootloader and persistent system configuration data.
-- Data partition: For persistent user data.
+- EFI system partition (ESP): Contains bootloader, persistent system configuration data as well as a minimal [[*Rescue System][rescue system]].
+- Data partition: Contains persistent user data.
 - System partition A
 - System partition B
 
@@ -52,7 +52,7 @@ A PlayOS installation has 4 partitions:
    
 PlayOS can only boot in UEFI mode. [[https://www.gnu.org/software/grub/][GNU Grub]] is used as bootloader.
 
-The bootloader [[*Boot selection logic][chooses system to boot]] (A or B) based on persistent variables (GRUB environment variables on the EFI system partition). 
+The bootloader automatically [[*Boot selection logic][chooses system to boot]] (A or B) based on persistent variables (GRUB environment variables on the EFI system partition). Automatic selection can be interrupted by user pressing the ~<ESC>~ key.
 
 The bootloader boots the selected system by loading the kernel and initial ram disk from the [[*System partition][system partition]]. The bootloader passes the device the system partition is located on as well as the [[*Update Mechanism][RAUC]] slot as kernel arguments (e.g. ~root=/dev/by-label/system.a rauc.slot=a~).
 
@@ -146,9 +146,22 @@ If system ~x~ is considered to be running satisfactory the system is marked good
 
 Important system events should be logged to ~log.dividat.com~.
 
-** TODO Rescue System
+** Rescue System
 
-User data wiping (formatting the data partition) is a hassle when the system is already running (users need to be logged out, disk needs to be unmounted and then possibly the system reboots). An easier way of implementing this is to provide a Linux kernel and a minimal initial ram disk on the ESP that can be used to wipe data.
+A minimal Linux rescue system is installed on the ESP partition. It's main purpose is to wipe any user data by reformatting the data partition.
+
+The rescue system can be started by manually selecting the entry from the boot loader menu.
+
+#+CAPTION: Rescue System
+#+NAME:   fig:rescue-system
+#+attr_html: :width 800px
+[[../screenshots/rescue-system.png]]
+
+After booting a menu is shown where user can choose to wipe user data (reformat data partition), reboot, access a Linux shell or play a game.
+
+The rescue system consists of a Linux kernel and a initial ramdisk with an embedded squashfs containing the system software.
+
+Use cases for rescue system beside wiping user data are not clear. In general reinstalling the system completely is a safer way of restoring system functionality. Nevertheless RAUC and Grub utilities are installed.
 
 * Installer
   
