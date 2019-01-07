@@ -149,7 +149,13 @@ If system ~x~ is considered to be running satisfactory the system is marked good
 
 Important system events should be logged to ~log.dividat.com~.
 
-** Rescue System
+** Remote management
+
+In order to allow manual remote management, the system is connected to a private [[http://zerotier.com/][ZeroTier]] network and allows root access via SSH to special keys held by technical support staff.
+
+This feature is intended to weed out issues in early phases of deployment. Once system is considered stable this feature will be disabled.
+
+** Rescue system
 
 A minimal Linux rescue system is installed on the ESP partition. It's main purpose is to wipe any user data by reformatting the data partition.
 

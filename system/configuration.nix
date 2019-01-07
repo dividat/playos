@@ -7,10 +7,14 @@ with lib;
 {
 
   imports = [
-    ./rauc
-
     # Play Kiosk and Driver
     ./play-kiosk.nix
+
+    # Remote management
+    ./remote-management.nix
+
+    # Update Machinery
+    ./rauc
 
     # Development helpers
     ./development.nix
