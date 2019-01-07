@@ -7,7 +7,7 @@
   dataPartitionSize ? 5
 
 , # Size of system partition in GiB
-  systemPartitionSize ? 5
+  systemPartitionSize ? 10
 }:
 with lib;
 let

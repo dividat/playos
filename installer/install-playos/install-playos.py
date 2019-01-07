@@ -8,8 +8,8 @@ import argparse
 import parted
 import uuid
 
-PARTITION_SIZE_GB_SYSTEM = 5
-PARTITION_SIZE_GB_DATA = 2
+PARTITION_SIZE_GB_SYSTEM = 10
+PARTITION_SIZE_GB_DATA = 5
 
 GRUB_CFG = "@grubCfg@"
 SYSTEM_TOP_LEVEL = "@systemToplevel@"
