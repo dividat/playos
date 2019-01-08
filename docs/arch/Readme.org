@@ -43,7 +43,7 @@ Doing testing without low-level modules is not desirable. Those are exactly the 
 
 A PlayOS installation has 4 partitions:
 
-- EFI system partition (ESP): Contains bootloader, persistent system configuration data as well as a minimal [[*Rescue System][rescue system]].
+- EFI system partition (ESP): Contains bootloader, persistent system configuration data as well as a minimal [[*Rescue system][rescue system]].
 - Data partition: Contains persistent user data.
 - System partition A
 - System partition B
@@ -89,7 +89,7 @@ A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Document
 
 ** Machine ID
    
-Every machine is assigned a [[https://tools.ietf.org/html/rfc4122][Universal Unique IDentifier]] (machine-id) during installation. The machine-id is stored on the ~/boot~ partition and is persisted between [[*Update Mechanism][updates]] and [[*Rescue System][user data wiping]].
+Every machine is assigned a [[https://tools.ietf.org/html/rfc4122][Universal Unique IDentifier]] (machine-id) during installation. The machine-id is stored on the ~/boot~ partition and is persisted between [[*Update Mechanism][updates]] and [[*Rescue system][user data wiping]].
 
 The machine-id is set on boot via the ~system.machine_id~ kernel argument and then [[https://www.freedesktop.org/software/systemd/man/machine-id.html][handled by the init system]].
 
