@@ -23,7 +23,7 @@ let
   components = lib.makeScope newScope (self: with self; {
 
     # Set version
-    version = "2018.12.0-dev";
+    version = "2019.1.0-dev";
 
     # Keyring used to verify update bundles
     keyring = copyPathToStore keyring;
