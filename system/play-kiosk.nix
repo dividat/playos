@@ -1,11 +1,12 @@
 { config, pkgs, lib, ... }:
 {
 
-  # Configure kiosk user with home folder on /data
-
+  # Kiosk runs as a non-privileged user
   users.users.play = {
     isNormalUser = true;
     home = "/home/play";
+    # who can play audio.
+    extraGroups = [ "audio" ];
   };
 
   # Note that setting up "/home" as persistent fails due to https://github.com/NixOS/nixpkgs/issues/6481
@@ -71,6 +72,17 @@
     serviceConfig.User = "play";
     wantedBy = [ "multi-user.target" ];
   };
+
+  # Enable audio
+  hardware.pulseaudio.enable = true;
+
+  # Run PulseAudio as System-Wide daemon. See [1] for why this is in general a bad idea, but ok for our case.
+  # [1] https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/WhatIsWrongWithSystemWide/
+  hardware.pulseaudio.systemWide = true;
+
+  # Install a command line mixer
+  # TODO: remove when controlling audio works trough controller
+  environment.systemPackages = with pkgs; [ pamix pamixer ];
 
   # Enable avahi for Senso discovery
   services.avahi.enable = true;

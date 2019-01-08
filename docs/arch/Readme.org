@@ -145,6 +145,12 @@ Currently a systemd service is setup to mark the sytem as good. This should be d
 If system ~x~ is considered to be running satisfactory the system is marked good via RAUC, which resets the number of boot attempts (~x_TRY=0~) and marks the system bootable (~x_OK=1~) (see [[*Boot selection logic][boot selection logic]]).
 
 *** TODO Network configuration
+*** TODO Audio configuration
+
+Audio is handled with [[https://www.freedesktop.org/wiki/Software/PulseAudio/][PulseAudio]] running as a [[https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/SystemWide/][system-wide]] daemon.
+
+https://github.com/savonet/ocaml-pulseaudio
+
 *** TODO Logging Mechanism
 
 Important system events should be logged to ~log.dividat.com~.
