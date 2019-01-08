@@ -16,7 +16,6 @@
   };
 
   # Kiosk session
-
   services.xserver = {
     enable = true;
 
@@ -66,12 +65,17 @@
   };
 
   # Driver service
-
   systemd.services."dividat-driver" = {
     description = "Dividat Driver";
     serviceConfig.ExecStart = "${pkgs.dividat-driver}/bin/dividat-driver";
     serviceConfig.User = "play";
     wantedBy = [ "multi-user.target" ];
   };
+
+  # Enable avahi for Senso discovery
+  services.avahi.enable = true;
+
+  # Enable pcscd for smart card identification
+  services.pcscd.enable = true;
 
 }
