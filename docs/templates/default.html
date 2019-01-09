@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="$lang$" xml:lang="$lang$"$if(dir)$ dir="$dir$"$endif$>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+$for(author-meta)$
+  <meta name="author" content="$author-meta$" />
+$endfor$
+$if(date-meta)$
+  <meta name="dcterms.date" content="$date-meta$" />
+$endif$
+$if(keywords)$
+  <meta name="keywords" content="$for(keywords)$$keywords$$sep$, $endfor$" />
+$endif$
+  <title>$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$</title>
+  <style type="text/css">
+      body {
+        font-family: 'Helvetica', sans-serif;
+        font-size: 100%;
+      }
+
+      #content {
+        margin: 20px auto;
+        width: 750px;
+      }
+
+      #footer {
+        text-align: right;
+        font-size: 75%;
+      }
+
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+      dl>dt{font-weight: bold;}
+      figure{width:100%; margin:0;}
+      figure>img{max-width: 100%; }
+      figure>img.align-center{margin-left: auto; margin-right: auto; display: block;}
+      img.align-center+figcaption{text-align: center;}
+      .attention{background-color: #ffffdd;}
+      .admonition-title{font-weight: bold;}
+$if(quotes)$
+      q { quotes: "“" "”" "‘" "’"; }
+$endif$
+  </style>
+$if(highlighting-css)$
+  <style type="text/css">
+$highlighting-css$
+  </style>
+$endif$
+$for(css)$
+  <link rel="stylesheet" href="$css$">
+$endfor$
+$if(math)$
+  $math$
+$endif$
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+$for(header-includes)$
+  $header-includes$
+$endfor$
+</head>
+<body>
+$for(include-before)$
+$include-before$
+$endfor$
+$if(title)$
+<div id="content">
+<header>
+<svg version="1.1" id="logo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="150px" viewBox="0 0 521.936 136.668" enable-background="new 0 0 521.936 136.668" xml:space="preserve">
+<g>
+  <g>
+    <path fill="#183165" d="M2.423,1.169h36.384c34.484,0,53.48,21.333,53.48,51.142c0,29.955-18.851,50.703-53.334,50.703H2.423
+      V1.169z M37.638,86.503c26.74,0,36.384-14.758,36.384-34.192c0-19.872-9.645-34.63-36.53-34.63H20.688v68.822H37.638z"/>
+    <path fill="#183165" d="M104.099,10.375C104.099,4.53,108.921,0,114.62,0c5.551,0,10.374,4.53,10.374,10.375
+      S120.171,20.75,114.62,20.75C108.921,20.75,104.099,16.219,104.099,10.375z M105.852,29.37h17.534v51.728
+      c0,5.405,1.169,7.744,5.115,7.744c1.023,0,2.483-0.147,3.069-0.294v14.758c-1.315,0.585-4.238,1.17-8.768,1.17
+      c-9.206,0-16.95-3.944-16.95-18.703V29.37z"/>
+    <path fill="#183165" d="M135.244,29.37h18.119l20.895,49.974l20.748-49.974h18.12l-31.562,73.644h-14.758L135.244,29.37z"/>
+    <path fill="#183165" d="M223.981,10.375C223.981,4.53,228.804,0,234.503,0c5.551,0,10.374,4.53,10.374,10.375
+      s-4.822,10.375-10.374,10.375C228.804,20.75,223.981,16.219,223.981,10.375z M225.735,29.37h17.533v51.728
+      c0,5.405,1.169,7.744,5.116,7.744c1.022,0,2.482-0.147,3.068-0.294v14.758c-1.315,0.585-4.238,1.17-8.768,1.17
+      c-9.206,0-16.95-3.944-16.95-18.703V29.37z"/>
+    <path fill="#183165" d="M294.95,27.763c12.42,0,20.896,5.553,23.525,12.274V1.169h17.534v79.635c0,6.137,1.462,8.621,5.407,8.621
+      c1.021,0,2.63-0.146,3.652-0.292v14.173c-2.192,0.878-5.552,1.17-8.621,1.17c-3.215,0-7.013-0.438-10.229-2.339
+      c-2.339-1.605-4.968-4.236-5.991-8.912c-4.236,6.281-11.981,11.542-25.278,11.542c-20.748,0-36.822-16.657-36.822-38.575
+      C258.128,44.421,274.202,27.763,294.95,27.763z M297.289,88.695c12.711,0,22.501-9.645,22.501-22.502
+      c0-12.858-9.79-22.502-22.501-22.502c-12.421,0-21.772,9.644-21.772,22.502C275.516,79.05,284.868,88.695,297.289,88.695z"/>
+    <path fill="#FFD046" d="M389.636,27.763c12.42,0,20.896,5.553,23.525,12.274V29.37h17.535v51.434c0,6.137,1.461,8.621,5.405,8.621
+      c1.022,0,2.631-0.146,3.654-0.292v14.173c-2.193,0.878-5.553,1.17-8.622,1.17c-3.215,0-7.014-0.438-10.229-2.339
+      c-2.339-1.605-4.967-4.236-5.991-8.912c-4.237,6.281-11.981,11.542-25.278,11.542c-20.748,0-36.822-16.657-36.822-38.575
+      C352.814,44.421,368.888,27.763,389.636,27.763z M391.975,88.695c12.711,0,22.501-9.645,22.501-22.502
+      c0-12.858-9.79-22.502-22.501-22.502c-12.42,0-21.772,9.644-21.772,22.502C370.203,79.05,379.555,88.695,391.975,88.695z"/>
+    <path fill="#FFD046" d="M454.805,45.297h-9.206V29.37h9.206V1.169h17.533V29.37h16.221v15.927h-16.221v32.875
+      c0,8.038,2.924,10.961,9.206,10.961c1.899,0,3.946-0.146,6.138-0.585v15.636c-2.485,0.583-5.699,0.877-9.061,0.877
+      c-10.082,0-23.816-2.924-23.816-24.986V45.297z"/>
+  </g>
+  <path fill="#FFD046" d="M501.041,126.293c0-5.845,4.822-10.375,10.521-10.375c5.552,0,10.374,4.53,10.374,10.375
+    s-4.822,10.375-10.374,10.375C505.863,136.668,501.041,132.138,501.041,126.293z"/>
+  <path fill="#DDD4CC" d="M4.836,131.482c30.082,0,60.163,0,90.244,0c63.037,0,126.074,0,189.11,0c55.181,0,110.361,0,165.541,0
+    c12.368,0,24.736,0,37.104,0c6.448,0,6.448-10,0-10c-30.081,0-60.163,0-90.244,0c-63.037,0-126.073,0-189.11,0
+    c-55.181,0-110.361,0-165.542,0c-12.368,0-24.736,0-37.104,0C-1.612,121.482-1.612,131.482,4.836,131.482L4.836,131.482z"/>
+</g>
+</svg>
+
+
+<h1 class="title">$title$</h1>
+$if(subtitle)$
+<p class="subtitle">$subtitle$</p>
+$endif$
+$for(author)$
+<p class="author">$author$</p>
+$endfor$
+$if(date)$
+$if(version)$
+<p class="date">
+Version: <i>$version$</i><br>
+Date: <i>$date$</i>
+</p>
+$endif$
+$endif$
+</header>
+$endif$
+$if(toc)$
+<nav id="$idprefix$TOC">
+<h2>Table of Contents</h2>
+$table-of-contents$
+</nav>
+$endif$
+$body$
+$for(include-after)$
+$include-after$
+$endfor$
+</div>
+
+<div id="footer">
+  <hr>
+  <p>
+  <b>(c) 2019 | Dividat AG</b></br>
+  </p>
+  <p>
+  $if(title)$
+  $title$
+  $endif$
+  $if(date)$
+  $if(version)$
+  <i>$version$</i> <i>$date$</i>
+  $endif$
+  $endif$
+  </p>
+</div>
+
+</body>
+</html>

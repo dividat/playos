@@ -1,8 +1,8 @@
-#+TITLE: PlayOS
+#+TITLE: PlayOS: Architecture
 
 * Overview
   
-A custom Linux system for running Dividat Play.
+PlayOS is a custom Linux system for running Dividat Play. This document describes technical architecture of PlayOS.
 
 ** Background
 

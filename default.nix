@@ -25,6 +25,9 @@ let
     # Set version
     version = "2019.1.0-dev";
 
+    # Documentations
+    docs = callPackage ./docs {};
+
     # Keyring used to verify update bundles
     keyring = copyPathToStore keyring;
 
@@ -73,8 +76,9 @@ stdenv.mkDerivation {
   buildCommand = ''
     mkdir -p $out
 
-    mkdir -p $out/bin
+    ln -s ${components.docs} $out/docs
 
+    mkdir -p $out/bin
     cp ${components.run-playos-in-vm} $out/bin/run-playos-in-vm
     chmod +x $out/bin/run-playos-in-vm
 
