@@ -148,8 +148,6 @@ If system ~x~ is considered to be running satisfactory the system is marked good
 
 Manual configuration of Ethernet interfaces is currently not possible. Ethernet interfaces are configured to use DHCP and fall back to link-local address configuration. This allows plug-and-play connectivity to Dividat Senso (link-local) and networks using DHCP.
 
-NOTE: NetworkManager is a royal pain in the ass. Maybe something like [[https://01.org/connman][ConnMan]] might work better.
-
 *** TODO Audio configuration
 
 Audio is handled with [[https://www.freedesktop.org/wiki/Software/PulseAudio/][PulseAudio]] running as a [[https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/SystemWide/][system-wide]] daemon.

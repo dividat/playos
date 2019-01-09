@@ -24,16 +24,8 @@ with lib;
     device = "/dev/root";
   };
 
-  volatileRoot = {
-    persistentDataPartition.device = "/dev/disk/by-label/data";
-    persistentFolders = {
-      "/etc/NetworkManager/system-connections" = {
-        mode = "0700";
-        user = "root";
-        group = "root";
-      };
-    };
-  };
+  volatileRoot.persistentDataPartition.device = "/dev/disk/by-label/data";
+
 
   fileSystems = {
     "/boot" = {
@@ -76,22 +68,32 @@ with lib;
   # Enable non-free firmware
   hardware.enableRedistributableFirmware = true;
 
-  networking.hostName = "playos";
+  # Use ConnMan
+  networking = {
+    hostName = "playos";
+    connman = {
+      enable = true;
+      enableVPN = false;
+      networkInterfaceBlacklist = [ "vmnet" "vboxnet" "virbr" "ifb" "ve" "zt" ];
+      extraConfig = ''
+        [General]
+        AllowHostnameUpdates=false
+        AllowDomainnameUpdates=false
+      '';
+    };
+    # enable wpa_supplicant
+    wireless = {
+      enable = true;
+      # Add a dummy network to make sure that wpa_supplicant.conf is created (see https://github.com/NixOS/nixpkgs/issues/23196)
+      networks."12345-i-do-not-exist"= {};
+    };
+  };
 
-  # Use NetworkManager
-  networking.networkmanager.enable = true;
-
-  # Use dhcpcd which supports fallback to link-local addressing.
-  # NetworkManager per default does not fall back to link-local addressing (IPv4LL) [1].
-  # [1] https://mail.gnome.org/archives/networkmanager-list/2009-April/msg00073.html
-  networking.networkmanager.dhcp = "dhcpcd";
-
-  # TODO: remove debug
-  environment.etc."dhcpcd.conf".text = ''
-    debug
-  '';
-
-  # Use Google Public DNS as fallback
-  networking.networkmanager.appendNameservers = [ "8.8.8.8" "8.8.4.4" ];
+  # Make connman folder persistent
+  volatileRoot.persistentFolders."/var/lib/connman" = {
+    mode = "0700";
+    user = "root";
+    group = "root";
+  };
 
 }
