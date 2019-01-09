@@ -1,0 +1,11 @@
+#+TITLE: PlayOS: User manual
+
+* TODO Overview
+* TODO Installation
+** TODO How to setup EFI from BIOS
+* Usage
+** TODO Shutting down
+** TODO Configuring Network
+*** TODO Wireless
+*** TODO Ethernet
+** TODO Wiping user data
