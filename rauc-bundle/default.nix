@@ -10,6 +10,7 @@ let
   testingKey = ../testing/pki/key.pem;
   testingCert = ../testing/pki/cert.pem;
 
+  # TODO: Create tar ball used for RAUC bundle in one derivation. This will reduce disk space usage as the tarball alone is not (unnecessarily) stored in the nix store.
   systemTarball = (importFromNixos "lib/make-system-tarball.nix") {
     inherit stdenv perl pixz pathsFromGraph;
 
