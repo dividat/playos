@@ -56,9 +56,9 @@ def run_vm(system, qemu_opts, kernel_arguments):
         initrd = sp + '/initrd'
         virtfs_opts = 'local,path={},security_model=none,mount_tag=system,readonly'.format(
             sp)
-        print("system partition at: {}".format(sp))
-        print("Kernel arguments: {}".format(kernel_arguments))
-        print("Run  `socat STDIO,raw,echo=0,escape=27 UNIX:{}/backdoor` for a login prompt.".format(backdoor_dir))
+        print("\nsystem partition at:\n\t{}".format(sp))
+        print("Kernel arguments:\n\t{}".format(kernel_arguments))
+        print("Backdoor activated. Access console with following command:\n\tsocat STDIO,raw,echo=0,escape=27 UNIX:{}/backdoor".format(backdoor_dir))
         _qemu([
             '-kernel',
             kernel,
@@ -118,8 +118,7 @@ def run_disk(disk, qemu_opts=DEFAULT_QEMU_OPTS):
 def _qemu(opts):
     try:
         print("Staring QEMU:")
-        print(' '.join([QEMU_SYSTEM_X86_64] + opts))
-        print()
+        print('\t' + ' '.join([QEMU_SYSTEM_X86_64] + opts))
         subprocess.run([QEMU_SYSTEM_X86_64] + opts, check=True)
     except KeyboardInterrupt:
         pass
