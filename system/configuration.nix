@@ -96,4 +96,12 @@ with lib;
     group = "root";
   };
 
+  # Start controller
+  systemd.services.playos-controller = {
+    description = "PlayOS Controller";
+    serviceConfig.ExecStart = "${pkgs.playos-controller}/bin/playos-controller";
+    serviceConfig.User = "root";
+    wantedBy = [ "multi-user.target" ];
+  };
+
 }

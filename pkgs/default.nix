@@ -7,4 +7,7 @@ self: super: {
     inherit (super) stdenv fetchurl;
   };
 
+  playos-controller = (import ../controller) {
+    inherit (super) fetchFromGitHub;
+  };
 }

@@ -39,9 +39,6 @@ let
       grubCfg = ./bootloader/grub.cfg;
     };
 
-    # Controller
-    controller = callPackage ./controller {};
-
     # Rescue system
     rescueSystem = callPackage ./bootloader/rescue {};
 
