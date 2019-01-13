@@ -58,7 +58,7 @@ def run_vm(system, qemu_opts, kernel_arguments):
             sp)
         print("\nsystem partition at:\n\t{}".format(sp))
         print("Kernel arguments:\n\t{}".format(kernel_arguments))
-        print("Backdoor activated. Access console with following command:\n\tsocat STDIO,raw,echo=0,escape=27 UNIX:{}/backdoor".format(backdoor_dir))
+        print("Backdoor activated. Access console with following command:\n\tsocat STDIO,raw,echo=0,escape=0x03 UNIX:{}/backdoor".format(backdoor_dir))
         _qemu([
             '-kernel',
             kernel,
