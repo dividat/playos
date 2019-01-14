@@ -128,7 +128,10 @@ The RAUC bundle produced by the build system is signed by a dummy development/te
 **** TODO develop update delivery mechanism
 *** TODO Mark system as good
 
-Currently a systemd service is setup to mark the sytem as good. This should be done by the controller after making sure things are running ok.
+The controller can mark currently booted system as "good". But no checks are done. Following checks should be done:
+
+- Check that all system services have started properly
+- Check if driver is running
 
 If system ~x~ is considered to be running satisfactory the system is marked good via RAUC, which resets the number of boot attempts (~x_TRY=0~) and marks the system bootable (~x_OK=1~) (see [[*Boot selection logic][boot selection logic]]).
 

@@ -61,13 +61,23 @@ let server () =
     |> middleware (Opium.Middleware.debug)
   )
 
-
 let main () =
   Logs.set_reporter (Logging.reporter ());
   Logs.set_level (Some Logs.Debug);
-  Logs_lwt.info (fun m -> m "PlayOS Controller Daemon (%s) starting up." version) >>= fun () ->
-  server ()
-  |> Opium.App.start
+
+  let%lwt () = Logs_lwt.info (fun m -> m "PlayOS Controller Daemon (%s) starting up." version) in
+
+  (* Mark currently booted slot as "good" *)
+  let%lwt () = try%lwt
+      let%lwt daemon = Rauc.daemon () in
+      let%lwt _, msg = Rauc.Slot.mark_current_good daemon in
+      Logs_lwt.info (fun m -> m "RAUC: %s" msg)
+    with
+    | exn ->
+      Logs_lwt.err (fun m -> m "RAUC: %s" (Printexc.to_string exn))
+  in
+
+  server () |> Opium.App.start
 
 let () =
   Lwt_main.run (main ())

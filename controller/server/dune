@@ -2,4 +2,7 @@
  (name server)
  (public_name playos-controller)
  (modules server logging)
- (libraries opium lwt logs logs.fmt logs.lwt fpath tyxml))
+ (libraries lwt logs logs.fmt logs.lwt fpath
+  opium tyxml
+  rauc)
+ (preprocess (pps lwt_ppx)))

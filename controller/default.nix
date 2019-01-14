@@ -26,6 +26,7 @@ ocamlPackages.buildDunePackage rec {
     fpath
     tyxml
     cohttp-lwt
+    obus
 
     # api
     ezjsonm
