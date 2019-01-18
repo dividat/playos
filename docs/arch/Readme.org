@@ -139,11 +139,17 @@ If system ~x~ is considered to be running satisfactory the system is marked good
 
 Manual configuration of Ethernet interfaces is currently not possible. Ethernet interfaces are configured to use DHCP and fall back to link-local address configuration. This allows plug-and-play connectivity to Dividat Senso (link-local) and networks using DHCP.
 
-*** TODO Audio configuration
+*** TODO Audio
 
 Audio is handled with [[https://www.freedesktop.org/wiki/Software/PulseAudio/][PulseAudio]] running as a [[https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/SystemWide/][system-wide]] daemon.
 
+Controller should set default audo output to HDMI and set volume to maximum. User configuration of volume should be done through the HDMI display device (e.g. the TV).
+
 https://github.com/savonet/ocaml-pulseaudio
+
+**** TODO Bluetooth
+
+Functionality to connect to bluetooth audio devices (e.g. bluetooth headphone). This would require an additional D-Bus binding to [[http://www.bluez.org/][Bluez]] and an user interface for setting up device.
 
 *** TODO Logging Mechanism
 
