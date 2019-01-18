@@ -1,5 +1,8 @@
 open Lwt
+open Lwt.Infix
 open Rauc_interfaces
+
+let log_src = Logs.Src.create "rauc"
 
 let daemon () =
   let%lwt system_bus = OBus_bus.system () in
@@ -11,19 +14,65 @@ let proxy daemon =
 
 module Slot =
 struct
+  type t =
+    | SystemA
+    | SystemB
 
-  let current_boot_slot daemon =
-    OBus_property.make
-      De_pengutronix_rauc_Installer.p_BootSlot
-      (proxy daemon)
-    |> OBus_property.get
+  let of_string = function
+    | "a" -> SystemA
+    | "system.a" -> SystemA
+    | "b" -> SystemB
+    | "system.b" -> SystemB
+    | _ -> failwith "Unexpected slot identifier."
 
-  let mark_current_good daemon =
-    OBus_method.call
+  let string_of_t = function
+    | SystemA -> "system.a"
+    | SystemB -> "system.b"
+
+end
+
+type slot =
+  | SystemA
+  | SystemB
+
+let get_booted_slot daemon =
+  OBus_property.make
+    De_pengutronix_rauc_Installer.p_BootSlot
+    (proxy daemon)
+  |> OBus_property.get
+  >|= Slot.of_string
+
+let mark_good daemon slot =
+  let%lwt marked, msg = OBus_method.call
       De_pengutronix_rauc_Installer.m_Mark
       (proxy daemon)
-      ("good", "booted")
-end
+      ("good", slot |> Slot.string_of_t)
+  in
+  let%lwt () = Logs_lwt.info ~src:log_src (fun m -> m "%s" msg) in
+  if Slot.of_string marked == slot then
+    return_unit
+  else
+    Lwt.fail_with "Wrong slot marked good."
+
+let get_slot_status daemon =
+  OBus_method.call De_pengutronix_rauc_Installer.m_GetSlotStatus
+    (proxy daemon)
+    ()
+
+type boot_state =
+  | Booted
+  | Inactive
+
+type slot_status =
+  { device: string
+  ; boot_name: string
+  ; boot_state: boot_state
+  }
+
+type status =
+  { a: slot_status
+  ; b: slot_status
+  }
 
 
 (* Auto generated with obus-gen-client *)

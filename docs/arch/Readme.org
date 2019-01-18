@@ -109,13 +109,11 @@ PlayOS controller is implemented in [[https://ocaml.org/][OCaml]]. OCaml allows 
 
 *** TODO Update Mechanism
 
- The ~poc~ regularly checks for available updates. Updates are distributed as [[https://www.rauc.io/][RAUC]] [[https://rauc.readthedocs.io/en/latest/basic.html#update-artifacts-bundles][bundles]]. If an update is available the bundle is installed by RAUC.
-
-During installation of a new system on slot ~x~ the ~x_OK~ variable is set to ~0~, marking the system non-bootable. After successful installation, [[https://rauc.readthedocs.io/en/latest/reference.html#grub][RAUC sets]] the ~ORDER~ to contain ~x~ as first element and sets the number of tries to 0 (~x_TRY=0~) and marks the system bootable (~x_OK=1~). On next boot GRUB attempts to boot system ~x~ for 3 times before falling back to the next system in ~ORDER~ (see [[*Boot selection logic][boot selection logic]]).
+[[https://www.rauc.io/][RAUC]] is used as update client. Updates are distributed as RAUC [[https://rauc.readthedocs.io/en/latest/basic.html#update-artifacts-bundles][bundles]], that are installed on the inactive system partition. [[*Bundle verification][Bundle verification]], target system partition selection, atomic update and boot loader integration are handled by RAUC. Checking for available updates and downloading them is handled by the controller, which then invokes RAUC to complete installation.
 
 **** TODO How to compare versions
 
- A system partition can be updated while the other is running. The ~poc~ regularly checks for updates.
+A system partition can be updated while the other is running. The ~poc~ regularly checks for updates.
 
 **** Bundle verification
 
@@ -124,6 +122,10 @@ RAUC bundles are signed. Before installing an update RAUC will verify signature 
 The keyring to be installed on the system must be passed to the build system with the ~keyring~ argument. 
 
 The RAUC bundle produced by the build system is signed by a dummy development/testing key. The bundle needs to be [[https://rauc.readthedocs.io/en/latest/advanced.html#resigning-bundles][resigned]] before it can be deployed. The script ~deploy-playos-update~ automates this process.
+
+**** Installation
+
+During installation of a new system on slot ~x~ the ~x_OK~ variable is set to ~0~, marking the system non-bootable. After successful installation, [[https://rauc.readthedocs.io/en/latest/reference.html#grub][RAUC sets]] the ~ORDER~ to contain ~x~ as first element and sets the number of tries to 0 (~x_TRY=0~) and marks the system bootable (~x_OK=1~). On next boot GRUB attempts to boot system ~x~ for 3 times before falling back to the next system in ~ORDER~ (see [[*Boot selection logic][boot selection logic]]).
 
 **** TODO develop update delivery mechanism
 *** TODO Mark system as good
@@ -185,6 +187,7 @@ A bootable image is built that can be used to install systems. The installation 
 Reasons for using Python include the [[https://github.com/dcantrell/pyparted][pyparted]] bindings to the [[https://www.gnu.org/software/parted/][GNU parted]] library for partitioning.
 
 ** TODO Use rauc bundle during installation
+
 
 *** [2018-12-07 Fri] Initial experimentation
 

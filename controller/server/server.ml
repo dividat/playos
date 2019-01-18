@@ -69,9 +69,9 @@ let main () =
 
   (* Mark currently booted slot as "good" *)
   let%lwt () = try%lwt
-      let%lwt daemon = Rauc.daemon () in
-      let%lwt _, msg = Rauc.Slot.mark_current_good daemon in
-      Logs_lwt.info (fun m -> m "RAUC: %s" msg)
+      let%lwt rauc = Rauc.daemon () in
+      Rauc.get_booted_slot rauc
+      >>= Rauc.mark_good rauc
     with
     | exn ->
       Logs_lwt.err (fun m -> m "RAUC: %s" (Printexc.to_string exn))

@@ -1,7 +1,7 @@
 (library
  (name rauc)
  (modules rauc rauc_interfaces)
- (libraries obus)
+ (libraries obus logs logs.lwt)
  (preprocess (pps lwt_ppx)))
 
 (rule
