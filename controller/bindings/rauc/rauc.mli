@@ -9,7 +9,16 @@ module Slot : sig
     | SystemA
     | SystemB
 
-  type status [@@deriving sexp]
+  type status =
+    { device : string
+    ; class' : string
+    ; state : string
+    (* Fields that are only available when installed via RAUC (not from installer script)*)
+    ; version : string
+    ; sha256 : string
+    ; installed_timestamp : string
+    }
+  [@@deriving sexp]
 
 end
 
@@ -20,7 +29,11 @@ val get_booted_slot : t -> Slot.t Lwt.t
 val mark_good : t -> Slot.t -> unit Lwt.t
 
 (** Rauc status *)
-type status [@@deriving sexp]
+type status =
+  { a: Slot.status
+  ; b: Slot.status
+  }
+[@@deriving sexp]
 
 (** Encode status as json *)
 val json_of_status : status -> Ezjsonm.t

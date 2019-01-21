@@ -36,10 +36,9 @@ struct
     { device : string
     ; class' : string
     ; state : string
-    (* Fields that are only available when installed via RAUC (not from installer script)*)
-    ; version : string option
-    ; sha256 : string option
-    ; installed_timestamp : string option
+    ; version : string
+    ; sha256 : string
+    ; installed_timestamp : string
     }
   [@@deriving sexp]
 
@@ -83,20 +82,14 @@ let slot_status_of_obus
     let open OBus_value.V in
     match List.assoc_opt key o with
     | Some (Basic (String s)) -> s
-    | _ -> failwith (Format.sprintf "Could not get string from field %s." key)
-  in
-  let get_string_opt key o =
-    let open OBus_value.V in
-    match List.assoc_opt key o with
-    | Some (Basic (String s)) -> Some s
-    | _ -> None
+    | _ -> failwith (Format.sprintf "could not get string from field %s" key)
   in
   { device = get_string "device" o
   ; class' = get_string "class" o
   ; state = get_string "state" o
-  ; version = get_string_opt "version" o
-  ; sha256  = get_string_opt "sha256" o
-  ; installed_timestamp = get_string_opt "installed.timestamp" o
+  ; version = get_string "bundle.version" o
+  ; sha256  = get_string "sha256" o
+  ; installed_timestamp = get_string "installed.timestamp" o
   }
 
 let get_status daemon =

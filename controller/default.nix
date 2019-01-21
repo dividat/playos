@@ -25,7 +25,7 @@ ocamlPackages.buildDunePackage rec {
     logs
     fpath
     tyxml
-    cohttp-lwt
+    cohttp-lwt-unix
     obus
     semver
     sexplib

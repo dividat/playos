@@ -67,15 +67,17 @@ let server ~(rauc:Rauc.t) =
     |> middleware (Opium.Middleware.debug)
   )
 
+let update_url =
+  "http://192.168.122.1:9999/"
+
 let main () =
   Logs.set_reporter (Logging.reporter ());
   Logs.set_level (Some Logs.Debug);
 
-  let%lwt () = Logs_lwt.info (fun m -> m "PlayOS Controller Daemon (%s) starting up." version) in
+  let%lwt () = Logs_lwt.info (fun m -> m "PlayOS Controller Daemon (%s) starting up" version) in
 
   (* Connect with RAUC *)
   let%lwt rauc = Rauc.daemon () in
-
 
   (* Mark currently booted slot as "good" *)
   let%lwt () = try%lwt
@@ -89,14 +91,22 @@ let main () =
   let%lwt () = try%lwt
       Rauc.get_status rauc
       >|= Rauc.sexp_of_status
-      >|= Sexplib.Sexp.to_string
+      >|= Sexplib.Sexp.to_string_hum
       >>= Lwt_io.printl
     with
     | exn ->
       Logs_lwt.err (fun m -> m "RAUC: %s" (Printexc.to_string exn))
   in
 
-  server rauc |> Opium.App.start
+  (* All following promises should run forever. *)
+  let%lwt () =
+    Lwt.pick [
+      server rauc |> Opium.App.start
+    ; Update.start rauc update_url
+    ]
+  in
+
+  Logs_lwt.info (fun m -> m "terminating")
 
 let () =
   Lwt_main.run (main ())
