@@ -2,13 +2,17 @@
 , importFromNixos
 , rauc
 , version
+
 , systemToplevel
+, closureInfo
 }:
 
 let
 
   testingKey = ../testing/pki/key.pem;
   testingCert = ../testing/pki/cert.pem;
+
+  systemClosureInfo = closureInfo { rootPaths = [ systemToplevel ]; };
 
   # TODO: Create tar ball used for RAUC bundle in one derivation. This will reduce disk space usage as the tarball alone is not (unnecessarily) stored in the nix store.
   systemTarball = (importFromNixos "lib/make-system-tarball.nix") {
@@ -40,14 +44,30 @@ in
 stdenv.mkDerivation {
   name = "bundle-${version}.raucb";
 
-  buildInputs = [ rauc ];
+  buildInputs = [ rauc pixz ];
 
   buildCommand = ''
-    mkdir -p $TEMP/rauc-bundle
+    # First create tarball with system content
+    mkdir -p system
+    cd system
 
-    cp --dereference ${systemTarball} $TEMP/rauc-bundle/system.tar.xz
+    # Copy store content
+    mkdir -p nix/store
+    for i in $(< ${systemClosureInfo}/store-paths); do
+        cp -a "$i" ".$i"
+    done
 
-    cat <<EOF > $TEMP/rauc-bundle/manifest.raucm
+    # copy initrd, kernel and init
+    cp -a "${systemToplevel}/initrd" initrd
+    cp -a "${systemToplevel}/kernel" kernel
+    cp -a "${systemToplevel}/init" init
+
+    mkdir -p ../rauc-bundle
+    time tar --sort=name --mtime='@1' --owner=0 --group=0 --numeric-owner -c * | pixz > ../rauc-bundle/system.tar.xz
+
+    cd ..
+
+    cat <<EOF > ./rauc-bundle/manifest.raucm
       [update]
       compatible=Dividat Play Computer
       version=${version}
@@ -56,11 +76,11 @@ stdenv.mkDerivation {
       filename=system.tar.xz
     EOF
 
-    rauc \
+    time rauc \
       --cert ${testingCert} \
       --key ${testingKey} \
       bundle \
-      $TEMP/rauc-bundle/ \
+      ./rauc-bundle/ \
       $out
   '';
 
