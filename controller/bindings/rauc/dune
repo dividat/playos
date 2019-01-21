@@ -1,8 +1,8 @@
 (library
  (name rauc)
  (modules rauc rauc_interfaces)
- (libraries obus logs logs.lwt)
- (preprocess (pps lwt_ppx)))
+ (libraries obus logs logs.lwt ezjsonm sexplib)
+ (preprocess (pps lwt_ppx  ppx_sexp_conv)))
 
 (rule
  (targets rauc_interfaces.ml rauc_interfaces.mli)

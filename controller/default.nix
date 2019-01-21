@@ -27,8 +27,8 @@ ocamlPackages.buildDunePackage rec {
     tyxml
     cohttp-lwt
     obus
-
-    # api
+    semver
+    sexplib
     ezjsonm
 
     # client side

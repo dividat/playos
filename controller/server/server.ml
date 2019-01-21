@@ -51,11 +51,17 @@ let static () =
   Logs.debug (fun m -> m "static content dir: %s" static_dir);
   Opium.Middleware.static ~local_path:static_dir ~uri_prefix:"/static" ()
 
-let server () =
+let server ~(rauc:Rauc.t) =
   Opium.App.(
     empty
     |> port 3333
     |> get "/" (fun _ -> `Json (server_info |> Server_info.to_json) |> respond')
+    |> get "/rauc" (fun _ ->
+        Rauc.get_status rauc
+        >|= Rauc.json_of_status
+        >|= (fun x -> `Json x)
+        >|= respond
+      )
     |> get "/gui" (fun _ -> `Html gui |> respond')
     |> middleware (static ())
     |> middleware (Opium.Middleware.debug)
@@ -67,9 +73,12 @@ let main () =
 
   let%lwt () = Logs_lwt.info (fun m -> m "PlayOS Controller Daemon (%s) starting up." version) in
 
+  (* Connect with RAUC *)
+  let%lwt rauc = Rauc.daemon () in
+
+
   (* Mark currently booted slot as "good" *)
   let%lwt () = try%lwt
-      let%lwt rauc = Rauc.daemon () in
       Rauc.get_booted_slot rauc
       >>= Rauc.mark_good rauc
     with
@@ -77,7 +86,17 @@ let main () =
       Logs_lwt.err (fun m -> m "RAUC: %s" (Printexc.to_string exn))
   in
 
-  server () |> Opium.App.start
+  let%lwt () = try%lwt
+      Rauc.get_status rauc
+      >|= Rauc.sexp_of_status
+      >|= Sexplib.Sexp.to_string
+      >>= Lwt_io.printl
+    with
+    | exn ->
+      Logs_lwt.err (fun m -> m "RAUC: %s" (Printexc.to_string exn))
+  in
+
+  server rauc |> Opium.App.start
 
 let () =
   Lwt_main.run (main ())

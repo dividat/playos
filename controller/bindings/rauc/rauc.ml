@@ -1,8 +1,11 @@
 open Lwt
 open Lwt.Infix
+open Sexplib.Std
 open Rauc_interfaces
 
 let log_src = Logs.Src.create "rauc"
+
+type t = OBus_peer.Private.t
 
 let daemon () =
   let%lwt system_bus = OBus_bus.system () in
@@ -29,11 +32,19 @@ struct
     | SystemA -> "system.a"
     | SystemB -> "system.b"
 
+  type status =
+    { device : string
+    ; class' : string
+    ; state : string
+    (* Fields that are only available when installed via RAUC (not from installer script)*)
+    ; version : string option
+    ; sha256 : string option
+    ; installed_timestamp : string option
+    }
+  [@@deriving sexp]
+
 end
 
-type slot =
-  | SystemA
-  | SystemB
 
 let get_booted_slot daemon =
   OBus_property.make
@@ -54,25 +65,49 @@ let mark_good daemon slot =
   else
     Lwt.fail_with "Wrong slot marked good."
 
-let get_slot_status daemon =
-  OBus_method.call De_pengutronix_rauc_Installer.m_GetSlotStatus
-    (proxy daemon)
-    ()
-
-type boot_state =
-  | Booted
-  | Inactive
-
-type slot_status =
-  { device: string
-  ; boot_name: string
-  ; boot_state: boot_state
-  }
-
 type status =
-  { a: slot_status
-  ; b: slot_status
+  { a: Slot.status
+  ; b: Slot.status
   }
+[@@deriving sexp]
+
+let json_of_status status =
+  status
+  |> sexp_of_status
+  |> Ezjsonm.t_of_sexp
+
+(* Helper to decode Slot.status from OBus *)
+let slot_status_of_obus
+    (o:(string * OBus_value.V.single) list) : Slot.status =
+  let get_string key o =
+    let open OBus_value.V in
+    match List.assoc_opt key o with
+    | Some (Basic (String s)) -> s
+    | _ -> failwith (Format.sprintf "Could not get string from field %s." key)
+  in
+  let get_string_opt key o =
+    let open OBus_value.V in
+    match List.assoc_opt key o with
+    | Some (Basic (String s)) -> Some s
+    | _ -> None
+  in
+  { device = get_string "device" o
+  ; class' = get_string "class" o
+  ; state = get_string "state" o
+  ; version = get_string_opt "version" o
+  ; sha256  = get_string_opt "sha256" o
+  ; installed_timestamp = get_string_opt "installed.timestamp" o
+  }
+
+let get_status daemon =
+  let%lwt status_assoc = OBus_method.call De_pengutronix_rauc_Installer.m_GetSlotStatus
+      (proxy daemon)
+      ()
+  in
+  { a = slot_status_of_obus (List.assoc "system.a" status_assoc)
+  ; b = slot_status_of_obus (List.assoc "system.b" status_assoc)
+  }
+  |> return
 
 
 (* Auto generated with obus-gen-client *)

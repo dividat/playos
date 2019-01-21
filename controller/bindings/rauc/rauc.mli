@@ -1,4 +1,4 @@
-open OBus_peer.Private
+type t = OBus_peer.Private.t
 
 (** [daemon ()] returns the peer object for the RAUC service/daemon *)
 val daemon : unit -> t Lwt.t
@@ -9,11 +9,21 @@ module Slot : sig
     | SystemA
     | SystemB
 
+  type status [@@deriving sexp]
+
 end
 
-
+(** [get_booted_slot rauc] returns the currently booted slot *)
 val get_booted_slot : t -> Slot.t Lwt.t
 
+(** [mark_good rauc slot] marks the slot [slot] as good*)
 val mark_good : t -> Slot.t -> unit Lwt.t
 
-val get_slot_status : t -> ( string * (string * OBus_value.V.single) list ) list Lwt.t
+(** Rauc status *)
+type status [@@deriving sexp]
+
+(** Encode status as json *)
+val json_of_status : status -> Ezjsonm.t
+
+(** [get_status rauc] returns current RAUC status *)
+val get_status : t -> status Lwt.t
