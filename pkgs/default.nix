@@ -10,4 +10,6 @@ self: super: {
   playos-controller = (import ../controller) {
     inherit (super) fetchFromGitHub;
   };
+
+  playos-kiosk-browser = (import ../kiosk);
 }
