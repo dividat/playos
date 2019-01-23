@@ -7,6 +7,8 @@ import shutil
 import argparse
 import parted
 import uuid
+import configparser
+from datetime import datetime
 
 PARTITION_SIZE_GB_SYSTEM = 10
 PARTITION_SIZE_GB_DATA = 5
@@ -116,6 +118,8 @@ def _compute_geometries(device):
 
 
 def install_bootloader(disk, machine_id):
+    """ Install bootloader and rescue system
+    """
     esp = disk.partitions[0]
     subprocess.run(['mkfs.vfat', '-n', 'ESP', esp.path], check=True)
     os.makedirs('/mnt/boot', exist_ok=True)
@@ -145,10 +149,41 @@ def install_bootloader(disk, machine_id):
     subprocess.run(['umount', '/mnt/boot'], check=True)
 
 
-def _install_system(partitionPath, label):
+def add_rauc_status_entries(esp, slot_name):
+    """ Add metadata about installation to status.ini file """
+    # Mount ESP
+    subprocess.run(['mount', esp, '/mnt/boot'], check=True)
+
+    # Read existing status file
+    status = configparser.ConfigParser()
+    status.read('/mnt/boot/status.ini')
+
+    # Add version and installation timestamp
+    status["slot." + slot_name] = {
+        'bundle.version': VERSION,
+        'installed.timestamp': datetime.now().isoformat()
+    }
+
+    # Write status file
+    with open('/mnt/boot/status.ini', 'w') as status_file:
+        status.write(status_file)
+
+    # Unmount ESP
+    subprocess.run(['umount', '/mnt/boot'], check=True)
+
+
+def install_system(partitionPath, label):
+    """ Create filesystem on system partition and copy nix store plus toplevel files
+    """
+
+    # Create filesystem
     subprocess.run(['mkfs.ext4', '-F', '-L', label, partitionPath], check=True)
+
+    # Mount system partition
     os.makedirs('/mnt/system', exist_ok=True)
     subprocess.run(['mount', partitionPath, '/mnt/system'], check=True)
+
+    # Copy Nix store content
     os.makedirs('/mnt/system/nix/store', exist_ok=True)
     with open(SYSTEM_CLOSURE_INFO + '/store-paths', 'r') as store_paths_file:
         store_paths = store_paths_file.read().splitlines()
@@ -162,24 +197,36 @@ def _install_system(partitionPath, label):
             check=True,
             stdin=status.stdout)
         read.wait()
-    subprocess.run(
-        ['cp', '-av', SYSTEM_TOP_LEVEL + '/initrd', '/mnt/system/initrd'],
-        check=True)
+
+    # Copy kernel, initrd and init
     subprocess.run(
         ['cp', '-av', SYSTEM_TOP_LEVEL + '/kernel', '/mnt/system/kernel'],
         check=True)
     subprocess.run(
+        ['cp', '-av', SYSTEM_TOP_LEVEL + '/initrd', '/mnt/system/initrd'],
+        check=True)
+    subprocess.run(
         ['cp', '-av', SYSTEM_TOP_LEVEL + '/init', '/mnt/system/init'],
         check=True)
+
+    # Unmount system partition
     subprocess.run(['umount', '/mnt/system'])
 
 
 def install(disk):
+    """ Install to already partitioned disk """
+    # Create data partition filesystem
     dataPartition = disk.partitions[1]
     subprocess.run(
         ['mkfs.ext4', '-F', '-L', 'data', dataPartition.path], check=True)
-    _install_system(disk.partitions[2].path, 'system.a')
-    _install_system(disk.partitions[3].path, 'system.b')
+
+    # Install system.a
+    install_system(disk.partitions[2].path, 'system.a')
+    add_rauc_status_entries(disk.partitions[0].path, 'system.a')
+
+    # Install system.b
+    install_system(disk.partitions[3].path, 'system.b')
+    add_rauc_status_entries(disk.partitions[0].path, 'system.b')
 
 
 # from http://code.activestate.com/recipes/577058/
@@ -223,21 +270,33 @@ def confirm(device, machine_id, no_confirm):
 
 
 def _main(opts):
+    # Detect device to install to
     device = find_device(opts.device)
+
+    # Ensure machine-id exists and is valid
     machine_id = _ensure_machine_id(opts.machine_id)
+
+    # Confirm installation
     if confirm(device, machine_id, no_confirm=opts.no_confirm):
+
         # Create a partitioned disk
         disk = create_partitioning(device)
+
         # Write partition to disk. WARNING: This partitions your drive!
         commit(disk)
+
         # Install bootloader
         install_bootloader(disk, machine_id)
+
         # Install system
         install(disk)
+
+        # And optionally reboot system
         if opts.reboot:
             subprocess.run(['reboot'])
         else:
             print("Done. Please reboot.")
+
         exit(0)
 
 

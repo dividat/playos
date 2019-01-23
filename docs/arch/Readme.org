@@ -186,33 +186,33 @@ A bootable image is built that can be used to install systems. The installation 
 
 Reasons for using Python include the [[https://github.com/dcantrell/pyparted][pyparted]] bindings to the [[https://www.gnu.org/software/parted/][GNU parted]] library for partitioning.
 
-** TODO Use rauc bundle during installation
+** TODO Use RAUC bundle during installation
 
+Currently installation script copies the target system directly from the Nix store. This allows for more efficient creation of disk images for testing as the system to be installed only is copied to a disk or bundle once. The disadvantage is that initial installation is different than updating a system with RAUC.
 
-*** [2018-12-07 Fri] Initial experimentation
+One way in which this difference manifests itself is that RAUC writes certain meta-data to the ~/boot/status.ini~ file which is required by the [[*Update Mechanism][update mechanism implemented by the controller]]. On initial installation this meta-data is written by the installation script, impersonating RAUC.
 
-- Not compressing system tarball with xz increases size of rauc bundle from 180MB to 280MB (no X system).
-- Rauc has [[https://rauc.readthedocs.io/en/latest/examples.html#write-slots-without-update-mechanics][write-slot]] option that can write an image to a slot. This still requires rauc to be properly configured on installation system (it needs to know about slots).
-- Using Rauc nicely makes the installer script more complicated. Currently not worth the effort.
-- Another idea: use rauc bundle but bypass rauc (bundle is just a squashfs image). However crypthographic verification of bundle is also bypassed.
+Some work has been done towards using RAUC bundles during installation:
 
-*** [2019-01-18 Fri] More thoughts
-
-- Maybe using RAUC nicely is not such a bad idea, as then version information is correctly set. And having a working RAUC is very useful. Also from rescue system.
-
-*** [2019-01-21 Mon] Another try
-
-- RAUC bundle creation is more efficient now and installing with RAUC is fast (i.e. ~rauc install~).
-- Attempted to use ~rauc install~ with ~--conf~ option:
-  #+BEGIN_SRC shell
-  Error creating proxy: Could not connect: No such file or directory
-  D-Bus error while installing `/nix/store/75zbfm75ymvxq9cn5bqvp4hfxiwrx9kc-bundle-2019.1.0-dev.raucb`
-  Error creating proxy: Could not connect: No such file or directory
-  D-Bus error while installing `/nix/store/75zbfm75ymvxq9cn5bqvp4hfxiwrx9kc-bundle-2019.1.0-dev.raucb`
-  #+END_SRC
-  Fails as RAUC needs to have D-Bus access which requires system configuration not present in the installer or the environment used to create the testing disk image.
-- Mounting the RAUC bundle and simply untaring also failed: ~mount: /mnt/rauc-bundle: mount failed: Operation not permitted.~. Me thinks the minimal Linux kernel used does not have squashfs suport.
-- Using the bundle for installation would be very nice as certain RAUC meta data is set properly (installed version, etc.) and also makes difference between fresh install and updated system smaller. Running RAUC (with proper D-Bus setup) on installer system is feasible. Currently the test disk image is created with the same installation script as is on the installer. If the installation script would require a fully running RAUC, then the disk creation would have to be adapted to either use a more complete Linux system (possibly the installer - making creation of the test disk very slow) or not use the installation script (not the idea of the testing disk). Further pondering required.
+- [2018-12-07 Fri] Initial experimentation
+  - Not compressing system tarball with xz increases size of rauc bundle from 180MB to 280MB (no X system).
+  - Rauc has [[https://rauc.readthedocs.io/en/latest/examples.html#write-slots-without-update-mechanics][write-slot]] option that can write an image to a slot. This still requires rauc to be properly configured on installation system (it needs to know about slots).
+  - Using Rauc nicely makes the installer script more complicated. Currently not worth the effort.
+  - Another idea: use rauc bundle but bypass rauc (bundle is just a squashfs image). However crypthographic verification of bundle is also bypassed.
+- [2019-01-18 Fri] More thoughts
+  - Maybe using RAUC nicely is not such a bad idea, as then version information is correctly set. And having a working RAUC is very useful. Also from rescue system.
+- [2019-01-21 Mon] Another try
+  - RAUC bundle creation is more efficient now and installing with RAUC is fast (i.e. ~rauc install~).
+  - Attempted to use ~rauc install~ with ~--conf~ option:
+    #+BEGIN_SRC shell
+    Error creating proxy: Could not connect: No such file or directory
+    D-Bus error while installing `/nix/store/75zbfm75ymvxq9cn5bqvp4hfxiwrx9kc-bundle-2019.1.0-dev.raucb`
+    Error creating proxy: Could not connect: No such file or directory
+    D-Bus error while installing `/nix/store/75zbfm75ymvxq9cn5bqvp4hfxiwrx9kc-bundle-2019.1.0-dev.raucb`
+    #+END_SRC
+    Fails as RAUC needs to have D-Bus access which requires system configuration not present in the installer or the environment used to create the testing disk image.
+  - Mounting the RAUC bundle and simply untaring also failed: ~mount: /mnt/rauc-bundle: mount failed: Operation not permitted.~. Me thinks the minimal Linux kernel used does not have squashfs suport.
+  - Using the bundle for installation would be very nice as certain RAUC meta data is set properly (installed version, etc.) and also makes difference between fresh install and updated system smaller. Running RAUC (with proper D-Bus setup) on installer system is feasible. Currently the test disk image is created with the same installation script as is on the installer. If the installation script would require a fully running RAUC, then the disk creation would have to be adapted to either use a more complete Linux system (possibly the installer - making creation of the test disk very slow) or not use the installation script (not the idea of the testing disk). Further pondering required.
 
 ** TODO Check for latest version of bundle over network
 ** TODO Check for already installed system and preserve [[*Machine ID][machine-id]]

@@ -37,7 +37,6 @@ struct
     ; class' : string
     ; state : string
     ; version : string
-    ; sha256 : string
     ; installed_timestamp : string
     }
   [@@deriving sexp]
@@ -88,7 +87,6 @@ let slot_status_of_obus
   ; class' = get_string "class" o
   ; state = get_string "state" o
   ; version = get_string "bundle.version" o
-  ; sha256  = get_string "sha256" o
   ; installed_timestamp = get_string "installed.timestamp" o
   }
 

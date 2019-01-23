@@ -15,7 +15,6 @@ module Slot : sig
     ; state : string
     (* Fields that are only available when installed via RAUC (not from installer script)*)
     ; version : string
-    ; sha256 : string
     ; installed_timestamp : string
     }
   [@@deriving sexp]
