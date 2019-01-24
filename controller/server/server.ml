@@ -51,16 +51,27 @@ let static () =
   Logs.debug (fun m -> m "static content dir: %s" static_dir);
   Opium.Middleware.static ~local_path:static_dir ~uri_prefix:"/static" ()
 
-let server ~(rauc:Rauc.t) =
+let server
+    ~(rauc:Rauc.t)
+    ~(update_s: Update.state Lwt_react.signal) =
   Opium.App.(
     empty
     |> port 3333
     |> get "/" (fun _ -> `Json (server_info |> Server_info.to_json) |> respond')
     |> get "/rauc" (fun _ ->
         Rauc.get_status rauc
-        >|= Rauc.json_of_status
-        >|= (fun x -> `Json x)
+        >|= Rauc.sexp_of_status
+        >|= Sexplib.Sexp.to_string_hum
+        >|= (fun x -> `String x)
         >|= respond
+      )
+    |> get "/update" (fun _ ->
+        update_s
+        |> Lwt_react.S.value
+        |> Update.sexp_of_state
+        |> Sexplib.Sexp.to_string_hum
+        |> (fun s -> `String s)
+        |> respond'
       )
     |> get "/gui" (fun _ -> `Html gui |> respond')
     |> middleware (static ())
@@ -98,11 +109,13 @@ let main () =
       Logs_lwt.err (fun m -> m "RAUC: %s" (Printexc.to_string exn))
   in
 
+  let update_s, update_p = Update.start ~rauc ~update_url in
+
   (* All following promises should run forever. *)
   let%lwt () =
     Lwt.pick [
-      server rauc |> Opium.App.start
-    ; Update.start rauc update_url
+      server ~rauc ~update_s |> Opium.App.start
+    ; update_p
     ]
   in
 
