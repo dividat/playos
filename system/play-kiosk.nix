@@ -29,9 +29,10 @@
             # Disable screen-saver control (screen blanking)
             xset s off
 
-            export PRIMARY_URL=https://play.dividat.com/ \
-                   SECONDARY_URL=https://www.dividat.com/
-            ${pkgs.playos-kiosk-browser}/bin/kiosk-browser
+            ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
+              https://play.dividat.com/ \
+              http://localhost:3000/gui/
+
             waitPID=$!
           '';
         }

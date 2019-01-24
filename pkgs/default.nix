@@ -11,5 +11,5 @@ self: super: {
     inherit (super) fetchFromGitHub;
   };
 
-  playos-kiosk-browser = (import ../kiosk);
+  playos-kiosk-browser = self.callPackage ../kiosk {};
 }

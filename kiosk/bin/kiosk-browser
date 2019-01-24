@@ -8,30 +8,26 @@ from kiosk_browser import KioskBrowser
 default_togglekey='CTRL+SHIFT+F12'
 
 parser = argparse.ArgumentParser(prog='kiosk-browser',
-        usage='PRIMARY_URL=foo SECONDARY_URL=baz %(prog)s',
         description='Open two toggable websites in kiosk mode.',
         epilog='Additional browser debugging environment variables can be found under https://doc.qt.io/qt-5/qtwebengine-debugging.html')
 
 parser.add_argument('--togglekey', dest='togglekey',
                     default=default_togglekey,
-                    help='Keyboard combination to toggle between websites. (Default: "%s")'%default_togglekey)
+                    help='Keyboard combination to toggle between primary and secondary websites. (Default: "%s")'%default_togglekey)
+
+parser.add_argument('PRIMARY_URL', help='Primary URL to load.')
+parser.add_argument('SECONDARY_URL', help='Secondary URL to load.')
 
 args = parser.parse_args()
 
-primary_url = os.environ.get('PRIMARY_URL')
-secondary_url = os.environ.get('SECONDARY_URL')
+# try:
+browser = KioskBrowser()
+browser.toggleKey(args.togglekey)
+browser.addUrl(args.PRIMARY_URL)
+browser.addUrl(args.SECONDARY_URL)
+browser.open()
 
-if not primary_url or not secondary_url:
-  parser.error('Required environment variables where not specified.')
-
-try:
-  browser = KioskBrowser()
-  browser.toggleKey(args.togglekey)
-  browser.addUrl(primary_url)
-  browser.addUrl(secondary_url)
-  browser.open()
-
-except InvalidUrl as error:
-  parser.error(error)
-except NoUrl as error:
-  parser.error(error)
+# except InvalidUrl as error:
+#   parser.error(error)
+# except NoUrl as error:
+#   parser.error(error)
