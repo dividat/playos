@@ -45,7 +45,7 @@ class KioskBrowser:
 
     self._app = QApplication(sys.argv)
     self._view = KioskBrowserWidget(urls=self._urls, toggle_sequence=self._toggle_sequence)
-    # self._view.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+    self._view.setContextMenuPolicy(Qt.NoContextMenu)
 
     if fullscreen:
       self._fullscreen()
