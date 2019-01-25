@@ -100,6 +100,26 @@ let get_status daemon =
   }
   |> return
 
+let install daemon source =
+  let proxy = proxy daemon in
+  let%lwt completed_e =
+    OBus_signal.map
+      (fun result ->
+         let result = Int32.to_int result in
+         result)
+      (OBus_signal.make
+         De_pengutronix_rauc_Installer.s_Completed proxy)
+    |> OBus_signal.connect
+  in
+  let%lwt () =
+    OBus_method.call De_pengutronix_rauc_Installer.m_Install proxy source
+  in
+  match%lwt Lwt_react.E.next completed_e with
+  | 0 ->
+    return_unit
+  | exit_code ->
+    Lwt.fail_with
+      (Format.sprintf "installing bundle (%s) failed with exit code %d" source exit_code)
 
 (* Auto generated with obus-gen-client *)
 module De_pengutronix_rauc_Installer : sig

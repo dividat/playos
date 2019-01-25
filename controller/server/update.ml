@@ -30,7 +30,7 @@ let semver_of_string string =
     failwith
       (Format.sprintf "could not parse version (version string: %s)" string)
   | Some version ->
-    version, string
+    version, string |> String.trim
 
 (** Get latest version available at [url] *)
 let get_latest_version url =
@@ -75,21 +75,26 @@ let get_version_info url rauc =
       |> return
   ) |> Lwt_result.catch
 
+let latest_download_url ~update_url version_string =
+  let bundle = Format.sprintf "playos-%s.raucb" version_string in
+  Format.sprintf "%s/%s/%s" update_url version_string bundle
 
 (** download RAUC bundle *)
-let download ~update_url ~version =
+let download ~url ~version =
   let bundle = Format.sprintf "playos-%s.raucb" version in
   (* TODO: save bundle to a more sensible location *)
   let bundle_path = Format.sprintf "/tmp/%s" bundle in
-  let url = Format.sprintf "%s/%s/%s" update_url version bundle in
   let command =
-    "", [| "curl"
-         ; url
-         (* resume download *)
-         ; "-C"; "-"
-         (* limit download speed *)
-         ; "--limit-rate"; "2M"
-         ; "-o"; bundle_path |]
+    "/run/current-system/sw/bin/curl",
+    [| "curl"; url
+     (* resume download *)
+     ; "-C"; "-"
+     (* limit download speed *)
+     ; "--limit-rate"; "10M"
+     ; "-o"; bundle_path |]
+  in
+  let%lwt () =
+    Logs_lwt.debug (fun m -> m "download command: %s" (command |> snd |> Array.to_list |> String.concat " "))
   in
   match%lwt Lwt_process.exec
               ~stdout:`Dev_null
@@ -97,19 +102,26 @@ let download ~update_url ~version =
               command with
   | Unix.WEXITED 0 ->
     return bundle_path
+  | Unix.WEXITED exit_code ->
+    Lwt.fail_with
+      (Format.sprintf "could not download RAUC bundle (exit code: %d)" exit_code)
   | _ ->
     Lwt.fail_with "could not download RAUC bundle"
 
 
 (* Update mechanism process *)
+
 type state =
   | GettingVersionInfo
   | ErrorGettingVersionInfo of string
-  | Uptodate of version_info
-  | Downloading of version_info
+  | UpToDate of version_info
+  | Downloading of {url: string; version: string}
   | ErrorDownloading of string
   | Installing of string
+  | ErrorInstalling of string
+  | RebootRequired
 [@@deriving sexp]
+
 
 (** Finite state machine handling updates *)
 let rec run ~update_url ~rauc ~set_state =
@@ -119,52 +131,56 @@ let rec run ~update_url ~rauc ~set_state =
   in
   function
   | GettingVersionInfo ->
+    (* get version information and decide what to do *)
     (match%lwt get_version_info update_url rauc with
      | Ok version_info ->
-       let%lwt () =
-         Logs_lwt.debug ~src:log_src
-           (fun m -> m "version information: %s"
-               (version_info
-                |> sexp_of_version_info
-                |> Sexplib.Sexp.to_string_hum))
-       in
        let version_compare = Semver.compare
            (fst version_info.latest)
            (fst version_info.inactive) in
        if version_compare == 0 then
-         (*TODO: check if booted < inactive and then set state to RebootRequired *)
-         Uptodate version_info
-         |> set
+         (* check if booted < inactive and then set state to RebootRequired *)
+         (if Semver.compare
+             (fst version_info.booted)
+             (fst version_info.inactive) < 0 then
+            RebootRequired
+            |> set
+          else
+            UpToDate version_info
+            |> set
+         )
        else if version_compare > 0 then
-         Downloading version_info
+         let latest_version = version_info.latest |> snd in
+         let url = latest_download_url ~update_url latest_version in
+         Downloading {url = url; version = latest_version}
          |> set
        else
          ErrorGettingVersionInfo "latest available version is less than installed version"
          |> set
 
      | Error exn ->
-       let%lwt () =
-         Logs_lwt.err ~src:log_src
-           (fun m -> m "failed to get version information (%s)"
-               (Printexc.to_string exn))
-       in
        ErrorGettingVersionInfo (Printexc.to_string exn)
        |> set
     )
 
-  | ErrorGettingVersionInfo _ ->
-    (* Wait for 30 seconds and retry *)
+  | ErrorGettingVersionInfo msg ->
+    (* handle error while getting version information *)
+    let%lwt () =
+      Logs_lwt.err ~src:log_src
+        (fun m -> m "failed to get version information: %s" msg)
+    in
+    (* wait for 30 seconds and retry *)
     let%lwt () = Lwt_unix.sleep 30.0 in
     set GettingVersionInfo
 
-  | Uptodate version_info ->
-    (* Wait for 6 of hours and recheck *)
-    let%lwt () = Lwt_unix.sleep (6. *. 60. *. 60.) in
+  | UpToDate version_info ->
+    (* system is up to date - no download/install/reboot required *)
+    (* wait for an hour and recheck *)
+    let%lwt () = Lwt_unix.sleep (1. *. 60. *. 60.) in
     set GettingVersionInfo
 
-  | Downloading version_info ->
-    let download_version = snd version_info.latest in
-    (match%lwt download update_url download_version |> Lwt_result.catch with
+  | Downloading {url; version} ->
+    (* download latest version *)
+    (match%lwt download url version |> Lwt_result.catch with
      | Ok bundle_path ->
        Installing bundle_path
        |> set
@@ -173,16 +189,49 @@ let rec run ~update_url ~rauc ~set_state =
        |> set
     )
 
-  | ErrorDownloading _ ->
+  | ErrorDownloading msg ->
+    (* handle error while downloading bundle *)
+    let%lwt () =
+      Logs_lwt.err ~src:log_src
+        (fun m -> m "failed to download RAUC bundle: %s" msg)
+    in
     (* Wait for 30 seconds and retry *)
     let%lwt () = Lwt_unix.sleep 30.0 in
     set GettingVersionInfo
 
-  | _ ->
-    return_unit
+  | Installing bundle_path ->
+    (* install bundle via RAUC *)
+    (match%lwt Rauc.install rauc bundle_path |> Lwt_result.catch with
+     | Ok () ->
+       RebootRequired
+       |> set
+     | Error exn ->
+       ErrorInstalling (Printexc.to_string exn)
+       |> set
+    )
+
+  | ErrorInstalling msg ->
+    (* handle installation error *)
+    let%lwt () =
+      Logs_lwt.err ~src:log_src
+        (fun m -> m "failed to download RAUC bundle: %s" msg)
+    in
+    (* TODO: remove downloaded bundle *)
+    (* Wait for 30 seconds and retry *)
+    let%lwt () = Lwt_unix.sleep 30.0 in
+    set GettingVersionInfo
+
+  | RebootRequired ->
+    (* inactive system has been updated and reboot is required to boot into updated system *)
+    (* wait for an hour and recheck for new updates *)
+    let%lwt () = Lwt_unix.sleep (1. *. 60. *. 60.) in
+    set GettingVersionInfo
+
 
 let start ~(rauc:Rauc.t) ~(update_url:string) =
   let state_s, set_state = Lwt_react.S.create GettingVersionInfo in
+
+  (* log state changes for debugging *)
   let () =
     Lwt_react.S.map (fun state ->
         Logs.debug (fun m -> m "update state: %s"

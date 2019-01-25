@@ -39,3 +39,6 @@ val json_of_status : status -> Ezjsonm.t
 
 (** [get_status rauc] returns current RAUC status *)
 val get_status : t -> status Lwt.t
+
+(** [install rauc source] install the bundle at path [source] *)
+val install : t -> string -> unit Lwt.t

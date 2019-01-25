@@ -23,10 +23,12 @@ type version_info =
 type state =
   | GettingVersionInfo
   | ErrorGettingVersionInfo of string
-  | Uptodate of version_info
-  | Downloading of version_info
+  | UpToDate of version_info
+  | Downloading of {url: string; version: string}
   | ErrorDownloading of string
   | Installing of string
+  | ErrorInstalling of string
+  | RebootRequired
 [@@deriving sexp]
 
 val start : rauc:Rauc.t -> update_url:string -> state Lwt_react.signal * unit Lwt.t
