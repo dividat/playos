@@ -20,21 +20,23 @@ class KioskBrowserWidget(QWebEngineView):
 
     # Shortcut to manually reload
     self.reload_shortcut = QShortcut('CTRL+R', self)
-    self.reload_shortcut.activated.connect(self._reload)
+    self.reload_shortcut.activated.connect(self.reload)
 
     # Check if pages is correctly loaded
     self.loadFinished.connect(self._loadFinished)
+
+    # Shortcut to close
+    self.quit_shortcut = QShortcut('CTRL+ALT+DELETE', self)
+    self.quit_shortcut.activated.connect(lambda: self.close())
+
 
   @pyqtSlot()
   def _openNextUrl(self):
     self.load(next(self._urls))
 
-  def _reload(self):
-    self.reload()
-
   def _loadFinished(self, success):
     if not success:
-      QTimer.singleShot(5000, self._reload)
+      QTimer.singleShot(5000, self.reload)
 
 
 class KioskBrowser:
