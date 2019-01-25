@@ -1,7 +1,8 @@
 import sys
 from itertools import cycle
+from time import sleep
 
-from PyQt5.QtCore import QUrl, pyqtSlot, Qt
+from PyQt5.QtCore import QUrl, pyqtSlot, Qt, QTimer
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QApplication, QShortcut
 from PyQt5.QtWebEngineWidgets import QWebEngineView
@@ -13,12 +14,27 @@ class KioskBrowserWidget(QWebEngineView):
     self._urls = cycle(urls)
     self._openNextUrl()
 
+    # Shortcut to cycle trough URLs
     self.shortcut = QShortcut(toggle_sequence, self)
     self.shortcut.activated.connect(self._openNextUrl)
+
+    # Shortcut to manually reload
+    self.reload_shortcut = QShortcut('CTRL+R', self)
+    self.reload_shortcut.activated.connect(self._reload)
+
+    # Check if pages is correctly loaded
+    self.loadFinished.connect(self._loadFinished)
 
   @pyqtSlot()
   def _openNextUrl(self):
     self.load(next(self._urls))
+
+  def _reload(self):
+    self.reload()
+
+  def _loadFinished(self, success):
+    if not success:
+      QTimer.singleShot(5000, self._reload)
 
 
 class KioskBrowser:
