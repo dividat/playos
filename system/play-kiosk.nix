@@ -22,29 +22,17 @@
 
     desktopManager = {
       xterm.enable = false;
-      # "Boot to Gecko"
-      default = "chromium-kiosk";
+      default = "kiosk-browser";
       session = [
-        { name = "chromium-kiosk";
+        { name = "kiosk-browser";
           start = ''
             # Disable screen-saver control (screen blanking)
             xset s off
 
-            # chromium sometimes fails to load properly if immediately started
-            sleep 1
-            # --window-size is a hack, see here: https://unix.stackexchange.com/questions/273989/how-can-i-make-chromium-start-full-screen-under-x
-            ${pkgs.chromium}/bin/chromium \
-              --no-sandbox \
-              --no-first-run \
-              --noerrdialogs \
-              --start-fullscreen \
-              --start-maximized \
-              --window-size=9000,9000 \
-              --disable-notifications \
-              --disable-infobars \
-              --disable-save-password-bubble \
-              --autoplay-policy=no-user-gesture-required \
-              --kiosk https://play.dividat.com/
+            ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
+              https://play.dividat.com/ \
+              http://localhost:3333/gui
+
             waitPID=$!
           '';
         }
