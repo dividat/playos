@@ -18,6 +18,10 @@ with lib;
       default = version;
     };
 
+    playos.updateUrl = mkOption {
+      type = types.string;
+    };
+
     playos.keyring = mkOption {
       type = types.package;
     };

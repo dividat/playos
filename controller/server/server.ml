@@ -78,14 +78,13 @@ let server
     |> middleware (Opium.Middleware.debug)
   )
 
-let update_url =
-  "http://192.168.122.1:9999/"
-
-let main () =
+let main update_url =
   Logs.set_reporter (Logging.reporter ());
   Logs.set_level (Some Logs.Debug);
 
-  let%lwt () = Logs_lwt.info (fun m -> m "PlayOS Controller Daemon (%s) starting up" version) in
+  let%lwt () =
+    Logs_lwt.info (fun m -> m "PlayOS Controller Daemon (%s)" version)
+  in
 
   (* Connect with RAUC *)
   let%lwt rauc = Rauc.daemon () in
@@ -122,4 +121,22 @@ let main () =
   Logs_lwt.info (fun m -> m "terminating")
 
 let () =
-  Lwt_main.run (main ())
+  let open Cmdliner in
+  (* command-line arguments *)
+  let update_url_a =
+    Arg.(required & pos 0 (some string) None & info []
+                            ~docv:"UPDATE_URL"
+                            ~doc:"URL from where updates should be retrieved"
+                         ) in
+  let main_t =
+    Term.(
+      const Lwt_main.run
+      $  (
+        const main
+        $ update_url_a
+      )
+    )
+  in
+  Term.(eval (main_t, Term.info ~doc:"PlayOS Controller" "playos-controller"))
+  |> ignore
+

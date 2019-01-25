@@ -1,7 +1,7 @@
 open Lwt
 open Sexplib.Std
 
-let log_src = Logs.Src.create "update-mechanism"
+let log_src = Logs.Src.create "update"
 
 
 (* Version handling *)
@@ -77,7 +77,7 @@ let get_version_info url rauc =
 
 let latest_download_url ~update_url version_string =
   let bundle = Format.sprintf "playos-%s.raucb" version_string in
-  Format.sprintf "%s/%s/%s" update_url version_string bundle
+  Format.sprintf "%s%s/%s" update_url version_string bundle
 
 (** download RAUC bundle *)
 let download ~url ~version =
@@ -203,6 +203,9 @@ let rec run ~update_url ~rauc ~set_state =
     (* install bundle via RAUC *)
     (match%lwt Rauc.install rauc bundle_path |> Lwt_result.catch with
      | Ok () ->
+       let%lwt () =
+         Logs_lwt.info (fun m -> m "succesfully installed update (%s)" bundle_path)
+       in
        RebootRequired
        |> set
      | Error exn ->
@@ -240,6 +243,10 @@ let start ~(rauc:Rauc.t) ~(update_url:string) =
                         |> Sexplib.Sexp.to_string_hum)))
       state_s
     |> Lwt_react.S.keep
+  in
+
+  let () =
+    Logs.info (fun m -> m "update URL: %s" update_url)
   in
 
   state_s, run ~update_url ~rauc ~set_state GettingVersionInfo
