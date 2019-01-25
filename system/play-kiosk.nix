@@ -31,7 +31,7 @@
 
             ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
               https://play.dividat.com/ \
-              http://localhost:3000/gui/
+              http://localhost:3333/gui
 
             waitPID=$!
           '';
