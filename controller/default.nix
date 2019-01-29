@@ -30,6 +30,7 @@ ocamlPackages.buildDunePackage rec {
     semver
     sexplib
     ezjsonm
+    mustache
 
     # client side
     js_of_ocaml

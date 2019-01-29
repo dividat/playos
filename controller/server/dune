@@ -1,8 +1,8 @@
 (executable
  (name server)
  (public_name playos-controller)
- (modules server logging update)
+ (modules server logging update info gui)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix
-  opium tyxml
+  opium tyxml mustache
   rauc semver)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))

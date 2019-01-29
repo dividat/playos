@@ -10,6 +10,8 @@ self: super: {
 
     obus = self.callPackage ./ocaml-modules/obus {};
 
+    mustache = self.callPackage ./ocaml-modules/mustache {};
+
     cohttp-lwt-jsoo = super.cohttp.overrideAttrs (oldAttrs: {
       buildPhase = "jbuilder build -p cohttp-lwt-jsoo";
       propagatedBuildInputs = with self; [ cohttp cohttp-lwt ocaml_lwt js_of_ocaml js_of_ocaml-lwt js_of_ocaml-ppx ppx_tools_versioned ];

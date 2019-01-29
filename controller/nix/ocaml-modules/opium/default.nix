@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, ocaml, buildDunePackage, findlib
+{ stdenv, fetchurl, ocaml, buildDunePackage
 , alcotest, cow
 , opium_kernel, cohttp-lwt-unix, ocaml_lwt, cmdliner, ppx_fields_conv, ppx_sexp_conv, re, magic-mime}:
 
