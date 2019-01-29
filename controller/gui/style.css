@@ -5,6 +5,10 @@ body {
     padding: 0;
 }
 
+dl > dt {
+    font-weight: bold;
+}
+
 #header {
     grid-area: header;
 }
@@ -36,7 +40,7 @@ body {
 
 #content {
     grid-area: content;
-    margin: 20px;
+    place-self: center;
 }
 
 #footer {

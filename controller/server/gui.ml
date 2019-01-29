@@ -30,20 +30,29 @@ let static () =
   Logs.debug (fun m -> m "static content dir: %s" static_dir);
   Opium.Middleware.static ~local_path:static_dir ~uri_prefix:"/static" ()
 
-let index () =
-  let%lwt template = template "index" in
+let info () =
+  let%lwt template = template "info" in
   Mustache.render template
     (Ezjsonm.dict [
         "server_info", Info.(get () |> to_json)
       ])
   |> return
 
+let index content =
+  let%lwt template = template "index" in
+  Mustache.render template
+    (Ezjsonm.dict [
+        "server_info", Info.(get () |> to_json)
+      ; "content", content |> Ezjsonm.string
+      ])
+  |> return
 
 let routes app =
   let open Opium.App in
   let respond_html x = `Html x |> respond in
   app
   |> middleware (static ())
-  |> get "/gui" (fun _ -> index () >|= respond_html)
+  |> get "/gui" (fun _ -> "/gui/info" |> Uri.of_string |> redirect')
+  |> get "/gui/info" (fun _ -> info () >>= index >|= respond_html)
 
 

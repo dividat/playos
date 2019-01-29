@@ -4,6 +4,8 @@
   (gui/client/client.bc.js as static/client.js)
   (gui/style.css as static/style.css)
   (gui/template/index.mustache as template/index.mustache)
+  (gui/template/info.mustache as template/info.mustache)
+  (gui/info.svg as static/info.svg)
   (gui/wifi.svg as static/wifi.svg)
   (gui/power.svg as static/power.svg)
   (gui/volume-2.svg as static/volume-2.svg)
