@@ -1,12 +1,13 @@
 open Lwt
 
 let server
+    ~(server_info:Info.t)
     ~(rauc:Rauc.t)
     ~(update_s: Update.state Lwt_react.signal) =
   Opium.App.(
     empty
     |> port 3333
-    |> get "/" (fun _ -> `Json Info.(get () |> to_json) |> respond')
+    |> get "/" (fun _ -> server_info |> Info.to_json |> (fun x -> `Json x) |> respond')
     |> get "/rauc" (fun _ ->
         Rauc.get_status rauc
         >|= Rauc.sexp_of_status
@@ -22,7 +23,7 @@ let server
         |> (fun s -> `String s)
         |> respond'
       )
-    |> Gui.routes
+    |> Gui.routes ~server_info
     |> middleware (Opium.Middleware.debug)
   )
 
@@ -30,8 +31,9 @@ let main update_url =
   Logs.set_reporter (Logging.reporter ());
   Logs.set_level (Some Logs.Debug);
 
+  let%lwt server_info = Info.get () in
+
   let%lwt () =
-    let server_info = Info.get () in
     Logs_lwt.info (fun m -> m "PlayOS Controller Daemon (%s)" server_info.version)
   in
 
@@ -62,7 +64,7 @@ let main update_url =
   (* All following promises should run forever. *)
   let%lwt () =
     Lwt.pick [
-      server ~rauc ~update_s |> Opium.App.start
+      server ~server_info ~rauc ~update_s |> Opium.App.start
     ; update_p
     ]
   in
