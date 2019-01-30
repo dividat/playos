@@ -1,5 +1,19 @@
 open Lwt
 
+let shutdown () =
+  match%lwt
+    Lwt_process.(exec
+                   ~stdout:`Dev_null
+                   ~stderr:`Keep
+                   ("", [|"halt"; "-p"; "-f"|])
+                )
+  with
+  | Unix.WEXITED 0 ->
+    return_unit
+  | _ ->
+    Lwt.fail_with (Format.sprintf "shutdown failed")
+
+
 let server
     ~(server_info:Info.t)
     ~(rauc:Rauc.t)
@@ -22,6 +36,11 @@ let server
         |> Sexplib.Sexp.to_string_hum
         |> (fun s -> `String s)
         |> respond'
+      )
+    |> get "/shutdown" (fun _ ->
+        shutdown ()
+        >|= (fun _ -> `String "Ok")
+        >|= respond
       )
     |> Gui.routes ~server_info
     |> middleware (Opium.Middleware.debug)
