@@ -99,7 +99,7 @@ The [[https://github.com/dividat/driver][Dividat Driver]], which handles connect
 
 ** Kiosk
 
-System automatically logs in the user ~play~, starts an X session and launches [[https://www.chromium.org/Home][chromium]] in a restricted mode pointing at Dividat Play.
+System automatically logs in the user ~play~, starts an X session and launches a custom Kiosk Application based on [[http://doc.qt.io/qt-5/qtwebengine-index.htm][QtWebEngine]]. The Kiosk Application loads Dividat Play in a restricted environment.
 
 ** TODO PlayOS Controller
 
