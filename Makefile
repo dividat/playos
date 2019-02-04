@@ -1,5 +1,8 @@
 # Blatant misuse of make to create nice shortcuts for different build profiles. The real build tool is nix.
 
+# Get the git branch
+BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+
 .PHONY: default
 default:
 	nix-build
@@ -14,11 +17,10 @@ vm:
 
 .PHONY: validation
 validation:
-  # TODO: check that we are on correct git branch
+	[[ $(BRANCH) = "validation" ]]
 	nix-build \
     --arg updateCert ./pki/validation/cert.pem \
 		--arg updateUrl https://dist.dividat.com/releases/playos/validation/ \
 		--arg deployUrl s3://dist.dividat.ch/releases/playos/validation/ \
-		--arg buildDisk false \
-		--arg buildInstaller false
+		--arg buildDisk false
 	@echo "Run ./result/bin/deploy-playos-update to deploy"
