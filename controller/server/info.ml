@@ -19,8 +19,9 @@ let to_json { app; version; machine_id; zerotier_address} =
     ]
   )
 
+(* TODO: get version from build system *)
 let version =
-  "2019.1.0-dev"
+  "2019.2.0-beta0"
 
 let of_file f =
   let%lwt ic = Lwt_io.(open_file ~mode:Lwt_io.Input) f in
