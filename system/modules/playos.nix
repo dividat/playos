@@ -1,7 +1,7 @@
 # This is the toplevel module for all PlayOS related functionalities.
 
 # Things that are injected into the system
-{pkgs, version, keyring}:
+{pkgs, version, keyring, updateUrl}:
 
 
 {config, lib, ...}:
@@ -37,7 +37,7 @@ with lib;
     boot.loader.grub.enable = false;
 
     playos = {
-      inherit version keyring;
+      inherit version keyring updateUrl;
     };
   };
 }

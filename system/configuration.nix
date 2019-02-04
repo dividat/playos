@@ -96,9 +96,6 @@ with lib;
     group = "root";
   };
 
-  # URL from where updates should be retrieved
-  playos.updateUrl = "http://192.168.122.1:9999/";
-
   # Start controller
   systemd.services.playos-controller = {
     description = "PlayOS Controller";

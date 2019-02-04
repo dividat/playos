@@ -10,10 +10,20 @@ let
 };
 in
 
-{ buildInstaller ? true
+{
+  ###### Configuration that is passed into the build system #######
+
+  # Keyring used for verification of update bundles
+  keyring ? pkgs.lib.warn "Using testing keyring. Build artifacts can only be used for local development." ./testing/pki/cert.pem
+
+  # url from where updates should be fetched
+# , updateUrl ? "https://dist.dividat.com/releases/playos/test/"
+, updateUrl ? "http://dist-test.dividat.ch.s3-website.eu-central-1.amazonaws.com/releases/playos/test/"
+
+  ##### Allow disabling the build of unused artifacts when developing/testing #####
+, buildInstaller ? true
 , buildBundle ? true
 , buildDisk ? true
-, keyring ? pkgs.lib.warn "Using testing keyring. Build artifacts can only be used for local development." ./testing/pki/cert.pem
 }:
 
 with pkgs;
@@ -24,6 +34,8 @@ let
 
     # Set version
     version = "2019.1.0-dev";
+
+    inherit updateUrl;
 
     # Documentations
     docs = callPackage ./docs {};
