@@ -17,6 +17,6 @@
   };
 
   environment.etc."rauc/cert.pem" = {
-    source = config.playos.keyring;
+    source = config.playos.updateCert;
   };
 }

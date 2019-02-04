@@ -13,12 +13,13 @@ in
 {
   ###### Configuration that is passed into the build system #######
 
-  # Keyring used for verification of update bundles
-  keyring ? pkgs.lib.warn "Using testing keyring. Build artifacts can only be used for local development." ./testing/pki/cert.pem
+  # Certificate used for verification of update bundles
+  updateCert ? pkgs.lib.warn "Using dummy update certificate. Build artifacts can only be used for local development." ./testing/pki/cert.pem
 
   # url from where updates should be fetched
 # , updateUrl ? "https://dist.dividat.com/releases/playos/test/"
 , updateUrl ? "http://dist-test.dividat.ch.s3-website.eu-central-1.amazonaws.com/releases/playos/test/"
+, deployUrl ? "s3://dist-test.dividat.ch/releases/playos/test/"
 
   ##### Allow disabling the build of unused artifacts when developing/testing #####
 , buildInstaller ? true
@@ -35,13 +36,13 @@ let
     # Set version
     version = "2019.1.0-dev";
 
-    inherit updateUrl;
+    inherit updateUrl deployUrl;
 
     # Documentations
     docs = callPackage ./docs {};
 
-    # Keyring used to verify update bundles
-    keyring = copyPathToStore keyring;
+    # Certificate used for verification of update bundles
+    updateCert = copyPathToStore updateCert;
 
     # NixOS system toplevel
     systemToplevel = callPackage ./system {};
@@ -94,8 +95,8 @@ stdenv.mkDerivation {
     cp ${components.run-playos-in-vm} $out/bin/run-playos-in-vm
     chmod +x $out/bin/run-playos-in-vm
 
-    # Keyring that is installed on system
-    ln -s ${keyring} $out/cert.pem
+    # Certificate used to verify update bundles
+    ln -s ${updateCert} $out/cert.pem
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''

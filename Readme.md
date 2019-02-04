@@ -36,6 +36,21 @@ nix build && ./result/bin/run-playos-in-vm
 See the output of `run-playos-in-vm --help` for more information.
 
 
+## Deployment
+
+Update bundles are hosted on Amazon S3. The script `bin/deploy-playos-update` will handle signing and uploading of bundle.
+
+The arguments `updateUrl` (from where updates will be fetched by PlayOS systems), `deployURL` (where bundles should be deployed to) must be specified. For example: `nix build --arg updateUrl https://dist.dividat.com/releases/playos/master/ --arg deployUrl s3://dist.dividat.ch/releases/playos/master/`.
+
+Commonly used update and deploy URLs (channels) can be used with shortcuts defined in the Makefile. 
+
+To release an update to the `validation` channel:
+
+```
+make validation
+./result/bin/deploy-playos-update --key ./pki/validation/key.pem
+```
+
 ## Related work
 
 - [Yocto](https://www.yoctoproject.org/): A builder for embedded Linux distributions. Widely used but not very well suited for desktop functionality (such as browser).

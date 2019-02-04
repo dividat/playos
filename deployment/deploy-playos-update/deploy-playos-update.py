@@ -3,12 +3,23 @@
 import argparse
 import subprocess
 import os.path
+import tempfile
+import sys
 
-KEYRING = "@keyring@"
 UNSIGNED_RAUC_BUNDLE = "@unsignedRaucBundle@"
 VERSION = "@version@"
 
+# Certificate installed on system
+UPDATE_CERT = "@updateCert@"
+
+# This is the Certificate for the dummy key used during building the bundle
+DUMMY_BUILD_CERT = "@dummyBuildCert@"
+
+DEPLOY_URL = "@deployUrl@"
+UPDATE_URL = "@updateUrl@"
+
 RAUC = "@rauc@/bin/rauc"
+AWS_CLI = "@awscli@/bin/aws"
 
 
 # from http://code.activestate.com/recipes/577058/
@@ -33,42 +44,104 @@ def _query_continue(question, default=False):
             sys.stdout.write("Please respond with 'yes' or 'no'")
 
 
-def sign_rauc_bundle(key, cert, keyring, out):
-    subprocess.run([
-        RAUC, "--key", key, "--cert", cert, "--keyring", keyring, "resign",
-        UNSIGNED_RAUC_BUNDLE, out
-    ])
+def sign_rauc_bundle(key, out):
+    with tempfile.NamedTemporaryFile(mode="w",delete=False) as combined_keyring:
+
+        # Create a keyring that contains the dummy and real certificate
+        with open(DUMMY_BUILD_CERT, "r") as dummy_cert, open(UPDATE_CERT, "r") as update_cert: 
+            combined_keyring.write(dummy_cert.read())
+            combined_keyring.write(update_cert.read())
+            combined_keyring.close()
+
+        subprocess.run(
+            [
+                RAUC,
+                "--key",
+                key,
+                "--cert",
+                UPDATE_CERT,
+                # will be used to check input and output bundle (for some reason...)
+                "--keyring",
+                combined_keyring.name,
+                "resign",
+                UNSIGNED_RAUC_BUNDLE,
+                out
+            ],
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            check=True)
 
 
 def _main(opts):
-    # Create the output directory
-    os.makedirs(opts.out, exist_ok=True)
 
-    # Create the version directory
-    os.makedirs(os.path.join(opts.out, VERSION), exist_ok=True)
+    print("Deploying PlayOS update:\n")
 
-    # Sign RAUC bundle
-    sign_rauc_bundle(
-        key=opts.key,
-        cert=opts.cert,
-        keyring=KEYRING,
-        out=os.path.join(opts.out, VERSION, "playos-" + VERSION + ".raucb"))
+    with tempfile.TemporaryDirectory(
+            prefix="playos-signed-release") as signed_release:
 
-    # Write latest file
-    with open(os.path.join(opts.out, 'latest'), 'w') as latest:
-        latest.write(VERSION + "\n")
+        # Create the version directory
+        version_dir = os.path.join(signed_release, VERSION)
+        os.makedirs(version_dir, exist_ok=True)
 
-    exit(0)
+        # Sign RAUC bundle (and verify signature)
+        signed_bundle = os.path.join(version_dir, "playos-" + VERSION + ".raucb")
+        sign_rauc_bundle(
+            key=opts.key,
+            out=signed_bundle)
+
+        # Write latest file
+        latest_file = os.path.join(signed_release, "latest")
+        with open(latest_file, 'w') as latest:
+            latest.write(VERSION + "\n")
+
+        # TODO: copy the installer to version_dir so that it will also be deployed
+
+        # Print some information and wait for confirmation
+        print("Update URL:\t%s" % UPDATE_URL)
+        print("Deploy URL:\t%s" % DEPLOY_URL)
+
+        # Show RAUC info
+        subprocess.run(
+            [RAUC, "info", "--keyring", UPDATE_CERT, signed_bundle],
+            stderr=subprocess.DEVNULL,
+            check=True)
+
+        if not _query_continue("\nContinue?"):
+            print("Aborted.")
+            exit(1)
+
+        # TODO: use boto3 library instead of calling awscli
+        # Deploy the version
+        subprocess.run(
+            [
+                AWS_CLI, "s3", "cp", version_dir, DEPLOY_URL + "VERSION" + "/",
+                "--recursive", "--acl", "public-read"
+            ],
+            check=True)
+
+        # Deploy the latest file
+        subprocess.run(
+            [
+                AWS_CLI,
+                "s3",
+                "cp",
+                latest_file,
+                DEPLOY_URL + "latest",
+                "--acl",
+                "public-read",
+                # TODO: increase this once out of testing to increase CDN cache hits
+                "--cache-control",
+                "max-age=0"
+            ],
+            check=True)
+
+        print("Deployment completed.")
+
+        exit(0)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Deploy PlayOS update")
     parser.add_argument('-v', '--version', action='version', version=VERSION)
     parser.add_argument('--key', help="key file or PKCS#11 URL", required=True)
-    parser.add_argument(
-        '--out',
-        help="directory to output release files to",
-        default='./release')
-    parser.add_argument(
-        '--cert', help="cert file or PKCS#11 URL", default=KEYRING)
     _main(parser.parse_args())

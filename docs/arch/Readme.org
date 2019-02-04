@@ -107,15 +107,15 @@ The PlayOS Controller is an application that manages system updates, checks syst
 
 PlayOS controller is implemented in [[https://ocaml.org/][OCaml]]. OCaml allows [[https://ocaml.github.io/ocamlunix/ocamlunix.html][lower-level system programming]] offers an excellent [[https://github.com/diml/obus][D-Bus interface]] and various libraries/tools for creating web-based user interfaces (e.g. [[https://github.com/rgrinberg/opium][opium]], [[https://ocsigen.org/js_of_ocaml/3.1.0/manual/overview][Js_of_ocaml]] and [[https://github.com/rgrinberg/ocaml-mustache][ocaml-mustache]]).
 
-*** TODO Update Mechanism
+*** Update Mechanism
 
 [[https://www.rauc.io/][RAUC]] is used as update client. Updates are distributed as RAUC [[https://rauc.readthedocs.io/en/latest/basic.html#update-artifacts-bundles][bundles]], that are installed on the inactive system partition. [[*Bundle verification][Bundle verification]], target system partition selection, atomic update and boot loader integration are handled by RAUC. Checking for available updates and downloading them is handled by the controller, which then invokes RAUC to complete installation.
 
 **** Bundle verification
 
-RAUC bundles are signed. Before installing an update RAUC will verify signature against keyring installed on system (see [[https://rauc.readthedocs.io/en/latest/advanced.html#security][here]]).
+RAUC bundles are signed. Before installing an update RAUC will verify signature against certificate installed on system (see [[https://rauc.readthedocs.io/en/latest/advanced.html#security][here]]).
 
-The keyring to be installed on the system must be passed to the build system with the ~keyring~ argument. 
+The certificate to be installed on the system must be passed to the build system with the ~updateCert~ argument. 
 
 The RAUC bundle produced by the build system is signed by a dummy development/testing key. The bundle needs to be [[https://rauc.readthedocs.io/en/latest/advanced.html#resigning-bundles][resigned]] before it can be deployed. The script ~deploy-playos-update~ automates this process.
 
@@ -123,7 +123,10 @@ The RAUC bundle produced by the build system is signed by a dummy development/te
 
 During installation of a new system on slot ~x~ the ~x_OK~ variable is set to ~0~, marking the system non-bootable. After successful installation, [[https://rauc.readthedocs.io/en/latest/reference.html#grub][RAUC sets]] the ~ORDER~ to contain ~x~ as first element and sets the number of tries to 0 (~x_TRY=0~) and marks the system bootable (~x_OK=1~). On next boot GRUB attempts to boot system ~x~ for 3 times before falling back to the next system in ~ORDER~ (see [[*Boot selection logic][boot selection logic]]).
 
-**** TODO Deploy updates to S3
+**** Deployment of updates
+
+Updates are deployed to Amazon S3.
+
 *** TODO Mark system as good
 
 The controller can mark currently booted system as "good". But no checks are done. Following checks should be done:

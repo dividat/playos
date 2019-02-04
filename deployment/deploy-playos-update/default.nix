@@ -1,9 +1,11 @@
 { substituteAll
-, version, keyring, unsignedRaucBundle
-, rauc, python36
+, version, updateCert, unsignedRaucBundle
+, deployUrl, updateUrl
+, rauc, awscli, python36
 }:
 substituteAll {
   src = ./deploy-playos-update.py;
-  inherit version keyring unsignedRaucBundle;
-  inherit rauc python36;
+  dummyBuildCert = ../../testing/pki/cert.pem;
+  inherit version updateCert unsignedRaucBundle deployUrl updateUrl;
+  inherit rauc awscli python36;
 }
