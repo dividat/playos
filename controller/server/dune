@@ -4,5 +4,6 @@
  (modules server logging update info gui)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix
   opium tyxml mustache
-  rauc semver)
+  rauc zerotier
+  semver)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))

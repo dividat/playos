@@ -41,6 +41,7 @@ dl > dt {
 #content {
     grid-area: content;
     place-self: center;
+    font-size: 2em;
 }
 
 #footer {
