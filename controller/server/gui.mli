@@ -1,1 +1,1 @@
-val routes : server_info:Info.t -> Opium.App.builder
+val routes : Opium.App.builder

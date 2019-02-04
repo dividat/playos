@@ -47,13 +47,14 @@ let index ~server_info content =
       ])
   |> return
 
-let routes ~server_info app =
+let routes app =
   let open Opium.App in
   let respond_html x = `Html x |> respond in
   app
   |> middleware (static ())
   |> get "/gui" (fun _ -> "/gui/info" |> Uri.of_string |> redirect')
   |> get "/gui/info" (fun _ ->
+      let%lwt server_info = Info.get () in
       info ~server_info ()
       >>= index ~server_info
       >|= respond_html)

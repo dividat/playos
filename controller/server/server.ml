@@ -15,13 +15,16 @@ let shutdown () =
 
 
 let server
-    ~(server_info:Info.t)
     ~(rauc:Rauc.t)
     ~(update_s: Update.state Lwt_react.signal) =
   Opium.App.(
     empty
     |> port 3333
-    |> get "/" (fun _ -> server_info |> Info.to_json |> (fun x -> `Json x) |> respond')
+    |> get "/" (fun _ ->
+        Info.get ()
+        >|= Info.to_json
+        >|= (fun x -> `Json x)
+        >|= respond)
     |> get "/rauc" (fun _ ->
         Rauc.get_status rauc
         >|= Rauc.sexp_of_status
@@ -42,7 +45,7 @@ let server
         >|= (fun _ -> `String "Ok")
         >|= respond
       )
-    |> Gui.routes ~server_info
+    |> Gui.routes
     |> middleware (Opium.Middleware.debug)
   )
 
@@ -83,7 +86,7 @@ let main update_url =
   (* All following promises should run forever. *)
   let%lwt () =
     Lwt.pick [
-      server ~server_info ~rauc ~update_s |> Opium.App.start
+      server ~rauc ~update_s |> Opium.App.start
     ; update_p
     ]
   in
