@@ -9,8 +9,8 @@
 
 let
 
-  testingKey = ../testing/pki/key.pem;
-  testingCert = ../testing/pki/cert.pem;
+  testingKey = ../pki/dummy/key.pem;
+  testingCert = ../pki/dummy/cert.pem;
 
   systemClosureInfo = closureInfo { rootPaths = [ systemToplevel ]; };
 

@@ -14,10 +14,9 @@ in
   ###### Configuration that is passed into the build system #######
 
   # Certificate used for verification of update bundles
-  updateCert ? pkgs.lib.warn "Using dummy update certificate. Build artifacts can only be used for local development." ./testing/pki/cert.pem
+  updateCert ? pkgs.lib.warn "Using dummy update certificate. Build artifacts can only be used for local development." ./pki/dummy/cert.pem
 
   # url from where updates should be fetched
-# , updateUrl ? "https://dist.dividat.com/releases/playos/test/"
 , updateUrl ? "http://dist-test.dividat.ch.s3-website.eu-central-1.amazonaws.com/releases/playos/test/"
 , deployUrl ? "s3://dist-test.dividat.ch/releases/playos/test/"
 
