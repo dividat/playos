@@ -69,7 +69,7 @@ stdenv.mkDerivation {
 
     cat <<EOF > ./rauc-bundle/manifest.raucm
       [update]
-      compatible=Dividat Play Computer
+      compatible=dividat-play-computer
       version=${version}
 
       [image.system]
