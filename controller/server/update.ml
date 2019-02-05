@@ -209,6 +209,9 @@ let rec run ~update_url ~rauc ~set_state =
        RebootRequired
        |> set
      | Error exn ->
+       let () = try Sys.remove bundle_path with
+         | _ -> ()
+       in
        ErrorInstalling (Printexc.to_string exn)
        |> set
     )
@@ -217,9 +220,8 @@ let rec run ~update_url ~rauc ~set_state =
     (* handle installation error *)
     let%lwt () =
       Logs_lwt.err ~src:log_src
-        (fun m -> m "failed to download RAUC bundle: %s" msg)
+        (fun m -> m "failed to install RAUC bundle: %s" msg)
     in
-    (* TODO: remove downloaded bundle *)
     (* Wait for 30 seconds and retry *)
     let%lwt () = Lwt_unix.sleep 30.0 in
     set GettingVersionInfo
