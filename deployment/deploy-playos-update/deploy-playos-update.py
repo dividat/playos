@@ -114,7 +114,7 @@ def _main(opts):
         # Deploy the version
         subprocess.run(
             [
-                AWS_CLI, "s3", "cp", version_dir, DEPLOY_URL + "VERSION" + "/",
+                AWS_CLI, "s3", "cp", version_dir, DEPLOY_URL + VERSION + "/",
                 "--recursive", "--acl", "public-read"
             ],
             check=True)
