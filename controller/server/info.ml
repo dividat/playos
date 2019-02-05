@@ -21,7 +21,7 @@ let to_json { app; version; machine_id; zerotier_address} =
 
 (* TODO: get version from build system *)
 let version =
-  "2019.2.0-beta0"
+  "2019.2.1-beta"
 
 let of_file f =
   let%lwt ic = Lwt_io.(open_file ~mode:Lwt_io.Input) f in
@@ -33,7 +33,7 @@ let of_file f =
 
 let get () =
   let%lwt ic = "/etc/machine-id" |> Lwt_io.(open_file ~mode:Input) in
-  let%lwt machine_id = Lwt_io.read ic in
+  let%lwt machine_id = Lwt_io.read ic >|= String.trim in
   let%lwt zerotier_address =
     (match%lwt Zerotier.get_status () with
      | Ok status -> Some status.address |> return

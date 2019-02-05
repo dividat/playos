@@ -79,6 +79,15 @@ with lib;
         [General]
         AllowHostnameUpdates=false
         AllowDomainnameUpdates=false
+
+        # Wifi will generally be used for internet, use as default route
+        PreferredTechnologies=wifi,ethernet
+
+        # Allow simultaneous connection to ethernet and wifi
+        SingleConnectedTechnology=false
+
+        # Disable calling home
+        EnableOnlineCheck=false
       '';
     };
     # enable wpa_supplicant
