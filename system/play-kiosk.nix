@@ -28,6 +28,8 @@
           start = ''
             # Disable screen-saver control (screen blanking)
             xset s off
+            xset s noblank
+            xset -dpms
 
             ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
               https://play.dividat.com/ \
