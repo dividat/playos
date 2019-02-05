@@ -33,7 +33,7 @@ let of_file f =
 
 let get () =
   let%lwt ic = "/etc/machine-id" |> Lwt_io.(open_file ~mode:Input) in
-  let%lwt machine_id = Lwt_io.read ic in
+  let%lwt machine_id = Lwt_io.read ic >|= String.trim in
   let%lwt zerotier_address =
     (match%lwt Zerotier.get_status () with
      | Ok status -> Some status.address |> return
