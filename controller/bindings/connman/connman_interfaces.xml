@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="org.freedesktop.DBus.Introspectable">
+    <method name="Introspect">
+      <arg name="xml" direction="out" type="s"/>
+    </method>
+  </interface>
+  <interface name="net.connman.Technology">
+    <method name="GetProperties">
+      <arg name="properties" direction="out" type="a{sv}"/>
+      <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
+    </method>
+    <method name="SetProperty">
+      <arg name="name" direction="in" type="s"/>
+      <arg name="value" direction="in" type="v"/>
+    </method>
+    <method name="Scan"/>
+    <signal name="PropertyChanged">
+      <arg name="name" type="s"/>
+      <arg name="value" type="v"/>
+    </signal>
+  </interface>
+  <interface name="net.connman.Service">
+    <method name="GetProperties">
+      <arg name="properties" direction="out" type="a{sv}"/>
+      <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
+    </method>
+    <method name="SetProperty">
+      <arg name="name" direction="in" type="s"/>
+      <arg name="value" direction="in" type="v"/>
+    </method>
+    <method name="ClearProperty">
+      <arg name="name" direction="in" type="s"/>
+    </method>
+    <method name="Connect"/>
+    <method name="Disconnect"/>
+    <method name="Remove"/>
+    <method name="MoveBefore">
+      <arg name="service" direction="in" type="o"/>
+    </method>
+    <method name="MoveAfter">
+      <arg name="service" direction="in" type="o"/>
+    </method>
+    <method name="ResetCounters"/>
+    <signal name="PropertyChanged">
+      <arg name="name" type="s"/>
+      <arg name="value" type="v"/>
+    </signal>
+  </interface>
+  <interface name="net.connman.Manager">
+    <method name="GetProperties">
+      <arg name="properties" direction="out" type="a{sv}"/>
+    </method>
+    <method name="SetProperty">
+      <arg name="name" direction="in" type="s"/>
+      <arg name="value" direction="in" type="v"/>
+    </method>
+    <method name="GetTechnologies">
+      <arg name="technologies" direction="out" type="a(oa{sv})"/>
+    </method>
+    <method name="RemoveProvider">
+      <arg name="provider" direction="in" type="o"/>
+      <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
+    </method>
+    <method name="GetServices">
+      <arg name="services" direction="out" type="a(oa{sv})"/>
+    </method>
+    <method name="GetPeers">
+      <arg name="peers" direction="out" type="a(oa{sv})"/>
+    </method>
+    <method name="ConnectProvider">
+      <arg name="provider" direction="in" type="a{sv}"/>
+      <arg name="path" direction="out" type="o"/>
+      <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
+    </method>
+    <method name="RegisterAgent">
+      <arg name="path" direction="in" type="o"/>
+    </method>
+    <method name="UnregisterAgent">
+      <arg name="path" direction="in" type="o"/>
+    </method>
+    <method name="RegisterCounter">
+      <arg name="path" direction="in" type="o"/>
+      <arg name="accuracy" direction="in" type="u"/>
+      <arg name="period" direction="in" type="u"/>
+    </method>
+    <method name="UnregisterCounter">
+      <arg name="path" direction="in" type="o"/>
+    </method>
+    <method name="CreateSession">
+      <arg name="settings" direction="in" type="a{sv}"/>
+      <arg name="notifier" direction="in" type="o"/>
+      <arg name="session" direction="out" type="o"/>
+    </method>
+    <method name="DestroySession">
+      <arg name="session" direction="in" type="o"/>
+    </method>
+    <method name="RequestPrivateNetwork">
+      <arg name="path" direction="out" type="o"/>
+      <arg name="settings" direction="out" type="a{sv}"/>
+      <arg name="socket" direction="out" type="h"/>
+    </method>
+    <method name="ReleasePrivateNetwork">
+      <arg name="path" direction="in" type="o"/>
+    </method>
+    <method name="RegisterPeerService">
+      <arg name="specification" direction="in" type="a{sv}"/>
+      <arg name="master" direction="in" type="b"/>
+    </method>
+    <method name="UnregisterPeerService">
+      <arg name="specification" direction="in" type="a{sv}"/>
+    </method>
+    <signal name="PropertyChanged">
+      <arg name="name" type="s"/>
+      <arg name="value" type="v"/>
+    </signal>
+    <signal name="TechnologyAdded">
+      <arg name="path" type="o"/>
+      <arg name="properties" type="a{sv}"/>
+    </signal>
+    <signal name="TechnologyRemoved">
+      <arg name="path" type="o"/>
+    </signal>
+    <signal name="ServicesChanged">
+      <arg name="changed" type="a(oa{sv})"/>
+      <arg name="removed" type="ao"/>
+    </signal>
+    <signal name="PeersChanged">
+      <arg name="changed" type="a(oa{sv})"/>
+      <arg name="removed" type="ao"/>
+    </signal>
+  </interface>
+  <interface name="net.connman.Clock">
+    <method name="GetProperties">
+      <arg name="properties" direction="out" type="a{sv}"/>
+    </method>
+    <method name="SetProperty">
+      <arg name="name" direction="in" type="s"/>
+      <arg name="value" direction="in" type="v"/>
+    </method>
+    <signal name="PropertyChanged">
+      <arg name="name" type="s"/>
+      <arg name="value" type="v"/>
+    </signal>
+  </interface>
+
+  <interface name="net.connman.Agent">
+    <method name="ReportError">
+       <arg type="o" direction="in"/>
+       <arg type="s" direction="in"/>
+    </method>
+
+    <method name="RequestInput">
+      <arg type="o" direction="in"/>
+      <arg type="a{sv}" direction="in"/>
+      <arg type="a{sv}" direction="out"/>
+    </method>
+
+    <method name="RequestBrowser">
+      <arg type="o" direction="in"/>
+      <arg type="s" direction="in"/>
+    </method>
+
+    <method name="Cancel"></method>
+    <method name="Release"></method>
+
+</interface>
+</node>
