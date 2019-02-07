@@ -79,5 +79,7 @@
 
   # Enable pcscd for smart card identification
   services.pcscd.enable = true;
+  # Blacklist NFC modules conflicting with CCID (https://ludovicrousseau.blogspot.com/2013/11/linux-nfc-driver-conflicts-with-ccid.html)
+  boot.blacklistedKernelModules = [ "pn533_usb" "pn533" "nfc" ];
 
 }
