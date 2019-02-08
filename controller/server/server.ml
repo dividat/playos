@@ -1,4 +1,5 @@
 open Lwt
+open Sexplib.Std
 
 let shutdown () =
   match%lwt
@@ -16,15 +17,28 @@ let shutdown () =
 
 let server
     ~(rauc:Rauc.t)
+    ~(connman:Connman.Manager.t)
+    ~(internet:Network.Internet.state Lwt_react.S.t)
     ~(update_s: Update.state Lwt_react.signal) =
   Opium.App.(
     empty
     |> port 3333
+
     |> get "/" (fun _ ->
         Info.get ()
         >|= Info.to_json
         >|= (fun x -> `Json x)
         >|= respond)
+
+    |> get "/shutdown" (fun _ ->
+        shutdown ()
+        >|= (fun _ -> `String "Ok")
+        >|= respond
+      )
+    |> Gui.routes ~connman ~internet
+
+    (* Following routes are for system debugging - they are currently not being used by GUI *)
+    |> middleware (Opium.Middleware.debug)
     |> get "/rauc" (fun _ ->
         Rauc.get_status rauc
         >|= Rauc.sexp_of_status
@@ -40,13 +54,13 @@ let server
         |> (fun s -> `String s)
         |> respond'
       )
-    |> get "/shutdown" (fun _ ->
-        shutdown ()
-        >|= (fun _ -> `String "Ok")
+    |> get "/network" (fun _ ->
+        Connman.Manager.get_services connman
+        >|= [%sexp_of: Connman.Service.t list]
+        >|= Sexplib.Sexp.to_string_hum
+        >|= (fun x -> `String x)
         >|= respond
       )
-    |> Gui.routes
-    |> middleware (Opium.Middleware.debug)
   )
 
 let main update_url =
@@ -61,6 +75,12 @@ let main update_url =
 
   (* Connect with RAUC *)
   let%lwt rauc = Rauc.daemon () in
+
+  (* Connect with ConnMan *)
+  let%lwt connman = Connman.Manager.connect () in
+
+  (* Get Internet State *)
+  let%lwt internet = Network.Internet.get_state connman in
 
   (* Mark currently booted slot as "good" *)
   let%lwt () = try%lwt
@@ -83,10 +103,19 @@ let main update_url =
 
   let update_s, update_p = Update.start ~rauc ~update_url in
 
+  let server_p =
+    server
+      ~rauc
+      ~connman
+      ~internet
+      ~update_s
+    |> Opium.App.start
+  in
+
   (* All following promises should run forever. *)
   let%lwt () =
     Lwt.pick [
-      server ~rauc ~update_s |> Opium.App.start
+      server_p
     ; update_p
     ]
   in

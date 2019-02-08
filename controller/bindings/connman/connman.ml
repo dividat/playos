@@ -36,6 +36,7 @@ struct
   type input =
     | None
     | Passphrase of string
+  [@@deriving sexp]
 
   type t = input OBus_object.t
 
@@ -147,6 +148,11 @@ struct
     | Online
   [@@deriving sexp]
 
+  let is_connected = function
+    | Ready -> true
+    | Online -> true
+    | _ -> false
+
   type t = {
     _proxy : OBus_proxy.t sexp_opaque
   ; _manager : OBus_proxy.t sexp_opaque
@@ -160,11 +166,20 @@ struct
   }
   [@@deriving sexp]
 
+  let to_json s =
+    let open Ezjsonm in
+    Ezjsonm.dict [
+      "id", s.id |> string
+    ; "name", s.name |> string
+    ; "favorite", s.favorite |> bool
+    ; "connected", s.state |> is_connected |> bool
+    ; "strength", s.strength |> CCOpt.get_or ~default:0 |> int
+    ]
+
   let set_property service ~name ~value =
     OBus_method.call
       Connman_interfaces.Net_connman_Service.m_SetProperty
       service._proxy (name, value)
-
 
   let connect ?(input=Agent.None) service =
     let%lwt () = Logs_lwt.debug ~src:log_src
@@ -245,11 +260,8 @@ struct
     |> CCList.filter_map to_technology
     |> return
 
-  let get_services manager =
-    let%lwt (context, services) =
-      OBus_method.call_with_context
-        Net_connman_Manager.m_GetServices manager ()
-    in
+  (* Helper to parse a service *)
+  let to_service  manager context (path, properties) =
     let type_of_string = function
       | "wifi" -> Some Service.Wifi
       | "ethernet" -> Some Service.Ethernet
@@ -273,24 +285,40 @@ struct
       with
       | _ -> None
     in
-    let to_service  (path, properties) =
-      CCOpt.(
-        pure (fun name type' state strength favorite autoconnect: Service.t ->
-            { _proxy = OBus_proxy.make (OBus_context.sender context) path
-            ; _manager = manager
-            ; id = path |> CCList.last 1 |> CCList.hd
-            ; name ; type'; state; strength; favorite; autoconnect
-            })
-        <*> (properties |> List.assoc_opt "Name" >>= string_of_obus)
-        <*> (properties |> List.assoc_opt "Type" >>= string_of_obus >>= type_of_string)
-        <*> (properties |> List.assoc_opt "State" >>= string_of_obus >>= state_of_string)
-        <*> (properties |> List.assoc_opt "Strength" >>= strength_of_obus |> pure)
-        <*> (properties |> List.assoc_opt "Favorite" >>= bool_of_obus)
-        <*> (properties |> List.assoc_opt "AutoConnect" >>= bool_of_obus)
-      )
+    CCOpt.(
+      pure (fun name type' state strength favorite autoconnect: Service.t ->
+          { _proxy = OBus_proxy.make (OBus_context.sender context) path
+          ; _manager = manager
+          ; id = path |> CCList.last 1 |> CCList.hd
+          ; name ; type'; state; strength; favorite; autoconnect
+          })
+      <*> (properties |> List.assoc_opt "Name" >>= string_of_obus)
+      <*> (properties |> List.assoc_opt "Type" >>= string_of_obus >>= type_of_string)
+      <*> (properties |> List.assoc_opt "State" >>= string_of_obus >>= state_of_string)
+      <*> (properties |> List.assoc_opt "Strength" >>= strength_of_obus |> pure)
+      <*> (properties |> List.assoc_opt "Favorite" >>= bool_of_obus)
+      <*> (properties |> List.assoc_opt "AutoConnect" >>= bool_of_obus)
+    )
+
+  let get_services manager =
+    let%lwt (context, services) =
+      OBus_method.call_with_context
+        Net_connman_Manager.m_GetServices manager ()
     in
     services
-    |> CCList.filter_map to_service
+    |> CCList.filter_map (to_service manager context)
+    |> return
+
+  let get_services_signal manager =
+    let%lwt initial_services = get_services manager in
+    let%lwt service_changes =
+      OBus_signal.map ignore
+        (OBus_signal.make
+           Net_connman_Manager.s_ServicesChanged manager)
+      |> OBus_signal.connect
+      >|= Lwt_react.E.map_s (fun () -> get_services manager)
+    in
+    Lwt_react.S.accum (service_changes |> Lwt_react.E.map (fun x _ -> x)) initial_services
     |> return
 
 end

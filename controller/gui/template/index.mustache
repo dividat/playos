@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>{{server_info.app}}</title>
+    <title>PlayOS Controller</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/client.js"></script>
   </head>
@@ -21,7 +21,9 @@
               </div>
 
               <div class="menu-item">
-                  <img class="menu-item-icon" src="/static/wifi.svg">
+                  <a href="/gui/network">
+                      <img class="menu-item-icon" src="/static/wifi.svg">
+                  </a>
               </div>
 
               <div class="menu-item">
@@ -41,7 +43,6 @@
           </div>
 
           <div id="footer">
-              {{server_info.app}} {{server_info.version}}
           </div>
 
       </div>
