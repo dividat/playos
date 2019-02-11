@@ -76,6 +76,20 @@ let main update_url =
   (* Connect with RAUC *)
   let%lwt rauc = Rauc.daemon () in
 
+  let health_s, health_p = Health.start ~rauc in
+
+  (* Log changes in health state *)
+  let%lwt () =
+    Lwt_react.S.(
+      map_s (fun state -> Logs_lwt.info (fun m -> m "health: %s"
+                                            (state
+                                             |> Health.sexp_of_state
+                                             |> Sexplib.Sexp.to_string)
+                                        )) health_s
+      >|= keep
+    )
+  in
+
   (* Connect with ConnMan *)
   let%lwt connman = Connman.Manager.connect () in
 
@@ -95,15 +109,6 @@ let main update_url =
                                         )) internet
       >|= keep
     )
-  in
-
-  (* Mark currently booted slot as "good" *)
-  let%lwt () = try%lwt
-      Rauc.get_booted_slot rauc
-      >>= Rauc.mark_good rauc
-    with
-    | exn ->
-      Logs_lwt.err (fun m -> m "RAUC: %s" (Printexc.to_string exn))
   in
 
   (* Start the update mechanism *)
@@ -136,6 +141,7 @@ let main update_url =
     Lwt.pick [
       server_p (* HTTP server *)
     ; update_p (* Update mechanism *)
+    ; health_p (* Health monitoring *)
     ; internet_p (* Internet connectivity check *)
     ]
   in

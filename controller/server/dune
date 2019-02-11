@@ -1,7 +1,7 @@
 (executable
  (name server)
  (public_name playos-controller)
- (modules server update info gui)
+ (modules server update info gui health)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium tyxml mustache
   rauc zerotier connman network
