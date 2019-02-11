@@ -44,6 +44,10 @@ dl > dt {
     font-size: 2em;
 }
 
+.info-icon {
+    width: 200px;
+}
+
 #footer {
     grid-area: footer;
     text-align: right;
