@@ -1,3 +1,6 @@
+(** Initialize Network connectivity *)
+val init : Connman.Manager.t -> unit Lwt.t
+
 module Internet : sig
   (** Internet connectivity state *)
   type state =

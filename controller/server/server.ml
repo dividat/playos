@@ -79,6 +79,9 @@ let main update_url =
   (* Connect with ConnMan *)
   let%lwt connman = Connman.Manager.connect () in
 
+  (* Initialize Network *)
+  let%lwt () = Network.init connman in
+
   (* Get Internet state *)
   let%lwt internet, internet_p = Network.Internet.get connman in
 

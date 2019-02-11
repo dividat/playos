@@ -3,6 +3,34 @@ open Sexplib.Std
 
 let log_src = Logs.Src.create "network"
 
+let init connman =
+  let open Connman in
+
+  let%lwt () = Logs_lwt.info (fun m -> m "initializing network connections") in
+
+  (* Get all available technolgies *)
+  let%lwt technologies = Manager.get_technologies connman in
+
+  (* enable all wifi devices *)
+  let%lwt () =
+    technologies
+    |> List.filter (fun (t:Technology.t) ->
+        t.type' = Technology.Wifi && not t.powered)
+    |> List.map (Technology.enable)
+    |> Lwt.join
+  in
+
+  (* and start a scan. *)
+  let%lwt () =
+    technologies
+    |> List.filter (fun (t:Technology.t) -> t.type' = Technology.Wifi)
+    |> List.map (Technology.scan)
+    |> Lwt.join
+  in
+
+  return_unit
+
+
 module Internet =
 struct
 
