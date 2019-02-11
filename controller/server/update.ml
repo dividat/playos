@@ -235,21 +235,6 @@ let rec run ~update_url ~rauc ~set_state =
 
 let start ~(rauc:Rauc.t) ~(update_url:string) =
   let state_s, set_state = Lwt_react.S.create GettingVersionInfo in
-
-  (* log state changes for debugging *)
-  let () =
-    Lwt_react.S.map (fun state ->
-        Logs.debug (fun m -> m "update state: %s"
-                       (state
-                        |> sexp_of_state
-                        |> Sexplib.Sexp.to_string_hum)))
-      state_s
-    |> Lwt_react.S.keep
-  in
-
-  let () =
-    Logs.info (fun m -> m "update URL: %s" update_url)
-  in
-
+  let () = Logs.info (fun m -> m "update URL: %s" update_url) in
   state_s, run ~update_url ~rauc ~set_state GettingVersionInfo
 

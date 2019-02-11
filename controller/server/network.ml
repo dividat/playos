@@ -1,17 +1,21 @@
 open Lwt
 open Sexplib.Std
 
+let log_src = Logs.Src.create "network"
+
 module Internet =
 struct
 
   type state =
+    | Pending
     | Connected
     | NotConnected of string
   [@@deriving sexp]
 
-  let check () =
+  let http_check () =
     let open Cohttp in
     let open Cohttp_lwt_unix in
+    let%lwt () = Logs_lwt.debug ~src:log_src (fun m -> m "checking internet connectivity with HTTP.") in
     match%lwt
       Client.get (Uri.of_string
                     (* Note that we use http to circumvent https://github.com/mirage/ocaml-cohttp/issues/130.
@@ -26,33 +30,52 @@ struct
     | Error exn ->
       NotConnected (Printexc.to_string exn) |> return
 
-  (* [check_patiently n] checks connection but retries [n] times if state is NotConnected.
+  let rec check_loop
+      ~update_state
+      ~(network_change:unit Lwt_react.E.t)
+      ~(retry_timeout:float)
+    =
+    let open Lwt_react in
 
-     This adds a delay when changing state to NotConnected and accommodates a delay between network change and Internet connectivity.
-  *)
-  let rec check_patiently remaining_tries old_state =
-    let%lwt new_state = check () in
-    match remaining_tries > 0, new_state with
-    | _, Connected ->
-      return Connected (* immediately return when connected *)
-    | true, NotConnected msg ->
-      let%lwt () = Lwt_unix.sleep 5.0 in
-      check_patiently (remaining_tries-1) old_state
-    | false, NotConnected msg ->
-      return new_state
+    (* wait for network change or retry timeout *)
+    let%lwt () =
+      [ network_change |> E.next
+      ; Lwt_unix.sleep retry_timeout
+      ] |> Lwt.pick
+    in
 
-  let get_state connman =
+    (* get new state *)
+    let%lwt new_state = http_check () in
+
+    (* helper to update and set timeout *)
+    let update timeout s =
+      update_state s;
+      check_loop ~update_state ~network_change ~retry_timeout:timeout
+    in
+
+    match new_state with
+    | Connected ->
+      (* if connected only recheck in 10 minutes *)
+      update (10. *. 60.) Connected
+    | NotConnected _ ->
+      (* if not Connected recheck in 5 seconds *)
+      update 5. new_state
+    | Pending ->
+      (* this should never happen *)
+      update 5. new_state
+
+  let get connman =
     let open Lwt_react in
     let%lwt network_change =
       Connman.Manager.get_services_signal connman
       >|= S.changes
       >|= E.map ignore (* don't care how the services changed *)
     in
-    let%lwt initial_state = check_patiently 3 (NotConnected "init") in
-    S.accum_s (network_change |> E.map (fun _ -> check_patiently 3)) initial_state
-    |> return
+    let state, update_state = S.create (Pending) in
+    return (state, check_loop ~update_state ~network_change  ~retry_timeout:5.0)
 
   let is_connected = function
+    | Pending -> false
     | Connected -> true
     | NotConnected _ -> false
 

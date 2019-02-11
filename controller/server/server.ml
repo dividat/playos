@@ -79,8 +79,20 @@ let main update_url =
   (* Connect with ConnMan *)
   let%lwt connman = Connman.Manager.connect () in
 
-  (* Get Internet State *)
-  let%lwt internet = Network.Internet.get_state connman in
+  (* Get Internet state *)
+  let%lwt internet, internet_p = Network.Internet.get connman in
+
+  (* Log changes to Internet state *)
+  let%lwt () =
+    Lwt_react.S.(
+      map_s (fun state -> Logs_lwt.info (fun m -> m "internet: %s"
+                                            (state
+                                             |> Network.Internet.sexp_of_state
+                                             |> Sexplib.Sexp.to_string)
+                                        )) internet
+      >|= keep
+    )
+  in
 
   (* Mark currently booted slot as "good" *)
   let%lwt () = try%lwt
@@ -91,18 +103,22 @@ let main update_url =
       Logs_lwt.err (fun m -> m "RAUC: %s" (Printexc.to_string exn))
   in
 
-  let%lwt () = try%lwt
-      Rauc.get_status rauc
-      >|= Rauc.sexp_of_status
-      >|= Sexplib.Sexp.to_string_hum
-      >>= Lwt_io.printl
-    with
-    | exn ->
-      Logs_lwt.err (fun m -> m "RAUC: %s" (Printexc.to_string exn))
-  in
-
+  (* Start the update mechanism *)
   let update_s, update_p = Update.start ~rauc ~update_url in
 
+  (* Log changes in update mechanism state *)
+  let%lwt () =
+    Lwt_react.S.(
+      map_s (fun state -> Logs_lwt.info (fun m -> m "update mechanism: %s"
+                                            (state
+                                             |> Update.sexp_of_state
+                                             |> Sexplib.Sexp.to_string)
+                                        )) update_s
+      >|= keep
+    )
+  in
+
+  (* Start HTTP server *)
   let server_p =
     server
       ~rauc
@@ -112,11 +128,12 @@ let main update_url =
     |> Opium.App.start
   in
 
-  (* All following promises should run forever. *)
+  (* Make sure all threads run forever. *)
   let%lwt () =
     Lwt.pick [
-      server_p
-    ; update_p
+      server_p (* HTTP server *)
+    ; update_p (* Update mechanism *)
+    ; internet_p (* Internet connectivity check *)
     ]
   in
 
