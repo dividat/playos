@@ -56,11 +56,29 @@ let network
     ~(internet:Network.Internet.state Lwt_react.S.t) =
   let open Connman in
   let%lwt template = template "network" in
-  let internet_connected =
-    internet
-    |> Lwt_react.S.value
-    |> Network.Internet.is_connected
+
+  (* Check if internet connected *)
+  let%lwt internet_connected =
+    if
+      internet
+      |> Lwt_react.S.value
+      |> Network.Internet.is_connected
+    then
+      return true
+    else
+      (* If not connected delay for 3 seconds.
+
+         Motivation: Add a delay after connecting to a new service.
+      *)
+      let%lwt () = Lwt_unix.sleep 3.0 in
+      internet
+      |> Lwt_react.S.value
+      |> Network.Internet.is_connected
+      |> return
   in
+
+
+
   let%lwt services =
     (* Only display available services if not connected. *)
     if internet_connected then
@@ -68,6 +86,7 @@ let network
     else
       Manager.get_services connman
   in
+
   Mustache.render template
     (Ezjsonm.dict [
         "internet_connected", internet_connected |> Ezjsonm.bool
