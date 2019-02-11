@@ -32,7 +32,7 @@
             xset -dpms
 
             ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
-              https://play.dividat.com/ \
+              ${config.playos.kioskUrl} \
               http://localhost:3333/gui
 
             waitPID=$!
