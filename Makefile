@@ -22,5 +22,6 @@ validation:
     --arg updateCert ./pki/validation/cert.pem \
 		--arg updateUrl http://dist.dividat.com/releases/playos/validation/ \
 		--arg deployUrl s3://dist.dividat.ch/releases/playos/validation/ \
+    --arg kioskUrl https://val-play.dividat.com/ \
 		--arg buildDisk false
 	@echo "Run ./result/bin/deploy-playos-update to deploy"

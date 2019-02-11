@@ -31,6 +31,7 @@ ocamlPackages.buildDunePackage rec {
     sexplib
     ezjsonm
     mustache
+    containers
 
     # client side
     js_of_ocaml

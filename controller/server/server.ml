@@ -1,4 +1,5 @@
 open Lwt
+open Sexplib.Std
 
 let shutdown () =
   match%lwt
@@ -16,15 +17,28 @@ let shutdown () =
 
 let server
     ~(rauc:Rauc.t)
+    ~(connman:Connman.Manager.t)
+    ~(internet:Network.Internet.state Lwt_react.S.t)
     ~(update_s: Update.state Lwt_react.signal) =
   Opium.App.(
     empty
     |> port 3333
+
     |> get "/" (fun _ ->
         Info.get ()
         >|= Info.to_json
         >|= (fun x -> `Json x)
         >|= respond)
+
+    |> get "/shutdown" (fun _ ->
+        shutdown ()
+        >|= (fun _ -> `String "Ok")
+        >|= respond
+      )
+    |> Gui.routes ~connman ~internet
+
+    (* Following routes are for system debugging - they are currently not being used by GUI *)
+    |> middleware (Opium.Middleware.debug)
     |> get "/rauc" (fun _ ->
         Rauc.get_status rauc
         >|= Rauc.sexp_of_status
@@ -40,13 +54,13 @@ let server
         |> (fun s -> `String s)
         |> respond'
       )
-    |> get "/shutdown" (fun _ ->
-        shutdown ()
-        >|= (fun _ -> `String "Ok")
+    |> get "/network" (fun _ ->
+        Connman.Manager.get_services connman
+        >|= [%sexp_of: Connman.Service.t list]
+        >|= Sexplib.Sexp.to_string_hum
+        >|= (fun x -> `String x)
         >|= respond
       )
-    |> Gui.routes
-    |> middleware (Opium.Middleware.debug)
   )
 
 let main update_url =
@@ -62,6 +76,24 @@ let main update_url =
   (* Connect with RAUC *)
   let%lwt rauc = Rauc.daemon () in
 
+  (* Connect with ConnMan *)
+  let%lwt connman = Connman.Manager.connect () in
+
+  (* Get Internet state *)
+  let%lwt internet, internet_p = Network.Internet.get connman in
+
+  (* Log changes to Internet state *)
+  let%lwt () =
+    Lwt_react.S.(
+      map_s (fun state -> Logs_lwt.info (fun m -> m "internet: %s"
+                                            (state
+                                             |> Network.Internet.sexp_of_state
+                                             |> Sexplib.Sexp.to_string)
+                                        )) internet
+      >|= keep
+    )
+  in
+
   (* Mark currently booted slot as "good" *)
   let%lwt () = try%lwt
       Rauc.get_booted_slot rauc
@@ -71,23 +103,37 @@ let main update_url =
       Logs_lwt.err (fun m -> m "RAUC: %s" (Printexc.to_string exn))
   in
 
-  let%lwt () = try%lwt
-      Rauc.get_status rauc
-      >|= Rauc.sexp_of_status
-      >|= Sexplib.Sexp.to_string_hum
-      >>= Lwt_io.printl
-    with
-    | exn ->
-      Logs_lwt.err (fun m -> m "RAUC: %s" (Printexc.to_string exn))
-  in
-
+  (* Start the update mechanism *)
   let update_s, update_p = Update.start ~rauc ~update_url in
 
-  (* All following promises should run forever. *)
+  (* Log changes in update mechanism state *)
+  let%lwt () =
+    Lwt_react.S.(
+      map_s (fun state -> Logs_lwt.info (fun m -> m "update mechanism: %s"
+                                            (state
+                                             |> Update.sexp_of_state
+                                             |> Sexplib.Sexp.to_string)
+                                        )) update_s
+      >|= keep
+    )
+  in
+
+  (* Start HTTP server *)
+  let server_p =
+    server
+      ~rauc
+      ~connman
+      ~internet
+      ~update_s
+    |> Opium.App.start
+  in
+
+  (* Make sure all threads run forever. *)
   let%lwt () =
     Lwt.pick [
-      server ~rauc ~update_s |> Opium.App.start
-    ; update_p
+      server_p (* HTTP server *)
+    ; update_p (* Update mechanism *)
+    ; internet_p (* Internet connectivity check *)
     ]
   in
 

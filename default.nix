@@ -20,6 +20,9 @@ in
 , updateUrl ? "http://dist-test.dividat.ch.s3-website.eu-central-1.amazonaws.com/releases/playos/test/"
 , deployUrl ? "s3://dist-test.dividat.ch/releases/playos/test/"
 
+  # url where kiosk points
+, kioskUrl ? "https://play.dividat.com"
+
   ##### Allow disabling the build of unused artifacts when developing/testing #####
 , buildInstaller ? true
 , buildBundle ? true
@@ -33,9 +36,9 @@ let
   components = lib.makeScope newScope (self: with self; {
 
     # Set version
-    version = "2019.2.1-beta";
+    version = "2019.2.2-beta";
 
-    inherit updateUrl deployUrl;
+    inherit updateUrl deployUrl kioskUrl;
 
     # Documentations
     docs = callPackage ./docs {};

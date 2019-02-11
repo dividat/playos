@@ -32,7 +32,7 @@
             xset -dpms
 
             ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
-              https://play.dividat.com/ \
+              ${config.playos.kioskUrl} \
               http://localhost:3333/gui
 
             waitPID=$!
@@ -79,5 +79,7 @@
 
   # Enable pcscd for smart card identification
   services.pcscd.enable = true;
+  # Blacklist NFC modules conflicting with CCID (https://ludovicrousseau.blogspot.com/2013/11/linux-nfc-driver-conflicts-with-ccid.html)
+  boot.blacklistedKernelModules = [ "pn533_usb" "pn533" "nfc" ];
 
 }
