@@ -97,7 +97,13 @@ let main update_url =
   let%lwt connman = Connman.Manager.connect () in
 
   (* Initialize Network *)
-  let%lwt () = Network.init connman in
+  let%lwt () =
+    match%lwt Network.init ~systemd ~connman with
+    | Ok () ->
+      return_unit
+    | Error exn ->
+      Logs_lwt.warn (fun m -> m "network initialization failed: %s" (Printexc.to_string exn))
+  in
 
   (* Get Internet state *)
   let%lwt internet, internet_p = Network.Internet.get connman in

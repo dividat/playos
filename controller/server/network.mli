@@ -1,5 +1,7 @@
 (** Initialize Network connectivity *)
-val init : Connman.Manager.t -> unit Lwt.t
+val init : systemd : Systemd.Manager.t
+  -> connman : Connman.Manager.t
+  -> (unit,exn) Lwt_result.t
 
 module Internet : sig
   (** Internet connectivity state *)
