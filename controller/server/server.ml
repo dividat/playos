@@ -38,7 +38,7 @@ let server
     |> Gui.routes ~connman ~internet
 
     (* Following routes are for system debugging - they are currently not being used by GUI *)
-    |> middleware (Opium.Middleware.debug)
+    (* |> middleware (Opium.Middleware.debug) *)
     |> get "/rauc" (fun _ ->
         Rauc.get_status rauc
         >|= Rauc.sexp_of_status
@@ -65,7 +65,7 @@ let server
 
 let main update_url =
   Logs.set_reporter (Logging.reporter ());
-  Logs.set_level (Some Logs.Debug);
+  Logs.set_level (Some Logs.Info);
 
   let%lwt server_info = Info.get () in
 
