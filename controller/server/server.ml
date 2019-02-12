@@ -65,7 +65,7 @@ let server
 
 let main update_url =
   Logs.set_reporter (Logging.reporter ());
-  Logs.set_level (Some Logs.Info);
+  Logs.set_level (Some Logs.Debug);
 
   let%lwt server_info = Info.get () in
 
