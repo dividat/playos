@@ -11,41 +11,55 @@ type state =
 [@@deriving sexp]
 
 
-let mark_system_good ~rauc =
-  (* Mark currently booted slot as "good" *)
-  let%lwt () = Logs_lwt.info ~src:log_src (fun m -> m "marking system good") in
-  Rauc.get_booted_slot rauc
-  >>= Rauc.mark_good rauc
-  |> Lwt_result.catch
-
-
-let rec run ~rauc ~set_state =
-  let set state = set_state state; run ~rauc ~set_state state in
+let rec run ~systemd ~rauc ~set_state =
+  let set state = set_state state; run ~systemd ~rauc ~set_state state in
   function
   | Pending ->
-    (* Wait for 30 seconds *)
-    let%lwt () = Lwt_unix.sleep 30.0 in
+    begin
+      (* Wait for 30 seconds *)
+      let%lwt () = Lwt_unix.sleep 30.0 in
 
-    (* and set system as good *)
-    set MarkingAsGood
+      let open Systemd in
+
+      (* Check what system state as systemd reports *)
+      match%lwt Systemd.Manager.get_system_state systemd with
+      | Manager.Running ->
+        (* and set system as good *)
+        set MarkingAsGood
+      | system_state ->
+        (* or bad... *)
+        Bad (Format.sprintf "system state is %s"
+               (system_state
+                |> Manager.sexp_of_system_state
+                |> Sexplib.Sexp.to_string_hum
+               ))
+        |> set
+    end
 
   | MarkingAsGood ->
+    (* Mark currently booted slot as "good" *)
     begin
-      match%lwt mark_system_good ~rauc with
+      match%lwt
+        Rauc.get_booted_slot rauc
+        >>= Rauc.mark_good rauc
+        |> Lwt_result.catch
+      with
       | Ok () -> set Good
       | Error exn -> set (Bad ("Failed to mark system good: " ^ (Printexc.to_string exn)))
     end
 
   | Good ->
-    (* this thread should not terminate, thus create a never ending task. *)
+    (* this thread should not terminate, thus create a never ending task.
+
+      TODO: do periodic system checks
+    *)
     Lwt.task () |> fst
-    (* TODO: do periodic system checks *)
 
   | Bad msg ->
     let%lwt () = Logs_lwt.err ~src:log_src (fun m -> m "system health bad: %s" msg) in
     (* TODO: mark system bad and exit *)
     set Pending
 
-let start ~rauc =
+let start ~systemd ~rauc =
   let state_s, set_state = Lwt_react.S.create Pending in
-  state_s, run ~rauc ~set_state Pending
+  state_s, run ~systemd ~rauc ~set_state Pending

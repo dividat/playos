@@ -73,10 +73,13 @@ let main update_url =
     Logs_lwt.info (fun m -> m "PlayOS Controller Daemon (%s)" server_info.version)
   in
 
+  (* Connect with systemd *)
+  let%lwt systemd = Systemd.Manager.connect () in
+
   (* Connect with RAUC *)
   let%lwt rauc = Rauc.daemon () in
 
-  let health_s, health_p = Health.start ~rauc in
+  let health_s, health_p = Health.start ~systemd ~rauc in
 
   (* Log changes in health state *)
   let%lwt () =
@@ -84,7 +87,7 @@ let main update_url =
       map_s (fun state -> Logs_lwt.info (fun m -> m "health: %s"
                                             (state
                                              |> Health.sexp_of_state
-                                             |> Sexplib.Sexp.to_string)
+                                             |> Sexplib.Sexp.to_string_hum)
                                         )) health_s
       >|= keep
     )
@@ -105,7 +108,7 @@ let main update_url =
       map_s (fun state -> Logs_lwt.info (fun m -> m "internet: %s"
                                             (state
                                              |> Network.Internet.sexp_of_state
-                                             |> Sexplib.Sexp.to_string)
+                                             |> Sexplib.Sexp.to_string_hum)
                                         )) internet
       >|= keep
     )
@@ -120,7 +123,7 @@ let main update_url =
       map_s (fun state -> Logs_lwt.info (fun m -> m "update mechanism: %s"
                                             (state
                                              |> Update.sexp_of_state
-                                             |> Sexplib.Sexp.to_string)
+                                             |> Sexplib.Sexp.to_string_hum)
                                         )) update_s
       >|= keep
     )

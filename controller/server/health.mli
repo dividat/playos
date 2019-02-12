@@ -7,4 +7,6 @@ type state =
 [@@deriving sexp]
 
 (** Start system health monitor *)
-val start : rauc : Rauc.t -> state Lwt_react.signal * unit Lwt.t
+val start : systemd : Systemd.Manager.t
+  -> rauc : Rauc.t
+  -> state Lwt_react.signal * unit Lwt.t

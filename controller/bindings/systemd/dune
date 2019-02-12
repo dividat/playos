@@ -1,0 +1,11 @@
+(library
+ (name systemd)
+ (modules systemd systemd_interfaces)
+ (libraries obus logs logs.lwt ezjsonm sexplib)
+ (preprocess (pps lwt_ppx  ppx_sexp_conv)))
+
+(rule
+ (targets systemd_interfaces.ml systemd_interfaces.mli)
+ (deps systemd_interfaces.xml)
+ (action
+  (run obus-gen-interface -keep-common -o systemd_interfaces %{deps})))
