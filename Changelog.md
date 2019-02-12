@@ -1,4 +1,18 @@
-# [2919.2.2-beta] - 2019-02-11
+# [2019.2.3-beta] - 2019-02-12
+
+## Changed
+
+- controller: gui style
+
+## Fixed
+
+- system: start RAUC and ConnMan before playos-controller
+
+## Attempted Fix
+
+- ConnMan issue with "No Carrier"
+
+# [2019.2.2-beta] - 2019-02-11
 
 ## Added
 

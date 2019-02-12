@@ -1,10 +1,10 @@
 (executable
  (name server)
  (public_name playos-controller)
- (modules server update info gui)
+ (modules server update info gui health)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium tyxml mustache
-  rauc zerotier connman network
+  rauc zerotier connman network systemd
   semver)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 
@@ -16,6 +16,6 @@
 (library
  (name network)
  (modules network)
- (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman)
+ (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman systemd)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 

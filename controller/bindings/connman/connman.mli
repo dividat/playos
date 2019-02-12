@@ -1,6 +1,14 @@
 (** ConnMan Technology API *)
 module Technology : sig
 
+  (** Type of technology. *)
+  type type' =
+    | Wifi
+    | Ethernet
+    | Bluetooth
+    | P2P
+  [@@deriving sexp]
+
   (** ConnMan Technology.
 
       Note that not all properties are encoded.
@@ -8,8 +16,16 @@ module Technology : sig
   type t = {
     _proxy: OBus_proxy.t Sexplib.Conv.sexp_opaque
   ; name : string
-  ; type' : string
+  ; type' : type'
+  ; powered : bool
+  ; connected : bool
   } [@@deriving sexp]
+
+  (** Enable a technology *)
+  val enable : t -> unit Lwt.t
+
+  (** Disable a technology *)
+  val disable : t -> unit Lwt.t
 
   (** Trigger a scan for technology [t].*)
   val scan : t -> unit Lwt.t
@@ -34,12 +50,6 @@ end
 (** ConnMan Service API*)
 module Service : sig
 
-  (** The service type *)
-  type type' =
-    | Wifi
-    | Ethernet
-  [@@deriving sexp]
-
 	(** The service state information. *)
   type state =
     | Idle
@@ -60,7 +70,7 @@ module Service : sig
   ; _manager: OBus_proxy.t Sexplib.Conv.sexp_opaque
   ; id : string
   ; name : string
-  ; type' : type'
+  ; type' : Technology.type'
   ; state : state
   ; strength : int option
   ; favorite : bool

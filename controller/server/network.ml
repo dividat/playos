@@ -3,6 +3,56 @@ open Sexplib.Std
 
 let log_src = Logs.Src.create "network"
 
+let enable_and_scan_wifi_devices ~connman =
+  begin
+    let open Connman in
+    (* Get all available technolgies *)
+    let%lwt technologies = Manager.get_technologies connman in
+
+    (* enable all wifi devices *)
+    let%lwt () =
+      technologies
+      |> List.filter (fun (t:Technology.t) ->
+          t.type' = Technology.Wifi && not t.powered)
+      |> List.map (Technology.enable)
+      |> Lwt.join
+    in
+
+    (* and start a scan. *)
+    let%lwt () =
+      technologies
+      |> List.filter (fun (t:Technology.t) -> t.type' = Technology.Wifi)
+      |> List.map (Technology.scan)
+      |> Lwt.join
+    in
+
+    return_unit
+  end
+  (* Add a timeout to scan *)
+  |> (fun p -> [p; Lwt_unix.timeout 30.0] |> Lwt.pick)
+  |> Lwt_result.catch
+
+let init ~systemd ~connman =
+  let%lwt () = Logs_lwt.info (fun m -> m "initializing network connections") in
+
+  match%lwt enable_and_scan_wifi_devices ~connman with
+
+  | Ok () ->
+    return_ok ()
+
+  | Error exn ->
+    begin
+      let%lwt () = Logs_lwt.debug
+          (fun m -> m "enabling and scanning wifi failed: %s, %s"
+              (OBus_error.name exn)
+              (Printexc.to_string exn))
+      in
+      (* Hack to fix No Carrier error (https://01.org/jira/browse/CM-670) *)
+      let%lwt () = Systemd.Manager.restart_unit systemd "wpa_supplicant.service" in
+      let%lwt () = Lwt_unix.sleep 3.0 in
+      enable_and_scan_wifi_devices ~connman
+    end
+
 module Internet =
 struct
 

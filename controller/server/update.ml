@@ -235,6 +235,5 @@ let rec run ~update_url ~rauc ~set_state =
 
 let start ~(rauc:Rauc.t) ~(update_url:string) =
   let state_s, set_state = Lwt_react.S.create GettingVersionInfo in
-  let () = Logs.info (fun m -> m "update URL: %s" update_url) in
+  let () = Logs.info ~src:log_src (fun m -> m "update URL: %s" update_url) in
   state_s, run ~update_url ~rauc ~set_state GettingVersionInfo
-

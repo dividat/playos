@@ -7,11 +7,37 @@ let log_src = Logs.Src.create "connman"
 
 module Technology =
 struct
+  type type' =
+    | Wifi
+    | Ethernet
+    | Bluetooth
+    | P2P
+  [@@deriving sexp]
+
+  let type_of_string = function
+    | "wifi" -> Some Wifi
+    | "ethernet" -> Some Ethernet
+    | "bluetooth" -> Some Bluetooth
+    | "p2p" -> Some P2P
+    | _ -> None
+
   type t = {
     _proxy: OBus_proxy.t sexp_opaque
   ; name : string
-  ; type' : string
+  ; type' : type'
+  ; powered : bool
+  ; connected : bool
   } [@@deriving sexp]
+
+  let set_property proxy ~name ~value =
+    OBus_method.call
+      Connman_interfaces.Net_connman_Technology.m_SetProperty proxy (name, value)
+
+  let enable t =
+    set_property t._proxy "Powered" (true |> OBus_value.C.(make_single basic_boolean))
+
+  let disable t =
+    set_property t._proxy "Powered" (false |> OBus_value.C.(make_single basic_boolean))
 
   let scan t =
     let%lwt () = Logs_lwt.debug ~src:log_src
@@ -133,11 +159,6 @@ end
 
 module Service =
 struct
-  type type' =
-    | Wifi
-    | Ethernet
-  [@@deriving sexp]
-
   type state =
     | Idle
     | Failure
@@ -158,7 +179,7 @@ struct
   ; _manager : OBus_proxy.t sexp_opaque
   ; id : string
   ; name : string
-  ; type' : type'
+  ; type' : Technology.type'
   ; state : state
   ; strength : int option
   ; favorite : bool
@@ -247,13 +268,21 @@ struct
       OBus_method.call_with_context
         Net_connman_Manager.m_GetTechnologies proxy () in
     let to_technology (path, properties) : Technology.t option =
-      CCOpt.(map2
-               (fun name type' : Technology.t ->
+      CCOpt.(pure
+               (fun name type' powered connected : Technology.t ->
                   { _proxy = OBus_proxy.make (OBus_context.sender context) path
                   ; name
-                  ; type'})
-               (properties |> List.assoc_opt "Name" >>= string_of_obus)
-               (properties |> List.assoc_opt "Name" >>= string_of_obus)
+                  ; type'
+                  ; powered
+                  ; connected
+                  })
+             <*> (properties |> List.assoc_opt "Name" >>= string_of_obus)
+             <*> (properties
+                  |> List.assoc_opt "Type"
+                  >>= string_of_obus
+                  >>= Technology.type_of_string)
+             <*> (properties |> List.assoc_opt "Powered" >>= bool_of_obus)
+             <*> (properties |> List.assoc_opt "Connected" >>= bool_of_obus)
             )
     in
     technologies
@@ -262,11 +291,6 @@ struct
 
   (* Helper to parse a service *)
   let to_service  manager context (path, properties) =
-    let type_of_string = function
-      | "wifi" -> Some Service.Wifi
-      | "ethernet" -> Some Service.Ethernet
-      | _ -> None
-    in
     let state_of_string = function
       | "idle" -> Some Service.Idle
       | "failure" -> Some Service.Failure
@@ -293,7 +317,7 @@ struct
           ; name ; type'; state; strength; favorite; autoconnect
           })
       <*> (properties |> List.assoc_opt "Name" >>= string_of_obus)
-      <*> (properties |> List.assoc_opt "Type" >>= string_of_obus >>= type_of_string)
+      <*> (properties |> List.assoc_opt "Type" >>= string_of_obus >>= Technology.type_of_string)
       <*> (properties |> List.assoc_opt "State" >>= string_of_obus >>= state_of_string)
       <*> (properties |> List.assoc_opt "Strength" >>= strength_of_obus |> pure)
       <*> (properties |> List.assoc_opt "Favorite" >>= bool_of_obus)

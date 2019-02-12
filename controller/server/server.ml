@@ -38,7 +38,7 @@ let server
     |> Gui.routes ~connman ~internet
 
     (* Following routes are for system debugging - they are currently not being used by GUI *)
-    |> middleware (Opium.Middleware.debug)
+    (* |> middleware (Opium.Middleware.debug) *)
     |> get "/rauc" (fun _ ->
         Rauc.get_status rauc
         >|= Rauc.sexp_of_status
@@ -73,11 +73,37 @@ let main update_url =
     Logs_lwt.info (fun m -> m "PlayOS Controller Daemon (%s)" server_info.version)
   in
 
+  (* Connect with systemd *)
+  let%lwt systemd = Systemd.Manager.connect () in
+
   (* Connect with RAUC *)
   let%lwt rauc = Rauc.daemon () in
 
+  let health_s, health_p = Health.start ~systemd ~rauc in
+
+  (* Log changes in health state *)
+  let%lwt () =
+    Lwt_react.S.(
+      map_s (fun state -> Logs_lwt.info (fun m -> m "health: %s"
+                                            (state
+                                             |> Health.sexp_of_state
+                                             |> Sexplib.Sexp.to_string_hum)
+                                        )) health_s
+      >|= keep
+    )
+  in
+
   (* Connect with ConnMan *)
   let%lwt connman = Connman.Manager.connect () in
+
+  (* Initialize Network *)
+  let%lwt () =
+    match%lwt Network.init ~systemd ~connman with
+    | Ok () ->
+      return_unit
+    | Error exn ->
+      Logs_lwt.warn (fun m -> m "network initialization failed: %s" (Printexc.to_string exn))
+  in
 
   (* Get Internet state *)
   let%lwt internet, internet_p = Network.Internet.get connman in
@@ -88,19 +114,10 @@ let main update_url =
       map_s (fun state -> Logs_lwt.info (fun m -> m "internet: %s"
                                             (state
                                              |> Network.Internet.sexp_of_state
-                                             |> Sexplib.Sexp.to_string)
+                                             |> Sexplib.Sexp.to_string_hum)
                                         )) internet
       >|= keep
     )
-  in
-
-  (* Mark currently booted slot as "good" *)
-  let%lwt () = try%lwt
-      Rauc.get_booted_slot rauc
-      >>= Rauc.mark_good rauc
-    with
-    | exn ->
-      Logs_lwt.err (fun m -> m "RAUC: %s" (Printexc.to_string exn))
   in
 
   (* Start the update mechanism *)
@@ -112,7 +129,7 @@ let main update_url =
       map_s (fun state -> Logs_lwt.info (fun m -> m "update mechanism: %s"
                                             (state
                                              |> Update.sexp_of_state
-                                             |> Sexplib.Sexp.to_string)
+                                             |> Sexplib.Sexp.to_string_hum)
                                         )) update_s
       >|= keep
     )
@@ -133,6 +150,7 @@ let main update_url =
     Lwt.pick [
       server_p (* HTTP server *)
     ; update_p (* Update mechanism *)
+    ; health_p (* Health monitoring *)
     ; internet_p (* Internet connectivity check *)
     ]
   in
