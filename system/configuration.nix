@@ -115,6 +115,8 @@ with lib;
       Restart = "always";
     };
     wantedBy = [ "multi-user.target" ];
+    requires = [ "rauc" "connman" ];
+    after = [ "rauc" "connman" ];
   };
 
 }
