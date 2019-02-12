@@ -10,7 +10,6 @@ type state =
   | Bad of string
 [@@deriving sexp]
 
-
 let rec run ~systemd ~rauc ~set_state =
   let set state = set_state state; run ~systemd ~rauc ~set_state state in
   function
@@ -23,9 +22,15 @@ let rec run ~systemd ~rauc ~set_state =
 
       (* Check what system state as systemd reports *)
       match%lwt Systemd.Manager.get_system_state systemd with
+
       | Manager.Running ->
         (* and set system as good *)
         set MarkingAsGood
+
+      | Manager.Starting ->
+        (* Systemd is still starting up some stuff. We wait. Systemd will handle job timeout itself and change state in finite time. *)
+        set Pending
+
       | system_state ->
         (* or bad... *)
         Bad (Format.sprintf "system state is %s"
@@ -34,6 +39,7 @@ let rec run ~systemd ~rauc ~set_state =
                 |> Sexplib.Sexp.to_string_hum
                ))
         |> set
+
     end
 
   | MarkingAsGood ->
