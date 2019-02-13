@@ -31,6 +31,9 @@
             xset s noblank
             xset -dpms
 
+            # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-5/qtwebengine-debugging.html)
+            export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
+
             ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
               ${config.playos.kioskUrl} \
               http://localhost:3333/gui
