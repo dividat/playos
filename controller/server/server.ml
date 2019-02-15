@@ -96,15 +96,6 @@ let main update_url =
   (* Connect with ConnMan *)
   let%lwt connman = Connman.Manager.connect () in
 
-  (* Initialize Network *)
-  let%lwt () =
-    match%lwt Network.init ~systemd ~connman with
-    | Ok () ->
-      return_unit
-    | Error exn ->
-      Logs_lwt.warn (fun m -> m "network initialization failed: %s" (Printexc.to_string exn))
-  in
-
   (* Get Internet state *)
   let%lwt internet, internet_p = Network.Internet.get connman in
 
@@ -145,14 +136,25 @@ let main update_url =
     |> Opium.App.start
   in
 
-  (* Make sure all threads run forever. *)
   let%lwt () =
-    Lwt.pick [
+    (* Initialize Network, parallel to starting server *)
+    begin
+      match%lwt Network.init ~systemd ~connman with
+      | Ok () ->
+        return_unit
+      | Error exn ->
+        Logs_lwt.warn (fun m -> m "network initialization failed: %s" (Printexc.to_string exn))
+    end
+
+    <&> Lwt.pick [
+      (* Make sure all threads run forever. *)
       server_p (* HTTP server *)
     ; update_p (* Update mechanism *)
     ; health_p (* Health monitoring *)
     ; internet_p (* Internet connectivity check *)
     ]
+
+
   in
 
   Logs_lwt.info (fun m -> m "terminating")

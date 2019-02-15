@@ -34,5 +34,6 @@ python3Packages.buildPythonApplication rec {
 
   makeWrapperArgs = [
       "--set QT_QPA_PLATFORM_PLUGIN_PATH ${qtbase.bin}/lib/qt-*/plugins/platforms"
+      "--set QT_PLUGIN_PATH ${qtbase.bin}/lib/qt-*/plugins"
   ];
 }

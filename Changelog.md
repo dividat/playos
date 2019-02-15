@@ -1,3 +1,14 @@
+# [2019.2.4-beta] - 2019-02-15
+
+## Changed
+
+- kiosk: enable Qt WebEngine Developer Tools
+- controller: initialize network parallel to server startup
+
+## Fixed
+
+- WebGL support in kiosk
+
 # [2019.2.3-beta] - 2019-02-12
 
 ## Changed
