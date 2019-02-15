@@ -95,25 +95,6 @@ let find_service ~connman id =
   Connman.Manager.get_services connman
   >|= List.find_opt (fun (s:Service.t) -> s.id = id)
 
-let network_service
-    ~(connman:Connman.Manager.t)
-    service_id =
-  let open Connman in
-  let open Opium.App in
-  let%lwt template = template "network_service" in
-  match%lwt find_service ~connman service_id with
-  | None ->
-    "/gui/network" |> Uri.of_string |> redirect'
-  | Some service ->
-    begin
-      Mustache.render template
-        (Ezjsonm.dict [
-            "service", service |> Service.to_json |> Ezjsonm.value
-          ])
-      |> index
-      >|= respond_html
-    end
-
 let network_service_connect
     ~(connman:Connman.Manager.t)
     req =
@@ -138,6 +119,20 @@ let network_service_connect
   in
   "/gui/network" |> Uri.of_string |> redirect'
 
+let network_service_remove
+    ~(connman:Connman.Manager.t)
+    req =
+  let open Opium.App in
+  let service_id = param req "id" in
+  let%lwt () =
+    match%lwt find_service ~connman service_id with
+    | None ->
+      return_unit
+    | Some service ->
+      Connman.Service.remove service
+  in
+  "/gui/network" |> Uri.of_string |> redirect'
+
 let routes ~connman ~internet app =
   let open Opium.App in
   app
@@ -157,10 +152,10 @@ let routes ~connman ~internet app =
     )
 
   |> get "/gui/network/:id" (fun req ->
-      let service_id = param req "id" in
-      network_service ~connman service_id
+      "/gui/network" |> Uri.of_string |> redirect'
     )
 
   |> post "/gui/network/:id/connect" (network_service_connect ~connman)
+  |> post "/gui/network/:id/remove" (network_service_remove ~connman)
 
 

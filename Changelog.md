@@ -1,3 +1,9 @@
+# [UNRELEASED]
+
+## Changed
+
+- controller: show more information and add ability to remove service
+
 # [2019.2.4-beta] - 2019-02-15
 
 ## Changed
