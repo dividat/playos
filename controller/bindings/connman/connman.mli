@@ -61,6 +61,40 @@ module Service : sig
     | Online
   [@@deriving sexp]
 
+  (** IPv4 properties *)
+  module IPv4 : sig
+    type t = {
+      method' : string
+    ; address : string
+    ; netmask : string
+    ; gateway : string
+    }
+    [@@deriving sexp]
+  end
+
+  (** IPv6 properties *)
+  module IPv6 : sig
+    type t = {
+      method' : string
+    ; address : string
+    ; prefix_length: int
+    ; gateway : string
+    ; privacy : string
+    }
+    [@@deriving sexp]
+  end
+
+  (** Ethernet properties *)
+  module Ethernet : sig
+    type t = {
+      method' : string
+    ; interface : string
+    ; address : string
+    ; mtu : int
+    }
+    [@@deriving sexp]
+  end
+
   (** ConnMan Service
 
       Note that not all properties are encoded.
@@ -75,8 +109,14 @@ module Service : sig
   ; strength : int option
   ; favorite : bool
   ; autoconnect : bool
+  ; ipv4 : IPv4.t option
+  ; ipv6 : IPv6.t option
+  ; ethernet : Ethernet.t
   }
   [@@deriving sexp]
+
+  (** Helper to decide if service is connected *)
+  val is_connected : t -> bool
 
   (** Encode service as JSON.
 

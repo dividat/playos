@@ -77,14 +77,10 @@ let network
       |> return
   in
 
-
-
   let%lwt services =
-    (* Only display available services if not connected. *)
-    if internet_connected then
-      return []
-    else
-      Manager.get_services connman
+    Manager.get_services connman
+    (* If not connected show all services, otherwise show services that are connected *)
+    >|= List.filter (fun s -> not internet_connected || s |> Connman.Service.is_connected)
   in
 
   Mustache.render template
