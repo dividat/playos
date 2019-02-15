@@ -1,7 +1,7 @@
 # This is the toplevel module for all PlayOS related functionalities.
 
 # Things that are injected into the system
-{pkgs, version, updateCert, updateUrl, kioskUrl, playos-controller}:
+{pkgs, version, updateCert, kioskUrl, playos-controller}:
 
 
 {config, lib, ...}:
@@ -22,10 +22,6 @@ with lib;
       type = types.string;
     };
 
-    playos.updateUrl = mkOption {
-      type = types.string;
-    };
-
     playos.updateCert = mkOption {
       type = types.package;
     };
@@ -41,14 +37,14 @@ with lib;
     boot.loader.grub.enable = false;
 
     playos = {
-      inherit version updateCert updateUrl kioskUrl;
+      inherit version updateCert kioskUrl;
     };
 
     # Start controller
     systemd.services.playos-controller = {
       description = "PlayOS Controller";
       serviceConfig = {
-        ExecStart = "${playos-controller}/bin/playos-controller ${config.playos.updateUrl}";
+        ExecStart = "${playos-controller}/bin/playos-controller";
         User = "root";
         RestartSec = "10s";
         Restart = "always";

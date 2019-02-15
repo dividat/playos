@@ -63,7 +63,7 @@ let server
       )
   )
 
-let main update_url =
+let main () =
   Logs.set_reporter (Logging.reporter ());
   Logs.set_level (Some Logs.Debug);
 
@@ -112,7 +112,7 @@ let main update_url =
   in
 
   (* Start the update mechanism *)
-  let update_s, update_p = Update.start ~rauc ~update_url in
+  let update_s, update_p = Update.start ~rauc ~update_url:Info.update_url in
 
   (* Log changes in update mechanism state *)
   let%lwt () =
@@ -161,21 +161,14 @@ let main update_url =
 
 let () =
   let open Cmdliner in
-  (* command-line arguments *)
-  let update_url_a =
-    Arg.(required & pos 0 (some string) None & info []
-           ~docv:"UPDATE_URL"
-           ~doc:"URL from where updates should be retrieved"
-        ) in
   let main_t =
     Term.(
       const Lwt_main.run
       $  (
-        const main
-        $ update_url_a
+        const (main ())
       )
     )
   in
-  Term.(eval (main_t, Term.info ~doc:"PlayOS Controller" "playos-controller"))
+  Term.(eval (main_t, Term.info ~doc:"PlayOS Controller" ~version:Info.version "playos-controller"))
   |> ignore
 
