@@ -49,6 +49,9 @@ let
     # NixOS system toplevel
     systemToplevel = callPackage ./system {};
 
+    # Controller
+    playos-controller = callPackage ./controller {};
+
     # Installation script
     install-playos = callPackage ./installer/install-playos {
       grubCfg = ./bootloader/grub.cfg;
