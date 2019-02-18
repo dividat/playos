@@ -8,9 +8,11 @@
   (gui/template/network.mustache as template/network.mustache)
   (gui/template/label.mustache as template/label.mustache)
   (gui/template/error.mustache as template/error.mustache)
+  (gui/template/status.mustache as template/status.mustache)
   (gui/info.svg as static/info.svg)
   (gui/check.svg as static/check.svg)
   (gui/wifi.svg as static/wifi.svg)
   (gui/power.svg as static/power.svg)
+  (gui/cpu.svg as static/cpu.svg)
   (gui/volume-2.svg as static/volume-2.svg)))
 

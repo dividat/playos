@@ -246,17 +246,54 @@ module LabelGui = struct
 
 end
 
+module StatusGui = struct
+  let build ~health_s ~update_s ~rauc app =
+    app
+    |> get "/gui/status" (fun req ->
+        let%lwt rauc =
+          Rauc.get_status rauc
+          >|= Rauc.sexp_of_status
+          >|= Sexplib.Sexp.to_string_hum
+        in
+        render "status" [
+          "update", update_s
+                    |> Lwt_react.S.value
+                    |> Update.sexp_of_state
+                    |> Sexplib.Sexp.to_string_hum
+                    |> Ezjsonm.string
+        ; "rauc", rauc
+                  |> Ezjsonm.string
+        ; "health", health_s
+                    |> Lwt_react.S.value
+                    |> Health.sexp_of_state
+                    |> Sexplib.Sexp.to_string_hum
+                    |> Ezjsonm.string
+        ]
+        >>= index
+      )
+end
 
-let routes ~connman ~internet app =
-  let open Opium.App in
+let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
   app
   |> middleware (static ())
   |> middleware error_handling
 
   |> get "/gui" (fun _ -> "/gui/info" |> Uri.of_string |> redirect')
 
+  |> get "/shutdown" (fun _ ->
+      shutdown ()
+      >|= (fun _ -> `String "Ok")
+      >|= respond
+    )
+
   |> InfoGui.build
-
   |> NetworkGui.build ~connman ~internet
-
   |> LabelGui.build
+  |> StatusGui.build ~health_s ~update_s ~rauc
+
+(* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
+let start ~shutdown ~health_s ~update_s ~rauc ~connman ~internet =
+  empty
+  |> port 3333
+  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet
+  |> start
