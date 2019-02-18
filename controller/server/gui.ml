@@ -83,10 +83,13 @@ let network
     >|= List.filter (fun s -> not internet_connected || s |> Connman.Service.is_connected)
   in
 
+  let%lwt interfaces = Network.Interface.get_all () in
+
   Mustache.render template
     (Ezjsonm.dict [
         "internet_connected", internet_connected |> Ezjsonm.bool
       ; "services", services |> Ezjsonm.list (fun s -> s |> Service.to_json |> Ezjsonm.value)
+      ; "interfaces", interfaces |> Ezjsonm.list (Network.Interface.to_json)
       ])
   |> return
 

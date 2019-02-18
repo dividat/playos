@@ -20,3 +20,23 @@ module Internet : sig
   val get: Connman.Manager.t -> (state Lwt_react.S.t * unit Lwt.t) Lwt.t
 
 end
+
+module Interface : sig
+  (** Network interface *)
+  type t =
+    { index: int
+    ; name: string
+    ; address: string
+    ; link_type: string
+    }
+  [@@deriving sexp]
+
+  val to_json : t -> Ezjsonm.value
+
+  (** Get all available interfaces.
+
+      This uses the Linux `ip` utility.
+  *)
+  val get_all : unit -> t list Lwt.t
+
+end

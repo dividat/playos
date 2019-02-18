@@ -131,3 +131,40 @@ struct
     | NotConnected _ -> false
 
 end
+
+module Interface = struct
+
+  type t =
+    { index: int
+    ; name: string
+    ; address: string
+    ; link_type: string
+    }
+  [@@deriving sexp]
+
+  let to_json i =
+    Ezjsonm.(dict [
+        "index", i.index |> int
+      ; "name", i.name |> string
+      ; "address", i.address |> string
+      ; "link_type", i.link_type |> string
+      ] |> value)
+
+  let of_json j =
+    let dict = Ezjsonm.get_dict j in
+    { index = dict |> List.assoc "ifindex" |> Ezjsonm.get_int
+    ; name = dict |> List.assoc "ifname" |> Ezjsonm.get_string
+    ; address = dict |> List.assoc "address" |> Ezjsonm.get_string
+    ; link_type = dict |> List.assoc "link_type" |> Ezjsonm.get_string
+    }
+
+  let get_all () =
+    let command = "/run/current-system/sw/bin/ip", [| "ip"; "-j"; "link" |] in
+    let%lwt json = Lwt_process.pread command in
+    json
+    |> Ezjsonm.from_string
+    |> Ezjsonm.value
+    |> Ezjsonm.get_list of_json
+    |> return
+
+end
