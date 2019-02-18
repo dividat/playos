@@ -324,7 +324,7 @@ def _main(opts):
         if opts.reboot:
             subprocess.run(['reboot'])
         else:
-            print("Done. Please reboot.")
+            print("Done. Please remove install medium and reboot.")
 
         exit(0)
 
