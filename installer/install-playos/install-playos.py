@@ -15,7 +15,7 @@ PARTITION_SIZE_GB_DATA = 5
 
 GRUB_CFG = "@grubCfg@"
 SYSTEM_TOP_LEVEL = "@systemToplevel@"
-RESUCE_SYSTEM = "@rescueSystem@"
+RESCUE_SYSTEM = "@rescueSystem@"
 SYSTEM_CLOSURE_INFO = "@systemClosureInfo@"
 VERSION = "@version@"
 
@@ -142,8 +142,8 @@ def install_bootloader(disk, machine_id):
 
     # Install the rescue system
     os.makedirs('/mnt/boot/rescue', exist_ok=True)
-    shutil.copy2(RESUCE_SYSTEM + '/kernel', '/mnt/boot/rescue/kernel')
-    shutil.copy2(RESUCE_SYSTEM + '/initrd', '/mnt/boot/rescue/initrd')
+    shutil.copy2(RESCUE_SYSTEM + '/kernel', '/mnt/boot/rescue/kernel')
+    shutil.copy2(RESCUE_SYSTEM + '/initrd', '/mnt/boot/rescue/initrd')
 
     # Unmount to make this function idempotent.
     subprocess.run(['umount', '/mnt/boot'], check=True)
