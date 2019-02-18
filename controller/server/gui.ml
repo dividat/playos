@@ -83,7 +83,7 @@ let error_handling =
 module InfoGui = struct
   let build app =
     app
-    |> get "/gui/info" (fun _ ->
+    |> get "/info" (fun _ ->
         let%lwt server_info = Info.get () in
         render "info" [ "server_info", server_info |> Info.to_json ]
         >>= index)
@@ -178,10 +178,9 @@ module NetworkGui = struct
       ~(internet:Network.Internet.state Lwt_react.S.t)
       app =
     app
-    |> get "/gui/network" (overview ~connman ~internet)
-    (* |> get "/gui/network/:id" (fun req -> "/gui/network" |> Uri.of_string |> redirect') *)
-    |> post "/gui/network/:id/connect" (connect ~connman)
-    |> post "/gui/network/:id/remove" (remove ~connman)
+    |> get "/network" (overview ~connman ~internet)
+    |> post "/network/:id/connect" (connect ~connman)
+    |> post "/network/:id/remove" (remove ~connman)
 
 end
 
@@ -244,15 +243,15 @@ module LabelGui = struct
 
   let build app =
     app
-    |> get "/gui/label" overview
-    |> post "/gui/label/print" print
+    |> get "/label" overview
+    |> post "/label/print" print
 
 end
 
 module StatusGui = struct
   let build ~health_s ~update_s ~rauc app =
     app
-    |> get "/gui/status" (fun req ->
+    |> get "/status" (fun req ->
         let%lwt rauc =
           Rauc.get_status rauc
           >|= Rauc.sexp_of_status
@@ -281,7 +280,7 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
   |> middleware (static ())
   |> middleware error_handling
 
-  |> get "/gui" (fun _ -> "/gui/info" |> Uri.of_string |> redirect')
+  |> get "/" (fun _ -> "/info" |> Uri.of_string |> redirect')
 
   |> get "/shutdown" (fun _ ->
       shutdown ()

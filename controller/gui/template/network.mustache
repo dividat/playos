@@ -17,14 +17,14 @@
         <pre>{{properties}}</pre>
 
         {{^connected}}
-        <form action="/gui/network/{{id}}/connect" method="post">
+        <form action="/network/{{id}}/connect" method="post">
             <input type="text" name="passphrase">
             <input type="submit" value="Connect">
         </form>
         {{/connected}}
 
         {{#connected}}
-        <form action="/gui/network/{{id}}/remove" method="post">
+        <form action="/network/{{id}}/remove" method="post">
             <input type="submit" value="Remove">
         </form>
         {{/connected}}

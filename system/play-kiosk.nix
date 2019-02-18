@@ -36,7 +36,7 @@
 
             ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
               ${config.playos.kioskUrl} \
-              http://localhost:3333/gui
+              http://localhost:3333/
 
             waitPID=$!
           '';
