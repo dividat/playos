@@ -136,6 +136,67 @@ let network_service_remove
   in
   "/gui/network" |> Uri.of_string |> redirect'
 
+let get_label () =
+  let%lwt ethernet_interfaces =
+    Network.Interface.get_all ()
+    >|= List.filter (fun (i: Network.Interface.t) ->
+        Re.execp (Re.seq [Re.start; Re.str "enp" ] |> Re.compile) i.name)
+  in
+  let%lwt server_info = Info.get () in
+  return
+    ({ machine_id = server_info.machine_id
+     ; mac_1 = CCOpt.(
+           ethernet_interfaces
+           |> CCList.get_at_idx 0
+           >|= (fun i -> i.address)
+           |> get_or ~default:"-"
+         )
+     ; mac_2 = CCOpt.(
+           ethernet_interfaces
+           |> CCList.get_at_idx 1
+           >|= (fun i -> i.address)
+           |> get_or ~default:"-"
+         )
+     } : Label_printer.label)
+
+let label req =
+  let%lwt template = template "label" in
+
+  let%lwt label = get_label () in
+
+  Mustache.render template
+    Ezjsonm.(dict [
+        "machine_id", label.machine_id |> string
+      ; "mac_1", label.mac_1 |> string
+      ; "mac_2", label.mac_2 |> string
+      ; "default_label_printer_url", "http://pinocchio.local:3000/play-computer" |> string
+      ])
+  |> return
+
+let success msg =
+  msg
+  |> index
+  >|= respond_html
+
+let label_print req =
+  let open Opium.App in
+  let%lwt form_data = urlencoded_pairs_of_body req in
+  let url = form_data
+            |> List.assoc "label_printer_url"
+            |> List.hd
+  in
+  let count = form_data
+              |> List.assoc "count"
+              |> List.hd
+              |> int_of_string
+  in
+  let%lwt label = get_label () in
+  CCList.replicate count ()
+  |> Lwt_list.iter_s
+    (fun () -> Label_printer.print ~url label)
+  >|= (fun () -> "Labels printed.")
+  >>= success
+
 let routes ~connman ~internet app =
   let open Opium.App in
   app
@@ -161,4 +222,10 @@ let routes ~connman ~internet app =
   |> post "/gui/network/:id/connect" (network_service_connect ~connman)
   |> post "/gui/network/:id/remove" (network_service_remove ~connman)
 
+  |> get "/gui/label" (fun req ->
+      label req
+      >>= index
+      >|= respond_html
+    )
+  |> post "/gui/label/print" label_print
 

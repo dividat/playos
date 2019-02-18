@@ -1,0 +1,5 @@
+(library
+ (name label_printer)
+ (modules label_printer)
+ (libraries lwt logs logs.lwt cohttp-lwt-unix ezjsonm sexplib)
+ (preprocess (pps lwt_ppx  ppx_sexp_conv)))

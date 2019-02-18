@@ -27,6 +27,12 @@ dl > dt {
     filter: invert(70%);
 }
 
+.hidden-link {
+    text-decoration: none;
+    cursor: text;
+    color: black;
+}
+
 #menu {
     grid-area: menu;
 
