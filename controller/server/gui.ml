@@ -3,6 +3,8 @@ open Sexplib.Std
 open Opium_kernel.Rock
 open Opium.App
 
+let log_src = Logs.Src.create "gui"
+
 (* Helper to load file *)
 let of_file f =
   let%lwt ic = Lwt_io.(open_file ~mode:Lwt_io.Input) f in
@@ -61,6 +63,7 @@ let error_handling =
     | Ok res ->
       return res
     | Error exn ->
+      let%lwt () = Logs_lwt.err (fun m -> m "GUI Error: %s" (Printexc.to_string exn)) in
       render "error"
         Ezjsonm.([
             "exn", exn
@@ -293,6 +296,7 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
 let start ~shutdown ~health_s ~update_s ~rauc ~connman ~internet =
+  let%lwt () = Logs_lwt.info (fun m -> m "starting up GUI on port 3333") in
   empty
   |> port 3333
   |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet
