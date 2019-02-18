@@ -1,5 +1,6 @@
 open Lwt
 open Sexplib.Std
+open Opium_kernel.Rock
 
 let of_file f =
   let%lwt ic = Lwt_io.(open_file ~mode:Lwt_io.Input) f in
@@ -17,11 +18,6 @@ let template name =
   template_dir / (name ^ ".mustache")
   |> to_string
   |> of_file
-
-
-let respond_html x =
-  let open Opium.App in
-  `Html x |> respond
 
 let static () =
   (* Require the static content to be at a directory fixed to the binary location. This is not optimal, but works for the moment. TODO: figure out a better way to do this.
@@ -42,6 +38,11 @@ let index content =
         "content", content |> Ezjsonm.string
       ])
   |> return
+
+let success msg =
+  msg
+  |> index
+  >|= Response.of_string_body
 
 let info ~server_info () =
   let%lwt template = template "info" in
@@ -113,28 +114,26 @@ let network_service_connect
     | _ ->
       Connman.Agent.None
   in
-  let%lwt () =
-    match%lwt find_service ~connman service_id with
-    | None ->
-      return_unit
-    | Some service ->
-      Connman.Service.connect ~input service
-  in
-  "/gui/network" |> Uri.of_string |> redirect'
+  match%lwt find_service ~connman service_id with
+  | None ->
+    fail_with (Format.sprintf "Service does not exist (%s)" service_id)
+  | Some service ->
+    Connman.Service.connect ~input service
+    >|= (fun () -> Format.sprintf "Connected with %s." service.name)
+    >>= success
 
 let network_service_remove
     ~(connman:Connman.Manager.t)
     req =
   let open Opium.App in
   let service_id = param req "id" in
-  let%lwt () =
-    match%lwt find_service ~connman service_id with
-    | None ->
-      return_unit
-    | Some service ->
-      Connman.Service.remove service
-  in
-  "/gui/network" |> Uri.of_string |> redirect'
+  match%lwt find_service ~connman service_id with
+  | None ->
+    fail_with (Format.sprintf "Service does not exist (%s)" service_id)
+  | Some service ->
+    Connman.Service.remove service
+    >|= (fun () -> Format.sprintf "Removed service %s." service.name)
+    >>= success
 
 let get_label () =
   let%lwt ethernet_interfaces =
@@ -173,11 +172,6 @@ let label req =
       ])
   |> return
 
-let success msg =
-  msg
-  |> index
-  >|= respond_html
-
 let label_print req =
   let open Opium.App in
   let%lwt form_data = urlencoded_pairs_of_body req in
@@ -197,22 +191,47 @@ let label_print req =
   >|= (fun () -> "Labels printed.")
   >>= success
 
+let error_handling =
+  let open Opium_kernel.Rock in
+  let filter handler req =
+    match%lwt handler req |> Lwt_result.catch with
+    | Ok res ->
+      return res
+    | Error exn ->
+      let%lwt template = template "error" in
+      Mustache.render template
+        Ezjsonm.(dict [
+            "exn", exn
+                   |> Sexplib.Std.sexp_of_exn
+                   |> Sexplib.Sexp.to_string_hum
+                   |> string
+          ; "request", req
+                       |> Request.sexp_of_t
+                       |> Sexplib.Sexp.to_string_hum
+                       |> string
+          ])
+      |> index
+      >|= Response.of_string_body
+  in
+  Middleware.create ~name:"Error" ~filter
+
 let routes ~connman ~internet app =
   let open Opium.App in
   app
   |> middleware (static ())
+  |> middleware error_handling
   |> get "/gui" (fun _ -> "/gui/info" |> Uri.of_string |> redirect')
   |> get "/gui/info" (fun _ ->
       let%lwt server_info = Info.get () in
       info ~server_info ()
       >>= index
-      >|= respond_html)
+      >|= Response.of_string_body)
 
   |> get "/gui/network" (fun _ ->
       let%lwt server_info = Info.get () in
       network ~connman ~internet
       >>= index
-      >|= respond_html
+      >|= Response.of_string_body
     )
 
   |> get "/gui/network/:id" (fun req ->
@@ -225,7 +244,7 @@ let routes ~connman ~internet app =
   |> get "/gui/label" (fun req ->
       label req
       >>= index
-      >|= respond_html
+      >|= Response.of_string_body
     )
   |> post "/gui/label/print" label_print
 
