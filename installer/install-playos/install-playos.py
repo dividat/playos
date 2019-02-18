@@ -8,12 +8,14 @@ import argparse
 import parted
 import uuid
 import configparser
+import re
 from datetime import datetime
 
 PARTITION_SIZE_GB_SYSTEM = 10
 PARTITION_SIZE_GB_DATA = 5
 
 GRUB_CFG = "@grubCfg@"
+GRUB_ENV = '/mnt/boot/grub/grubenv'
 SYSTEM_TOP_LEVEL = "@systemToplevel@"
 RESCUE_SYSTEM = "@rescueSystem@"
 SYSTEM_CLOSURE_INFO = "@systemClosureInfo@"
@@ -135,7 +137,7 @@ def install_bootloader(disk, machine_id):
     shutil.copy2(GRUB_CFG, '/mnt/boot/grub/grub.cfg')
     subprocess.run(
         [
-            'grub-editenv', '/mnt/boot/grub/grubenv', 'set',
+            'grub-editenv', GRUB_ENV, 'set',
             'machine_id=' + machine_id.hex
         ],
         check=True)
@@ -251,11 +253,38 @@ def _query_continue(question, default=False):
             sys.stdout.write("Please respond with 'yes' or 'no'")
 
 
-def _ensure_machine_id(machine_id):
-    if machine_id == None:
-        return uuid.uuid4()
+def _ensure_machine_id(passed_machine_id, device):
+    if passed_machine_id == None:
+        previous_machine_id = _get_grubenv_entry('machine_id', device)
+        if previous_machine_id == None:
+            return uuid.uuid4()
+        else:
+            return uuid.UUID(previous_machine_id)
     else:
-        return uuid.UUID(machine_id)
+        return uuid.UUID(passed_machine_id)
+
+
+def _get_grubenv_entry(entry_name, device):
+    try:
+        # Try to mount the device's first partition
+        disk = parted.newDisk(device)
+        esp = disk.partitions[0]
+        os.makedirs('/mnt/boot', exist_ok=True)
+        subprocess.run(['mount', esp.path, '/mnt/boot'], check=True)
+        # Try to read entry from grubenv
+        grub_list = subprocess.run(
+            [ 'grub-editenv', GRUB_ENV, 'list' ],
+            check=True, stdout=subprocess.PIPE, universal_newlines=True)
+        entry_match = re.search(
+            "^" + entry_name + "=(.+)$", grub_list.stdout, re.MULTILINE)
+        if entry_match == None:
+            return None
+        else:
+            return entry_match.group(1)
+    except:
+        return None
+    finally:
+        subprocess.run(['umount', '/mnt/boot'])
 
 
 def _device_size_in_gb(device):
@@ -274,7 +303,7 @@ def _main(opts):
     device = find_device(opts.device)
 
     # Ensure machine-id exists and is valid
-    machine_id = _ensure_machine_id(opts.machine_id)
+    machine_id = _ensure_machine_id(opts.machine_id, device)
 
     # Confirm installation
     if confirm(device, machine_id, no_confirm=opts.no_confirm):
@@ -321,6 +350,6 @@ if __name__ == '__main__':
     parser.add_argument(
         '--machine-id',
         help=
-        'Set system machine-id. If not specified a random id will be generated'
+        'Set system machine-id. If not specified, an already configured id will be reused, or a random id will be generated'
     )
     _main(parser.parse_args())
