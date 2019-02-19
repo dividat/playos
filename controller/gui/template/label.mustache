@@ -1,0 +1,27 @@
+<h1>Print Label</h1>
+
+<dl>
+    <dt>Machine ID</dt>
+    <dd>{{machine_id}}</dd>
+
+    <dt>MAC (1)</dt>
+    <dd>{{mac_1}}</dd>
+
+    <dt>MAC (2)</dt>
+    <dd>{{mac_2}}</dd>
+</dl>
+
+<form action="/label/print" method="post">
+    <dl>
+        <dt>Label Printer URL</dt>
+        <dd>
+            <input size="40" type="text" value="{{default_label_printer_url}}" name="label_printer_url">
+        </dd>
+
+        <dt>How many labels?</dt>
+        <dd>
+            <input type="number" min="1" value="2" max="5" name="count">
+        </dd>
+    </dl>
+    <input type="submit" value="Print">
+</form>

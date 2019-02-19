@@ -7,10 +7,6 @@ self: super: {
     inherit (super) stdenv fetchurl;
   };
 
-  playos-controller = (import ../controller) {
-    inherit (super) fetchFromGitHub;
-  };
-
   playos-kiosk-browser = self.callPackage ../kiosk {};
 
   # pin pcsclite to 1.8.23 because of break in ABI (https://github.com/LudovicRousseau/PCSC/commit/984f84df10e2d0f432039e3b31f94c74e95092eb)

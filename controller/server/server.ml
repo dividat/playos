@@ -15,57 +15,13 @@ let shutdown () =
     Lwt.fail_with (Format.sprintf "shutdown failed")
 
 
-let server
-    ~(rauc:Rauc.t)
-    ~(connman:Connman.Manager.t)
-    ~(internet:Network.Internet.state Lwt_react.S.t)
-    ~(update_s: Update.state Lwt_react.signal) =
-  Opium.App.(
-    empty
-    |> port 3333
-
-    |> get "/" (fun _ ->
-        Info.get ()
-        >|= Info.to_json
-        >|= (fun x -> `Json x)
-        >|= respond)
-
-    |> get "/shutdown" (fun _ ->
-        shutdown ()
-        >|= (fun _ -> `String "Ok")
-        >|= respond
-      )
-    |> Gui.routes ~connman ~internet
-
-    (* Following routes are for system debugging - they are currently not being used by GUI *)
-    (* |> middleware (Opium.Middleware.debug) *)
-    |> get "/rauc" (fun _ ->
-        Rauc.get_status rauc
-        >|= Rauc.sexp_of_status
-        >|= Sexplib.Sexp.to_string_hum
-        >|= (fun x -> `String x)
-        >|= respond
-      )
-    |> get "/update" (fun _ ->
-        update_s
-        |> Lwt_react.S.value
-        |> Update.sexp_of_state
-        |> Sexplib.Sexp.to_string_hum
-        |> (fun s -> `String s)
-        |> respond'
-      )
-    |> get "/network" (fun _ ->
-        Connman.Manager.get_services connman
-        >|= [%sexp_of: Connman.Service.t list]
-        >|= Sexplib.Sexp.to_string_hum
-        >|= (fun x -> `String x)
-        >|= respond
-      )
-  )
-
-let main update_url =
+let main debug port =
   Logs.set_reporter (Logging.reporter ());
-  Logs.set_level (Some Logs.Debug);
+
+  if debug then
+    Logs.set_level (Some Logs.Debug)
+  else
+    Logs.set_level (Some Logs.Info);
 
   let%lwt server_info = Info.get () in
 
@@ -112,7 +68,7 @@ let main update_url =
   in
 
   (* Start the update mechanism *)
-  let update_s, update_p = Update.start ~rauc ~update_url in
+  let update_s, update_p = Update.start ~rauc ~update_url:Info.update_url in
 
   (* Log changes in update mechanism state *)
   let%lwt () =
@@ -126,14 +82,16 @@ let main update_url =
     )
   in
 
-  (* Start HTTP server *)
-  let server_p =
-    server
+  (* Start the GUI *)
+  let gui_p =
+    Gui.start
+      ~port
+      ~shutdown
       ~rauc
       ~connman
       ~internet
       ~update_s
-    |> Opium.App.start
+      ~health_s
   in
 
   let%lwt () =
@@ -148,7 +106,7 @@ let main update_url =
 
     <&> Lwt.pick [
       (* Make sure all threads run forever. *)
-      server_p (* HTTP server *)
+      gui_p (* GUI *)
     ; update_p (* Update mechanism *)
     ; health_p (* Health monitoring *)
     ; internet_p (* Internet connectivity check *)
@@ -161,21 +119,21 @@ let main update_url =
 
 let () =
   let open Cmdliner in
-  (* command-line arguments *)
-  let update_url_a =
-    Arg.(required & pos 0 (some string) None & info []
-           ~docv:"UPDATE_URL"
-           ~doc:"URL from where updates should be retrieved"
-        ) in
+  let debug_a = Arg.(flag
+                       (info ~doc:"Enable debug output." ["d"; "debug"])
+                     |> value)
+  in
+  let port_a = Arg.(opt int 3333 
+                      (info ~doc:"Port on which to start gui (http server)." ~docv:"PORT" ["p"; "port"])
+                    |> value)
+  in
   let main_t =
     Term.(
-      const Lwt_main.run
-      $  (
-        const main
-        $ update_url_a
-      )
+      const main
+      $ debug_a
+      $ port_a
+      |> app (const Lwt_main.run)
     )
   in
-  Term.(eval (main_t, Term.info ~doc:"PlayOS Controller" "playos-controller"))
+  Term.(eval (main_t, Term.info ~doc:"PlayOS Controller" ~version:Info.version "playos-controller"))
   |> ignore
-

@@ -1,12 +1,53 @@
-{{#internet_connected}}
-    <img class="info-icon" src="/static/check.svg">
-{{/internet_connected}}
+<h1>Network</h1>
+
+<dl>
+    <dt>Internet</dt>
+    <dd>
+    {{#internet_connected}}Connected{{/internet_connected}}
+    {{^internet_connected}}Not connected{{/internet_connected}}
+    </dd>
+</dl>
+
+<h2>Services</h2>
 
 {{#services}}
-    <p>
-        <a href="/gui/network/{{id}}">
-            {{name}}
-        </a>
-    </p>
+    <details class="service-details">
+        <summary>{{name}}</summary>
+
+        <pre>{{properties}}</pre>
+
+        {{^connected}}
+        <form action="/network/{{id}}/connect" method="post">
+            <input type="text" name="passphrase">
+            <input type="submit" value="Connect">
+        </form>
+        {{/connected}}
+
+        {{#connected}}
+        <form action="/network/{{id}}/remove" method="post">
+            <input type="submit" value="Remove">
+        </form>
+        {{/connected}}
+
+    </details>
+{{/services}}
+{{^services}}
+    No services available.
 {{/services}}
 
+
+<h2>Interfaces</h2>
+
+<dl>
+    {{#interfaces}}
+        <dt>
+            {{name}}
+        </dt>
+        <dd>
+            <code>{{address}}</code>
+        </dd>
+    {{/interfaces}}
+    {{^interfaces}}
+        No interfaces.
+    {{/interfaces}}
+</dl>

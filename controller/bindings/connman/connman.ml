@@ -5,6 +5,20 @@ open Sexplib.Conv
 
 let log_src = Logs.Src.create "connman"
 
+let string_of_obus value =
+  (* Helper to safely get string from OBus_value.V.single *)
+  try
+    Some OBus_value.C.(value |> cast_single basic_string)
+  with
+    _ -> None
+
+let bool_of_obus value =
+  (* Helper to safely get bool from OBus_value.V.single *)
+  try
+    Some OBus_value.C.(value |> cast_single basic_boolean)
+  with
+    _ -> None
+
 module Technology =
 struct
   type type' =
@@ -169,10 +183,82 @@ struct
     | Online
   [@@deriving sexp]
 
-  let is_connected = function
-    | Ready -> true
-    | Online -> true
-    | _ -> false
+  module IPv4 =
+  struct
+    type t = {
+      method' : string
+    ; address : string
+    ; netmask : string
+    ; gateway : string
+    }
+    [@@deriving sexp]
+
+    let of_obus v =
+      (fun () ->
+         let open OBus_value.C in
+         let properties = v |> cast_single (dict string variant) in
+         { method' = properties |> List.assoc "Method" |> cast_single basic_string
+         ; address = properties |> List.assoc "Address" |> cast_single basic_string
+         ; netmask = properties |> List.assoc "Netmask" |> cast_single basic_string
+         ; gateway = properties |> List.assoc "Gateway" |> cast_single basic_string
+         }
+      )
+      |> CCResult.guard
+      |> CCResult.to_opt
+  end
+
+  module IPv6 =
+  struct
+    type t = {
+      method' : string
+    ; address : string
+    ; prefix_length: int
+    ; gateway : string
+    ; privacy : string
+    }
+    [@@deriving sexp]
+
+    let of_obus v =
+      (fun () ->
+         let open OBus_value.C in
+         let properties = v |> cast_single (dict string variant) in
+         { method' = properties |> List.assoc "Method" |> cast_single basic_string
+         ; address = properties |> List.assoc "Address" |> cast_single basic_string
+         ; prefix_length = properties
+                           |> List.assoc "PrefixLength"
+                           |> cast_single basic_byte
+                           |> int_of_char
+         ; gateway = properties |> List.assoc "Gateway" |> cast_single basic_string
+         ; privacy = properties |> List.assoc "Privacy" |> cast_single basic_string
+         }
+      )
+      |> CCResult.guard
+      |> CCResult.to_opt
+  end
+
+  module Ethernet =
+  struct
+    type t = {
+      method' : string
+    ; interface : string
+    ; address : string
+    ; mtu : int
+    }
+    [@@deriving sexp]
+
+    let of_obus v =
+      (fun () ->
+         let open OBus_value.C in
+         let properties = v |> cast_single (dict string variant) in
+         { method' = properties |> List.assoc "Method" |> cast_single basic_string
+         ; interface = properties |> List.assoc "Interface" |> cast_single basic_string
+         ; address = properties |> List.assoc "Address" |> cast_single basic_string
+         ; mtu = properties |> List.assoc "MTU" |> cast_single basic_uint16
+         }
+      )
+      |> CCResult.guard
+      |> CCResult.to_opt
+  end
 
   type t = {
     _proxy : OBus_proxy.t sexp_opaque
@@ -184,17 +270,65 @@ struct
   ; strength : int option
   ; favorite : bool
   ; autoconnect : bool
+  ; ipv4 : IPv4.t option
+  ; ipv6 : IPv6.t option
+  ; ethernet : Ethernet.t
   }
   [@@deriving sexp]
 
+  (* Helper to parse a service from OBus *)
+  let of_obus  manager context (path, properties) =
+    let state_of_string = function
+      | "idle" -> Some Idle
+      | "failure" -> Some Failure
+      | "association" -> Some Association
+      | "configuration" -> Some Configuration
+      | "ready" -> Some Ready
+      | "disconnect" -> Some Disconnect
+      | "online" -> Some Online
+      | _ -> None
+    in
+    let strength_of_obus v =
+      try
+        OBus_value.C.(v |> cast_single basic_byte)
+        |> int_of_char
+        |> CCOpt.return
+      with
+      | _ -> None
+    in
+    CCOpt.(
+      pure (fun name type' state strength favorite autoconnect ipv4 ipv6 ethernet ->
+          { _proxy = OBus_proxy.make (OBus_context.sender context) path
+          ; _manager = manager
+          ; id = path |> CCList.last 1 |> CCList.hd
+          ; name ; type'; state; strength; favorite; autoconnect
+          ; ipv4; ipv6; ethernet
+          })
+      <*> (properties |> List.assoc_opt "Name" >>= string_of_obus)
+      <*> (properties |> List.assoc_opt "Type" >>= string_of_obus >>= Technology.type_of_string)
+      <*> (properties |> List.assoc_opt "State" >>= string_of_obus >>= state_of_string)
+      <*> (properties |> List.assoc_opt "Strength" >>= strength_of_obus |> pure)
+      <*> (properties |> List.assoc_opt "Favorite" >>= bool_of_obus)
+      <*> (properties |> List.assoc_opt "AutoConnect" >>= bool_of_obus)
+      <*> (properties |> List.assoc_opt "IPv4" >>= IPv4.of_obus |> pure)
+      <*> (properties |> List.assoc_opt "IPv6" >>= IPv6.of_obus |> pure)
+      <*> (properties |> List.assoc_opt "Ethernet" >>= Ethernet.of_obus)
+    )
+
+
+  let is_connected t =
+    match t.state with
+    | Ready -> true
+    | Online -> true
+    | _ -> false
+
   let to_json s =
-    let open Ezjsonm in
     Ezjsonm.dict [
-      "id", s.id |> string
-    ; "name", s.name |> string
-    ; "favorite", s.favorite |> bool
-    ; "connected", s.state |> is_connected |> bool
-    ; "strength", s.strength |> CCOpt.get_or ~default:0 |> int
+      "id", s.id |> Ezjsonm.string
+    ; "name", s.name |> Ezjsonm.string
+    ; "favorite", s.favorite |> Ezjsonm.bool
+    ; "connected", s |> is_connected |> Ezjsonm.bool
+    ; "properties", s |> sexp_of_t |> Sexplib.Sexp.to_string_hum |> Ezjsonm.string
     ]
 
   let set_property service ~name ~value =
@@ -249,20 +383,6 @@ struct
     OBus_proxy.make peer []
     |> return
 
-  let string_of_obus value =
-    (* Helper to safely get string from OBus_value.V.single *)
-    try
-      Some OBus_value.C.(value |> cast_single basic_string)
-    with
-      _ -> None
-
-  let bool_of_obus value =
-    (* Helper to safely get bool from OBus_value.V.single *)
-    try
-      Some OBus_value.C.(value |> cast_single basic_boolean)
-    with
-      _ -> None
-
   let get_technologies proxy =
     let%lwt (context, technologies) =
       OBus_method.call_with_context
@@ -289,48 +409,13 @@ struct
     |> CCList.filter_map to_technology
     |> return
 
-  (* Helper to parse a service *)
-  let to_service  manager context (path, properties) =
-    let state_of_string = function
-      | "idle" -> Some Service.Idle
-      | "failure" -> Some Service.Failure
-      | "association" -> Some Service.Association
-      | "configuration" -> Some Service.Configuration
-      | "ready" -> Some Service.Ready
-      | "disconnect" -> Some Service.Disconnect
-      | "online" -> Some Service.Online
-      | _ -> None
-    in
-    let strength_of_obus v =
-      try
-        OBus_value.C.(v |> cast_single basic_byte)
-        |> int_of_char
-        |> CCOpt.return
-      with
-      | _ -> None
-    in
-    CCOpt.(
-      pure (fun name type' state strength favorite autoconnect: Service.t ->
-          { _proxy = OBus_proxy.make (OBus_context.sender context) path
-          ; _manager = manager
-          ; id = path |> CCList.last 1 |> CCList.hd
-          ; name ; type'; state; strength; favorite; autoconnect
-          })
-      <*> (properties |> List.assoc_opt "Name" >>= string_of_obus)
-      <*> (properties |> List.assoc_opt "Type" >>= string_of_obus >>= Technology.type_of_string)
-      <*> (properties |> List.assoc_opt "State" >>= string_of_obus >>= state_of_string)
-      <*> (properties |> List.assoc_opt "Strength" >>= strength_of_obus |> pure)
-      <*> (properties |> List.assoc_opt "Favorite" >>= bool_of_obus)
-      <*> (properties |> List.assoc_opt "AutoConnect" >>= bool_of_obus)
-    )
-
   let get_services manager =
     let%lwt (context, services) =
       OBus_method.call_with_context
         Net_connman_Manager.m_GetServices manager ()
     in
     services
-    |> CCList.filter_map (to_service manager context)
+    |> CCList.filter_map (Service.of_obus manager context)
     |> return
 
   let get_services_signal manager =

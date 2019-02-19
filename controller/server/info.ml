@@ -3,15 +3,17 @@ open Lwt
 type t =
   { app: string
   ; version: string
+  ; update_url : string
   ; machine_id: string
   ; zerotier_address: string option
   }
 
-let to_json { app; version; machine_id; zerotier_address} =
+let to_json { app; version; update_url; machine_id; zerotier_address} =
   Ezjsonm.(
     dict [
       "app", string app
     ; "version", string version
+    ; "update_url", string update_url
     ; "machine_id", string machine_id
     ; "zerotier_address", match zerotier_address with
       | Some address -> string address
@@ -19,9 +21,13 @@ let to_json { app; version; machine_id; zerotier_address} =
     ]
   )
 
-(* TODO: get version from build system *)
+(** Version, set by build system *)
 let version =
-  "2019.2.4-beta"
+  "@PLAYOS_VERSION@"
+
+(** URL from where to get updates, set by build system *)
+let update_url =
+  "@PLAYOS_UPDATE_URL@"
 
 let of_file f =
   let%lwt ic = Lwt_io.(open_file ~mode:Lwt_io.Input) f in
@@ -43,6 +49,7 @@ let get () =
   let%lwt () = Lwt_io.close ic in
   { app = "PlayOS Controller"
   ; version
+  ; update_url
   ; machine_id
   ; zerotier_address
   }
