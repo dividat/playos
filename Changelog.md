@@ -1,5 +1,9 @@
 # [UNRELEASED]
 
+## Added
+
+- controller: print labels
+
 ## Changed
 
 - controller: show more information and add ability to remove service
