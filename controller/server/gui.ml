@@ -295,7 +295,6 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
 let start ~shutdown ~health_s ~update_s ~rauc ~connman ~internet =
-  let%lwt () = Logs_lwt.info (fun m -> m "starting up GUI on port 3333") in
   empty
   |> port 3333
   |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet

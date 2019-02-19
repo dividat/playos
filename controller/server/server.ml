@@ -15,9 +15,13 @@ let shutdown () =
     Lwt.fail_with (Format.sprintf "shutdown failed")
 
 
-let main () =
+let main debug =
   Logs.set_reporter (Logging.reporter ());
-  Logs.set_level (Some Logs.Debug);
+
+  if debug then
+    Logs.set_level (Some Logs.Debug)
+  else
+    Logs.set_level (Some Logs.Info);
 
   let%lwt server_info = Info.get () in
 
@@ -114,14 +118,13 @@ let main () =
 
 let () =
   let open Cmdliner in
+  let debug_a = Arg.(flag (info ~doc:"Enable debug output" ["d"; "debug"]) |> value) in
   let main_t =
     Term.(
-      const Lwt_main.run
-      $  (
-        const (main ())
-      )
+      const main
+      $ debug_a
+      |> app (const Lwt_main.run)
     )
   in
   Term.(eval (main_t, Term.info ~doc:"PlayOS Controller" ~version:Info.version "playos-controller"))
   |> ignore
-
