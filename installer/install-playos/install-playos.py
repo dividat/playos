@@ -126,13 +126,13 @@ def install_bootloader(disk, machine_id):
     subprocess.run(['mkfs.vfat', '-n', 'ESP', esp.path], check=True)
     os.makedirs('/mnt/boot', exist_ok=True)
     subprocess.run(['mount', esp.path, '/mnt/boot'], check=True)
-    subprocess.run(
+    _suppress_unless_fails(subprocess.run(
         [
             'grub-install', '--no-nvram', '--no-bootsector', '--removable',
             '--boot-directory', '/mnt/boot', '--target', 'x86_64-efi',
             '--efi-directory', '/mnt/boot'
         ],
-        check=True)
+        check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
     os.makedirs('/mnt/boot/grub/', exist_ok=True)
     shutil.copy2(GRUB_CFG, '/mnt/boot/grub/grub.cfg')
     subprocess.run(
@@ -229,6 +229,18 @@ def install(disk):
     # Install system.b
     install_system(disk.partitions[3].path, 'system.b')
     add_rauc_status_entries(disk.partitions[0].path, 'system.b')
+
+
+def _suppress_unless_fails(completed_process):
+    """Suppress the stdout of a subprocess unless it fails.
+    Additional parameters {stdout,stderr}=subprocess.PIPELINE to
+    subprocess.run are required."""
+    try:
+        completed_process.check_returncode()
+    except:
+        sys.stdout.write(completed_process.stdout)
+        sys.stdout.write(completed_process.stderr)
+        raise
 
 
 # from http://code.activestate.com/recipes/577058/
