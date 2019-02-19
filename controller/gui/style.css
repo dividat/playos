@@ -27,6 +27,12 @@ dl > dt {
     filter: invert(70%);
 }
 
+.hidden-link {
+    text-decoration: none;
+    cursor: text;
+    color: black;
+}
+
 #menu {
     grid-area: menu;
 
@@ -42,6 +48,14 @@ dl > dt {
     grid-area: content;
     place-self: center;
     font-size: 2em;
+    width: 90%;
+    height: 90%;
+    overflow: scroll;
+    margin: 10px;
+}
+
+.service-detail {
+    margin-left: 10px;
 }
 
 .info-icon {

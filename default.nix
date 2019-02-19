@@ -17,7 +17,7 @@ in
   updateCert ? pkgs.lib.warn "Using dummy update certificate. Build artifacts can only be used for local development." ./pki/dummy/cert.pem
 
   # url from where updates should be fetched
-, updateUrl ? "http://dist-test.dividat.ch.s3-website.eu-central-1.amazonaws.com/releases/playos/test/"
+, updateUrl ? "http://localhost:9000/"
 , deployUrl ? "s3://dist-test.dividat.ch/releases/playos/test/"
 
   # url where kiosk points
@@ -36,7 +36,7 @@ let
   components = lib.makeScope newScope (self: with self; {
 
     # Set version
-    version = "2019.2.4-beta";
+    version = "2019.2.5-beta";
 
     inherit updateUrl deployUrl kioskUrl;
 
@@ -48,6 +48,9 @@ let
 
     # NixOS system toplevel
     systemToplevel = callPackage ./system {};
+
+    # Controller
+    playos-controller = callPackage ./controller {};
 
     # Installation script
     install-playos = callPackage ./installer/install-playos {

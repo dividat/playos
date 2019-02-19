@@ -1,4 +1,6 @@
-{ fetchFromGitHub ? (import <nixpkgs> {}).fetchFromGitHub  }:
+{ fetchFromGitHub ? (import <nixpkgs> {}).fetchFromGitHub
+, version ? "0.0.0"
+, updateUrl ? "http://localhost:9999/"}:
 
 # We require two things for the OCaml build environment that are not yet in 18.09 channel (used by rest of project): https://github.com/NixOS/nixpkgs/pull/49684 and https://github.com/NixOS/nixpkgs/pull/53357.
 with import (fetchFromGitHub {
@@ -11,11 +13,18 @@ with import (fetchFromGitHub {
 
 ocamlPackages.buildDunePackage rec {
   pname = "playos_controller";
-  version = "0";
+  inherit version;
 
   minimumOcamlVersion = "4.06";
 
   src = ./.;
+
+  preConfigure = ''
+    sed -i \
+      -e "s,@PLAYOS_VERSION@,${version},g" \
+      -e "s,@PLAYOS_UPDATE_URL@,${updateUrl},g" \
+      ./server/info.ml
+  '';
 
   buildInputs = with ocamlPackages; [ utop nodejs ];
   propagatedBuildInputs = with ocamlPackages; [
