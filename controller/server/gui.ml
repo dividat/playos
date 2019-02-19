@@ -294,8 +294,8 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
   |> StatusGui.build ~health_s ~update_s ~rauc
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
-let start ~shutdown ~health_s ~update_s ~rauc ~connman ~internet =
+let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman ~internet =
   empty
-  |> port 3333
+  |> Opium.App.port port
   |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet
   |> start

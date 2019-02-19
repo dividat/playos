@@ -15,7 +15,7 @@ let shutdown () =
     Lwt.fail_with (Format.sprintf "shutdown failed")
 
 
-let main debug =
+let main debug port =
   Logs.set_reporter (Logging.reporter ());
 
   if debug then
@@ -85,6 +85,7 @@ let main debug =
   (* Start the GUI *)
   let gui_p =
     Gui.start
+      ~port
       ~shutdown
       ~rauc
       ~connman
@@ -118,11 +119,19 @@ let main debug =
 
 let () =
   let open Cmdliner in
-  let debug_a = Arg.(flag (info ~doc:"Enable debug output" ["d"; "debug"]) |> value) in
+  let debug_a = Arg.(flag
+                       (info ~doc:"Enable debug output." ["d"; "debug"])
+                     |> value)
+  in
+  let port_a = Arg.(opt int 3333 
+                      (info ~doc:"Port on which to start gui (http server)." ~docv:"PORT" ["p"; "port"])
+                    |> value)
+  in
   let main_t =
     Term.(
       const main
       $ debug_a
+      $ port_a
       |> app (const Lwt_main.run)
     )
   in
