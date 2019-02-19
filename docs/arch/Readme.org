@@ -238,4 +238,3 @@ Some work has been done towards using RAUC bundles during installation:
   - Using the bundle for installation would be very nice as certain RAUC meta data is set properly (installed version, etc.) and also makes difference between fresh install and updated system smaller. Running RAUC (with proper D-Bus setup) on installer system is feasible. Currently the test disk image is created with the same installation script as is on the installer. If the installation script would require a fully running RAUC, then the disk creation would have to be adapted to either use a more complete Linux system (possibly the installer - making creation of the test disk very slow) or not use the installation script (not the idea of the testing disk). Further pondering required.
 
 ** TODO Check for latest version of bundle over network
-** TODO Check for already installed system and preserve [[*Machine ID][machine-id]]
