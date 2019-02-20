@@ -131,15 +131,16 @@ During installation of a new system on slot ~x~ the ~x_OK~ variable is set to ~0
 
 Updates are deployed to Amazon S3.
 
-*** TODO Mark system as good
+*** Mark system as good
 
-The controller can mark currently booted system as "good". But no checks are done. Following checks should be done:
+The controller marks the currently running system good after:
 
-- Check that all system services have started properly
-- Check if driver is running
+ - Controller is running for at least 30 seconds
+ - System state as reported by systemd is "Running"
 
 If system ~x~ is considered to be running satisfactory the system is marked good via RAUC, which resets the number of boot attempts (~x_TRY=0~) and marks the system bootable (~x_OK=1~) (see [[*Boot selection logic][boot selection logic]]).
 
+Note that if system is rebooted before controller can mark the system as good, the boot attempt counter (~x_TRY~) will be incremented. [[*Boot selection logic][The boot selection logic]] will not boot a system with more than 3 boot attempts.
 
 *** TODO Logging Mechanism
 
