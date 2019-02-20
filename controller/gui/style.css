@@ -1,6 +1,7 @@
 body {
     font-family: monospace;
-    background-color: black;
+    background-color: white;
+    color: black;
     margin: 5vh 5vw 5vh 5vw;
     padding: 0;
 }
@@ -70,7 +71,6 @@ dl > dt {
 
 #container {
     display: grid;
-    background-color: white;
 
     grid-template-columns: 1fr 10fr;
     grid-template-rows: 1fr 13fr 1fr;
