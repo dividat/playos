@@ -15,9 +15,6 @@ with lib;
 
     # Update Machinery
     ./rauc
-
-    # Development helpers
-    ./development.nix
   ];
 
   systemPartition = {

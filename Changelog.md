@@ -1,3 +1,13 @@
+# [UNRELEASED]
+
+## Added
+
+- installer: preserve machine-id on reinstallation
+
+## Removed
+
+- system: disable local root access
+
 # [2019.2.5-beta] - 2019-02-19
 
 ## Added
