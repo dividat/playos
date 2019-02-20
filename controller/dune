@@ -13,6 +13,5 @@
   (gui/check.svg as static/check.svg)
   (gui/wifi.svg as static/wifi.svg)
   (gui/power.svg as static/power.svg)
-  (gui/cpu.svg as static/cpu.svg)
   (gui/volume-2.svg as static/volume-2.svg)))
 
