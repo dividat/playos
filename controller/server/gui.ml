@@ -30,7 +30,7 @@ let template name =
 (* Helper to render template *)
 let render name dict =
   let%lwt template = template name in
-  Mustache.render template (Ezjsonm.dict dict)
+  Mustache.render ~strict:false template (Ezjsonm.dict dict)
   |> return
 
 (* Middleware that makes static content available *)
@@ -51,6 +51,15 @@ let index content =
   render "index" ["content", content |> Ezjsonm.string]
   >|= Response.of_string_body
 
+let page identifier page_values =
+  let menu_flag = ( "is_" ^ identifier, Ezjsonm.bool true ) in
+  let index_with_menu_flag content =
+    render "index" (menu_flag :: ["content", content |> Ezjsonm.string])
+  in
+  render identifier page_values
+  >>= index_with_menu_flag
+  >|= Response.of_string_body
+
 let success msg =
   msg
   |> index
@@ -64,7 +73,7 @@ let error_handling =
       return res
     | Error exn ->
       let%lwt () = Logs_lwt.err (fun m -> m "GUI Error: %s" (Printexc.to_string exn)) in
-      render "error"
+      page "error"
         Ezjsonm.([
             "exn", exn
                    |> Sexplib.Std.sexp_of_exn
@@ -75,7 +84,6 @@ let error_handling =
                        |> Sexplib.Sexp.to_string_hum
                        |> string
           ])
-      >>= index
   in
   Middleware.create ~name:"Error" ~filter
 
@@ -85,8 +93,7 @@ module InfoGui = struct
     app
     |> get "/info" (fun _ ->
         let%lwt server_info = Info.get () in
-        render "info" [ "server_info", server_info |> Info.to_json ]
-        >>= index)
+        page "info" [ "server_info", server_info |> Info.to_json ])
 end
 
 (** Network configuration GUI *)
@@ -127,12 +134,11 @@ module NetworkGui = struct
     in
 
 
-    render "network"
+    page "network"
       [
         "internet_connected", internet_connected |> Ezjsonm.bool
       ; "services", services |> Ezjsonm.list (fun s -> s |> Service.to_json |> Ezjsonm.value)
       ]
-    >>= index
 
   (** Helper to find a service by id *)
   let find_service ~connman id =
@@ -212,14 +218,13 @@ module LabelGui = struct
 
   let overview req =
     let%lwt label = make_label () in
-    render "label"
+    page "label"
       [ "machine_id", label.machine_id |> Ezjsonm.string
       ; "mac_1", label.mac_1 |> Ezjsonm.string
       ; "mac_2", label.mac_2 |> Ezjsonm.string
       ; "default_label_printer_url",
         "http://pinocchio.local:3000/play-computer" |> Ezjsonm.string
       ]
-    >>= index
 
   let print req =
     let%lwt form_data = urlencoded_pairs_of_body req in
@@ -259,7 +264,7 @@ module StatusGui = struct
                         |> return)
         in
         let%lwt interfaces = Network.Interface.get_all () in
-        render "status" [
+        page "status" [
           "update", update_s
                     |> Lwt_react.S.value
                     |> Update.sexp_of_state
@@ -277,7 +282,6 @@ module StatusGui = struct
                         |> Sexplib.Sexp.to_string_hum
                         |> Ezjsonm.string
         ]
-        >>= index
       )
 end
 
