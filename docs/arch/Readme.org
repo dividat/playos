@@ -115,6 +115,10 @@ PlayOS controller is implemented in [[https://ocaml.org/][OCaml]]. OCaml allows 
 
 [[https://www.rauc.io/][RAUC]] is used as update client. Updates are distributed as RAUC [[https://rauc.readthedocs.io/en/latest/basic.html#update-artifacts-bundles][bundles]], that are installed on the inactive system partition. [[*Bundle verification][Bundle verification]], target system partition selection, atomic update and boot loader integration are handled by RAUC. Checking for available updates and downloading them is handled by the controller, which then invokes RAUC to complete installation.
 
+**** Checking for new available versions
+
+The controller retrieves the version of the latest available release from a predefined URL, the update URL. An update is downloaded and installed if the booted system is outdated. Note that an update will not be downloaded if the booted system is up to date but the inactive partition is outdated. That means that in normal operation the active partition will be run the latest available version, whereas the inactive partition has the (latest-1) version installed.
+
 **** Bundle verification
 
 RAUC bundles are signed. Before installing an update RAUC will verify signature against certificate installed on system (see [[https://rauc.readthedocs.io/en/latest/advanced.html#security][here]]).
