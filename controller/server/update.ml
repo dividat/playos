@@ -82,7 +82,6 @@ let latest_download_url ~update_url version_string =
 (** download RAUC bundle *)
 let download ~url ~version =
   let bundle = Format.sprintf "playos-%s.raucb" version in
-  (* TODO: save bundle to a more sensible location *)
   let bundle_path = Format.sprintf "/tmp/%s" bundle in
   let command =
     "/run/current-system/sw/bin/curl",
