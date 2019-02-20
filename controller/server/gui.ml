@@ -126,13 +126,11 @@ module NetworkGui = struct
       >|= List.filter (fun s -> not internet_connected || s |> Service.is_connected)
     in
 
-    let%lwt interfaces = Interface.get_all () in
 
     render "network"
       [
         "internet_connected", internet_connected |> Ezjsonm.bool
       ; "services", services |> Ezjsonm.list (fun s -> s |> Service.to_json |> Ezjsonm.value)
-      ; "interfaces", interfaces |> Ezjsonm.list (Interface.to_json)
       ]
     >>= index
 
@@ -253,10 +251,14 @@ module StatusGui = struct
     app
     |> get "/status" (fun req ->
         let%lwt rauc =
-          Rauc.get_status rauc
-          >|= Rauc.sexp_of_status
-          >|= Sexplib.Sexp.to_string_hum
+          catch
+            (fun () -> Rauc.get_status rauc
+              >|= Rauc.sexp_of_status
+              >|= Sexplib.Sexp.to_string_hum)
+            (fun exn -> Printexc.to_string exn
+                        |> return)
         in
+        let%lwt interfaces = Network.Interface.get_all () in
         render "status" [
           "update", update_s
                     |> Lwt_react.S.value
@@ -270,6 +272,10 @@ module StatusGui = struct
                     |> Health.sexp_of_state
                     |> Sexplib.Sexp.to_string_hum
                     |> Ezjsonm.string
+        ; "interfaces", interfaces
+                        |> [%sexp_of: Network.Interface.t list]
+                        |> Sexplib.Sexp.to_string_hum
+                        |> Ezjsonm.string
         ]
         >>= index
       )
