@@ -132,35 +132,58 @@ let rec run ~update_url ~rauc ~set_state =
   function
   | GettingVersionInfo ->
     (* get version information and decide what to do *)
-    (match%lwt get_version_info update_url rauc with
-     | Ok version_info ->
-       let version_compare = Semver.compare
-           (fst version_info.latest)
-           (fst version_info.inactive) in
-       if version_compare == 0 then
-         (* check if booted < inactive and then set state to RebootRequired *)
-         (if Semver.compare
-             (fst version_info.booted)
-             (fst version_info.inactive) < 0 then
-            RebootRequired
-            |> set
-          else
-            UpToDate version_info
-            |> set
-         )
-       else if version_compare > 0 then
-         let latest_version = version_info.latest |> snd in
-         let url = latest_download_url ~update_url latest_version in
-         Downloading {url = url; version = latest_version}
-         |> set
-       else
-         ErrorGettingVersionInfo "latest available version is less than installed version"
-         |> set
+    begin
+      match%lwt get_version_info update_url rauc with
+      | Ok version_info ->
 
-     | Error exn ->
-       ErrorGettingVersionInfo (Printexc.to_string exn)
-       |> set
-    )
+        (* Compare latest available version to version booted. *)
+        let booted_version_comparae = Semver.compare
+            (fst version_info.latest)
+            (fst version_info.booted) in
+        let booted_up_to_date = booted_version_comparae == 0 in
+
+        (* Compare latest available version to version on inactive system partition. *)
+        let inactive_version_compare = Semver.compare
+            (fst version_info.latest)
+            (fst version_info.inactive) in
+        let inactive_up_to_date = inactive_version_compare == 0 in
+        let inactive_update_available = inactive_version_compare > 0 in
+
+        if booted_up_to_date then
+          (* Don't care if inactive can be updated. I.e. Only update the inactive partition once the booted partition is outdated. This results in always two versions being available on the machine. *)
+          UpToDate version_info
+          |> set
+
+        else if inactive_up_to_date then
+          (* If booted is not up to date but inactive is up to date, we probably should reboot *)
+          (* TODO this is where you should check if inactive boot partition has more than 3 boot attempts, if it does, you probably should reinstall. *)
+          RebootRequired
+          |> set
+
+        else if inactive_update_available then
+          (* Booted system is not up to date and there is an update available for inactive system. *)
+          let latest_version = version_info.latest |> snd in
+          let url = latest_download_url ~update_url latest_version in
+          Downloading {url = url; version = latest_version}
+          |> set
+
+        else
+          let msg =
+            ("nonsensical version information: "
+             ^ (version_info
+                |> sexp_of_version_info
+                |> Sexplib.Sexp.to_string_hum))
+          in
+          let%lwt () =
+            Logs_lwt.warn ~src:log_src
+              (fun m -> m "%s" msg)
+          in
+          ErrorGettingVersionInfo msg |> set
+
+      | Error exn ->
+        ErrorGettingVersionInfo (Printexc.to_string exn)
+        |> set
+    end
 
   | ErrorGettingVersionInfo msg ->
     (* handle error while getting version information *)
