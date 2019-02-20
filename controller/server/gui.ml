@@ -108,23 +108,10 @@ module NetworkGui = struct
       req =
 
     (* Check if internet connected *)
-    let%lwt internet_connected =
-      if
+    let internet_connected =
         internet
         |> Lwt_react.S.value
         |> Internet.is_connected
-      then
-        return true
-      else
-        (* If not connected delay for 3 seconds.
-
-           Motivation: Add a delay after connecting to a new service.
-        *)
-        let%lwt () = Lwt_unix.sleep 3.0 in
-        internet
-        |> Lwt_react.S.value
-        |> Internet.is_connected
-        |> return
     in
 
     let%lwt services =
