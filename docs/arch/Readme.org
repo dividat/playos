@@ -162,7 +162,7 @@ If Internet connectivity is not available a list of available wireless networks 
 
 [[https://01.org/connman][ConnMan]] is used as network manager. The controller interfaces with ConnMan via its D-Bus API. ConnMan is used in favor of NetworkManager as it is more lightweight, has more predictable behavior when connecting with link-local networks (see [[https://mail.gnome.org/archives/networkmanager-list/2009-April/msg00102.html][here]]) and has a easy to use D-Bus API (see [[https://git.kernel.org/pub/scm/network/connman/connman.git/tree/doc][documentation in the project repository]]).
 
-**** Limitations
+***** Limitations
 
 - Manual configuration of Ethernet interfaces is currently not possible. Ethernet interfaces are configured to use DHCP and fall back to link-local address configuration. This allows plug-and-play connectivity to Dividat Senso (link-local) and networks using DHCP.
 - Only WEP or WPA with passphrase is supported by the GUI. Further methods may be implemented by extending the ~Connman.Agent~ module and support in GUI. Manual configuration of ConnMan can be done via ~connmanctl~ (e.g. [[https://wiki.archlinux.org/index.php/ConnMan#Connecting_to_eduroam_(802.1X)][connecting to WPA Enterprise]]).
