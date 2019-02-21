@@ -4,16 +4,18 @@ type t =
   { app: string
   ; version: string
   ; update_url : string
+  ; kiosk_url : string
   ; machine_id: string
   ; zerotier_address: string option
   }
 
-let to_json { app; version; update_url; machine_id; zerotier_address} =
+let to_json { app; version; update_url; kiosk_url; machine_id; zerotier_address} =
   Ezjsonm.(
     dict [
       "app", string app
     ; "version", string version
     ; "update_url", string update_url
+    ; "kiosk_url", string kiosk_url
     ; "machine_id", string machine_id
     ; "zerotier_address", match zerotier_address with
       | Some address -> string address
@@ -28,6 +30,10 @@ let version =
 (** URL from where to get updates, set by build system *)
 let update_url =
   "@PLAYOS_UPDATE_URL@"
+
+(** URL to which kiosk is pointed *)
+let kiosk_url =
+  "@PLAYOS_KIOSK_URL@"
 
 let of_file f =
   let%lwt ic = Lwt_io.(open_file ~mode:Lwt_io.Input) f in
@@ -50,6 +56,7 @@ let get () =
   { app = "PlayOS Controller"
   ; version
   ; update_url
+  ; kiosk_url
   ; machine_id
   ; zerotier_address
   }

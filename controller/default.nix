@@ -1,6 +1,7 @@
 { fetchFromGitHub ? (import <nixpkgs> {}).fetchFromGitHub
 , version ? "0.0.0"
-, updateUrl ? "http://localhost:9999/"}:
+, updateUrl ? "http://localhost:9999/"
+, kioskUrl ? "https://play.dividat.com/"}:
 
 # We require two things for the OCaml build environment that are not yet in 18.09 channel (used by rest of project): https://github.com/NixOS/nixpkgs/pull/49684 and https://github.com/NixOS/nixpkgs/pull/53357.
 with import (fetchFromGitHub {
@@ -23,6 +24,7 @@ ocamlPackages.buildDunePackage rec {
     sed -i \
       -e "s,@PLAYOS_VERSION@,${version},g" \
       -e "s,@PLAYOS_UPDATE_URL@,${updateUrl},g" \
+      -e "s,@PLAYOS_KIOSK_URL@,${kioskUrl},g" \
       ./server/info.ml
   '';
 

@@ -89,7 +89,8 @@ The initial page displayed is a page displaying basic system information.
 Information displayed:
 
 - Version: The version of the currently running PlayOS system
-- Update URL: The location from where updates will be automatically installed
+- Update URL: The location from where updates will be installed
+- Kiosk URL: Location of web application that is loaded automatically
 - Machine ID: A unique identifier for the machine
 - ZeroTier address: Network address for remote access to this machine
 
