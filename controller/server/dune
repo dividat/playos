@@ -4,7 +4,7 @@
  (modules server update info gui health)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium tyxml mustache
-  rauc zerotier connman network systemd label_printer
+  rauc zerotier connman network timedate systemd label_printer
   semver)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 
