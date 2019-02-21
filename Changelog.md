@@ -1,4 +1,4 @@
-# [UNRELEASED]
+# [2019.2.6-beta] - 2019-02-21
 
 ## Added
 

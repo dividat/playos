@@ -36,7 +36,7 @@ let
   components = lib.makeScope newScope (self: with self; {
 
     # Set version
-    version = "2019.2.5-beta";
+    version = "2019.2.6-beta";
 
     inherit updateUrl deployUrl kioskUrl;
 
