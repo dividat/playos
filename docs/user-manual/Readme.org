@@ -1,11 +1,151 @@
 #+TITLE: PlayOS: User manual
 
-* TODO Overview
-* TODO Installation
-** TODO How to setup EFI from BIOS
+* Overview
+
+PlayOS is a custom operating system for running Dividat Play together with Dividat Senso.
+
+** Supported Hardware
+
+PlayOS runs on most standard ~x86_64~ systems.
+
+The only recommended and supported machine is the /Shuttle DH110/.
+
+* Installation
+** UEFI boot mode
+
+PlayOS requires the machine to boot in UEFI mode.
+
+Depending on the factory settings of your computer it may be necessary to manually set the boot mode to UEFI. To do this press the ~Delete~ key immediately after powering on the computer. A menu will be shown. Navigate to the tab /Boot/ and set the option /Boot Mode Select/ to /UEFI/:
+
+#+CAPTION: UEFI
+#+NAME: fig:bios-uefi
+#+attr_html: :width 800px
+[[../screenshots/bios-uefi.png]]
+
+Press ~F4~ to save and exit.
+
+** Installation
+
+Insert the installation USB key, power on the computer and press ~F4~ to open the boot selection menu. Select the USB key and hit ~Enter~:
+
+#+CAPTION: Boot selection
+#+NAME: fig:boot-selection
+#+attr_html: :width 800px
+[[../screenshots/boot-selection.png]]
+
+The installer will start and display a boot loader menu:
+
+#+CAPTION: Installer boot loader
+#+NAME: fig:installer-boot-loader.png
+#+attr_html: :width 800px
+[[../screenshots/installer-boot-loader.png]]
+
+Select the first entry and press ~Enter~. This will boot the PlayOS installer. After the installer is completely booted a prompt will ask for confirmation to install PlayOS on the computer's disk:
+
+#+CAPTION: Confirmation to install PlayOS
+#+NAME: fig:install-playos.png
+#+attr_html: :width 800px
+[[../screenshots/install-playos.png]]
+
+To continue installation entery ~y~ and press ~Enter~. Note that installation will delete any data already present on the disk.
+
+Installation takes around 5 to 10 minutes. After the installation completes successfully, the computer will automatically restart the computer and boot into the newly install PlayOS system.
+
 * Usage
-** TODO Shutting down
-** TODO Configuring Network
-*** TODO Wireless
-*** TODO Ethernet
-** TODO Wiping user data
+
+The system will automatically boot and load Dividat Play.
+
+You may login using the provided credentials and start your training. 
+
+Connection to Dividat Senso will automatically be configured. To manually configure connection please refer to the Dividat Play manual.
+
+** Shutting down
+
+The system may be shut down by pressing the power button on the computer or alternatively from the administrator menu.
+
+* Administration
+
+A menu for system administration is provided and may be accessed with the key combination ~Ctrl-Shift-F12~.
+
+Multiple pages are available and may be navigated with the icons on the right of the screen.
+
+The initial page displayed is a page displaying basic system information.
+
+** Information
+
+#+CAPTION: Information
+#+NAME: fig:controller-information
+#+attr_html: :width 800px
+[[../screenshots/controller-information.png]]
+
+Information displayed:
+
+- Version: The version of the currently running PlayOS system
+- Update URL: The location from where updates will be automatically installed
+- Machine ID: A unique identifier for the machine
+- ZeroTier address: Network address for remote access to this machine
+
+** Network
+
+The network screen shows the state of Internet connectivity.
+
+If system is connected to Internet a list of connected services (e.g. Wireless networks) is displayed:
+
+#+CAPTION: Internet connected
+#+NAME: fig:controller-network
+#+attr_html: :width 800px
+[[../screenshots/controller-network.png]]
+
+If system is not connected to Internet a list of available services is displayed:
+
+#+CAPTION: Internet not connected
+#+NAME: fig:controller-network-not-connected
+#+attr_html: :width 800px
+[[../screenshots/controller-network-not-connected.png]]
+
+A service may be expanded by clicking on the triangle to the left of the service name. This will display more information on the service. For wireless networks an input field to enter a WEP/WPA passphrase and connect with the service is displayed:
+
+#+CAPTION: Connect with a service
+#+NAME: fig:controller-network-connect
+#+attr_html: :width 800px
+[[../screenshots/controller-network-connect.png]]
+
+A service that is connected may be removed (e.g. thus disconnecting from the Wireless network) by expanding the service information and clicking the *Remove* button.
+
+#+CAPTION: Remove a service
+#+NAME: fig:controller-network-remove
+#+attr_html: :width 800px
+[[../screenshots/controller-network-remove.png]]
+
+Ethernet connections are automatically configured using DHCP or link-local address autoconfiguration. Manual configuration is not possible.
+
+** System Status
+
+Advanced system status information can be displayed by clicking the *system status* link in the bottom right of the screen.
+
+** Network interface addresses
+
+The addresses of the Ethernet interfaces (MAC addresses) are printed on the label of the computer. They are also displayed in the [[*System Status][System Status]] page.
+
+** Wiping user data
+
+Certain user data such as Play login credentials, wireless settings are stored persistently on the computer's disk.
+
+User data can be completely deleted (wiped) from the rescue system. To start the rescue system, reboot the computer and press the ~Escape~ key once the message "Welcome to GRUB!" appears. This will show the boot loader menu:
+
+#+CAPTION: Boot loader
+#+NAME: fig:boot-loader
+#+attr_html: :width 800px
+[[../screenshots/boot-loader.png]]
+
+Select the entry "wipe user data / rescue system" with the arrow keys and press ~Enter~.
+
+The rescue system will boot and display a menu:
+
+#+CAPTION: Rescue System
+#+NAME:   fig:rescue-system
+#+attr_html: :width 800px
+[[../screenshots/rescue-system.png]]
+
+Select the entry "wipe-user-data" and press ~Enter~. This will delete all user data and reboot the computer.
+
