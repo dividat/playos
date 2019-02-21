@@ -56,8 +56,29 @@ with lib;
   # Enable non-free firmware
   hardware.enableRedistributableFirmware = true;
 
-  networking.networkmanager.enable = true;
-  networking.hostName = "playos-installer";
+  # Use ConnMan
+  networking = {
+    hostName = "playos-installer";
+    connman = {
+      enable = true;
+      enableVPN = false;
+      networkInterfaceBlacklist = [ "vmnet" "vboxnet" "virbr" "ifb" "ve" "zt" ];
+      extraConfig = ''
+        [General]
+        AllowHostnameUpdates=false
+        AllowDomainnameUpdates=false
+
+        # Disable calling home
+        EnableOnlineCheck=false
+      '';
+    };
+    # enable wpa_supplicant
+    wireless = {
+      enable = true;
+      # Add a dummy network to make sure that wpa_supplicant.conf is created (see https://github.com/NixOS/nixpkgs/issues/23196)
+      networks."12345-i-do-not-exist"= {};
+    };
+  };
 
   # ISO naming.
   isoImage.isoName = "playos-installer-${version}.iso";
