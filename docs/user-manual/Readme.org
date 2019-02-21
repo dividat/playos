@@ -26,7 +26,7 @@ Press ~F4~ to save and exit.
 
 ** Installation
 
-Insert the installation USB key, power on the computer and press ~F4~ to open the boot selection menu. Select the USB key and hit ~Enter~:
+Insert the installation USB key, power on the computer and press ~F7~ to open the boot selection menu. Select the USB key and hit ~Enter~:
 
 #+CAPTION: Boot selection
 #+NAME: fig:boot-selection
