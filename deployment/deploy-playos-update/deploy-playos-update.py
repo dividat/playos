@@ -17,6 +17,7 @@ DUMMY_BUILD_CERT = "@dummyBuildCert@"
 
 DEPLOY_URL = "@deployUrl@"
 UPDATE_URL = "@updateUrl@"
+KIOSK_URL = "@kioskUrl@"
 
 RAUC = "@rauc@/bin/rauc"
 AWS_CLI = "@awscli@/bin/aws"
@@ -45,10 +46,12 @@ def _query_continue(question, default=False):
 
 
 def sign_rauc_bundle(key, out):
-    with tempfile.NamedTemporaryFile(mode="w",delete=False) as combined_keyring:
+    with tempfile.NamedTemporaryFile(
+            mode="w", delete=False) as combined_keyring:
 
         # Create a keyring that contains the dummy and real certificate
-        with open(DUMMY_BUILD_CERT, "r") as dummy_cert, open(UPDATE_CERT, "r") as update_cert: 
+        with open(DUMMY_BUILD_CERT,
+                  "r") as dummy_cert, open(UPDATE_CERT, "r") as update_cert:
             combined_keyring.write(dummy_cert.read())
             combined_keyring.write(update_cert.read())
             combined_keyring.close()
@@ -84,10 +87,9 @@ def _main(opts):
         os.makedirs(version_dir, exist_ok=True)
 
         # Sign RAUC bundle (and verify signature)
-        signed_bundle = os.path.join(version_dir, "playos-" + VERSION + ".raucb")
-        sign_rauc_bundle(
-            key=opts.key,
-            out=signed_bundle)
+        signed_bundle = os.path.join(version_dir,
+                                     "playos-" + VERSION + ".raucb")
+        sign_rauc_bundle(key=opts.key, out=signed_bundle)
 
         # Write latest file
         latest_file = os.path.join(signed_release, "latest")
@@ -99,6 +101,7 @@ def _main(opts):
         # Print some information and wait for confirmation
         print("Update URL:\t%s" % UPDATE_URL)
         print("Deploy URL:\t%s" % DEPLOY_URL)
+        print("Kiosk URL:\t%s" % KIOSK_URL)
 
         # Show RAUC info
         subprocess.run(
