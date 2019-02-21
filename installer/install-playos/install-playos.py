@@ -21,6 +21,9 @@ RESCUE_SYSTEM = "@rescueSystem@"
 SYSTEM_CLOSURE_INFO = "@systemClosureInfo@"
 VERSION = "@version@"
 
+PLAYOS_UPDATE_URL = "@updateUrl@"
+PLAYOS_KIOSK_URL = "@kioskUrl@"
+
 
 def find_device(device_path):
     """Return suitable device to install PlayOS on"""
@@ -126,20 +129,20 @@ def install_bootloader(disk, machine_id):
     subprocess.run(['mkfs.vfat', '-n', 'ESP', esp.path], check=True)
     os.makedirs('/mnt/boot', exist_ok=True)
     subprocess.run(['mount', esp.path, '/mnt/boot'], check=True)
-    _suppress_unless_fails(subprocess.run(
-        [
-            'grub-install', '--no-nvram', '--no-bootsector', '--removable',
-            '--boot-directory', '/mnt/boot', '--target', 'x86_64-efi',
-            '--efi-directory', '/mnt/boot'
-        ],
-        check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+    _suppress_unless_fails(
+        subprocess.run(
+            [
+                'grub-install', '--no-nvram', '--no-bootsector', '--removable',
+                '--boot-directory', '/mnt/boot', '--target', 'x86_64-efi',
+                '--efi-directory', '/mnt/boot'
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE))
     os.makedirs('/mnt/boot/grub/', exist_ok=True)
     shutil.copy2(GRUB_CFG, '/mnt/boot/grub/grub.cfg')
     subprocess.run(
-        [
-            'grub-editenv', GRUB_ENV, 'set',
-            'machine_id=' + machine_id.hex
-        ],
+        ['grub-editenv', GRUB_ENV, 'set', 'machine_id=' + machine_id.hex],
         check=True)
 
     # Install the rescue system
@@ -285,10 +288,12 @@ def _get_grubenv_entry(entry_name, device):
         subprocess.run(['mount', esp.path, '/mnt/boot'], check=True)
         # Try to read entry from grubenv
         grub_list = subprocess.run(
-            [ 'grub-editenv', GRUB_ENV, 'list' ],
-            check=True, stdout=subprocess.PIPE, universal_newlines=True)
-        entry_match = re.search(
-            "^" + entry_name + "=(.+)$", grub_list.stdout, re.MULTILINE)
+            ['grub-editenv', GRUB_ENV, 'list'],
+            check=True,
+            stdout=subprocess.PIPE,
+            universal_newlines=True)
+        entry_match = re.search("^" + entry_name + "=(.+)$", grub_list.stdout,
+                                re.MULTILINE)
         if entry_match == None:
             return None
         else:
@@ -306,7 +311,9 @@ def _device_size_in_gb(device):
 def confirm(device, machine_id, no_confirm):
     print('\n\nInstalling PlayOS ({}) to {} ({} - {:n}GB)'.format(
         VERSION, device.path, device.model, _device_size_in_gb(device)))
-    print('  machine-id: {}\n'.format(machine_id.hex))
+    print('  Machine ID: {}'.format(machine_id.hex))
+    print('  Update URL: {}'.format(PLAYOS_UPDATE_URL))
+    print('  Kiosk URL: {}\n'.format(PLAYOS_KIOSK_URL))
     return (no_confirm or _query_continue('Do you want to continue?'))
 
 
