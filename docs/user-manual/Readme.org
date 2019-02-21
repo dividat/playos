@@ -22,6 +22,14 @@ Depending on the factory settings of your computer it may be necessary to manual
 #+attr_html: :width 800px
 [[../screenshots/bios-uefi.png]]
 
+Additionally the /Secure Boot Control/ functionality needs to be disabled. Navigate to the tab /Security/ and set the option /Secure Boot Control/ to /Disabled/:
+
+#+CAPTION: Secure boot
+#+NAME: fig:secure-boot
+#+attr_html: :width 800px
+[[../screenshots/secure-boot.png]]
+
+
 Press ~F4~ to save and exit.
 
 ** Installation
