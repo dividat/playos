@@ -49,6 +49,9 @@ let
     # NixOS system toplevel
     systemToplevel = callPackage ./system {};
 
+    # USB live system
+    live = callPackage ./live {};
+
     # Controller
     playos-controller = callPackage ./controller {};
 
@@ -102,6 +105,8 @@ stdenv.mkDerivation {
 
     # Certificate used to verify update bundles
     ln -s ${updateCert} $out/cert.pem
+
+    ln -s ${components.live}/iso/playos-live-${components.version}.iso $out/playos-live-${components.version}.iso
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
