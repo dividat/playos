@@ -33,26 +33,31 @@ let enable_and_scan_wifi_devices ~connman =
   |> Lwt_result.catch
 
 
+(* Hack to fix No Carrier error (https://01.org/jira/browse/CM-670) *)
+let no_carrier_hack ~systemd ~connman =
+  let%lwt () = Logs_lwt.info (fun m -> m "restarting wpa_supplicatn") in
+  let%lwt () = Lwt_unix.sleep 3.0 in
+  Lwt_result.(
+    Systemd.Manager.restart_unit systemd "wpa_supplicant.service" |> Lwt_result.catch
+    >>= (fun () -> Lwt_unix.sleep 3.0 |> Lwt_result.catch)
+    >>= (fun () -> enable_and_scan_wifi_devices ~connman)
+  )
+
 let init ~systemd ~connman =
   let%lwt () = Logs_lwt.info (fun m -> m "initializing network connections") in
 
-  enable_and_scan_wifi_devices ~connman
-  >>= CCResult.(
-      catch
-        ~ok:(fun x -> x |> return |> Lwt.return)
-        ~err:(fun exn ->
-            let%lwt () = Logs_lwt.warn
-                (fun m -> m "enabling and scanning wifi failed: %s, %s"
-                    (OBus_error.name exn)
-                    (Printexc.to_string exn))
-            in
-            (* Hack to fix No Carrier error (https://01.org/jira/browse/CM-670) *)
-            let%lwt () = Logs_lwt.info (fun m -> m "restarting wpa_supplicatn") in
-            let%lwt () = Systemd.Manager.restart_unit systemd "wpa_supplicant.service" in
-            let%lwt () = Lwt_unix.sleep 3.0 in
-            enable_and_scan_wifi_devices ~connman
-          )
-    )
+  match%lwt enable_and_scan_wifi_devices ~connman with
+
+  | Ok () ->
+    Lwt_result.return ()
+
+  | Error exn ->
+    let%lwt () = Logs_lwt.warn
+        (fun m -> m "enabling and scanning wifi failed: %s, %s"
+            (OBus_error.name exn)
+            (Printexc.to_string exn))
+    in
+    no_carrier_hack ~systemd ~connman
 
 module Internet =
 struct
