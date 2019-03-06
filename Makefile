@@ -12,6 +12,7 @@ vm:
 	nix-build \
 		--arg buildInstaller false \
 		--arg buildBundle false \
+		--arg buildLive false \
 		--arg buildDisk false
 	@echo "Run ./result/bin/run-playos-in-vm to start a VM"
 
