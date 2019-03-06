@@ -50,8 +50,8 @@ with lib;
         Restart = "always";
       };
       wantedBy = [ "multi-user.target" ];
-      requires = [ "rauc" "connman" ];
-      after = [ "rauc" "connman" ];
+      requires = [ "connman.service" ];
+      after = [ "rauc.service" "connman.service" ];
     };
 
   };
