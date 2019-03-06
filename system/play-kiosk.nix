@@ -9,13 +9,12 @@
     extraGroups = [ "audio" ];
   };
 
-  # TODO: reenable this for live system
   # Note that setting up "/home" as persistent fails due to https://github.com/NixOS/nixpkgs/issues/6481
-  # volatileRoot.persistentFolders."/home/play" = {
-  #   mode = "0700";
-  #   user = "play";
-  #   group = "users";
-  # };
+  volatileRoot.persistentFolders."/home/play" = {
+    mode = "0700";
+    user = "play";
+    group = "users";
+  };
 
   # Kiosk session
   services.xserver = {

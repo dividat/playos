@@ -48,7 +48,8 @@ with lib;
       })
       cfg.persistentFolders) //
       {
-        "/" = {
+        # Force to override if other root has been configured
+        "/" = mkForce {
           fsType = "tmpfs";
           options = [ "mode=0755" ];
         };

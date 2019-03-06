@@ -21,6 +21,7 @@ with lib;
   ];
 
   systemPartition = {
+    enable = true;
     device = "/dev/root";
   };
 
