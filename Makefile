@@ -20,9 +20,17 @@ vm:
 validation:
 	[[ $(BRANCH) = "validation" ]]
 	nix-build \
-    --arg updateCert ./pki/validation/cert.pem \
+		--arg updateCert ./pki/validation/cert.pem \
 		--arg updateUrl http://dist.dividat.com/releases/playos/validation/ \
 		--arg deployUrl s3://dist.dividat.ch/releases/playos/validation/ \
 		--arg kioskUrl https://val-play.dividat.com/ \
 		--arg buildDisk false
 	@echo "Run ./result/bin/deploy-playos-update to deploy"
+
+.PHONY: lab-key
+lab-key:
+	nix-build \
+		--arg kioskUrl https://lab.dividat.com/ \
+		--arg buildInstaller false \
+		--arg buildBundle false \
+		--arg buildDisk false
