@@ -33,6 +33,9 @@ with lib;
     # Use overlayed pkgs.
     nixpkgs.pkgs = pkgs;
 
+    # Custom label when identifying OS
+    system.nixos.label = "PlayOS-${version}";
+
     # disable installation of bootloader
     boot.loader.grub.enable = false;
 
