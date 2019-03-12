@@ -23,7 +23,7 @@ let nixos = pkgs.importFromNixos ""; in
       isoImage.makeEfiBootable = true;
       isoImage.makeUsbBootable = true;
       isoImage.isoName = "playos-live-${version}.iso";
-
+      isoImage.appendToMenuLabel = " Live System";
 
       # Set up as completely volatile system
       systemPartition.enable = mkForce false;
