@@ -96,6 +96,85 @@ module InfoGui = struct
         page "info" [ "server_info", server_info |> Info.to_json ])
 end
 
+(** Localization GUI *)
+module LocalizationGui = struct
+  let overview req =
+    let%lwt td_daemon = Timedate.daemon () in
+    let%lwt current_timezone = Timedate.get_timezone td_daemon in
+    let is_current candidate_tz =
+      match current_timezone with
+      | Some current_tz -> String.equal candidate_tz current_tz
+      | None -> false
+    in
+    let%lwt all_timezones = Timedate.get_available_timezones td_daemon in
+    let tz_groups =
+      List.fold_right
+        (fun tz groups ->
+          let re_spaced = String.map (fun c -> if Char.equal c '_' then ' ' else c) tz in
+          let group_id, name = match String.split_on_char '/' re_spaced |> List.rev with
+            (* An unscoped entry, e.g. UTC. *)
+            | [ singleton ] -> singleton, singleton
+            (* A humble entry, likely scoped to continent, e.g. Europe/Amsterdam. *)
+            | [ name; group_id ] -> group_id, name
+            (* A multi-hierarchical entry, e.g. America/Argentina/Buenos_Aires. *)
+            | name :: group_sections -> String.concat "/" (List.rev group_sections), name
+            (* Not a sensible outcome. *)
+            | [] -> re_spaced, re_spaced
+          in
+          let prev_entries = match List.assoc_opt group_id groups with
+            | Some entries -> entries
+            | None -> []
+          in
+          ( group_id
+          , ( [ "id", Ezjsonm.string tz
+              ; "name", Ezjsonm.string (name)
+              ; "active", Ezjsonm.bool (is_current tz)
+              ]
+              |> Ezjsonm.dict
+            )
+            :: prev_entries
+          )
+          :: List.remove_assoc group_id groups
+        )
+        all_timezones
+        []
+        |> Ezjsonm.list
+        (fun (group_id, entries) ->
+          Ezjsonm.dict
+            [ "group", Ezjsonm.string group_id
+            ; "entries", Ezjsonm.list (fun x -> x) entries
+            ]
+        )
+    in
+    page "localization"
+      [ "timezone_groups", tz_groups
+      ; "is_timezone_set",
+        (match current_timezone with
+         | Some tz -> Ezjsonm.bool true
+         | None -> Ezjsonm.bool false
+        )
+      ]
+
+  let set_timezone req =
+    let%lwt td_daemon = Timedate.daemon () in
+    let%lwt form_data =
+      urlencoded_pairs_of_body req
+    in
+    let%lwt () =
+      match form_data |> List.assoc_opt "timezone" with
+      | Some [ tz_id ] ->
+        Timedate.set_timezone td_daemon tz_id
+      | _ ->
+        return ()
+    in
+    "/localization" |> Uri.of_string |> redirect'
+
+  let build app =
+    app
+    |> get "/localization" overview
+    |> post "/localization/timezone" set_timezone
+end
+
 (** Network configuration GUI *)
 module NetworkGui = struct
 
@@ -287,6 +366,7 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
 
   |> InfoGui.build
   |> NetworkGui.build ~connman ~internet
+  |> LocalizationGui.build
   |> LabelGui.build
   |> StatusGui.build ~health_s ~update_s ~rauc
 

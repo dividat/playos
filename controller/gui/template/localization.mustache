@@ -1,0 +1,17 @@
+<h1>Localization</h1>
+
+<section>
+<h2>Timezone</h2>
+<form action="/localization/timezone" method="POST">
+<select name="timezone" required>
+  <option value="" disabled{{^is_timezone_set}} selected{{/is_timezone_set}}>Select your closest timezone ...</option>
+  {{#timezone_groups}}
+  <optgroup label="{{group}}">
+    {{#entries}}
+    <option{{#active}} selected{{/active}} value="{{id}}">{{name}}</option>
+    {{/entries}}
+  {{/timezone_groups}}
+</select>
+<input type="submit" value="Set">
+</form>
+</section>

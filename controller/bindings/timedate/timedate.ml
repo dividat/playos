@@ -23,10 +23,11 @@ let get_timezone daemon =
   else
     Some raw_tz |> return
 
-let get_current_time () =
+let get_current_time daemon =
   Lwt_process.pread ("", [|"date"; "+%Y-%m-%d %H:%M UTC%z"|])
 
-let get_available_timezones () =
+let get_available_timezones daemon =
+  (* Newer versions of systemd add a DBus property for this. *)
   Lwt_process.pread_lines ("", [|"timedatectl"; "list-timezones"|])
   |> Lwt_stream.to_list
 
