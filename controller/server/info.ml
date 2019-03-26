@@ -7,9 +7,10 @@ type t =
   ; kiosk_url : string
   ; machine_id: string
   ; zerotier_address: string option
+  ; local_time : string
   }
 
-let to_json { app; version; update_url; kiosk_url; machine_id; zerotier_address} =
+let to_json { app; version; update_url; kiosk_url; machine_id; zerotier_address; local_time } =
   Ezjsonm.(
     dict [
       "app", string app
@@ -17,9 +18,11 @@ let to_json { app; version; update_url; kiosk_url; machine_id; zerotier_address}
     ; "update_url", string update_url
     ; "kiosk_url", string kiosk_url
     ; "machine_id", string machine_id
-    ; "zerotier_address", match zerotier_address with
+    ; "zerotier_address", (match zerotier_address with
       | Some address -> string address
       | None -> string "—"
+    )
+    ; "local_time", string local_time
     ]
   )
 
@@ -52,6 +55,15 @@ let get () =
      | Error _ -> None |> return
     )
   in
+  let%lwt timedate_daemon = Timedate.daemon () in
+  let%lwt current_time = Timedate.get_current_time timedate_daemon in
+  let%lwt timezone =
+    (match%lwt Timedate.get_active_timezone timedate_daemon with
+     | Some tz -> return tz
+     | None -> return "No timezone"
+    )
+  in
+  let local_time = current_time ^ " (" ^ timezone ^ ")" in
   let%lwt () = Lwt_io.close ic in
   { app = "PlayOS Controller"
   ; version
@@ -59,6 +71,7 @@ let get () =
   ; kiosk_url
   ; machine_id
   ; zerotier_address
+  ; local_time
   }
   |> return
 

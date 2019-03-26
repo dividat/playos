@@ -13,6 +13,9 @@ with lib;
     # Remote management
     ./remote-management.nix
 
+    # Localization
+    ./localization.nix
+
     # Update Machinery
     ./rauc
   ];
@@ -29,7 +32,6 @@ with lib;
       device = "/dev/disk/by-label/ESP";
     };
   };
-
 
   # Codename Dancing Bear
   services.mingetty.greetingLine =
