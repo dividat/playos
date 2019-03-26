@@ -100,10 +100,13 @@ end
 module LocalizationGui = struct
   let overview req =
     let%lwt td_daemon = Timedate.daemon () in
-    let%lwt current_timezone = Timedate.get_timezone td_daemon in
-    let is_current candidate_tz =
-      match current_timezone with
-      | Some current_tz -> String.equal candidate_tz current_tz
+    let%lwt current_timezone = Timedate.get_configured_timezone () in
+    let is_some = function
+      | Some _ -> true
+      | None -> false
+    in
+    let is_some_thing thing = function
+      | Some other -> String.equal other thing
       | None -> false
     in
     let%lwt all_timezones = Timedate.get_available_timezones td_daemon in
@@ -128,7 +131,7 @@ module LocalizationGui = struct
           ( group_id
           , ( [ "id", Ezjsonm.string tz
               ; "name", Ezjsonm.string (name)
-              ; "active", Ezjsonm.bool (is_current tz)
+              ; "active", Ezjsonm.bool (is_some_thing tz current_timezone)
               ]
               |> Ezjsonm.dict
             )
@@ -146,13 +149,54 @@ module LocalizationGui = struct
             ]
         )
     in
+    let%lwt current_lang = Locale.get_lang () in
+    let langs =
+      [ "nl_NL.UTF-8", "Dutch"
+      ; "en_UK.UTF-8", "English (UK)"
+      ; "en_US.UTF-8", "English (US)"
+      ; "fi_FI.UTF-8", "Finnish"
+      ; "fr_FR.UTF-8", "French"
+      ; "de_DE.UTF-8", "German"
+      ; "it_IT.UTF-8", "Italian"
+      ; "es_ES.UTF-8", "Spanish"
+      ]
+      |> Ezjsonm.list
+        (fun (id, name) ->
+          [ "id", id |> Ezjsonm.string
+          ; "name", name |> Ezjsonm.string
+          ; "active", is_some_thing id current_lang |> Ezjsonm.bool
+          ]
+          |> Ezjsonm.dict
+        )
+    in
+    let%lwt current_keymap = Locale.get_keymap () in
+    let keymaps =
+      [ "nl", "Dutch"
+      ; "gb", "English (UK)"
+      ; "us", "English (US)"
+      ; "fi", "Finnish"
+      ; "fr", "French"
+      ; "de", "German"
+      ; "ch", "German (Switzerland)"
+      ; "it", "Italian"
+      ; "es", "Spanish"
+      ]
+      |> Ezjsonm.list
+        (fun (id, name) ->
+          [ "id", id |> Ezjsonm.string
+          ; "name", name |> Ezjsonm.string
+          ; "active", is_some_thing id current_keymap |> Ezjsonm.bool
+          ]
+          |> Ezjsonm.dict
+        )
+    in
     page "localization"
       [ "timezone_groups", tz_groups
-      ; "is_timezone_set",
-        (match current_timezone with
-         | Some tz -> Ezjsonm.bool true
-         | None -> Ezjsonm.bool false
-        )
+      ; "is_timezone_set", Ezjsonm.bool (is_some current_timezone)
+      ; "langs", langs
+      ; "is_lang_set", Ezjsonm.bool (is_some current_lang)
+      ; "is_keymap_set", Ezjsonm.bool (is_some current_keymap)
+      ; "keymaps", keymaps
       ]
 
   let set_timezone req =
@@ -160,12 +204,38 @@ module LocalizationGui = struct
     let%lwt form_data =
       urlencoded_pairs_of_body req
     in
-    let%lwt () =
+    let%lwt _ =
       match form_data |> List.assoc_opt "timezone" with
       | Some [ tz_id ] ->
-        Timedate.set_timezone td_daemon tz_id
+        Timedate.set_timezone tz_id
       | _ ->
-        return ()
+        return false
+    in
+    "/localization" |> Uri.of_string |> redirect'
+
+  let set_lang req =
+    let%lwt form_data =
+      urlencoded_pairs_of_body req
+    in
+    let%lwt _ =
+      match form_data |> List.assoc_opt "lang" with
+      | Some [ lang ] ->
+        Locale.set_lang lang
+      | _ ->
+        return false
+    in
+    "/localization" |> Uri.of_string |> redirect'
+
+  let set_keymap req =
+    let%lwt form_data =
+      urlencoded_pairs_of_body req
+    in
+    let%lwt _ =
+      match form_data |> List.assoc_opt "keymap" with
+      | Some [ keymap ] ->
+        Locale.set_keymap keymap
+      | _ ->
+        return false
     in
     "/localization" |> Uri.of_string |> redirect'
 
@@ -173,6 +243,8 @@ module LocalizationGui = struct
     app
     |> get "/localization" overview
     |> post "/localization/timezone" set_timezone
+    |> post "/localization/lang" set_lang
+    |> post "/localization/keymap" set_keymap
 end
 
 (** Network configuration GUI *)

@@ -31,6 +31,14 @@
             xset s noblank
             xset -dpms
 
+            # Localization for xsession
+            if [ -f /var/lib/gui-localization/lang ]; then
+              export LANG=$(cat /var/lib/gui-localization/lang)
+            fi
+            if [ -f /var/lib/gui-localization/keymap ]; then
+              setxkbmap $(cat /var/lib/gui-localization/keymap) || true
+            fi
+
             # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-5/qtwebengine-debugging.html)
             export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
 

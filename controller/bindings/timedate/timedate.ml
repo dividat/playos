@@ -1,7 +1,19 @@
 open Lwt
 open Timedate_interfaces
 
+let log_src = Logs.Src.create "timedate"
+
 type t = OBus_peer.Private.t
+
+(* Timezone Configuration *)
+
+let get_configured_timezone () =
+  Util.read_from_file log_src "/var/lib/gui-localization/timezone"
+
+let set_timezone timezone =
+  Util.write_to_file log_src "/var/lib/gui-localization/timezone" timezone
+
+(* Active Timezone *)
 
 let daemon () =
   let%lwt system_bus = OBus_bus.system () in
@@ -11,7 +23,7 @@ let daemon () =
 let proxy daemon =
   OBus_proxy.make daemon ["org"; "freedesktop"; "timedate1"]
 
-let get_timezone daemon =
+let get_active_timezone daemon =
   let%lwt raw_tz =
     OBus_property.make
       Org_freedesktop_timedate1.p_Timezone
@@ -30,12 +42,6 @@ let get_available_timezones daemon =
   (* Newer versions of systemd add a DBus property for this. *)
   Lwt_process.pread_lines ("", [|"timedatectl"; "list-timezones"|])
   |> Lwt_stream.to_list
-
-let set_timezone daemon timezone =
-  OBus_method.call
-    Org_freedesktop_timedate1.m_SetTimezone
-    (proxy daemon)
-    (timezone, false)
 
 
 (* Auto generated with obus-gen-client *)

@@ -58,7 +58,7 @@ let get () =
   let%lwt timedate_daemon = Timedate.daemon () in
   let%lwt current_time = Timedate.get_current_time timedate_daemon in
   let%lwt timezone =
-    (match%lwt Timedate.get_timezone timedate_daemon with
+    (match%lwt Timedate.get_active_timezone timedate_daemon with
      | Some tz -> return tz
      | None -> return "No timezone"
     )
