@@ -31,7 +31,11 @@
     # is created (see https://github.com/NixOS/nixpkgs/issues/23196)
     wireless = {
       enable = true;
-      networks."12345-i-do-not-exist"= {};
+      networks."12345-i-do-not-exist"= {
+        extraConfig = ''
+          disabled=1
+        '';
+      };
     };
   };
   # Issue 2: Make sure connman starts after wpa_supplicant
