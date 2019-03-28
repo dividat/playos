@@ -33,6 +33,9 @@ with lib;
     # Use overlayed pkgs.
     nixpkgs.pkgs = pkgs;
 
+    # Custom label when identifying OS
+    system.nixos.label = "PlayOS-${version}";
+
     # disable installation of bootloader
     boot.loader.grub.enable = false;
 
@@ -50,8 +53,8 @@ with lib;
         Restart = "always";
       };
       wantedBy = [ "multi-user.target" ];
-      requires = [ "rauc" "connman" ];
-      after = [ "rauc" "connman" ];
+      requires = [ "connman.service" ];
+      after = [ "rauc.service" "connman.service" ];
     };
 
   };
