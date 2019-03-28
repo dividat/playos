@@ -55,7 +55,7 @@ Select the first entry and press ~Enter~. This will boot the PlayOS installer. A
 #+attr_html: :width 800px
 [[../screenshots/install-playos.png]]
 
-To continue installation entery ~y~ and press ~Enter~. Note that installation will delete any data already present on the disk.
+To continue installation enter ~y~ and press ~Enter~. Note that installation will delete any data already present on the disk.
 
 Installation takes around 5 to 10 minutes. After the installation completes successfully, the computer will automatically restart the computer and boot into the newly install PlayOS system.
 
@@ -158,3 +158,8 @@ The rescue system will boot and display a menu:
 
 Select the entry "wipe-user-data" and press ~Enter~. This will delete all user data and reboot the computer.
 
+* Live System
+
+A live system build of PlayOS is available and can be pointed to experimental versions of Play or other web addresses to allow for easy evaluation. This version of PlayOS boots from removable media such as USB keys and has no persistent storage at all. Any configuration done when booted will be reset to defaults on next boot.
+
+Starting up the live system from a USB key works in the same basic manner as during [[*Installation][installation]]. Once started, network and other configuration can be set in the [[*Administration][administration]] interface.

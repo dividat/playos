@@ -17,7 +17,8 @@ For quicker development cycles you may pass following arguments to the build:
 
 - `buildInstaller`: Should the installer ISO image be built.
 - `buildBundle`: Should the RAUC bundle be built.
-- `buildDisk`: Should the preinstalled disk image.
+- `buildDisk`: Should the preinstalled disk image be built.
+- `buildLive`: Should the PlayOS live system image be built.
 
 For example: `nix build --arg buildInstaller false --arg buildBundle false` will only build the system toplevels and the preinstalled disk image.
 
