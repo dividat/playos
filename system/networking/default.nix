@@ -40,18 +40,18 @@
   };
   # Issue 2: Make sure connman starts after wpa_supplicant
   systemd.services."connman".after = [ "wpa_supplicant.service" ];
-  # Issue 3: Leave time for rfkill to unblock WLAN and restart connman
-  systemd.timers."restart-connman" = {
+  # Issue 3: Leave time for rfkill to unblock WLAN and restart wpa_supplicant & connman
+  systemd.timers."restart-wpa" = {
     timerConfig = {
-      OnBootSec = 15;
+      OnBootSec = 20;
       RemainAfterElapse = false;
     };
     wantedBy = [ "timers.target" ];
   };
-  systemd.services."restart-connman" = {
-    description = "Restart connman to enable WLAN";
+  systemd.services."restart-wpa" = {
+    description = "Restart wpa to enable WLAN";
     serviceConfig.Type = "oneshot";
-    serviceConfig.ExecStart = "/run/current-system/sw/bin/systemctl try-restart connman.service";
+    serviceConfig.ExecStart = "/run/current-system/sw/bin/systemctl try-restart wpa_supplicant.service";
   };
 
   # Make connman folder persistent
