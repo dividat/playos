@@ -27,6 +27,7 @@ in
 , buildInstaller ? true
 , buildBundle ? true
 , buildDisk ? true
+, buildLive ? true
 }:
 
 with pkgs;
@@ -36,7 +37,7 @@ let
   components = lib.makeScope newScope (self: with self; {
 
     # Set version
-    version = "2019.2.6-beta";
+    version = "2019.3.0-VALIDATION";
 
     inherit updateUrl deployUrl kioskUrl;
 
@@ -48,6 +49,9 @@ let
 
     # NixOS system toplevel
     systemToplevel = callPackage ./system {};
+
+    # USB live system
+    live = callPackage ./live {};
 
     # Controller
     playos-controller = callPackage ./controller {};
@@ -102,6 +106,10 @@ stdenv.mkDerivation {
 
     # Certificate used to verify update bundles
     ln -s ${updateCert} $out/cert.pem
+  ''
+
+  + lib.optionalString buildLive ''
+    ln -s ${components.live}/iso/playos-live-${components.version}.iso $out/playos-live-${components.version}.iso
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''

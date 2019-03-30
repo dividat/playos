@@ -6,6 +6,7 @@
   (gui/template/index.mustache as template/index.mustache)
   (gui/template/info.mustache as template/info.mustache)
   (gui/template/network.mustache as template/network.mustache)
+  (gui/template/localization.mustache as template/localization.mustache)
   (gui/template/label.mustache as template/label.mustache)
   (gui/template/error.mustache as template/error.mustache)
   (gui/template/status.mustache as template/status.mustache)
@@ -13,5 +14,6 @@
   (gui/check.svg as static/check.svg)
   (gui/wifi.svg as static/wifi.svg)
   (gui/power.svg as static/power.svg)
+  (gui/world.svg as static/world.svg)
   (gui/volume-2.svg as static/volume-2.svg)))
 

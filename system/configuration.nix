@@ -13,11 +13,18 @@ with lib;
     # Remote management
     ./remote-management.nix
 
+    # Localization
+    ./localization.nix
+
     # Update Machinery
     ./rauc
+
+    # Networking
+    ./networking
   ];
 
   systemPartition = {
+    enable = true;
     device = "/dev/root";
   };
 
@@ -29,7 +36,6 @@ with lib;
       device = "/dev/disk/by-label/ESP";
     };
   };
-
 
   # Codename Dancing Bear
   services.mingetty.greetingLine =
@@ -58,48 +64,8 @@ with lib;
   services.mingetty.helpLine = "";
 
   # disable installation of documentation
-	documentation.enable = false;
+  documentation.enable = false;
 
   environment.systemPackages = with pkgs; [];
-
-  # Enable non-free firmware
-  hardware.enableRedistributableFirmware = true;
-
-  # Use ConnMan
-  networking = {
-    hostName = "playos";
-    connman = {
-      enable = true;
-      enableVPN = false;
-      networkInterfaceBlacklist = [ "vmnet" "vboxnet" "virbr" "ifb" "ve" "zt" ];
-      extraConfig = ''
-        [General]
-        AllowHostnameUpdates=false
-        AllowDomainnameUpdates=false
-
-        # Wifi will generally be used for internet, use as default route
-        PreferredTechnologies=wifi,ethernet
-
-        # Allow simultaneous connection to ethernet and wifi
-        SingleConnectedTechnology=false
-
-        # Disable calling home
-        EnableOnlineCheck=false
-      '';
-    };
-    # enable wpa_supplicant
-    wireless = {
-      enable = true;
-      # Add a dummy network to make sure that wpa_supplicant.conf is created (see https://github.com/NixOS/nixpkgs/issues/23196)
-      networks."12345-i-do-not-exist"= {};
-    };
-  };
-
-  # Make connman folder persistent
-  volatileRoot.persistentFolders."/var/lib/connman" = {
-    mode = "0700";
-    user = "root";
-    group = "root";
-  };
 
 }

@@ -1,0 +1,11 @@
+(library
+ (name timedate)
+ (modules timedate timedate_interfaces)
+ (libraries obus logs logs.lwt cohttp-lwt-unix sexplib util)
+ (preprocess (pps lwt_ppx  ppx_sexp_conv)))
+
+(rule
+ (targets timedate_interfaces.ml timedate_interfaces.mli)
+ (deps    timedate_interfaces.xml)
+ (action
+  (run obus-gen-interface -keep-common -o timedate_interfaces %{deps})))

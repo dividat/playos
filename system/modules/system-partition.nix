@@ -6,6 +6,8 @@ in
 {
   options = {
     systemPartition = {
+      enable = mkEnableOption "System partition";
+
       device = mkOption {
         default = null;
         example = "/dev/sda";
@@ -30,7 +32,7 @@ in
     };
   };
 
-  config = {
+  config = mkIf config.systemPartition.enable {
     fileSystems = {
       "/mnt/system" = {
         device = cfg.device;

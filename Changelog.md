@@ -1,3 +1,14 @@
+# [2019.3.0-VALIDATION] - 2019-03-30
+
+## Added
+
+- controller: add localization settings for timezone, keyboard and locale
+- live system image to run PlayOS from removable media
+
+## Changed
+
+- system: enable wifi on first boot
+
 # [2019.2.6-beta] - 2019-02-21
 
 ## Added
