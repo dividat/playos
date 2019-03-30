@@ -11,6 +11,8 @@ let nixos = pkgs.importFromNixos ""; in
       ../system/play-kiosk.nix
       # Networking
       ../system/networking
+      # Localization
+      ../system/localization.nix
 
       (pkgs.importFromNixos "modules/installer/cd-dvd/iso-image.nix")
     ];
