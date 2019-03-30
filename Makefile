@@ -27,6 +27,18 @@ validation:
 		--arg buildDisk false
 	@echo "Run ./result/bin/deploy-playos-update to deploy"
 
+.PHONY: master
+master:
+	[[ $(BRANCH) = "master" ]]
+	nix-build \
+		--arg updateCert ./pki/master/cert.pem \
+		--arg updateUrl http://dist.dividat.com/releases/playos/master/ \
+		--arg deployUrl s3://dist.dividat.ch/releases/playos/master/ \
+		--arg kioskUrl https://play.dividat.com/ \
+		--arg buildDisk false
+	@echo "Run ./result/bin/deploy-playos-update to deploy"
+
+
 .PHONY: lab-key
 lab-key:
 	nix-build \
