@@ -52,6 +52,10 @@ make validation
 ./result/bin/deploy-playos-update --key ./pki/validation/key.pem
 ```
 
+### Key switch
+
+When switching key pairs on a channel, the new certficiate must be built into the bundle, which must then be signed with the new key.
+
 ## Related work
 
 - [Yocto](https://www.yoctoproject.org/): A builder for embedded Linux distributions. Widely used but not very well suited for desktop functionality (such as browser).

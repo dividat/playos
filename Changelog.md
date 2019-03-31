@@ -1,3 +1,9 @@
+# [UNRELEASED]
+
+## Changed
+
+- updater: new bundle signature for validation channel
+
 # [2019.3.0-VALIDATION] - 2019-03-30
 
 ## Added
