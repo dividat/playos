@@ -361,7 +361,7 @@ module LabelGui = struct
       ; "mac_1", label.mac_1 |> Ezjsonm.string
       ; "mac_2", label.mac_2 |> Ezjsonm.string
       ; "default_label_printer_url",
-        "http://pinocchio.local:3000/play-computer" |> Ezjsonm.string
+        "http://192.168.0.5:3000/play-computer" |> Ezjsonm.string
       ]
 
   let print req =
