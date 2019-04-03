@@ -54,7 +54,7 @@ make validation
 
 ### Key switch
 
-When switching key pairs on a channel, the new certficiate must be built into the bundle, which must then be signed with the new key.
+When switching key pairs on a channel, the new certficiate must be built into the bundle, which must then be signed with the old key. For this purpose, the `--override-cert` option of the deploy script is needed to provide RAUC with a certificate matching the new key.
 
 ## Related work
 
