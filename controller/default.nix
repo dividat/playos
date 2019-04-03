@@ -1,7 +1,7 @@
 { fetchFromGitHub ? (import <nixpkgs> {}).fetchFromGitHub
 , version ? "0.0.0"
 , updateUrl ? "http://localhost:9999/"
-, kioskUrl ? "https://play.dividat.com/"}:
+, kioskUrl ? "https://dev-play.dividat.com/"}:
 
 # We require two things for the OCaml build environment that are not yet in 18.09 channel (used by rest of project): https://github.com/NixOS/nixpkgs/pull/49684 and https://github.com/NixOS/nixpkgs/pull/53357.
 with import (fetchFromGitHub {
