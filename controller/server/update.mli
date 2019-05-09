@@ -1,21 +1,14 @@
-(* Compatible with Semver.t but also deriving sexp *)
-type semver = int * int * int [@@deriving sexp]
-
 (** Type containing version information.
-
-    Versions are encoded with Semver decoding and a string representation. This is because the Semver library ignores pre-release and build meta-data.
-    TODO: improve Semver library (see https://github.com/rgrinberg/ocaml-semver/issues/1)
-
 *)
 type version_info =
   {(* the latest available version *)
-    latest : semver * string
+    latest : Semver.t * string
 
   (* version of currently booted system *)
-  ; booted : semver * string
+  ; booted : Semver.t * string
 
   (* version of inactive system *)
-  ; inactive : semver * string
+  ; inactive : Semver.t * string
   }
 [@@deriving sexp]
 

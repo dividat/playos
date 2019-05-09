@@ -1,16 +1,26 @@
-{buildOcaml, fetchFromGitHub}:
-buildOcaml rec {
-  name= "semver";
+{buildDunePackage, fetchFromGitHub, angstrom, ppxlib, ppx_inline_test, ocaml, stdenv}:
+buildDunePackage rec {
+  pname= "semver";
   version = "0.1.0";
 
-  minimumOCamlVersion = "4.02";
+  minimumOCamlVersion = "4.04";
 
   src = fetchFromGitHub {
-    owner = "rgrinberg";
+    owner = "dividat";
     repo = "ocaml-semver";
-    rev = "905c063a84935765f21fcc632c28a35dbc3b3e3d";
-    sha256 = "0f8id2pxn2k6bfnnp5w2s9k37wsf457q6im7il815fg9ajwxw76h";
+    rev = "ea51d2f6a60a6203978f9b10ffb3acf7a4178ef1";
+    sha256 = "0i3k1m7cr8gzajwvi7yaikdfzwl122wgqy2wic9404dwffppxaqz";
   };
 
+  buildInputs = [ ];
+  propagatedBuildInputs = [ angstrom ppxlib ppx_inline_test ];
+
+  meta = {
+    description = " Semantic version handling for OCaml.";
+    license = stdenv.lib.licenses.mit;
+    homepage = "https://github.com/dividat/ocaml-semver";
+    maintainers = [ ];
+    inherit (ocaml.meta) platforms;
+  };
 
 }
