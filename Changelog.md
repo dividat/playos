@@ -1,3 +1,9 @@
+# [Unreleased]
+
+## Changed
+
+- updater: Support SemVer 2.0 versioning, respecting pre-release identifiers
+
 # [2019.4.0] - 2019-04-03
 
 First stable release on master channel.
