@@ -1,4 +1,4 @@
-{ config, pkgs, lib, install-playos, version,... }:
+{ config, pkgs, lib, install-playos, version, greeting, ... }:
 
 with lib;
 
@@ -25,29 +25,7 @@ with lib;
   # Allow the user to log in as root without a password.
   users.users.root.initialHashedPassword = "";
 
-  # Codename Dancing Bear
-  services.mingetty.greetingLine =
-  ''
-                           _,-'^\
-                       _,-'   ,\ )
-                   ,,-'     ,'  d'
-    ,,,           J_ \    ,'
-   `\ /     __ ,-'  \ \ ,'
-   / /  _,-'  '      \ \
-  / |,-'             /  }
-  (                 ,'  /
-  '-,________         /
-             \       /
-              |      |
-             /       |                Dividat PlayOS installer (${version})
-            /        |
-           /  /~\   (\/)
-          {  /   \     }
-          | |     |   =|
-          / |      ~\  |
-          J \,       (_o
-           '"
-  '';
+  services.mingetty.greetingLine = greeting "Dividat PlayOS installer (${version})";
 
   environment.loginShellInit = ''
     install-playos --reboot

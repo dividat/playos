@@ -1,7 +1,7 @@
 # This is the toplevel module for all PlayOS related functionalities.
 
 # Things that are injected into the system
-{pkgs, version, updateCert, kioskUrl, playos-controller}:
+{pkgs, version, updateCert, kioskUrl, greeting, playos-controller}:
 
 
 {config, lib, ...}:
@@ -42,6 +42,10 @@ with lib;
     playos = {
       inherit version updateCert kioskUrl;
     };
+
+    # 'Welcome Screen'
+    services.mingetty.greetingLine = greeting "Dividat PlayOS (${version})";
+    services.mingetty.helpLine = "";
 
     # Start controller
     systemd.services.playos-controller = {
