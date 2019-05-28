@@ -236,7 +236,7 @@ def install(disk):
 
 def _suppress_unless_fails(completed_process):
     """Suppress the stdout of a subprocess unless it fails.
-    Additional parameters {stdout,stderr}=subprocess.PIPELINE to
+    Additional parameters {stdout,stderr}=subprocess.PIPE to
     subprocess.run are required."""
     try:
         completed_process.check_returncode()
@@ -285,12 +285,16 @@ def _get_grubenv_entry(entry_name, device):
         disk = parted.newDisk(device)
         esp = disk.partitions[0]
         os.makedirs('/mnt/boot', exist_ok=True)
-        subprocess.run(['mount', esp.path, '/mnt/boot'], check=True)
+        subprocess.run(['mount', esp.path, '/mnt/boot'],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL)
         # Try to read entry from grubenv
         grub_list = subprocess.run(
             ['grub-editenv', GRUB_ENV, 'list'],
             check=True,
             stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
             universal_newlines=True)
         entry_match = re.search("^" + entry_name + "=(.+)$", grub_list.stdout,
                                 re.MULTILINE)
@@ -301,7 +305,9 @@ def _get_grubenv_entry(entry_name, device):
     except:
         return None
     finally:
-        subprocess.run(['umount', '/mnt/boot'])
+        subprocess.run(['umount', '/mnt/boot'],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL)
 
 
 def _device_size_in_gb(device):
