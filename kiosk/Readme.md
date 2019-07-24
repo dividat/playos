@@ -8,4 +8,4 @@ To create a suitable development environment run `nix-shell` in this directly. N
 
 ## Usage
 
-See `python ./bin/kiosk-browser --help`
+See `./bin/kiosk-browser --help`

@@ -30,6 +30,7 @@ python3Packages.buildPythonApplication rec {
 
   propagatedBuildInputs = with python3Packages; [
     pyqt5
+    requests
   ];
 
   makeWrapperArgs = [

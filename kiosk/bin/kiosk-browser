@@ -3,9 +3,9 @@
 import argparse
 import os
 
-from kiosk_browser import KioskBrowser
+from app import app
 
-default_togglekey = 'CTRL+SHIFT+F12'
+default_toggle_key = 'CTRL+SHIFT+F12'
 
 parser = argparse.ArgumentParser(
     prog='kiosk-browser',
@@ -15,24 +15,20 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    '--togglekey',
-    dest='togglekey',
-    default=default_togglekey,
+    '--toggle-key',
+    dest='toggle_key',
+    default=default_toggle_key,
     help=
     'Keyboard combination to toggle between primary and secondary websites. (Default: "%s")'
-    % default_togglekey)
+    % default_toggle_key)
 
-parser.add_argument('PRIMARY_URL', help='Primary URL to load.')
-parser.add_argument('SECONDARY_URL', help='Secondary URL to load.')
+parser.add_argument('play_url', help='Play URL')
+parser.add_argument('settings_url', help='Settings URL')
 
 args = parser.parse_args()
 
 # try:
-browser = KioskBrowser()
-browser.toggleKey(args.togglekey)
-browser.addUrl(args.PRIMARY_URL)
-browser.addUrl(args.SECONDARY_URL)
-browser.open()
+app.start(args.play_url, args.settings_url, args.toggle_key)
 
 # except InvalidUrl as error:
 #   parser.error(error)
