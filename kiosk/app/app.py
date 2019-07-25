@@ -1,25 +1,25 @@
 import sys
 import itertools
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QApplication
 
-from app import main_widget, connection
+from app import main_widget
 
 def start(primary_url, secondary_url, toggle_sequence, fullscreen = True):
 
     app = QApplication(sys.argv)
+
     mainWidget = main_widget.MainWidget(
             urls = [parseUrl(primary_url), parseUrl(secondary_url)],
             toggle_sequence = QKeySequence(toggle_sequence))
 
-    connection.start_daemon(mainWidget)
+    mainWidget.setContextMenuPolicy(Qt.NoContextMenu)
 
-    # self._view.setContextMenuPolicy(Qt.NoContextMenu)
-    # if fullscreen:
-        # self._fullscreen()
+    if fullscreen:
+        set_fullscreen(app, mainWidget)
 
-    sys.exit(app.exec_())
+    app.exec_()
 
 def parseUrl(url):
     parsed_url = QUrl(url)
@@ -28,9 +28,9 @@ def parseUrl(url):
     else:
         return parsed_url
 
-# def _fullscreen(self):
-#     # Without a Window Manager, showFullScreen does not work under X,
-#     # so set the window size to the primary screen size.
-#     screen_size = self._app.primaryScreen().size()
-#     # self._view.resize(screen_size)
-#     # self._view.showFullScreen()
+def set_fullscreen(app, mainWidget):
+    # Without a Window Manager, showFullScreen does not work under X,
+    # so set the window size to the primary screen size.
+    screen_size = app.primaryScreen().size()
+    mainWidget.resize(screen_size)
+    mainWidget.showFullScreen()
