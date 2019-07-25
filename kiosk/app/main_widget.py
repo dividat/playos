@@ -1,25 +1,21 @@
 from enum import Enum
+from itertools import cycle
 from PyQt5.QtCore import pyqtSlot, Qt, QUrl
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QWidget, QPushButton, QBoxLayout, QShortcut
 
 from app.browser_widget import BrowserWidget
 
-class View(Enum):
-    PLAY = 1
-    SETTINGS = 2
-    PORTAL = 3
-
 class MainWidget(QWidget):
 
-    def __init__(self, play_url, settings_url, toggle_sequence):
+    def __init__(self, urls, toggle_sequence):
         super(MainWidget, self).__init__()
 
         self._captive_portal_url = ''
-        self._view = View.PLAY
-        self._play_url = play_url
-        self._settings_url = settings_url
-        self._browser_widget = BrowserWidget(play_url)
+        self._urls = cycle(urls)
+        self._current_url = next(self._urls)
+        self._browser_widget = BrowserWidget(self._current_url)
+        self._is_captive_portal_visible = False
         self._layout = QBoxLayout(QBoxLayout.Direction.Up)
         self._button = QPushButton()
         self._button.setFlat(True)
@@ -37,38 +33,33 @@ class MainWidget(QWidget):
 
     def set_captive_portal_url(self, url):
         self._captive_portal_url = url
-        self._show_or_hide_captive_portal_button()
-
-    # Private
-
-    def _press_toggle(self):
-        if self._view == View.PLAY:
-            self._browser_widget.load(self._settings_url)
-            self._view = View.SETTINGS
-        else:
-            self._browser_widget.load(self._play_url)
-            self._view = View.PLAY
-        self._show_or_hide_captive_portal_button()
-
-    def _show_or_hide_captive_portal_button(self):
-        if self._view == View.PLAY or self._captive_portal_url == '' and self._view != View.PORTAL:
+        if url == '' and not self._is_captive_portal_visible:
             self._button.setParent(None)
         else:
             self._update_button_text()
             self._layout.addWidget(self._button)
 
-    def _update_button_text(self):
-        if self._view == View.SETTINGS:
-            self._button.setText('Go to captive portal')
-        elif self._view == View.PORTAL:
-            self._button.setText('Back to settings')
+    # Private
 
-    def _press_button(self):
-        if self._view == View.SETTINGS:
-            self._browser_widget.load(QUrl(self._captive_portal_url))
-            self._view = View.PORTAL
+    def _press_toggle(self):
+        if self._is_captive_portal_visible:
+            self._browser_widget.load(self._current_url)
+            self._is_captive_portal_visible = False
             self._update_button_text()
         else:
-            self._browser_widget.load(self._settings_url)
-            self._view = View.SETTINGS
-            self._button.setParent(None)
+            self._current_url = next(self._urls)
+            self._browser_widget.load(self._current_url)
+
+    def _press_button(self):
+        if self._is_captive_portal_visible:
+            self._browser_widget.load(self._current_url)
+        else:
+            self._browser_widget.load(QUrl(self._captive_portal_url))
+        self._is_captive_portal_visible = not self._is_captive_portal_visible
+        self._update_button_text()
+
+    def _update_button_text(self):
+        if self._is_captive_portal_visible:
+            self._button.setText('Close captive portal')
+        else:
+            self._button.setText('Go to captive portal')

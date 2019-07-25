@@ -3,8 +3,8 @@ import tempfile
 import threading
 import time
 
-# check_connection_url = 'http://127.0.0.1:8000'
-check_connection_url = 'http://captive.apple.com'
+check_connection_url = 'http://127.0.0.1:8000'
+# check_connection_url = 'http://captive.apple.com'
 sleep_time = 5
 is_connected = False
 

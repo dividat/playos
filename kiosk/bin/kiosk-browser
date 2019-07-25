@@ -22,13 +22,13 @@ parser.add_argument(
     'Keyboard combination to toggle between primary and secondary websites. (Default: "%s")'
     % default_toggle_key)
 
-parser.add_argument('play_url', help='Play URL')
-parser.add_argument('settings_url', help='Settings URL')
+parser.add_argument('primary_url', help='Primary URL to load')
+parser.add_argument('secondary_url', help='Secondary URL to load')
 
 args = parser.parse_args()
 
 # try:
-app.start(args.play_url, args.settings_url, args.toggle_key)
+app.start(args.primary_url, args.secondary_url, args.toggle_key)
 
 # except InvalidUrl as error:
 #   parser.error(error)

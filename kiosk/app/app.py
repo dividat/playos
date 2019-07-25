@@ -6,12 +6,11 @@ from PyQt5.QtWidgets import QApplication
 
 from app import main_widget, connection
 
-def start(play_url, settings_url, toggle_sequence, fullscreen = True):
+def start(primary_url, secondary_url, toggle_sequence, fullscreen = True):
 
     app = QApplication(sys.argv)
     mainWidget = main_widget.MainWidget(
-            play_url = parseUrl(play_url),
-            settings_url = parseUrl(settings_url),
+            urls = [parseUrl(primary_url), parseUrl(secondary_url)],
             toggle_sequence = QKeySequence(toggle_sequence))
 
     connection.start_daemon(mainWidget)
