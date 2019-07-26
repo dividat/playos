@@ -4,7 +4,7 @@ from PyQt5.QtCore import pyqtSlot, Qt, QUrl
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QWidget, QPushButton, QBoxLayout, QShortcut
 
-from app import browser_widget, captive_portal_message, connection
+from kiosk_browser import browser_widget, captive_portal_message, connection
 
 class MainWidget(QWidget):
 
@@ -21,7 +21,7 @@ class MainWidget(QWidget):
         self._is_captive_portal_visible = False
         self._captive_portal_message = captive_portal_message.CaptivePortalMessage(self._press_button)
 
-        self._layout = QBoxLayout(QBoxLayout.Direction.Up)
+        self._layout = QBoxLayout(QBoxLayout.BottomToTop)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
         self._layout.addWidget(self._browser_widget)
@@ -43,20 +43,20 @@ class MainWidget(QWidget):
 
     def _press_toggle(self):
         if self._is_captive_portal_visible:
-            self._browser_widget.load(self._current_url)
+            self._browser_widget.clean_and_load(self._current_url)
             self._is_captive_portal_visible = False
             self._update_captive_portal_message()
         else:
             self._current_url = next(self._urls)
-            self._browser_widget.load(self._current_url)
+            self._browser_widget.clean_and_load(self._current_url)
 
     def _press_button(self):
         if self._is_captive_portal_visible:
             if self._connection.is_connected():
                 self._captive_portal_message.setParent(None)
-            self._browser_widget.load(self._current_url)
+            self._browser_widget.clean_and_load(self._current_url)
         else:
-            self._browser_widget.load(QUrl(self._captive_portal_url))
+            self._browser_widget.clean_and_load(QUrl(self._captive_portal_url))
         self._is_captive_portal_visible = not self._is_captive_portal_visible
         self._update_captive_portal_message()
 

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QBoxLayout, QLabel
+from PyQt5.QtWidgets import QWidget, QPushButton, QHBoxLayout, QLabel
 
 login_message = 'You must log in to this network before you can access the Internet.'
 
@@ -13,7 +13,7 @@ class CaptivePortalMessage(QWidget):
         self._button.setFixedWidth(180)
         self._button.clicked.connect(press_button)
 
-        self._layout = QBoxLayout(QBoxLayout.Direction.LeftToRight)
+        self._layout = QHBoxLayout()
         self._layout.addWidget(self._label)
         self._layout.addWidget(self._button)
 

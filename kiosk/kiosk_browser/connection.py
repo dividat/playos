@@ -25,7 +25,6 @@ class Connection():
         time.sleep(1)
 
         while True:
-
             r = requests.get(check_connection_url, allow_redirects = False)
 
             if r.status_code == 200:

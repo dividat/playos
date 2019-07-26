@@ -3,7 +3,7 @@
 import argparse
 import os
 
-from app import app
+import kiosk_browser
 
 default_toggle_key = 'CTRL+SHIFT+F12'
 
@@ -28,7 +28,7 @@ parser.add_argument('secondary_url', help='Secondary URL to load')
 args = parser.parse_args()
 
 # try:
-app.start(args.primary_url, args.secondary_url, args.toggle_key)
+kiosk_browser.start(args.primary_url, args.secondary_url, args.toggle_key)
 
 # except InvalidUrl as error:
 #   parser.error(error)

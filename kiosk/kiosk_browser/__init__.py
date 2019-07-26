@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QApplication
 
-from app import main_widget
+from kiosk_browser import main_widget
 
 def start(primary_url, secondary_url, toggle_sequence, fullscreen = True):
 
