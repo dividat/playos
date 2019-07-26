@@ -3,7 +3,7 @@ import tempfile
 import threading
 import time
 
-check_connection_url = 'http://captive.apple.com'
+check_connection_url = 'http://captive.apple.com/'
 sleep_time = 5
 
 class Connection():
