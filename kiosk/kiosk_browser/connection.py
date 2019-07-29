@@ -25,16 +25,20 @@ class Connection():
         time.sleep(1)
 
         while True:
-            r = requests.get(check_connection_url, allow_redirects = False)
+            try:
+                r = requests.get(check_connection_url, allow_redirects = False)
 
-            if r.status_code == 200:
-                self._is_connected = True
-                self._set_captive_portal_url('')
-            elif r.status_code in [301, 302, 303, 307]:
-                self._is_connected = False
-                self._set_captive_portal_url(r.headers['Location'])
-            else:
-                self._is_connected = False
-                self._set_captive_portal_url('')
+                if r.status_code == 200:
+                    self._is_connected = True
+                    self._set_captive_portal_url('')
+                elif r.status_code in [301, 302, 303, 307]:
+                    self._is_connected = False
+                    self._set_captive_portal_url(r.headers['Location'])
+                else:
+                    self._is_connected = False
+                    self._set_captive_portal_url('')
+
+            except requests.ConnectionError as e:
+                print('Request exception:', e)
 
             time.sleep(sleep_time)
