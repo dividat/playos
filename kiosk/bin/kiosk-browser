@@ -9,7 +9,7 @@ default_toggle_key = 'CTRL+SHIFT+F12'
 
 parser = argparse.ArgumentParser(
     prog='kiosk-browser',
-    description='Open two toggable websites in kiosk mode.',
+    description='Cycle through two urls in kiosk mode. Allow login to captive portals.'
     epilog=
     'Additional browser debugging environment variables can be found under https://doc.qt.io/qt-5/qtwebengine-debugging.html'
 )

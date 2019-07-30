@@ -1,7 +1,7 @@
 #+TITLE: PlayOS: Architecture
 
 * Overview
-  
+
 PlayOS is a custom Linux system for running Dividat Play. This document describes technical architecture of PlayOS.
 
 ** Background
@@ -11,7 +11,7 @@ PlayOS is a custom Linux system for running Dividat Play. This document describe
 Installations of Dividat Play and Dividat Senso usually receive a dedicated computer to run the software. PlayOS is a custom Linux system for such computers.
 
 PlayOS is a custom [[https://nixos.org/][NixOS]] system that runs Dividat Play in a restricted kiosk environment. Installations can be upgraded atomically over-the-air. Deployed machines have two system partitions (A/B), each containing a complete system. PlayOS is compatible with NixOS modules and packages, everything that is available from upstream NixOS can be used.
-  
+
 ** Build System
 
 [[https://nixos.org/nix/][Nix]] is used as build system. Running ~nix build~ in the repository root will build all artifacts required to deploy system (via fresh installation or upgrade).
@@ -28,7 +28,7 @@ For a more complete test a virtual disk containing all necessary partitions and 
 
 *** TODO Automated Testing
 
-NixOS has a very cool [[https://nixos.org/nixos/manual/index.html#sec-obtaining][testing framework]] (see also [[https://nixos.org/~eelco/talks/issre-nov-2010.pdf][this presentation]]). It relies on the module <nixos/modules/virtualisation/qemu-vm.nix> and <nixos/modules/testing/test-instrumentation.nix> to set up a efficient virtual machine. 
+NixOS has a very cool [[https://nixos.org/nixos/manual/index.html#sec-obtaining][testing framework]] (see also [[https://nixos.org/~eelco/talks/issre-nov-2010.pdf][this presentation]]). It relies on the module <nixos/modules/virtualisation/qemu-vm.nix> and <nixos/modules/testing/test-instrumentation.nix> to set up a efficient virtual machine.
 
 However ~qemu-vm.nix~ assumes a certain filesystem layout which is incompatible with our ~system-partition~ module. Possible solutions:
 
@@ -49,7 +49,7 @@ A PlayOS installation has 4 partitions:
 - System partition B
 
 ** Booting
-   
+
 PlayOS can only boot in UEFI mode. [[https://www.gnu.org/software/grub/][GNU Grub]] is used as bootloader.
 
 The bootloader automatically [[*Boot selection logic][chooses system to boot]] (A or B) based on persistent variables (GRUB environment variables on the EFI system partition). Automatic selection can be interrupted by user pressing the ~<ESC>~ key.
@@ -88,7 +88,7 @@ The system partition is mounted on ~/mnt/system~ (read-only).
 A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt][tmpfs]]) is used as root. Folders containing persistent user data need to be specified explicitly and are bind mounted to correct locations on root.
 
 ** Machine ID
-   
+
 Every machine is assigned a [[https://tools.ietf.org/html/rfc4122][Universal Unique IDentifier]] (machine-id) during installation. The machine-id is stored on the ~/boot~ partition and is persisted between [[*Update Mechanism][updates]] and [[*Rescue system][user data wiping]].
 
 The machine-id is set on boot via the ~system.machine_id~ kernel argument and then [[https://www.freedesktop.org/software/systemd/man/machine-id.html][handled by the init system]].
@@ -99,9 +99,11 @@ The [[https://github.com/dividat/driver][Dividat Driver]], which handles connect
 
 ** Kiosk
 
-System automatically logs in the user ~play~, starts an X session and launches a custom Kiosk Application based on [[http://doc.qt.io/qt-5/qtwebengine-index.htm][QtWebEngine]]. The Kiosk Application loads Dividat Play in a restricted environment.
+System automatically logs in the user ~play~, starts an X session and launches a custom Kiosk Application based on [[http://doc.qt.io/qt-5/qtwebengine-index.html][QtWebEngine]]. The Kiosk Application loads Dividat Play in a restricted environment.
 
 A [[*User interface][user interface for system configuration]] can be accessed with the key-combination ~Ctrl-Shift-F12~.
+
+If a captive portal is detected, which requires user interaction before granting Internet access, a prompt appears to open it.
 
 For debugging the [[https://doc.qt.io/qt-5/qtwebengine-debugging.html][Qt WebEngine Developer Tools]] are enabled and accessible at http://localhost:3355. The Dev Tools can be used to inspect and interact with the running page (e.g. load a new page with ~location.replace("https://nixos.org")~).
 
@@ -123,7 +125,7 @@ The controller retrieves the version of the latest available release from a pred
 
 RAUC bundles are signed. Before installing an update RAUC will verify signature against certificate installed on system (see [[https://rauc.readthedocs.io/en/latest/advanced.html#security][here]]).
 
-The certificate to be installed on the system must be passed to the build system with the ~updateCert~ argument. 
+The certificate to be installed on the system must be passed to the build system with the ~updateCert~ argument.
 
 The RAUC bundle produced by the build system is signed by a dummy development/testing key. The bundle needs to be [[https://rauc.readthedocs.io/en/latest/advanced.html#resigning-bundles][resigned]] before it can be deployed. The script ~deploy-playos-update~ automates this process.
 
@@ -209,7 +211,7 @@ The rescue system consists of a Linux kernel and a initial ramdisk with an embed
 Use cases for rescue system beside wiping user data are not clear. In general reinstalling the system completely is a safer way of restoring system functionality. Nevertheless RAUC and Grub utilities are installed.
 
 * TODO Installer
-  
+
 A bootable image is built that can be used to install systems. The installation is performed by a Python script (~install-playos.py~). It will automatically detect a suitable device to install the system to and ask for confirmation before partitioning, formatting and installing the system. Optionally the script can be used non-interactively.
 
 Reasons for using Python include the [[https://github.com/dcantrell/pyparted][pyparted]] bindings to the [[https://www.gnu.org/software/parted/][GNU parted]] library for partitioning.
