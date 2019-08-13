@@ -1,36 +1,37 @@
 open Lwt
 open Sexplib.Std
+open Sexplib.Conv
 
 let log_src = Logs.Src.create "update"
 
 
 (* Version handling *)
 
-(* Compatible with Semver.t but also deriving sexp *)
-type semver = int * int * int [@@deriving sexp]
 
 (** Type containing version information *)
 type version_info =
   {(* the latest available version *)
-    latest : semver * string
+    latest : Semver.t sexp_opaque * string
 
   (* version of currently booted system *)
-  ; booted : semver * string
+  ; booted : Semver.t sexp_opaque * string
 
   (* version of inactive system *)
-  ; inactive : semver * string
+  ; inactive : Semver.t sexp_opaque * string
   }
 [@@deriving sexp]
 
 
 (** Helper to parse semver from string or fail *)
 let semver_of_string string =
-  match Semver.of_string string with
+  let trimmed_string = String.trim string
+  in
+  match Semver.of_string trimmed_string with
   | None ->
     failwith
       (Format.sprintf "could not parse version (version string: %s)" string)
   | Some version ->
-    version, string |> String.trim
+    version, trimmed_string
 
 (** Get latest version available at [url] *)
 let get_latest_version url =
