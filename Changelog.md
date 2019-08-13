@@ -1,5 +1,7 @@
 # [Unreleased]
 
+# [2019.8.0-VALIDATION] - 2019-08-13
+
 ## Changed
 
 - updater: Support SemVer 2.0 versioning, respecting pre-release identifiers

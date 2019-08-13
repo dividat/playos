@@ -37,7 +37,7 @@ let
   components = lib.makeScope newScope (self: with self; {
 
     # Set version
-    version = "2019.4.0";
+    version = "2019.8.0-VALIDATION";
 
     greeting = label: ''
                                          _
