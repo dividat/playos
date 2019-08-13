@@ -5,6 +5,7 @@
 - updater: Support SemVer 2.0 versioning, respecting pre-release identifiers
 - controller: Leave service units a moment to shut down gracefully
 - installer: Suppress machine-id recovery warnings on first install
+- os: Update nixpkgs channel to 19.03
 
 # [2019.4.0] - 2019-04-03
 
