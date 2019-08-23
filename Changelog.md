@@ -1,5 +1,7 @@
 # [Unreleased]
 
+# [2019.8.0-VALIDATION.1] - 2019-08-23
+
 ## Added
 
 - Add installer ISO to archived assets
