@@ -37,7 +37,21 @@ let
   components = lib.makeScope newScope (self: with self; {
 
     # Set version
-    version = "2019.4.0";
+    version = "2019.8.0";
+
+    greeting = label: ''
+                                         _
+                                     , -"" "".
+                                   ,'  ____  `.
+                                 ,'  ,'    `.  `._
+        (`.         _..--.._   ,'  ,'        \\    \\
+       (`-.\\    .-""        ""'   /          (  d _b
+      (`._  `-"" ,._             (            `-(   \\
+      <_  `     (  <`<            \\              `-._\\
+       <`-       (__< <           :                      ${label}
+        (__        (_<_<          ;
+    -----`------------------------------------------------------ ----------- ------- ----- --- -- -
+    '';
 
     inherit updateUrl deployUrl kioskUrl;
 

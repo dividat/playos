@@ -37,31 +37,8 @@ with lib;
     };
   };
 
-  # Codename Dancing Bear
-  services.mingetty.greetingLine =
-  ''
-                           _,-'^\
-                       _,-'   ,\ )
-                   ,,-'     ,'  d'
-    ,,,           J_ \    ,'
-   `\ /     __ ,-'  \ \ ,'
-   / /  _,-'  '      \ \
-  / |,-'             /  }
-  (                 ,'  /
-  '-,________         /
-             \       /
-              |      |
-             /       |                Dividat PlayOS (${config.playos.version})
-            /        |
-           /  /~\   (\/)
-          {  /   \     }
-          | |     |   =|
-          / |      ~\  |
-          J \,       (_o
-           '"
-  '';
-
-  services.mingetty.helpLine = "";
+  # Set a low default timeout when stopping services, to prevent the Windows 95 shutdown experience
+  systemd.extraConfig = "DefaultTimeoutStopSec=15s";
 
   # disable installation of documentation
   documentation.enable = false;

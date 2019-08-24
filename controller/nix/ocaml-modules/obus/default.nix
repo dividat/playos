@@ -20,7 +20,7 @@ buildDunePackage rec {
     [ camlp4 ocaml-migrate-parsetree ppx_metaquot ppx_tools_versioned ocaml_lwt lwt_react lwt_ppx lwt_log react type_conv xmlm ];
 
   meta = {
-    homepage = https://github.com/pukkamustard/obus;
+    homepage = https://github.com/dividat/obus;
     description = "Pure OCaml implementation of the D-Bus protocol";
     license = stdenv.lib.licenses.bsd3;
     maintainers = with stdenv.lib.maintainers; [ ];

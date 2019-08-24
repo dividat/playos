@@ -2,11 +2,13 @@
 
 import argparse
 import subprocess
+import os
 import os.path
 import tempfile
 import sys
 
 UNSIGNED_RAUC_BUNDLE = "@unsignedRaucBundle@"
+INSTALLER_ISO = "@installer@"
 VERSION = "@version@"
 
 # Certificate installed on system
@@ -22,6 +24,8 @@ KIOSK_URL = "@kioskUrl@"
 RAUC = "@rauc@/bin/rauc"
 AWS_CLI = "@awscli@/bin/aws"
 
+
+TMPDIR = "/tmp"
 
 # from http://code.activestate.com/recipes/577058/
 def _query_continue(question, default=False):
@@ -47,7 +51,7 @@ def _query_continue(question, default=False):
 
 def sign_rauc_bundle(key, cert, out):
     with tempfile.NamedTemporaryFile(
-            mode="w", delete=False) as combined_keyring:
+            mode="w", delete=False, dir=TMPDIR) as combined_keyring:
 
         # Create a keyring that contains the dummy and real certificate
         with open(DUMMY_BUILD_CERT,
@@ -85,7 +89,7 @@ def _main(opts):
     output_cert = UPDATE_CERT if opts.override_cert == None else opts.override_cert
 
     with tempfile.TemporaryDirectory(
-            prefix="playos-signed-release") as signed_release:
+            prefix="playos-signed-release", dir=TMPDIR) as signed_release:
 
         # Create the version directory
         version_dir = os.path.join(signed_release, VERSION)
@@ -101,7 +105,11 @@ def _main(opts):
         with open(latest_file, 'w') as latest:
             latest.write(VERSION + "\n")
 
-        # TODO: copy the installer to version_dir so that it will also be deployed
+        installer_iso_filename = "playos-installer-" + VERSION + ".iso"
+        installer_iso_src = os.path.join(INSTALLER_ISO, "iso", installer_iso_filename)
+        installer_iso_dst = os.path.join(version_dir, installer_iso_filename)
+        subprocess.run(["cp", installer_iso_src, installer_iso_dst],
+            check=True)
 
         # Print some information and wait for confirmation
         print("Update URL:\t%s" % UPDATE_URL)

@@ -45,11 +45,11 @@ The arguments `updateUrl` (from where updates will be fetched by PlayOS systems)
 
 Commonly used update and deploy URLs (channels) can be used with shortcuts defined in the Makefile. 
 
-To release an update to the `validation` channel:
+To release an update to the `develop` channel:
 
 ```
-make validation
-./result/bin/deploy-playos-update --key ./pki/validation/key.pem
+make develop
+./result/bin/deploy-playos-update --key PATH_TO_KEY.pem
 ```
 
 ### Key switch

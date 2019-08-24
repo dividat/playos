@@ -1,3 +1,20 @@
+# [2019.8.0] - 2019-08-24
+
+# [2019.8.0-VALIDATION.1] - 2019-08-23
+
+## Added
+
+- Add installer ISO to archived assets
+
+# [2019.8.0-VALIDATION] - 2019-08-13
+
+## Changed
+
+- updater: Support SemVer 2.0 versioning, respecting pre-release identifiers
+- controller: Leave service units a moment to shut down gracefully
+- installer: Suppress machine-id recovery warnings on first install
+- os: Update nixpkgs channel to 19.03
+
 # [2019.4.0] - 2019-04-03
 
 First stable release on master channel.

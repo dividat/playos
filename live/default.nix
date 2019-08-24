@@ -1,12 +1,12 @@
 # Build NixOS system
-{pkgs, lib, version, updateCert, kioskUrl, playos-controller}:
+{pkgs, lib, version, updateCert, kioskUrl, greeting, playos-controller}:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
   configuration = {...}: {
     imports = [
       # general PlayOS modules
-      ((import ../system/modules/playos.nix) {inherit pkgs version updateCert kioskUrl playos-controller;})
+      ((import ../system/modules/playos.nix) {inherit pkgs version updateCert kioskUrl greeting playos-controller;})
       # Play Kiosk and Driver
       ../system/play-kiosk.nix
       # Networking

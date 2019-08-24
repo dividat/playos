@@ -16,6 +16,17 @@ vm:
 		--arg buildDisk false
 	@echo "Run ./result/bin/run-playos-in-vm to start a VM"
 
+.PHONY: develop
+develop:
+	[[ $(BRANCH) = "develop" ]]
+	nix-build \
+		--arg updateCert ./pki/develop/cert.pem \
+		--arg updateUrl http://dist.dividat.com/releases/playos/develop/ \
+		--arg deployUrl s3://dist.dividat.ch/releases/playos/develop/ \
+		--arg kioskUrl https://dev-play.dividat.com/ \
+		--arg buildDisk false
+	@echo "Run ./result/bin/deploy-playos-update to deploy"
+
 .PHONY: validation
 validation:
 	[[ $(BRANCH) = "validation" ]]

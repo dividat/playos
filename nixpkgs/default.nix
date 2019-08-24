@@ -6,8 +6,8 @@ let
   nixpkgsRepo = _nixpkgs.fetchFromGitHub {
     owner = "NixOS"
     ; repo = "nixpkgs-channels"
-    ; rev = "2dc559868c94a6aad7cacbebb0ba7abdd9e08d91"
-    ; sha256 = "0hass2jk4jaijnsgvfk59kq5rli56bc7xv8gwsc9y6cff5sxfv8g";
+    ; rev = "f52505fac8c82716872a616c501ad9eff188f97f"
+    ; sha256 = "0q2m2qhyga9yq29yz90ywgjbn9hdahs7i8wwlq7b55rdbyiwa5dy";
   };
 
 in

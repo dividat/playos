@@ -6,7 +6,7 @@ let shutdown () =
     Lwt_process.(exec
                    ~stdout:`Dev_null
                    ~stderr:`Keep
-                   ("", [|"halt"; "-p"; "-f"|])
+                   ("", [|"halt"; "--poweroff"|])
                 )
   with
   | Unix.WEXITED 0 ->

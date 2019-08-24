@@ -1,13 +1,12 @@
 # Build NixOS system
 { config, lib, pkgs
-, version, install-playos
+, version, greeting, install-playos
 }:
 let
   nixos = pkgs.importFromNixos "";
 
   configuration = (import ./configuration.nix) {
-    # TODO: what is the config that goes in there?
-    inherit config pkgs lib install-playos version;
+    inherit config pkgs lib install-playos version greeting;
   };
 
 in
