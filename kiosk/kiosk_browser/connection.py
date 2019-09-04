@@ -21,9 +21,6 @@ class Connection():
         return self._is_connected
 
     def _check(self):
-        # Initial sleep to be sure _set_captive_portal_url is accessible
-        time.sleep(1)
-
         while True:
             try:
                 r = requests.get(check_connection_url, allow_redirects = False)

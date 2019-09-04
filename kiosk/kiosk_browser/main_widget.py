@@ -12,8 +12,6 @@ class MainWidget(QWidget):
         super(MainWidget, self).__init__()
 
         self._connection = connection.Connection(self.set_captive_portal_url)
-        self._connection.start_daemon()
-
         self._captive_portal_url = ''
         self._urls = cycle(urls)
         self._current_url = next(self._urls)
@@ -30,6 +28,7 @@ class MainWidget(QWidget):
 
         self.setLayout(self._layout)
         self.show()
+        self._connection.start_daemon()
 
     def set_captive_portal_url(self, url):
         self._captive_portal_url = url
