@@ -4,7 +4,8 @@ import threading
 import time
 
 check_connection_url = 'http://captive.apple.com/'
-sleep_time = 5
+sleep_time_disconnected = 5
+sleep_time_connected = 60
 
 class Connection():
 
@@ -38,4 +39,7 @@ class Connection():
             except requests.exceptions.RequestException as e:
                 print('Request exception:', e)
 
-            time.sleep(sleep_time)
+            if self._is_connected:
+                time.sleep(sleep_time_connected)
+            else:
+                time.sleep(sleep_time_disconnected)
