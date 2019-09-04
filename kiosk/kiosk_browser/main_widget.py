@@ -17,14 +17,14 @@ class MainWidget(QWidget):
         self._current_url = next(self._urls)
         self._browser_widget = browser_widget.BrowserWidget(self._current_url)
         self._is_captive_portal_visible = False
-        self._captive_portal_message = captive_portal_message.CaptivePortalMessage(self._press_button)
+        self._captive_portal_message = captive_portal_message.CaptivePortalMessage(self._toggle_captive_portal)
 
         self._layout = QBoxLayout(QBoxLayout.BottomToTop)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
         self._layout.addWidget(self._browser_widget)
 
-        QShortcut(toggle_sequence, self).activated.connect(self._press_toggle)
+        QShortcut(toggle_sequence, self).activated.connect(self._load_next_url)
 
         self.setLayout(self._layout)
         self.show()
@@ -40,7 +40,7 @@ class MainWidget(QWidget):
 
     # Private
 
-    def _press_toggle(self):
+    def _load_next_url(self):
         if self._is_captive_portal_visible:
             self._browser_widget.clean_and_load(self._current_url)
             self._is_captive_portal_visible = False
@@ -49,7 +49,7 @@ class MainWidget(QWidget):
             self._current_url = next(self._urls)
             self._browser_widget.clean_and_load(self._current_url)
 
-    def _press_button(self):
+    def _toggle_captive_portal(self):
         if self._is_captive_portal_visible:
             if self._connection.is_connected():
                 self._captive_portal_message.setParent(None)
