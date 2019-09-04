@@ -35,7 +35,7 @@ class Connection():
                     self._is_connected = False
                     self._set_captive_portal_url('')
 
-            except requests.ConnectionError as e:
+            except requests.exceptions.RequestException as e:
                 print('Request exception:', e)
 
             time.sleep(sleep_time)
