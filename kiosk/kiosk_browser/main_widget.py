@@ -51,7 +51,7 @@ class MainWidget(QWidget):
 
     def _toggle_captive_portal(self):
         if self._is_captive_portal_visible:
-            if self._connection.is_connected():
+            if not self._connection.is_captive():
                 self._captive_portal_message.setParent(None)
             self._browser_widget.clean_and_load(self._current_url)
         else:
@@ -61,6 +61,6 @@ class MainWidget(QWidget):
 
     def _update_captive_portal_message(self):
         if self._is_captive_portal_visible:
-            self._captive_portal_message.setCloseMessage(self._connection.is_connected())
+            self._captive_portal_message.setCloseMessage(self._connection.is_captive())
         else:
             self._captive_portal_message.setOpenMessage()

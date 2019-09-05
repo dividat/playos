@@ -24,9 +24,9 @@ class CaptivePortalMessage(QWidget):
         self._button.setText('Open Network Login Page')
         self._label.setText(login_message)
 
-    def setCloseMessage(self, is_connected):
+    def setCloseMessage(self, is_captive):
         self._button.setText('Close Network Login Page')
-        if is_connected:
-            self._label.setText('')
-        else:
+        if is_captive:
             self._label.setText(login_message)
+        else:
+            self._label.setText('')
