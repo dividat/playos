@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+from PyQt5.QtWidgets import QSizePolicy
 
 class BrowserWidget(QWebEngineView):
     def __init__(self, url, *args, **kwargs):
@@ -18,6 +19,14 @@ class BrowserWidget(QWebEngineView):
         # Shortcut to close
         self.quit_shortcut = QShortcut('CTRL+ALT+DELETE', self)
         self.quit_shortcut.activated.connect(lambda: self.close())
+
+        # Stretch the browser
+        policy = QSizePolicy()
+        policy.setVerticalStretch(1)
+        policy.setHorizontalStretch(1)
+        policy.setVerticalPolicy(QSizePolicy.Preferred)
+        policy.setHorizontalPolicy(QSizePolicy.Preferred)
+        self.setSizePolicy(policy)
 
     def clean_and_load(self, url):
         self.setPage(QWebEnginePage())
