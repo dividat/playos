@@ -6,6 +6,10 @@ from PyQt5.QtWidgets import QApplication
 
 from kiosk_browser import main_widget
 
+# Enable high dpi scaling, must be activated before the app is created.
+# https://doc.qt.io/qt-5/highdpi.html#high-dpi-support-in-qt
+QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+
 def start(primary_url, secondary_url, toggle_sequence, fullscreen = True):
 
     app = QApplication(sys.argv)
