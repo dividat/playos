@@ -4,7 +4,7 @@ import threading
 import time
 from enum import Enum, auto
 
-check_connection_url = 'http://captive.apple.com/'
+check_connection_url = 'http://captive.dividat.com/'
 sleep_time_not_connected = 5
 sleep_time_connected = 60
 

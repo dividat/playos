@@ -63,7 +63,7 @@ struct
     let open Cohttp_lwt_unix in
     let%lwt () = Logs_lwt.debug ~src:log_src (fun m -> m "checking internet connectivity with HTTP.") in
     match%lwt
-      Client.get (Uri.of_string "http://captive.apple.com/")
+      Client.get (Uri.of_string "http://captive.dividat.com/")
       |> Lwt_result.catch
     with
 
