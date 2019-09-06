@@ -43,7 +43,9 @@ class Connection():
                     self._set_captive_portal_url('')
 
             except requests.exceptions.RequestException as e:
-                print('Request exception:', e)
+                print('Connection request exception:', e)
+            except Exception as e:
+                print('Connection exception:', e)
 
             if self._status == Status.CONNECTED:
                 time.sleep(sleep_time_connected)
