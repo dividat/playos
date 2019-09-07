@@ -1,5 +1,9 @@
 # [Unreleased]
 
+## Added
+
+- kiosk: enable connection to captive portals
+
 # [2019.8.0] - 2019-08-24
 
 # [2019.8.0-VALIDATION.1] - 2019-08-23

@@ -1,6 +1,6 @@
 # PlayOS Kiosk Browser
 
-Opens a website in a full screen, locked down browser based on [QtWebEngine](http://doc.qt.io/qt-5/qtwebengine-index.html).
+Cycle between two urls in a full screen, locked down browser based on [QtWebEngine](http://doc.qt.io/qt-5/qtwebengine-index.html). Allow login to captive portals.
 
 ## Development
 
@@ -8,4 +8,4 @@ To create a suitable development environment run `nix-shell` in this directly. N
 
 ## Usage
 
-See `python ./bin/kiosk-browser --help`
+See `./bin/kiosk-browser --help`
