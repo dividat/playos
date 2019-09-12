@@ -23,8 +23,8 @@
         # Allow simultaneous connection to ethernet and wifi
         SingleConnectedTechnology=false
 
-        # Disable calling home
-        EnableOnlineCheck=false
+        # Enable online check to favour connected services
+        EnableOnlineCheck=true
       '';
     };
     # Issue 1: Add a dummy network to make sure wpa_supplicant.conf
