@@ -1,6 +1,6 @@
 # NixOS configuration file
 
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, version, ... }:
 
 with lib;
 
