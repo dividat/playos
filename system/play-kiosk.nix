@@ -43,7 +43,8 @@
             export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
 
             ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
-              PlayOS/${config.playos.version} \
+              PlayOS \
+              ${config.playos.version} \
               ${config.playos.kioskUrl} \
               http://localhost:3333/
 

@@ -10,14 +10,16 @@ from kiosk_browser import main_widget
 # https://doc.qt.io/qt-5/highdpi.html#high-dpi-support-in-qt
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
 
-def start(name, primary_url, secondary_url, toggle_sequence, fullscreen = True):
+def start(system_name, system_version, primary_url, secondary_url, toggle_sequence, fullscreen = True):
 
     app = QApplication(sys.argv)
 
     mainWidget = main_widget.MainWidget(
-            name = name,
+            system_name = system_name,
+            system_version = system_version,
             urls = [parseUrl(primary_url), parseUrl(secondary_url)],
-            toggle_sequence = QKeySequence(toggle_sequence))
+            toggle_sequence = QKeySequence(toggle_sequence)
+    )
 
     mainWidget.setContextMenuPolicy(Qt.NoContextMenu)
 
