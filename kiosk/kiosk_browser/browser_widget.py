@@ -9,8 +9,9 @@ class BrowserWidget(QWebEngineView):
     def __init__(self, system_name, system_version, url, *args, **kwargs):
         QWebEngineView.__init__(self, *args, **kwargs)
 
-        self._profile = get_profile(system_name, system_version)
-        self.clean_and_load(url)
+        self._page = QWebEnginePage(get_profile(system_name, system_version))
+        self.setPage(self._page)
+        self.load(url)
 
         # Shortcut to manually reload
         self.reload_shortcut = QShortcut('CTRL+R', self)
@@ -31,14 +32,8 @@ class BrowserWidget(QWebEngineView):
         policy.setHorizontalPolicy(QSizePolicy.Preferred)
         self.setSizePolicy(policy)
 
-    def clean_and_load(self, url):
-
-        # Recreate a new page in order to clear the screen the moment the
-        # shortcut is pressed
-        page = QWebEnginePage(self._profile)
-
-        page.setUrl(url)
-        self.setPage(page)
+    def load(self, url):
+        self._page.setUrl(url)
 
     def _load_finished(self, success):
         if not success:

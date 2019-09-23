@@ -46,20 +46,20 @@ class MainWidget(QWidget):
 
     def _load_next_url(self):
         if self._is_captive_portal_visible:
-            self._browser_widget.clean_and_load(self._current_url)
+            self._browser_widget.load(self._current_url)
             self._is_captive_portal_visible = False
             self._update_captive_portal_message()
         else:
             self._current_url = next(self._urls)
-            self._browser_widget.clean_and_load(self._current_url)
+            self._browser_widget.load(self._current_url)
 
     def _toggle_captive_portal(self):
         if self._is_captive_portal_visible:
             if not self._connection.is_captive():
                 self._captive_portal_message.setParent(None)
-            self._browser_widget.clean_and_load(self._current_url)
+            self._browser_widget.load(self._current_url)
         else:
-            self._browser_widget.clean_and_load(QUrl(self._captive_portal_url))
+            self._browser_widget.load(QUrl(self._captive_portal_url))
         self._is_captive_portal_visible = not self._is_captive_portal_visible
         self._update_captive_portal_message()
 
