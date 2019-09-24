@@ -63,6 +63,12 @@
           timeout = 0;
         };
       };
+
+      sessionCommands = ''
+        ${pkgs.xorg.xrdb}/bin/xrdb -merge <<EOF
+          Xcursor.theme: Breeze_Contrast
+        EOF
+      '';
     };
   };
 
@@ -83,7 +89,11 @@
 
   # Install a command line mixer
   # TODO: remove when controlling audio works trough controller
-  environment.systemPackages = with pkgs; [ pamix pamixer ];
+  environment.systemPackages = with pkgs; [
+    pamix
+    pamixer
+    (callPackage ./cursor-theme/breeze-contrast.nix {})
+  ];
 
   # Enable avahi for Senso discovery
   services.avahi.enable = true;
