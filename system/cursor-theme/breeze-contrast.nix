@@ -3,6 +3,7 @@
 stdenv.mkDerivation rec {
   name = "breeze-contrast-cursor-theme";
   version = "1.0";
+  themeName = "Breeze_Contrast";
 
   src = fetchzip {
     url = "https://code.jpope.org/jpope/breeze_cursor_sources/raw/master/${name}.zip";
@@ -10,8 +11,8 @@ stdenv.mkDerivation rec {
   };
 
   installPhase = ''
-    install -d $out/share/icons/Breeze_Contrast
-    cp -rf * $out/share/icons/Breeze_Contrast
+    install -d $out/share/icons/${themeName}
+    cp -rf * $out/share/icons/${themeName}
   '';
 
   meta = {
