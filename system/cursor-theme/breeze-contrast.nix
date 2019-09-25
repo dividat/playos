@@ -1,5 +1,7 @@
 { stdenv, fetchzip, ... }:
 
+# Inspiration:
+# https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=breeze-contrast-cursor-theme
 stdenv.mkDerivation rec {
   name = "breeze-contrast-cursor-theme";
   version = "1.0";
