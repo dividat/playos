@@ -1,2 +1,2 @@
-NAME = "@name@"
-VERSION = "@version@"
+NAME = "@system_name@"
+VERSION = "@system_version@"

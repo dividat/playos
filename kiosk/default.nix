@@ -13,8 +13,8 @@ python3Packages.buildPythonApplication rec {
 
   postPatch = ''
     substituteInPlace kiosk_browser/system.py \
-      --replace @name@ ${system_name} \
-      --replace @version@ ${system_version}
+      --replace "@system_name@" "${system_name}" \
+      --replace "@system_version@" "${system_version}"
   '';
 
   doCheck = false;
