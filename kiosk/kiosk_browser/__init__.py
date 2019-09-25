@@ -15,8 +15,9 @@ def start(primary_url, secondary_url, toggle_sequence, fullscreen = True):
     app = QApplication(sys.argv)
 
     mainWidget = main_widget.MainWidget(
-            urls = [parseUrl(primary_url), parseUrl(secondary_url)],
-            toggle_sequence = QKeySequence(toggle_sequence))
+        urls = [parseUrl(primary_url), parseUrl(secondary_url)],
+        toggle_sequence = QKeySequence(toggle_sequence)
+    )
 
     mainWidget.setContextMenuPolicy(Qt.NoContextMenu)
 
