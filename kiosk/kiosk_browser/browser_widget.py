@@ -4,12 +4,14 @@ from PyQt5.QtWidgets import QShortcut
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineProfile
 from PyQt5.QtWidgets import QSizePolicy
 
+from kiosk_browser import system
+
 class BrowserWidget(QWebEngineView):
 
-    def __init__(self, system_name, system_version, url, *args, **kwargs):
+    def __init__(self, url, *args, **kwargs):
         QWebEngineView.__init__(self, *args, **kwargs)
 
-        self._page = QWebEnginePage(get_profile(system_name, system_version))
+        self._page = QWebEnginePage(get_profile())
         self.setPage(self._page)
         self.load(url)
 
@@ -39,12 +41,12 @@ class BrowserWidget(QWebEngineView):
         if not success:
             QTimer.singleShot(5000, self.reload)
 
-def get_profile(system_name, system_version):
+def get_profile():
     profile = QWebEngineProfile.defaultProfile()
     profile.setHttpUserAgent(user_agent_with_system(
         user_agent = profile.httpUserAgent(),
-        system_name = system_name,
-        system_version = system_version
+        system_name = system.NAME,
+        system_version = system.VERSION
     ))
     return profile
 

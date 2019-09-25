@@ -21,21 +21,13 @@ parser.add_argument(
     'Keyboard combination to toggle between primary and secondary websites. (Default: "%s")'
     % default_toggle_key)
 
-parser.add_argument('system_name', help='System name displayed in user agent')
-parser.add_argument('system_version', help='System version displayed in user agent')
 parser.add_argument('primary_url', help='Primary URL to load')
 parser.add_argument('secondary_url', help='Secondary URL to load')
 
 args = parser.parse_args()
 
 # try:
-kiosk_browser.start(
-        system_name = args.system_name,
-        system_version = args.system_version,
-        primary_url = args.primary_url,
-        secondary_url = args.secondary_url,
-        toggle_sequence = args.toggle_key
-)
+kiosk_browser.start(args.primary_url, args.secondary_url, args.toggle_key)
 
 # except InvalidUrl as error:
 #   parser.error(error)
