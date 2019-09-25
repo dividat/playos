@@ -1,4 +1,5 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, ... }:
+
 {
 
   # Kiosk runs as a non-privileged user
@@ -63,6 +64,12 @@
           timeout = 0;
         };
       };
+
+      sessionCommands = ''
+        ${pkgs.xorg.xrdb}/bin/xrdb -merge <<EOF
+          Xcursor.theme: ${pkgs.breeze-contrast-cursor-theme.themeName}
+        EOF
+      '';
     };
   };
 
@@ -83,7 +90,11 @@
 
   # Install a command line mixer
   # TODO: remove when controlling audio works trough controller
-  environment.systemPackages = with pkgs; [ pamix pamixer ];
+  environment.systemPackages = with pkgs; [
+    pamix
+    pamixer
+    breeze-contrast-cursor-theme
+  ];
 
   # Enable avahi for Senso discovery
   services.avahi.enable = true;

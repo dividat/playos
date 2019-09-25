@@ -17,4 +17,6 @@ self: super: {
       sha256 = "1jc9ws5ra6v3plwraqixin0w0wfxj64drahrbkyrrwzghqjjc9ss";
     };
   });
+
+  breeze-contrast-cursor-theme = self.callPackage ./breeze-contrast-cursor-theme {};
 }
