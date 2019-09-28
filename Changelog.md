@@ -2,7 +2,13 @@
 
 ## Added
 
-- kiosk: enable connection to captive portals
+- kiosk: Enable connection to captive portals
+- kiosk: Include PlayOS version in user-agent string
+
+## Changed
+
+- os: Use breeze cursor theme for larger, friendlier cursor symbols
+- os: Enable connman online check to improve default route selection
 
 # [2019.8.0] - 2019-08-24
 
