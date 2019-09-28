@@ -1,5 +1,5 @@
 # TODO: Not so nice that entire pkgs is used as argument. We need to find a nice way where we can explicitly define arguments but also make it easy to cd into this directory and start a "local" nix shell or just build the local component.
-{ pkgs ? (import <nixpkgs> {})}:
+{ pkgs ? (import <nixpkgs> {}), system_name, system_version }:
 with pkgs;
 
 let qtx=qt5; in
@@ -10,6 +10,12 @@ python3Packages.buildPythonApplication rec {
   src = builtins.filterSource
     (path: type: type != "directory" ||  baseNameOf path != "venv")
     ./.;
+
+  postPatch = ''
+    substituteInPlace kiosk_browser/system.py \
+      --replace "@system_name@" "${system_name}" \
+      --replace "@system_version@" "${system_version}"
+  '';
 
   doCheck = false;
 
@@ -30,6 +36,7 @@ python3Packages.buildPythonApplication rec {
 
   propagatedBuildInputs = with python3Packages; [
     pyqt5
+    requests
   ];
 
   makeWrapperArgs = [

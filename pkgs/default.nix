@@ -1,5 +1,5 @@
 # overlay for custom packages
-self: super: {
+system_version: self: super: {
 
   rauc = (import ./rauc) super;
 
@@ -7,7 +7,10 @@ self: super: {
     inherit (super) stdenv fetchurl;
   };
 
-  playos-kiosk-browser = self.callPackage ../kiosk {};
+  playos-kiosk-browser = self.callPackage ../kiosk {
+    inherit system_version;
+    system_name = "PlayOS";
+  };
 
   # pin pcsclite to 1.8.23 because of break in ABI (https://github.com/LudovicRousseau/PCSC/commit/984f84df10e2d0f432039e3b31f94c74e95092eb)
   pcsclite = super.pcsclite.overrideAttrs (oldAttrs: rec {
@@ -17,4 +20,6 @@ self: super: {
       sha256 = "1jc9ws5ra6v3plwraqixin0w0wfxj64drahrbkyrrwzghqjjc9ss";
     };
   });
+
+  breeze-contrast-cursor-theme = self.callPackage ./breeze-contrast-cursor-theme {};
 }

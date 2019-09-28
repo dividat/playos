@@ -63,16 +63,16 @@ struct
     let open Cohttp_lwt_unix in
     let%lwt () = Logs_lwt.debug ~src:log_src (fun m -> m "checking internet connectivity with HTTP.") in
     match%lwt
-      Client.get (Uri.of_string
-                    (* Note that we use http to circumvent https://github.com/mirage/ocaml-cohttp/issues/130.
-
-                       The expected response is 301 Moved Permanently (to the https address), which is sufficient for checking internet connectivity.
-                    *)
-                    "http://api.dividat.com/")
+      Client.get (Uri.of_string "http://captive.dividat.com/")
       |> Lwt_result.catch
     with
-    | Ok _ ->
-      Connected |> return
+
+    | Ok (resp, _) ->
+      if Response.status resp == `OK then
+        return Connected
+      else
+        return (NotConnected "Captive portal login required")
+
     | Error exn ->
       NotConnected (Printexc.to_string exn) |> return
 
