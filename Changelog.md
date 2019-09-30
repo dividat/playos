@@ -1,4 +1,6 @@
-# [Unreleased]
+# [UNRELEASED]
+
+# [2019.9.0-VALIDATION] - 2019-09-28
 
 ## Added
 
