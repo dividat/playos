@@ -1,6 +1,6 @@
 let
   # Set version
-  version = "2019.9.0-VALIDATION";
+  version = "2019.9.0";
 
   pinnedNixpkgs = import ./nixpkgs;
 
