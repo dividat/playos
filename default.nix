@@ -1,8 +1,12 @@
 let
+  # Set version
+  version = "2019.9.0";
+
   pinnedNixpkgs = import ./nixpkgs;
+
   pkgs = pinnedNixpkgs.nixpkgs {
     overlays = [
-      (import ./pkgs)
+      (import ./pkgs version)
       (self: super: {
         inherit (pinnedNixpkgs) importFromNixos;
       })
@@ -36,9 +40,6 @@ let
   # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
   components = lib.makeScope newScope (self: with self; {
 
-    # Set version
-    version = "2019.8.0";
-
     greeting = label: ''
                                          _
                                      , -"" "".
@@ -53,7 +54,7 @@ let
     -----`------------------------------------------------------ ----------- ------- ----- --- -- -
     '';
 
-    inherit updateUrl deployUrl kioskUrl;
+    inherit updateUrl deployUrl kioskUrl version;
 
     # Documentations
     docs = callPackage ./docs {};
@@ -101,7 +102,7 @@ let
 in
 
 stdenv.mkDerivation {
-  name = "playos-${components.version}";
+  name = "playos-${version}";
 
   buildInputs = [
     rauc
@@ -123,15 +124,15 @@ stdenv.mkDerivation {
   ''
 
   + lib.optionalString buildLive ''
-    ln -s ${components.live}/iso/playos-live-${components.version}.iso $out/playos-live-${components.version}.iso
+    ln -s ${components.live}/iso/playos-live-${version}.iso $out/playos-live-${version}.iso
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
-    ln -s ${components.installer}/iso/playos-installer-${components.version}.iso $out/playos-installer-${components.version}.iso
+    ln -s ${components.installer}/iso/playos-installer-${version}.iso $out/playos-installer-${version}.iso
   ''
   # RAUC bundle
   + lib.optionalString buildBundle ''
-    ln -s ${components.unsignedRaucBundle} $out/playos-${components.version}-UNSIGNED.raucb
+    ln -s ${components.unsignedRaucBundle} $out/playos-${version}-UNSIGNED.raucb
     cp ${components.deploy-playos-update} $out/bin/deploy-playos-update
     chmod +x $out/bin/deploy-playos-update
   '';
