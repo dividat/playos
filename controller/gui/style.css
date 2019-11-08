@@ -58,10 +58,6 @@ dl > dt {
     margin: 10px;
 }
 
-.service-detail {
-    margin-left: 10px;
-}
-
 .info-icon {
     width: 200px;
 }
@@ -84,4 +80,15 @@ dl > dt {
     align-items: stretch;
 
     height: 90vh;
+}
+
+/* Network */
+
+.d-Network__ServiceDetail {
+    margin-left: 10px;
+}
+
+.d-Network__ServiceStrength {
+  color: #777777;
+  font-size: 80%;
 }

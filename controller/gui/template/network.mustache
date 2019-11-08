@@ -11,8 +11,14 @@
 <h2>Services</h2>
 
 {{#services}}
-    <details class="service-details">
-        <summary>{{name}}</summary>
+    <details class="d-Network__ServiceDetail">
+        <summary>
+            {{name}}
+
+            <span class="d-Network__ServiceStrength">
+                {{strength}}
+            </span>
+        </summary>
 
         <pre>{{properties}}</pre>
 
@@ -34,4 +40,3 @@
 {{^services}}
     No services available.
 {{/services}}
-

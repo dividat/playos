@@ -328,6 +328,9 @@ struct
     ; "name", s.name |> Ezjsonm.string
     ; "favorite", s.favorite |> Ezjsonm.bool
     ; "connected", s |> is_connected |> Ezjsonm.bool
+    ; "strength", (match s.strength with
+      | Some s -> string_of_int s ^ "%"
+      | None -> "") |> Ezjsonm.string
     ; "properties", s |> sexp_of_t |> Sexplib.Sexp.to_string_hum |> Ezjsonm.string
     ]
 
