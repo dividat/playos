@@ -1,55 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>PlayOS Controller</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="/static/client.js"></script>
-  </head>
-  <body>
-      <div id="container">
+    <head>
+        <meta charset="utf-8">
+        <title>PlayOS Controller</title>
+        <link rel="stylesheet" href="/static/style.css">
+        <script src="/static/client.js"></script>
+    </head>
+    <body id="d-Container">
 
-          <div id="header">
-          </div>
+        <div id="d-Header">
+        </div>
 
-          <div id="menu">
+        <div id="d-Menu">
 
-              <div class="menu-item{{#is_info}} active{{/is_info}}">
-                  <a href="/info">
-                    <img class="menu-item-icon" src="/static/info.svg">
-                  </a>
-              </div>
+            <div class="d-Menu__Item {{#is_info}}d-Menu__Item--Active{{/is_info}}">
+                <a href="/info">
+                    <img class="d-Menu__ItemIcon" src="/static/info.svg">
+                </a>
+            </div>
 
-              <div class="menu-item{{#is_network}} active{{/is_network}}">
-                  <a href="/network">
-                      <img class="menu-item-icon" src="/static/wifi.svg">
-                  </a>
-              </div>
+            <div class="d-Menu__Item {{#is_network}}d-Menu__Item--Active{{/is_network}}">
+                <a href="/network">
+                    <img class="d-Menu__ItemIcon" src="/static/wifi.svg">
+                </a>
+            </div>
 
-              <div class="menu-item{{#is_localization}} active{{/is_localization}}">
-                  <a href="/localization">
-                      <img class="menu-item-icon" src="/static/world.svg">
-                  </a>
-              </div>
+            <div class="d-Menu__Item {{#is_localization}}d-Menu__Item--Active{{/is_localization}}">
+                <a href="/localization">
+                    <img class="d-Menu__ItemIcon" src="/static/world.svg">
+                </a>
+            </div>
 
-              <div class="menu-item">
-                  <a href="/shutdown">
-                    <img class="menu-item-icon" src="/static/power.svg">
-                  </a>
-              </div>
+            <div class="d-Menu__Item d-Menu__Item">
+                <a href="/shutdown">
+                  <img class="d-Menu__ItemIcon" src="/static/power.svg">
+                </a>
+            </div>
 
-          </div>
+        </div>
 
-          <div id="content">
-              {{{content}}}
-          </div>
+        <div id="d-Content">
+            {{{content}}}
+        </div>
 
-          <div id="footer">
-              <a href="/status">
-                  system status
-              </a>
-          </div>
+        <div id="d-Footer">
+            <a href="/status">
+                system status
+            </a>
+        </div>
 
-      </div>
-  </body>
+    </body>
 </html>

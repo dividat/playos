@@ -1,74 +1,12 @@
-body {
+/* Template */
+
+#d-Container {
     font-family: monospace;
     background-color: white;
     color: black;
     margin: 5vh 5vw 5vh 5vw;
     padding: 0;
-}
 
-dl > dt {
-    font-weight: bold;
-}
-
-#header {
-    grid-area: header;
-}
-
-.menu-item {
-    display: block;
-    margin: 10px;
-}
-
-.menu-item-icon {
-    width: 100%;
-}
-
-.menu-item-icon:hover {
-    filter: invert(70%);
-}
-
-.menu-item.active .menu-item-icon {
-    filter: invert(70%) sepia(70%) saturate(100%);
-}
-
-.hidden-link {
-    text-decoration: none;
-    cursor: text;
-    color: black;
-}
-
-#menu {
-    grid-area: menu;
-
-    display: grid;
-    grid-template-columns: 1fr;
-    align-content: start;
-    align-items: center;
-    justify-items: stretch;
-    grid-row-gap: 20px;
-}
-
-#content {
-    grid-area: content;
-    place-self: center;
-    font-size: 2em;
-    width: 90%;
-    height: 90%;
-    overflow: scroll;
-    margin: 10px;
-}
-
-.info-icon {
-    width: 200px;
-}
-
-#footer {
-    grid-area: footer;
-    text-align: right;
-    margin: 20px;
-}
-
-#container {
     display: grid;
 
     grid-template-columns: 1fr 10fr;
@@ -80,6 +18,57 @@ dl > dt {
     align-items: stretch;
 
     height: 90vh;
+}
+
+#d-Header {
+    grid-area: header;
+}
+
+#d-Content {
+    grid-area: content;
+    place-self: center;
+    font-size: 2em;
+    width: 90%;
+    height: 90%;
+    overflow: scroll;
+    margin: 10px;
+}
+
+
+#d-Footer {
+    grid-area: footer;
+    text-align: right;
+    margin: 20px;
+}
+
+/* Menu */
+
+#d-Menu {
+    grid-area: menu;
+
+    display: grid;
+    grid-template-columns: 1fr;
+    align-content: start;
+    align-items: center;
+    justify-items: stretch;
+    grid-row-gap: 20px;
+}
+
+.d-Menu__Item {
+    display: block;
+    margin: 10px;
+}
+
+.d-Menu__ItemIcon {
+    width: 100%;
+}
+
+.d-Menu__ItemIcon:hover {
+    filter: invert(70%);
+}
+
+.d-Menu__Item--Active .d-Menu__ItemIcon {
+  filter: invert(70%) sepia(70%) saturate(100%);
 }
 
 /* Network */
@@ -106,4 +95,18 @@ dl > dt {
 
 .d-Network__Refresh:hover {
     border-color: #888888;
+}
+
+/* Definitions */
+
+.d-Definitions__Term {
+    font-weight: bold;
+}
+
+/* Other */
+
+.d-HiddenLink {
+    text-decoration: none;
+    cursor: text;
+    color: black;
 }
