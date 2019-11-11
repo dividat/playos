@@ -253,36 +253,45 @@ module NetworkGui = struct
   open Connman
   open Network
 
+  (** Mutable services resulting from the merge of every
+      services ever given from the overview page.*)
+  let merged_overview_services = ref []
+
+  (** Merge new services into old services.*)
+  let merge_services old_services new_services =
+    old_services
+    |> List.filter
+      (fun (o:Service.t) -> List.exists (fun (n:Service.t) -> o.id == n.id) new_services)
+    |> List.append new_services
+
+  (** Find a service by id.*)
+  let find_service id =
+    List.find_opt (fun (s:Service.t) -> s.id = id)
+
   let overview
       ~(connman:Manager.t)
       ~(internet:Internet.state Lwt_react.S.t)
       req =
 
-    (* Check if internet connected *)
+    (* Check if internet is connected *)
     let internet_connected =
         internet
         |> Lwt_react.S.value
         |> Internet.is_connected
     in
 
-    let%lwt services =
-      Manager.get_services connman
-      (* If not connected show all services, otherwise show services that are connected *)
-      >|= List.filter (fun s -> not internet_connected || s |> Service.is_connected)
-    in
+    let%lwt services = Manager.get_services connman in
 
+    (** Store new services.*)
+    let () = merged_overview_services := merge_services !merged_overview_services services in
 
     page "network"
-      [
-        "internet_connected", internet_connected |> Ezjsonm.bool
-      ; "services", services |> Ezjsonm.list (fun s -> s |> Service.to_json |> Ezjsonm.value)
+      [ "internet_connected", internet_connected |> Ezjsonm.bool
+      ; "services", services
+        (* If not connected show all services, otherwise show services that are connected *)
+        |> List.filter (fun s -> not internet_connected || s |> Service.is_connected)
+        |> Ezjsonm.list (fun s -> s |> Service.to_json |> Ezjsonm.value)
       ]
-
-  (** Helper to find a service by id *)
-  let find_service ~connman id =
-    let open Connman in
-    Connman.Manager.get_services connman
-    >|= List.find_opt (fun (s:Service.t) -> s.id = id)
 
   (** Connect to a service *)
   let connect ~(connman:Connman.Manager.t) req =
@@ -297,7 +306,7 @@ module NetworkGui = struct
       | _ ->
         Connman.Agent.None
     in
-    match%lwt find_service ~connman service_id with
+    match find_service service_id !merged_overview_services with
     | None ->
       fail_with (Format.sprintf "Service does not exist (%s)" service_id)
     | Some service ->
@@ -307,7 +316,7 @@ module NetworkGui = struct
 
   let remove ~(connman:Connman.Manager.t) req =
     let service_id = param req "id" in
-    match%lwt find_service ~connman service_id with
+    match find_service service_id !merged_overview_services with
     | None ->
       fail_with (Format.sprintf "Service does not exist (%s)" service_id)
     | Some service ->
