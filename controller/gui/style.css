@@ -89,11 +89,11 @@ dl > dt {
 }
 
 .d-Network__ServiceStrength {
-  color: #777777;
-  font-size: 80%;
+    color: #777777;
+    font-size: 80%;
 }
 
-.d-Network__Reload {
+.d-Network__Refresh {
     display: inline-block;
     font-size: 1rem;
     text-decoration: none;
@@ -104,6 +104,6 @@ dl > dt {
     border: 0.15rem solid #DDDDDD;
 }
 
-.d-Network__Reload:hover {
+.d-Network__Refresh:hover {
     border-color: #888888;
 }
