@@ -1,5 +1,14 @@
 # [UNRELEASED]
 
+## Added
+
+- controller: Add a refresh button in the network page
+- controller: Show network strengths in the network page
+
+## Fixed
+
+- controller: Allow subsequent connections after a connection error
+
 # [2019.9.0] - 2019-10-15
 
 # [2019.9.0-VALIDATION] - 2019-09-28

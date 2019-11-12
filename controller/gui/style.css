@@ -89,6 +89,21 @@ dl > dt {
 }
 
 .d-Network__ServiceStrength {
-  color: #777777;
-  font-size: 80%;
+    color: #777777;
+    font-size: 80%;
+}
+
+.d-Network__Refresh {
+    display: inline-block;
+    font-size: 1rem;
+    text-decoration: none;
+    padding: 0.4rem 0.8rem;
+    margin-bottom: 1rem;
+    color: black;
+    background-color: #DDDDDD;
+    border: 0.15rem solid #DDDDDD;
+}
+
+.d-Network__Refresh:hover {
+    border-color: #888888;
 }
