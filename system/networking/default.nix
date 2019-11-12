@@ -27,10 +27,22 @@
         EnableOnlineCheck=true
       '';
     };
-    # Issue 1: Add a dummy network to make sure wpa_supplicant.conf
-    # is created (see https://github.com/NixOS/nixpkgs/issues/23196)
     wireless = {
       enable = true;
+
+      extraConfig = ''
+        # BSS expiration age in seconds. A BSS will be removed from the local cache
+        # if it is not in use and has not been seen for this time. Default is 180.
+        bss_expiration_age=180
+
+        # BSS expiration after number of scans. A BSS will be removed from the local
+        # cache if it is not seen in this number of scans.
+        # Default is 2.
+        bss_expiration_scan_count=16
+      '';
+
+      # Issue 1: Add a dummy network to make sure wpa_supplicant.conf
+      # is created (see https://github.com/NixOS/nixpkgs/issues/23196)
       networks."12345-i-do-not-exist"= {
         extraConfig = ''
           disabled=1
