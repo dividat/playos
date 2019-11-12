@@ -261,7 +261,7 @@ module NetworkGui = struct
   let merge_services old_services new_services =
     old_services
     |> List.filter
-      (fun (o:Service.t) -> List.exists (fun (n:Service.t) -> o.id == n.id) new_services)
+      (fun (o:Service.t) -> not (List.exists (fun (n:Service.t) -> o.id = n.id) new_services))
     |> List.append new_services
 
   (** Find a service by id.*)
