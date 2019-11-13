@@ -30,7 +30,7 @@ Notes:
 
 ## Code style
 
-- Author CSS according to these [BEM-based guidelines](https://github.com/dividat/diviapps/blob/develop/frontend/docs/dev/styles.md).
+- Author CSS according to the [BEM methodology](http://getbem.com/) in the format `d-Block__Element--Modifier`.
 
 ## See also
 
