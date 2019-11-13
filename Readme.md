@@ -43,7 +43,7 @@ Update bundles are hosted on Amazon S3. The script `bin/deploy-playos-update` wi
 
 The arguments `updateUrl` (from where updates will be fetched by PlayOS systems), `deployURL` (where bundles should be deployed to) must be specified. For example: `nix build --arg updateUrl https://dist.dividat.com/releases/playos/master/ --arg deployUrl s3://dist.dividat.ch/releases/playos/master/`.
 
-Commonly used update and deploy URLs (channels) can be used with shortcuts defined in the Makefile. 
+Commonly used update and deploy URLs (channels) can be used with shortcuts defined in the Makefile.
 
 To release an update to the `develop` channel:
 
@@ -55,6 +55,10 @@ make develop
 ### Key switch
 
 When switching key pairs on a channel, the new certficiate must be built into the bundle, which must then be signed with the old key. For this purpose, the `--override-cert` option of the deploy script is needed to provide RAUC with a certificate matching the new key.
+
+## Change Log
+
+Update the change log for every release. See http://keepachangelog.com/ for formatting and conventions.
 
 ## Related work
 

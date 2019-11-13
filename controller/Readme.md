@@ -28,7 +28,10 @@ Notes:
 - The controller application requires certain artifacts to be in a specific location relative to binary location. The `dune build @install` command ensures this.
 - The `--profile release` option disables dune from failing on warnings (which are currently present in the `obus` library)
 
+## Code style
+
+- Author CSS according to the [BEM methodology](http://getbem.com/) in the format `d-Block__Element--Modifier`.
+
 ## See also
 
 Many ideas have been taken from the [logarion](https://cgit.orbitalfox.eu/logarion/) project.
-
