@@ -30,6 +30,9 @@
     wireless = {
       enable = true;
 
+      # Stabilize WIFI connection scanning by keeping any scanned WIFI for at
+      # least 1 minute. This intends to fix “Service not found” error when
+      # connecting to a network by id.
       extraConfig = ''
         # BSS expiration age in seconds. A BSS will be removed from the local cache
         # if it is not in use and has not been seen for this time. Default is 180.
