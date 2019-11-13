@@ -1,6 +1,6 @@
 /* Template */
 
-#d-Container {
+.d-Container {
     font-family: monospace;
     background-color: white;
     color: black;
@@ -20,11 +20,11 @@
     height: 90vh;
 }
 
-#d-Header {
+.d-Header {
     grid-area: header;
 }
 
-#d-Content {
+.d-Content {
     grid-area: content;
     place-self: center;
     font-size: 2em;
@@ -35,7 +35,7 @@
 }
 
 
-#d-Footer {
+.d-Footer {
     grid-area: footer;
     text-align: right;
     margin: 20px;
@@ -43,7 +43,7 @@
 
 /* Menu */
 
-#d-Menu {
+.d-Menu {
     grid-area: menu;
 
     display: grid;
