@@ -40,7 +40,7 @@
   };
   # Issue 2: Make sure connman starts after wpa_supplicant
   systemd.services."connman".after = [ "wpa_supplicant.service" ];
-  # Issue 3: Leave time for rfkill to unblock WLAN and restart wpa_supplicant & connman
+  # Issue 3: Leave time for rfkill to unblock WLAN and restart wpa_supplicant & connman (https://01.org/jira/browse/CM-670)
   systemd.timers."restart-wpa" = {
     timerConfig = {
       OnBootSec = 20;
