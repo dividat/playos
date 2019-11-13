@@ -33,12 +33,12 @@
       extraConfig = ''
         # BSS expiration age in seconds. A BSS will be removed from the local cache
         # if it is not in use and has not been seen for this time. Default is 180.
-        bss_expiration_age=180
+        bss_expiration_age=60
 
         # BSS expiration after number of scans. A BSS will be removed from the local
         # cache if it is not seen in this number of scans.
         # Default is 2.
-        bss_expiration_scan_count=16
+        bss_expiration_scan_count=1000
       '';
 
       # Issue 1: Add a dummy network to make sure wpa_supplicant.conf
