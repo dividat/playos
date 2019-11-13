@@ -8,6 +8,7 @@
 ## Fixed
 
 - controller: Allow subsequent connections after a connection error
+- controller: Stabilize WIFI connection scanning
 
 # [2019.9.0] - 2019-10-15
 
