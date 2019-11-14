@@ -126,40 +126,53 @@
 
 /* Form */
 
+:root {
+    --form-component-height: 2.5rem;
+    --form-component-font-size: 70%;
+    --form-border-color: #DDDDDD;
+    --form-border-color-hover: #888888;
+    --form-input-border: 0.15rem solid var(--form-border-color);
+}
+
 .d-Input {
-    font-size: 70%;
-    height: 2.5rem;
+    font-size: var(--form-component-font-size);
+    height: var(--form-component-height);
     padding: 0 0.5rem;
+    border: var(--form-input-border);
+}
+
+.d-Input:hover {
+    border-color: var(--form-border-color-hover);
 }
 
 .d-Button {
     display: inline-flex;
     align-items: center;
-    height: 2.5rem;
-    font-size: 1rem;
+    height: var(--form-component-height);
+    font-size: var(--form-component-font-size);
     text-decoration: none;
     padding: 0 0.8rem;
     color: black;
-    background-color: #DDDDDD;
-    border: 0.15rem solid #DDDDDD;
+    background-color: var(--form-border-color);
+    border: var(--form-input-border);
     cursor: pointer;
 }
 
 .d-Button:hover {
-    border-color: #888888;
+    border-color: var(--form-border-color-hover);
 }
 
 .d-Select {
-    font-size: 70%;
-    height: 2.5rem;
+    font-size: var(--form-component-font-size);
+    height: var(--form-component-height);
     padding: 0 0.5rem;
     background-color: white;
-    border: 0.15rem solid #DDDDDD;
+    border: var(--form-input-border);
     cursor: pointer;
 }
 
 .d-Select:hover {
-    border-color: #888888;
+    border-color: var(--form-border-color-hover);
 }
 
 /* Definitions */
