@@ -118,6 +118,12 @@
     width: 28rem;
 }
 
+.d-Localization__Note {
+    font-style: italic;
+    font-size: 80%;
+    margin-top: 2rem;
+}
+
 /* Form */
 
 .d-Input {
