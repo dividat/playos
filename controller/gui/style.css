@@ -2,10 +2,7 @@
 
 .d-Container {
     font-family: monospace;
-    background-color: white;
-    color: black;
-    margin: 5vh 5vw 5vh 5vw;
-    padding: 0;
+    padding: 5vh 5vw 5vh 5vw;
 
     display: grid;
 
@@ -15,7 +12,6 @@
         "header header"
         "menu content"
         "footer footer";
-    align-items: stretch;
 
     height: 90vh;
 }
@@ -30,7 +26,7 @@
     font-size: 2em;
     width: 90%;
     height: 90%;
-    overflow: scroll;
+    overflow: auto;
     margin: 10px;
 }
 
@@ -68,10 +64,22 @@
 }
 
 .d-Menu__Item--Active .d-Menu__ItemIcon {
-  filter: invert(70%) sepia(70%) saturate(100%);
+    filter: invert(70%) sepia(70%) saturate(100%);
 }
 
 /* Network */
+
+.d-Network__Refresh {
+    margin-bottom: 2rem;
+}
+
+.d-Network__InternetConnected {
+    color: green;
+}
+
+.d-Network__InternetNotConnected {
+    color: red;
+}
 
 .d-Network__ServiceDetail {
     margin-left: 10px;
@@ -82,19 +90,89 @@
     font-size: 80%;
 }
 
-.d-Network__Refresh {
-    display: inline-block;
-    font-size: 1rem;
-    text-decoration: none;
-    padding: 0.4rem 0.8rem;
-    margin-bottom: 1rem;
-    color: black;
-    background-color: #DDDDDD;
-    border: 0.15rem solid #DDDDDD;
+.d-Network__Form {
+    display: flex;
+    margin-bottom: 2rem;
 }
 
-.d-Network__Refresh:hover {
-    border-color: #888888;
+.d-Network__Input {
+    width: 50%;
+    margin-right: 1rem;
+}
+
+/* Localization */
+
+.d-Localization__Form {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.d-Localization__Legend {
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+.d-Localization__Select {
+    margin-right: 1rem;
+    width: 28rem;
+}
+
+.d-Localization__Note {
+    font-style: italic;
+    font-size: 80%;
+    margin-top: 2rem;
+}
+
+/* Form */
+
+:root {
+    --form-component-height: 2.5rem;
+    --form-component-font-size: 70%;
+    --form-border-color: #DDDDDD;
+    --form-border-color-hover: #888888;
+    --form-input-border: 0.15rem solid var(--form-border-color);
+}
+
+.d-Input {
+    font-size: var(--form-component-font-size);
+    height: var(--form-component-height);
+    padding: 0 0.5rem;
+    border: var(--form-input-border);
+}
+
+.d-Input:hover {
+    border-color: var(--form-border-color-hover);
+}
+
+.d-Button {
+    display: inline-flex;
+    align-items: center;
+    height: var(--form-component-height);
+    font-size: var(--form-component-font-size);
+    text-decoration: none;
+    padding: 0 0.8rem;
+    color: black;
+    background-color: var(--form-border-color);
+    border: var(--form-input-border);
+    cursor: pointer;
+}
+
+.d-Button:hover {
+    border-color: var(--form-border-color-hover);
+}
+
+.d-Select {
+    font-size: var(--form-component-font-size);
+    height: var(--form-component-height);
+    padding: 0 0.5rem;
+    background-color: white;
+    border: var(--form-input-border);
+    cursor: pointer;
+}
+
+.d-Select:hover {
+    border-color: var(--form-border-color-hover);
 }
 
 /* Definitions */
@@ -103,7 +181,27 @@
     font-weight: bold;
 }
 
+.d-Definitions__Description {
+    margin-bottom: 1rem;
+}
+
 /* Other */
+
+.d-Title {
+    margin-bottom: 1rem;
+}
+
+.d-Subtitle {
+    margin-bottom: 1rem;
+}
+
+.d-Preformatted {
+    font-size: 80%;
+    border-left: 0.5rem solid #E0CB52;
+    padding: 0.5rem 1rem;
+    background-color: #FCFAEE;
+    overflow: auto;
+}
 
 .d-HiddenLink {
     text-decoration: none;

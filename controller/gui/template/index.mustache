@@ -3,15 +3,16 @@
     <head>
         <meta charset="utf-8">
         <title>PlayOS Controller</title>
+        <link rel="stylesheet" href="/static/reset.css">
         <link rel="stylesheet" href="/static/style.css">
         <script src="/static/client.js"></script>
     </head>
     <body class="d-Container">
 
-        <div class="d-Header">
-        </div>
+        <header class="d-Header">
+        </header>
 
-        <div class="d-Menu">
+        <nav class="d-Menu">
 
             <div class="d-Menu__Item {{#is_info}}d-Menu__Item--Active{{/is_info}}">
                 <a href="/info">
@@ -37,17 +38,17 @@
                 </a>
             </div>
 
-        </div>
+        </nav>
 
-        <div class="d-Content">
+        <main class="d-Content">
             {{{content}}}
-        </div>
+        </main>
 
-        <div class="d-Footer">
+        <footer class="d-Footer">
             <a href="/status">
                 system status
             </a>
-        </div>
+        </footer>
 
     </body>
 </html>

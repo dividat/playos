@@ -2,6 +2,7 @@
  (section share_root)
  (files
   (gui/client/client.bc.js as static/client.js)
+  (gui/reset.css as static/reset.css)
   (gui/style.css as static/style.css)
   (gui/template/index.mustache as template/index.mustache)
   (gui/template/info.mustache as template/info.mustache)

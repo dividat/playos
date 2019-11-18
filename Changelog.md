@@ -5,6 +5,10 @@
 - controller: Add a refresh button in the network page
 - controller: Show network strengths in the network page
 
+## Changed
+
+- controller: Improve UI
+
 ## Fixed
 
 - controller: Allow subsequent connections after a connection error
