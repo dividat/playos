@@ -64,7 +64,7 @@
       #!${pkgs.runtimeShell}
       if [ "$RFKILL_STATE" == 1 ]; then
         # Wait an instant. Immediate restart gets wpa_supplicant stuck in the same way.
-        sleep 3
+        sleep 5
         ${config.systemd.package}/bin/systemctl try-restart wpa_supplicant.service
       fi
       '';
