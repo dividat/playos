@@ -62,6 +62,7 @@
   environment.etc = [
     { source = pkgs.writeScript "rfkill.hook" ''
       #!${pkgs.runtimeShell}
+      # States: 1 - normal, 0 - soft-blocked, 2 - hardware-blocked
       if [ "$RFKILL_STATE" == 1 ]; then
         # Wait an instant. Immediate restart gets wpa_supplicant stuck in the same way.
         sleep 5
