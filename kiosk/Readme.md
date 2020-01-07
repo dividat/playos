@@ -4,8 +4,10 @@ Cycle between two urls in a full screen, locked down browser based on [QtWebEngi
 
 ## Development
 
-To create a suitable development environment run `nix-shell` in this directly. Note however, that this will use your local `nixpkgs` and not the pinned version used by the `playos` repo in whole.
+Run `nix-shell` to create a suitable development environment.
 
-## Usage
+Then, start the kiosk browser with, for example:
 
-See `./bin/kiosk-browser --help`
+```bash
+bin/kiosk-browser http://localhost:8080/play.html http://localhost:3333
+```

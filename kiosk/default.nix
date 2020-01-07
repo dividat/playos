@@ -1,8 +1,9 @@
-# TODO: Not so nice that entire pkgs is used as argument. We need to find a nice way where we can explicitly define arguments but also make it easy to cd into this directory and start a "local" nix shell or just build the local component.
-{ pkgs ? (import <nixpkgs> {}), system_name, system_version }:
+{ pkgs, system_name, system_version }:
+
 with pkgs;
 
 let qtx=qt5; in
+
 python3Packages.buildPythonApplication rec {
   pname = "playos_kiosk_browser";
   version = "0.1.0";
@@ -31,7 +32,7 @@ python3Packages.buildPythonApplication rec {
   ];
 
   nativeBuildInputs = [
-     makeWrapper
+    makeWrapper
   ];
 
   propagatedBuildInputs = with python3Packages; [
@@ -40,7 +41,13 @@ python3Packages.buildPythonApplication rec {
   ];
 
   makeWrapperArgs = [
-      "--set QT_QPA_PLATFORM_PLUGIN_PATH ${qtbase.bin}/lib/qt-*/plugins/platforms"
-      "--set QT_PLUGIN_PATH ${qtbase.bin}/lib/qt-*/plugins"
+    "--set QT_QPA_PLATFORM_PLUGIN_PATH ${qtbase.bin}/lib/qt-*/plugins/platforms"
+    "--set QT_PLUGIN_PATH ${qtbase.bin}/lib/qt-*/plugins"
   ];
+
+  shellHook = ''
+    export QT_QPA_PLATFORM_PLUGIN_PATH="$(echo ${qtx.qtbase.bin}/lib/qt-*/plugins/platforms)"
+    export QT_PLUGIN_PATH="$(echo ${qtbase.bin}/lib/qt-*/plugins)"
+    export PYTHONPATH=./:$PYTHONPATH # Give access to kiosk_browser module
+  '';
 }
