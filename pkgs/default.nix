@@ -20,7 +20,7 @@ let
         inherit (super) stdenv fetchurl;
       };
 
-      playos-kiosk-browser = super.callPackage ../kiosk {
+      playos-kiosk-browser = import ../kiosk {
         pkgs = self;
         system_name = "PlayOS";
         system_version = version;
