@@ -1,17 +1,6 @@
 let
-  # Set version
   version = "2019.9.0";
-
-  pinnedNixpkgs = import ./nixpkgs;
-
-  pkgs = pinnedNixpkgs.nixpkgs {
-    overlays = [
-      (import ./pkgs version)
-      (self: super: {
-        inherit (pinnedNixpkgs) importFromNixos;
-      })
-    ];
-};
+  pkgs = import ./pkgs { inherit version; };
 in
 
 {
