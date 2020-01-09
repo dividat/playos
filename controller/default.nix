@@ -43,6 +43,7 @@ ocamlPackages.buildDunePackage rec {
     ezjsonm
     mustache
     containers
+    omd
 
     # client side
     js_of_ocaml

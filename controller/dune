@@ -1,9 +1,11 @@
 (install
  (section share_root)
  (files
+  (Changelog.md as Changelog.md)
   (gui/client/client.bc.js as static/client.js)
   (gui/reset.css as static/reset.css)
   (gui/style.css as static/style.css)
+  (gui/template/changelog.mustache as template/changelog.mustache)
   (gui/template/index.mustache as template/index.mustache)
   (gui/template/info.mustache as template/info.mustache)
   (gui/template/network.mustache as template/network.mustache)

@@ -2,6 +2,7 @@ open Lwt
 open Sexplib.Std
 open Opium_kernel.Rock
 open Opium.App
+open Omd
 
 let log_src = Logs.Src.create "gui"
 
@@ -14,17 +15,20 @@ let of_file f =
   |> Mustache.of_string
   |> return
 
+
+(* Require the resource directory to be at a directory fixed to the binary location. This is not optimal, but works for the moment. TODO: figure out a better way to do this.
+*)
+let resource_path end_path =
+  let open Fpath in
+  (Sys.argv.(0) |> v |> parent) / ".." / "share" // end_path
+  |> to_string
+
 (* Load a template file
 
    TODO: cache templates
 *)
 let template name =
-  let open Fpath in
-  let template_dir =
-    (Sys.argv.(0) |> v |> parent) / ".." / "share" / "template"
-  in
-  template_dir / (name ^ ".mustache")
-  |> to_string
+  Fpath.(resource_path (v "template" / (name ^ ".mustache")))
   |> of_file
 
 (* Helper to render template *)
@@ -35,14 +39,7 @@ let render name dict =
 
 (* Middleware that makes static content available *)
 let static () =
-  (* Require the static content to be at a directory fixed to the binary location. This is not optimal, but works for the moment. TODO: figure out a better way to do this.
-  *)
-  let static_dir =
-    Fpath.(
-      (Sys.argv.(0) |> v |> parent) / ".." / "share" / "static"
-      |> to_string
-    )
-  in
+  let static_dir = resource_path (Fpath.v "static") in
   Logs.debug (fun m -> m "static content dir: %s" static_dir);
   Opium.Middleware.static ~local_path:static_dir ~uri_prefix:"/static" ()
 
@@ -423,6 +420,20 @@ module StatusGui = struct
       )
 end
 
+module ChangelogGui = struct
+  let build app =
+    app
+    |> get "/changelog" (fun _ ->
+        let%lwt changelog = Util.read_from_file log_src (resource_path (Fpath.v "Changelog.md")) in
+        page "changelog" [
+          "changelog", changelog
+                       |> Util.from_maybe ""
+                       |> Omd.of_string
+                       |> Omd.to_html
+                       |> Ezjsonm.string
+        ])
+end
+
 let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
   app
   |> middleware (static ())
@@ -441,6 +452,7 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
   |> LocalizationGui.build
   |> LabelGui.build
   |> StatusGui.build ~health_s ~update_s ~rauc
+  |> ChangelogGui.build
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
 let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman ~internet =

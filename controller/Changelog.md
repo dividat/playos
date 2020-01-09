@@ -4,6 +4,7 @@
 
 - controller: Add a refresh button in the network page
 - controller: Show network strengths in the network page
+- controller: Show PlayOS changelog
 
 ## Changed
 
