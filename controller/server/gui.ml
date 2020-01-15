@@ -2,7 +2,6 @@ open Lwt
 open Sexplib.Std
 open Opium_kernel.Rock
 open Opium.App
-open Omd
 
 let log_src = Logs.Src.create "gui"
 
@@ -424,13 +423,9 @@ module ChangelogGui = struct
   let build app =
     app
     |> get "/changelog" (fun _ ->
-        let%lwt changelog = Util.read_from_file log_src (resource_path (Fpath.v "Changelog.md")) in
+        let%lwt changelog = Util.read_from_file log_src (resource_path (Fpath.v "Changelog.html")) in
         page "changelog" [
-          "changelog", changelog
-                       |> Util.from_maybe ""
-                       |> Omd.of_string
-                       |> Omd.to_html
-                       |> Ezjsonm.string
+          "changelog", changelog |> Util.from_maybe "" |> Ezjsonm.string
         ])
 end
 

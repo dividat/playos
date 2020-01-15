@@ -1,7 +1,7 @@
 (install
  (section share_root)
  (files
-  (Changelog.md as Changelog.md)
+  (Changelog.html as Changelog.html)
   (gui/client/client.bc.js as static/client.js)
   (gui/reset.css as static/reset.css)
   (gui/style.css as static/style.css)

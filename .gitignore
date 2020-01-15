@@ -4,3 +4,4 @@ release/
 *.merlin
 *.install
 */_build
+controller/Changelog.html

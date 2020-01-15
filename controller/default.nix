@@ -21,6 +21,8 @@ ocamlPackages.buildDunePackage rec {
   src = ./.;
 
   preConfigure = ''
+    markdown Changelog.md > Changelog.html
+
     sed -i \
       -e "s,@PLAYOS_VERSION@,${version},g" \
       -e "s,@PLAYOS_UPDATE_URL@,${updateUrl},g" \
@@ -28,7 +30,12 @@ ocamlPackages.buildDunePackage rec {
       ./server/info.ml
   '';
 
-  buildInputs = with ocamlPackages; [ utop nodejs ];
+  buildInputs = with ocamlPackages; [
+    discount # Transform Markdown to HTML
+    nodejs
+    utop
+  ];
+
   propagatedBuildInputs = with ocamlPackages; [
     # server side
     opium
@@ -43,7 +50,6 @@ ocamlPackages.buildDunePackage rec {
     ezjsonm
     mustache
     containers
-    omd
 
     # client side
     js_of_ocaml
