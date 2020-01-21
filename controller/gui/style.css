@@ -6,8 +6,8 @@
 
     display: grid;
 
-    grid-template-columns: 1fr 10fr;
-    grid-template-rows: 1fr 13fr 1fr;
+    grid-template-columns: 1fr minmax(0, 10fr);
+    grid-template-rows: 1fr minmax(0, 13fr) 1fr;
     grid-template-areas:
         "header header"
         "menu content"
@@ -30,11 +30,14 @@
     margin: 10px;
 }
 
-
 .d-Footer {
     grid-area: footer;
     text-align: right;
     margin: 20px;
+}
+
+.d-Footer__Link:not(:last-child) {
+    margin-right: 1rem;
 }
 
 /* Menu */
@@ -183,6 +186,31 @@
 
 .d-Definitions__Description {
     margin-bottom: 1rem;
+}
+
+/* Markdown */
+
+.d-Markdown {
+    font-size: 90%;
+}
+
+.d-Markdown h1 {
+    margin-bottom: 1rem;
+}
+
+.d-Markdown ul {
+    list-style: square inside;
+    padding-left: 0;
+    font-weight: normal;
+}
+
+.d-Markdown code {
+    background-color: gray;
+    padding: .2rem .5rem;
+    font-size: 90%;
+    background: #f1f1f1;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
 }
 
 /* Other */
