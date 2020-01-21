@@ -1,13 +1,8 @@
-let
-  version = "2019.9.0";
-  pkgs = import ./pkgs { inherit version; };
-in
-
 {
   ###### Configuration that is passed into the build system #######
 
   # Certificate used for verification of update bundles
-  updateCert ? pkgs.lib.warn "Using dummy update certificate. Build artifacts can only be used for local development." ./pki/dummy/cert.pem
+  updateCert ? (import <nixpkgs> {}).lib.warn "Using dummy update certificate. Build artifacts can only be used for local development." ./pki/dummy/cert.pem
 
   # url from where updates should be fetched
 , updateUrl ? "http://localhost:9000/"
@@ -23,11 +18,13 @@ in
 , buildLive ? true
 }:
 
-with pkgs;
 let
+  version = "2019.9.0";
+
+  pkgs = import ./pkgs { inherit version updateUrl kioskUrl; };
 
   # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
-  components = lib.makeScope newScope (self: with self; {
+  components = with pkgs; lib.makeScope newScope (self: with self; {
 
     greeting = label: ''
                                          _
@@ -56,9 +53,6 @@ let
 
     # USB live system
     live = callPackage ./live {};
-
-    # Controller
-    playos-controller = callPackage ./controller {};
 
     # Installation script
     install-playos = callPackage ./installer/install-playos {
@@ -90,7 +84,7 @@ let
 
 in
 
-stdenv.mkDerivation {
+with pkgs; stdenv.mkDerivation {
   name = "playos-${version}";
 
   buildInputs = [

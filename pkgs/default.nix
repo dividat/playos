@@ -1,11 +1,11 @@
-{ version }:
+{ version, updateUrl, kioskUrl }:
 
 let
 
   nixpkgs = (import <nixpkgs> {}).fetchFromGitHub {
     owner = "NixOS";
-    repo = "nixpkgs-channels";
-    rev = "f52505fac8c82716872a616c501ad9eff188f97f";
+    repo = "nixpkgs";
+    rev = "19.03";
     sha256 = "0q2m2qhyga9yq29yz90ywgjbn9hdahs7i8wwlq7b55rdbyiwa5dy";
   };
 
@@ -36,6 +36,33 @@ let
       });
 
       breeze-contrast-cursor-theme = super.callPackage ./breeze-contrast-cursor-theme {};
+
+      ocamlPackages = super.ocamlPackages.overrideScope' (self: super: {
+
+        hmap = self.callPackage ./ocaml-modules/hmap {};
+
+        semver = self.callPackage ./ocaml-modules/semver {};
+
+        opium_kernel = self.callPackage ./ocaml-modules/opium_kernel {};
+        opium = self.callPackage ./ocaml-modules/opium {};
+
+        obus = self.callPackage ./ocaml-modules/obus {};
+
+        mustache = self.callPackage ./ocaml-modules/mustache {};
+
+        cohttp-lwt-jsoo = super.cohttp.overrideAttrs (oldAttrs: {
+          buildPhase = "jbuilder build -p cohttp-lwt-jsoo";
+          propagatedBuildInputs = with self; [ cohttp cohttp-lwt ocaml_lwt js_of_ocaml js_of_ocaml-lwt js_of_ocaml-ppx ppx_tools_versioned ];
+        });
+      });
+
+      # Controller
+      playos-controller = import ../controller {
+        pkgs = self;
+        version = version;
+        updateUrl = updateUrl;
+        kioskUrl = kioskUrl;
+      };
 
     };
 
