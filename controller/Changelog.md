@@ -1,5 +1,7 @@
 # [UNRELEASED]
 
+# [2020.1.0-VALIDATION] - 2020-01-22
+
 ## Added
 
 - controller: Add a refresh button in the network page

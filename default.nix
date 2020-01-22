@@ -19,7 +19,7 @@
 }:
 
 let
-  version = "2019.9.0";
+  version = "2020.1.0-VALIDATION";
 
   pkgs = import ./pkgs { inherit version updateUrl kioskUrl; };
 
