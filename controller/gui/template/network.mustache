@@ -1,37 +1,57 @@
-<h1>Network</h1>
+<h1 class="d-Title">Network</h1>
 
-<dl>
-    <dt>Internet</dt>
-    <dd>
-    {{#internet_connected}}Connected{{/internet_connected}}
-    {{^internet_connected}}Not connected{{/internet_connected}}
+<div class="d-Network__Refresh">
+    <a href="/network" class="d-Button">Refresh</a>
+</div>
+
+<dl class="d-Definitions">
+    <dt class="d-Definitions__Term">Internet</dt>
+    <dd class="d-Definitions__Description">
+        {{#internet_connected}}
+            <span class="d-Network__InternetConnected">
+                Connected
+            </span>
+        {{/internet_connected}}
+
+        {{^internet_connected}}
+            <span class="d-Network__InternetNotConnected">
+                Not connected
+            </span>
+        {{/internet_connected}}
     </dd>
 </dl>
 
-<h2>Services</h2>
+<section>
+    <h2 class="d-Subtitle">Services</h2>
 
-{{#services}}
-    <details class="service-details">
-        <summary>{{name}}</summary>
+    {{#services}}
+        <details class="d-Network__ServiceDetail">
+            <summary>
+                {{name}}
 
-        <pre>{{properties}}</pre>
+                <span class="d-Network__ServiceStrength">
+                    {{strength}}
+                </span>
+            </summary>
 
-        {{^connected}}
-        <form action="/network/{{id}}/connect" method="post">
-            <input type="text" name="passphrase">
-            <input type="submit" value="Connect">
-        </form>
-        {{/connected}}
+            <pre class="d-Preformatted">{{properties}}</pre>
 
-        {{#connected}}
-        <form action="/network/{{id}}/remove" method="post">
-            <input type="submit" value="Remove">
-        </form>
-        {{/connected}}
+            {{^connected}}
+                <form action="/network/{{id}}/connect" method="post" class="d-Network__Form">
+                    <input type="text" class="d-Input d-Network__Input" name="passphrase">
+                    <input type="submit" class="d-Button" value="Connect">
+                </form>
+            {{/connected}}
 
-    </details>
-{{/services}}
-{{^services}}
-    No services available.
-{{/services}}
+            {{#connected}}
+                <form action="/network/{{id}}/remove" method="post" class="d-Network__Form">
+                    <input type="submit" class="d-Button" value="Remove">
+                </form>
+            {{/connected}}
+        </details>
+    {{/services}}
 
+    {{^services}}
+          No services available.
+    {{/services}}
+</section>
