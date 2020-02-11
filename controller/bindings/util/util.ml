@@ -34,3 +34,7 @@ let write_to_file log_src path str =
     in
     Lwt.return false
 
+let from_maybe default maybe =
+  match maybe with
+    | Some v -> v
+    | None -> default

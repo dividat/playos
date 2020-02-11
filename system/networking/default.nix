@@ -27,10 +27,25 @@
         EnableOnlineCheck=true
       '';
     };
-    # Issue 1: Add a dummy network to make sure wpa_supplicant.conf
-    # is created (see https://github.com/NixOS/nixpkgs/issues/23196)
     wireless = {
       enable = true;
+
+      # Stabilize WIFI connection scanning by keeping any scanned WIFI for at
+      # least 1 minute. This intends to fix “Service not found” error when
+      # connecting to a network by id.
+      extraConfig = ''
+        # BSS expiration age in seconds. A BSS will be removed from the local cache
+        # if it is not in use and has not been seen for this time. Default is 180.
+        bss_expiration_age=60
+
+        # BSS expiration after number of scans. A BSS will be removed from the local
+        # cache if it is not seen in this number of scans.
+        # Default is 2.
+        bss_expiration_scan_count=1000
+      '';
+
+      # Issue 1: Add a dummy network to make sure wpa_supplicant.conf
+      # is created (see https://github.com/NixOS/nixpkgs/issues/23196)
       networks."12345-i-do-not-exist"= {
         extraConfig = ''
           disabled=1
@@ -40,19 +55,23 @@
   };
   # Issue 2: Make sure connman starts after wpa_supplicant
   systemd.services."connman".after = [ "wpa_supplicant.service" ];
-  # Issue 3: Leave time for rfkill to unblock WLAN and restart wpa_supplicant & connman
-  systemd.timers."restart-wpa" = {
-    timerConfig = {
-      OnBootSec = 20;
-      RemainAfterElapse = false;
-    };
-    wantedBy = [ "timers.target" ];
-  };
-  systemd.services."restart-wpa" = {
-    description = "Restart wpa to enable WLAN";
-    serviceConfig.Type = "oneshot";
-    serviceConfig.ExecStart = "/run/current-system/sw/bin/systemctl try-restart wpa_supplicant.service";
-  };
+  # Issue 3: Restart wpa_supplicant (and thereby connman) after rfkill unblock of wlan
+  #          This addresses the problem of wpa_supplicant with connman not seeing any
+  #          networks if wlan was initially soft blocked. (https://01.org/jira/browse/CM-670)
+  services.udev.packages = [ pkgs.rfkill_udev ];
+  environment.etc = [
+    { source = pkgs.writeScript "rfkill.hook" ''
+      #!${pkgs.runtimeShell}
+      # States: 1 - normal, 0 - soft-blocked, 2 - hardware-blocked
+      if [ "$RFKILL_STATE" == 1 ]; then
+        # Wait an instant. Immediate restart gets wpa_supplicant stuck in the same way.
+        sleep 5
+        ${config.systemd.package}/bin/systemctl try-restart wpa_supplicant.service
+      fi
+      '';
+      target = "rfkill.hook";
+    }
+  ];
 
   # Make connman folder persistent
   volatileRoot.persistentFolders."/var/lib/connman" = {

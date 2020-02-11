@@ -95,7 +95,7 @@ struct
     match input with
     | Passphrase p ->
       (match List.assoc_opt "Passphrase" fields with
-       | Some _ -> 
+       | Some _ ->
          return [ "Passphrase", p |> OBus_value.C.(make_single basic_string)]
        | None ->
          let%lwt () = Logs_lwt.err ~src:log_src
@@ -328,6 +328,9 @@ struct
     ; "name", s.name |> Ezjsonm.string
     ; "favorite", s.favorite |> Ezjsonm.bool
     ; "connected", s |> is_connected |> Ezjsonm.bool
+    ; "strength", (match s.strength with
+      | Some s -> string_of_int s ^ "%"
+      | None -> "") |> Ezjsonm.string
     ; "properties", s |> sexp_of_t |> Sexplib.Sexp.to_string_hum |> Ezjsonm.string
     ]
 
@@ -340,20 +343,21 @@ struct
     let%lwt () = Logs_lwt.debug ~src:log_src
         (fun m -> m "connect to service %s" service.id)
     in
+
     (* Create and register an agent that will pass input to ConnMan *)
     let%lwt agent_path, agent = Agent.create input in
     let%lwt () = register_agent service._manager agent_path in
 
-    (* Connect to service *)
-    let%lwt () =
+    begin
+      (* Connect to service *)
       OBus_method.call
         Connman_interfaces.Net_connman_Service.m_Connect
         service._proxy ()
-    in
-
-    (* Cleanup and destroy agent *)
-    let%lwt () = unregister_agent service._manager agent_path in
-    Agent.destroy agent
+    end
+    [%lwt.finally
+      (* Cleanup and destroy agent *)
+      let%lwt () = unregister_agent service._manager agent_path in
+      Agent.destroy agent]
 
   let disconnect service =
     let%lwt () = Logs_lwt.debug ~src:log_src

@@ -1,47 +1,47 @@
-<h1>Localization</h1>
+<h1 class="d-Title">Localization</h1>
 
-<p>
-<form action="/localization/timezone" method="POST">
-<legend>Timezone</legend>
-<select name="timezone" required>
-  <option value="" disabled{{^is_timezone_set}} selected{{/is_timezone_set}}>Select your closest timezone ...</option>
-  {{#timezone_groups}}
-  <optgroup label="{{group}}">
-    {{#entries}}
-    <option{{#active}} selected{{/active}} value="{{id}}">{{name}}</option>
-    {{/entries}}
-  {{/timezone_groups}}
-</select>
-<input type="submit" value="Set">
+<form action="/localization/timezone" method="POST" class="d-Localization__Form">
+    <legend class="d-Localization__Legend">Timezone</legend>
+
+    <select name="timezone" class="d-Select d-Localization__Select" required>
+        <option value="" disabled{{^is_timezone_set}} selected{{/is_timezone_set}}>Select your closest timezone ...</option>
+        {{#timezone_groups}}
+            <optgroup label="{{group}}">
+            {{#entries}}
+                <option{{#active}} selected{{/active}} value="{{id}}">{{name}}</option>
+            {{/entries}}
+        {{/timezone_groups}}
+    </select>
+
+    <input type="submit" class="d-Button" value="Set">
 </form>
-</p>
 
-<p>
-<form action="/localization/lang" method="POST">
-<legend>Language</legend>
-<select name="lang" required>
-  <option value="" disabled{{^is_lang_set}} selected{{/is_lang_set}}>Select your language ...</option>
-  {{#langs}}
-  <option{{#active}} selected{{/active}} value="{{id}}">{{name}}</option>
-  {{/langs}}
-</select>
-<input type="submit" value="Set">
+<form action="/localization/lang" method="POST" class="d-Localization__Form">
+    <legend class="d-Localization__Legend">Language</legend>
+
+    <select name="lang" class="d-Select d-Localization__Select" required>
+        <option value="" disabled{{^is_lang_set}} selected{{/is_lang_set}}>Select your language ...</option>
+          {{#langs}}
+              <option{{#active}} selected{{/active}} value="{{id}}">{{name}}</option>
+          {{/langs}}
+    </select>
+
+    <input type="submit" class="d-Button" value="Set">
 </form>
-</p>
 
-<p>
-<form action="/localization/keymap" method="POST">
-<legend>Keyboard</legend>
-<select name="keymap" required>
-  <option value="" disabled{{^is_keymap_set}} selected{{/is_keymap_set}}>Select your keyboard layout ...</option>
-  {{#keymaps}}
-  <option{{#active}} selected{{/active}} value="{{id}}">{{name}}</option>
-  {{/keymaps}}
-</select>
-<input type="submit" value="Set">
+<form action="/localization/keymap" method="POST" class="d-Localization__Form">
+    <legend class="d-Localization__Legend">Keyboard</legend>
+
+    <select name="keymap" class="d-Select d-Localization__Select" required>
+        <option value="" disabled{{^is_keymap_set}} selected{{/is_keymap_set}}>Select your keyboard layout ...</option>
+            {{#keymaps}}
+                <option{{#active}} selected{{/active}} value="{{id}}">{{name}}</option>
+            {{/keymaps}}
+    </select>
+
+    <input type="submit" class="d-Button" value="Set">
 </form>
-</p>
 
-<aside>
-  <small><em>Note that keyboard and language changes require a restart.</em></small>
+<aside class="d-Localization__Note">
+    Note that keyboard and language changes require a restart.
 </aside>
