@@ -28,7 +28,7 @@ For a more complete test a virtual disk containing all necessary partitions and 
 
 **** Installation on VirtualBox
 
-1. Use ~nix-build~, enabling at least ~buildInstaller~. See [[../../Readme.md#choose-what-to-build][the documentation]].
+1. Use ~nix-build~, enabling at least ~buildInstaller~ (see [[../../Readme.md#choose-what-to-build][how-to]]).
 
 2. On VirtualBox, create a new virtual machine with:
 
