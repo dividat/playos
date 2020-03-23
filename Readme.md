@@ -13,6 +13,8 @@ Running `nix build` will create following (in `result/`):
 - `playos-installer-VERSION.iso`: Bootable ISO image that can install the system.
 - `disk.img`: Preinstalled disk with bootloader, system partitions A/B and data partitions for testing (but without test instrumentation).
 
+### Choose what to build
+
 For quicker development cycles you may pass following arguments to the build:
 
 - `buildInstaller`: Should the installer ISO image be built.
@@ -55,15 +57,8 @@ When switching key pairs on a channel, the new certficiate must be built into th
 
 ## Installation on VirtualBox
 
-1. Build the installer with:
-
-```sh
-nix-build \
-  --arg buildInstaller true \
-  --arg buildBundle false \
-  --arg buildLive false \
-  --arg buildDisk false
-```
+1. Use `nix-build`. At least `buildInstaller` must be enabled. See
+   https://github.com/dividat/playos/tree/develop#choose-what-to-build.
 
 2. On VirtualBox, create a new virtual machine with:
 
@@ -75,13 +70,9 @@ Update the following settings:
 - `Settings > Display > Graphics controller:` set `VBoxSVGA` (see [this issue](https://discourse.nixos.org/t/trying-to-fix-very-poor-virtualbox-install-experience/2488), but it [should be resolved on NixOS 20.03](https://github.com/NixOS/nixpkgs/commit/58d0134da072548eb66d9313ad629e4dffddfd9d)),
 - `Settings > System > Motherboard`: enable EFI.
 
-3. Start the virtual machine. You will be prompted to select an optical drive,
-   select the previously built `result/playos-installer-VERSION.iso`. Then,
-   follow the installation procedure. Once the installation has been completed,
-   power off the virtual machine.
-
-4. In `Settings > Storage`, remove the optical drive containing
-   `playos-installer-VERSION.iso`. Then, start the virtual machine.
+3. Install PlayOS from `result/playos-installer-VERSION.iso` to the virtual
+   machine. Don’t forget to remove the optical drive in `Settings > Storage`
+   once the installation has been completed.
 
 ## Change Log
 
