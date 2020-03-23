@@ -28,7 +28,7 @@ For a more complete test a virtual disk containing all necessary partitions and 
 
 **** Installation on VirtualBox
 
-1. Use ~nix-build~, enabling at least ~buildInstaller~. See [the documentation](../../Readme.md#choose-what-to-build).
+1. Use ~nix-build~, enabling at least ~buildInstaller~. See [[../../Readme.md#choose-what-to-build][the documentation]].
 
 2. On VirtualBox, create a new virtual machine with:
 
@@ -37,7 +37,7 @@ For a more complete test a virtual disk containing all necessary partitions and 
 
 Update the following settings:
 
-- ~Settings > Display > Graphics controller:~ set ~VBoxSVGA~ (see [this issue](https://discourse.nixos.org/t/trying-to-fix-very-poor-virtualbox-install-experience/2488), but it [should be resolved on NixOS 20.03](https://github.com/NixOS/nixpkgs/commit/58d0134da072548eb66d9313ad629e4dffddfd9d)),
+- ~Settings > Display > Graphics controller:~ set ~VBoxSVGA~ (see [[https://discourse.nixos.org/t/trying-to-fix-very-poor-virtualbox-install-experience/2488][this issue]], but it [[https://github.com/NixOS/nixpkgs/commit/58d0134da072548eb66d9313ad629e4dffddfd9d][should be resolved on NixOS 20.03]]),
 - ~Settings > System > Motherboard~: enable EFI.
 
 3. Install PlayOS from ~result/playos-installer-VERSION.iso~ to the virtual
