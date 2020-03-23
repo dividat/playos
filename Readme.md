@@ -13,6 +13,8 @@ Running `nix build` will create following (in `result/`):
 - `playos-installer-VERSION.iso`: Bootable ISO image that can install the system.
 - `disk.img`: Preinstalled disk with bootloader, system partitions A/B and data partitions for testing (but without test instrumentation).
 
+### Choose what to build
+
 For quicker development cycles you may pass following arguments to the build:
 
 - `buildInstaller`: Should the installer ISO image be built.
@@ -28,14 +30,11 @@ A virtual machine (with test instrumentation) can be started without any of the 
 
 A helper is available to quickly start a virtual machine:
 
-
 ```
-nix build && ./result/bin/run-playos-in-vm
+make vm && ./result/bin/run-playos-in-vm
 ```
-
 
 See the output of `run-playos-in-vm --help` for more information.
-
 
 ## Deployment
 

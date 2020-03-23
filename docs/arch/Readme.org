@@ -26,6 +26,24 @@ With minimal test instrumentation a virtual machine can be started without creat
 
 For a more complete test a virtual disk containing all necessary partitions and pre-installed systems can be used.
 
+**** Installation on VirtualBox
+
+1. Use ~nix-build~, enabling at least ~buildInstaller~ (see [[../../Readme.md#choose-what-to-build][how-to]]).
+
+2. On VirtualBox, create a new virtual machine with:
+
+  - RAM: 4096MB,
+  - Virtual VDI HDD: 60GB dynamically allocated.
+
+  Update the following settings:
+
+  - ~Settings > Display > Graphics controller:~ set ~VBoxSVGA~ (see [[https://discourse.nixos.org/t/trying-to-fix-very-poor-virtualbox-install-experience/2488][this issue]], but it [[https://github.com/NixOS/nixpkgs/commit/58d0134da072548eb66d9313ad629e4dffddfd9d][should be resolved on NixOS 20.03]]),
+  - ~Settings > System > Motherboard~: enable EFI.
+
+3. Install PlayOS from ~result/playos-installer-VERSION.iso~ to the virtual
+   machine. Don’t forget to remove the optical drive in ~Settings > Storage~
+   once the installation has been completed.
+
 *** TODO Automated Testing
 
 NixOS has a very cool [[https://nixos.org/nixos/manual/index.html#sec-obtaining][testing framework]] (see also [[https://nixos.org/~eelco/talks/issre-nov-2010.pdf][this presentation]]). It relies on the module <nixos/modules/virtualisation/qemu-vm.nix> and <nixos/modules/testing/test-instrumentation.nix> to set up a efficient virtual machine.
