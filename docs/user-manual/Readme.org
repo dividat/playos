@@ -63,7 +63,7 @@ Installation takes around 5 to 10 minutes. After the installation completes succ
 
 The system will automatically boot and load Dividat Play.
 
-You may login using the provided credentials and start your training. 
+You may login using the provided credentials and start your training.
 
 Connection to Dividat Senso will automatically be configured. To manually configure connection please refer to the Dividat Play manual.
 
@@ -93,12 +93,13 @@ Information displayed:
 - Kiosk URL: Location of web application that is loaded automatically
 - Machine ID: A unique identifier for the machine
 - ZeroTier address: Network address for remote access to this machine
+- Local time: Current time with timezone
 
 ** Network
 
 The network screen shows the state of Internet connectivity.
 
-If system is connected to Internet a list of connected services (e.g. Wireless networks) is displayed:
+If system is connected to Internet, the connected service (e.g. Wireless network) is displayed:
 
 #+CAPTION: Internet connected
 #+NAME: fig:controller-network
