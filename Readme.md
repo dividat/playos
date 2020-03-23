@@ -55,25 +55,6 @@ make develop
 
 When switching key pairs on a channel, the new certficiate must be built into the bundle, which must then be signed with the old key. For this purpose, the `--override-cert` option of the deploy script is needed to provide RAUC with a certificate matching the new key.
 
-## Installation on VirtualBox
-
-1. Use `nix-build`. At least `buildInstaller` must be enabled. See
-   https://github.com/dividat/playos/tree/develop#choose-what-to-build.
-
-2. On VirtualBox, create a new virtual machine with:
-
-- RAM: 4096MB,
-- Virtual VDI HDD: 60GB dynamically allocated.
-
-Update the following settings:
-
-- `Settings > Display > Graphics controller:` set `VBoxSVGA` (see [this issue](https://discourse.nixos.org/t/trying-to-fix-very-poor-virtualbox-install-experience/2488), but it [should be resolved on NixOS 20.03](https://github.com/NixOS/nixpkgs/commit/58d0134da072548eb66d9313ad629e4dffddfd9d)),
-- `Settings > System > Motherboard`: enable EFI.
-
-3. Install PlayOS from `result/playos-installer-VERSION.iso` to the virtual
-   machine. Don’t forget to remove the optical drive in `Settings > Storage`
-   once the installation has been completed.
-
 ## Change Log
 
 Update the change log for every release. See http://keepachangelog.com/ for formatting and conventions.
