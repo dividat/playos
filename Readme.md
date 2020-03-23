@@ -28,14 +28,11 @@ A virtual machine (with test instrumentation) can be started without any of the 
 
 A helper is available to quickly start a virtual machine:
 
-
 ```
-nix build && ./result/bin/run-playos-in-vm
+make vm && ./result/bin/run-playos-in-vm
 ```
-
 
 See the output of `run-playos-in-vm --help` for more information.
-
 
 ## Deployment
 
@@ -55,6 +52,36 @@ make develop
 ### Key switch
 
 When switching key pairs on a channel, the new certficiate must be built into the bundle, which must then be signed with the old key. For this purpose, the `--override-cert` option of the deploy script is needed to provide RAUC with a certificate matching the new key.
+
+## Installation on VirtualBox
+
+1. Build the installer with:
+
+```sh
+nix-build \
+  --arg buildInstaller true \
+  --arg buildBundle false \
+  --arg buildLive false \
+  --arg buildDisk false
+```
+
+2. On VirtualBox, create a new virtual machine with:
+
+- RAM: 4096MB,
+- Virtual VDI HDD: 60GB dynamically allocated.
+
+Update the following settings:
+
+- `Settings > Display > Graphics controller:` set `VBoxSVGA` (see [this issue](https://discourse.nixos.org/t/trying-to-fix-very-poor-virtualbox-install-experience/2488), but it [should be resolved on NixOS 20.03](https://github.com/NixOS/nixpkgs/commit/58d0134da072548eb66d9313ad629e4dffddfd9d)),
+- `Settings > System > Motherboard`: enable EFI.
+
+3. Start the virtual machine. You will be prompted to select an optical drive,
+   select the previously built `result/playos-installer-VERSION.iso`. Then,
+   follow the installation procedure. Once the installation has been completed,
+   power off the virtual machine.
+
+4. In `Settings > Storage`, remove the optical drive containing
+   `playos-installer-VERSION.iso`. Then, start the virtual machine.
 
 ## Change Log
 
