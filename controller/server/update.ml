@@ -119,7 +119,12 @@ type state =
   | ErrorDownloading of string
   | Installing of string
   | ErrorInstalling of string
+  (* inactive system has been updated and reboot is required to boot into updated system *)
   | RebootRequired
+  (* inactive system is up to date, but current system was selected for boot *)
+  | OutOfDateVersionSelected
+  (* there are no known-good systems and a reinstall is recommended *)
+  | ReinstallRequired
 [@@deriving sexp]
 
 
@@ -149,16 +154,23 @@ let rec run ~update_url ~rauc ~set_state =
         let inactive_up_to_date = inactive_version_compare == 0 in
         let inactive_update_available = inactive_version_compare > 0 in
 
-        if booted_up_to_date then
-          (* Don't care if inactive can be updated. I.e. Only update the inactive partition once the booted partition is outdated. This results in always two versions being available on the machine. *)
-          UpToDate version_info
-          |> set
-
-        else if inactive_up_to_date then
-          (* If booted is not up to date but inactive is up to date, we probably should reboot *)
-          (* TODO this is where you should check if inactive boot partition has more than 3 boot attempts, if it does, you probably should reinstall. *)
-          RebootRequired
-          |> set
+        if booted_up_to_date || inactive_up_to_date then
+          match%lwt Rauc.get_primary rauc with
+          | Some primary_slot ->
+            if booted_up_to_date then
+              (* Don't care if inactive can be updated. I.e. Only update the inactive partition once the booted partition is outdated. This results in always two versions being available on the machine. *)
+              UpToDate version_info |> set
+            else
+              let%lwt booted_slot = Rauc.get_booted_slot rauc in
+              if booted_slot == primary_slot then
+                (* Inactive is up to date while booted is out of date, but booted was specifically selected for boot *)
+                OutOfDateVersionSelected |> set
+              else
+                (* If booted is not up to date but inactive is up to date, we probably should reboot *)
+                RebootRequired |> set
+          | None ->
+            (* All systems bad; suggest reinstallation *)
+            ReinstallRequired |> set
 
         else if inactive_update_available then
           (* Booted system is not up to date and there is an update available for inactive system. *)
@@ -193,12 +205,6 @@ let rec run ~update_url ~rauc ~set_state =
     in
     (* wait for 30 seconds and retry *)
     let%lwt () = Lwt_unix.sleep 30.0 in
-    set GettingVersionInfo
-
-  | UpToDate version_info ->
-    (* system is up to date - no download/install/reboot required *)
-    (* wait for an hour and recheck *)
-    let%lwt () = Lwt_unix.sleep (1. *. 60. *. 60.) in
     set GettingVersionInfo
 
   | Downloading {url; version} ->
@@ -249,8 +255,10 @@ let rec run ~update_url ~rauc ~set_state =
     let%lwt () = Lwt_unix.sleep 30.0 in
     set GettingVersionInfo
 
-  | RebootRequired ->
-    (* inactive system has been updated and reboot is required to boot into updated system *)
+  | UpToDate _
+  | RebootRequired
+  | OutOfDateVersionSelected
+  | ReinstallRequired ->
     (* wait for an hour and recheck for new updates *)
     let%lwt () = Lwt_unix.sleep (1. *. 60. *. 60.) in
     set GettingVersionInfo
