@@ -10,6 +10,10 @@ stdenv.mkDerivation rec {
     sha256 = "sha256:0qg6frrih1q81r0x9byy4nxjd3nd8mj7iai8j6wcql5c3zy86ii2";
   };
 
+  patches = [
+    ./0001-Adapt-notion-of-GRUB-primary-slot-to-allow-for-2-uns.patch
+  ];
+
   configureFlags = [
     "--with-dbuspolicydir=${placeholder "out"}/etc/dbus-1/system.d"
     "--with-dbussystemservicedir=${placeholder "out"}/etc/dbus-1/system-services"
