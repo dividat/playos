@@ -100,6 +100,14 @@ let get_status daemon =
   }
   |> return
 
+let get_primary daemon =
+  try%lwt
+  (OBus_method.call De_pengutronix_rauc_Installer.m_GetPrimary (proxy daemon) ()
+  >|= Slot.of_string
+  >>= Lwt.return_some
+  )
+  with _ -> Lwt.return_none
+
 let install daemon source =
   let proxy = proxy daemon in
   let%lwt completed_e =
