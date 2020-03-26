@@ -142,10 +142,10 @@ let rec run ~update_url ~rauc ~set_state =
       | Ok version_info ->
 
         (* Compare latest available version to version booted. *)
-        let booted_version_comparae = Semver.compare
+        let booted_version_compare = Semver.compare
             (fst version_info.latest)
             (fst version_info.booted) in
-        let booted_up_to_date = booted_version_comparae == 0 in
+        let booted_up_to_date = booted_version_compare == 0 in
 
         (* Compare latest available version to version on inactive system partition. *)
         let inactive_version_compare = Semver.compare
