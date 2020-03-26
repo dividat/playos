@@ -166,7 +166,7 @@ let rec run ~update_url ~rauc ~set_state =
                 (* Inactive is up to date while booted is out of date, but booted was specifically selected for boot *)
                 OutOfDateVersionSelected |> set
               else
-                (* If booted is not up to date but inactive is up to date, we probably should reboot *)
+                (* If booted is not up to date but inactive is both up to date and primary, we should reboot into the primary *)
                 RebootRequired |> set
           | None ->
             (* All systems bad; suggest reinstallation *)
