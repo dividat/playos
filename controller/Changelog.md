@@ -1,5 +1,9 @@
 # [UNRELEASED]
 
+## Added
+
+- controller: Add update status types for manually pinned systems and dual-slot system failure
+
 ## Changed
 
 - system: Update rauc to 1.2
