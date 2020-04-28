@@ -11,14 +11,14 @@ in
       device = mkOption {
         default = null;
         example = "/dev/sda";
-        type = types.string;
+        type = types.str;
         description = "Location of the device.";
       };
 
       fsType = mkOption {
         default = "auto";
         example = "ext3";
-        type = types.string;
+        type = types.str;
         description = "Type of the file system.";
       };
 
@@ -26,7 +26,7 @@ in
         default = [ "ro" ];
         example = [ "data=journal" ];
         description = "Options used to mount the file system.";
-        type = types.listOf types.string;
+        type = types.listOf types.str;
       };
 
     };

@@ -9,7 +9,7 @@ PlayOS controller is an OCaml application that manages various system tasks for 
 ## Folders
 
 - `bindings/`: bindings to various things
-- `gui/`: static gui assets and client side code
+- `gui/`: static gui assets
 - `nix/`: nix stuff
 - `server/`: main application code
 

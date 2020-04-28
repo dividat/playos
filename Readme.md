@@ -34,6 +34,9 @@ A helper is available to quickly start a virtual machine:
 make vm && ./result/bin/run-playos-in-vm
 ```
 
+In order to get the vm system journal, look at the output of `run-playos-in-vm`
+for a command starting with `socat`.
+
 See the output of `run-playos-in-vm --help` for more information.
 
 ## Deployment

@@ -1,4 +1,0 @@
-(executable
- (name client)
- (modules client)
- (libraries cohttp-lwt-jsoo))

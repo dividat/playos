@@ -8,6 +8,7 @@
 
 - system: Update rauc to 1.2
 - system: Remember manual boot choice on reboot
+- os: Update nixpkgs channel to 20.03
 
 # [2020.1.0] - 2020-02-11
 
