@@ -26,6 +26,7 @@ with lib;
   systemPartition = {
     enable = true;
     device = "/dev/root";
+    options = [ "rw" ];
   };
 
   volatileRoot.persistentDataPartition.device = "/dev/disk/by-label/data";

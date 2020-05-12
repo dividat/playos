@@ -53,5 +53,15 @@ in
       ln -s mnt/system/init init
       cd /
     '';
+
+    # Replace /dev/root by /dev/disk/by-label/system.x in /etc/fstab
+    boot.postBootCommands = with pkgs; ''
+      SYSTEM_DEVICE=$(readlink /dev/root)
+      mv /etc/fstab /etc/fstab.old
+      cp -L /etc/fstab.old /etc/fstab
+      chmod u+w /etc/fstab
+      ${gnused}/bin/sed -i "s|/dev/root|$SYSTEM_DEVICE|" /etc/fstab
+      chmod u-w /etc/fstab
+    '';
   };
 }
