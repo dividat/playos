@@ -61,20 +61,15 @@
   #          This addresses the problem of wpa_supplicant with connman not seeing any
   #          networks if wlan was initially soft blocked. (https://01.org/jira/browse/CM-670)
   services.udev.packages = [ pkgs.rfkill_udev ];
-  environment.etc = {
-    "rfkill.hook" = {
-      text = ''
-        #!${pkgs.runtimeShell}
-        # States: 1 - normal, 0 - soft-blocked, 2 - hardware-blocked
-        if [ "$RFKILL_STATE" == 1 ]; then
-          # Wait an instant. Immediate restart gets wpa_supplicant stuck in the same way.
-          sleep 5
-          ${config.systemd.package}/bin/systemctl try-restart wpa_supplicant.service
-        fi
-      '';
-      mode = "0740";
-    };
-  };
+  environment.etc."rfkill.hook".source = pkgs.writeShellScript "rfkill.hook" ''
+    # States: 1 - normal, 0 - soft-blocked, 2 - hardware-blocked
+    if [ "$RFKILL_STATE" == 1 ]; then
+      # Wait an instant. Immediate restart gets wpa_supplicant stuck in the same way.
+      sleep 5
+
+      ${config.systemd.package}/bin/systemctl try-restart wpa_supplicant.service
+    fi
+  '';
 
   # Make connman folder persistent
   volatileRoot.persistentFolders."/var/lib/connman" = {
