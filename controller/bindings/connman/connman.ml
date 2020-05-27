@@ -36,7 +36,7 @@ struct
     | _ -> None
 
   type t = {
-    _proxy: OBus_proxy.t sexp_opaque
+    _proxy: (OBus_proxy.t [@sexp.opaque])
   ; name : string
   ; type' : type'
   ; powered : bool
@@ -261,8 +261,8 @@ struct
   end
 
   type t = {
-    _proxy : OBus_proxy.t sexp_opaque
-  ; _manager : OBus_proxy.t sexp_opaque
+    _proxy : (OBus_proxy.t [@sexp.opaque])
+  ; _manager : (OBus_proxy.t [@sexp.opaque])
   ; id : string
   ; name : string
   ; type' : Technology.type'

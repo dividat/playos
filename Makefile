@@ -25,7 +25,7 @@ develop:
 	[[ $(BRANCH) = "develop" ]]
 	nix-build \
 		--arg updateCert ./pki/develop/cert.pem \
-		--arg updateUrl http://dist.dividat.com/releases/playos/develop/ \
+		--arg updateUrl https://dist.dividat.com/releases/playos/develop/ \
 		--arg deployUrl s3://dist.dividat.ch/releases/playos/develop/ \
 		--arg kioskUrl https://dev-play.dividat.com/ \
 		--arg buildDisk false
@@ -36,7 +36,7 @@ validation:
 	[[ $(BRANCH) = "validation" ]]
 	nix-build \
 		--arg updateCert ./pki/validation/cert.pem \
-		--arg updateUrl http://dist.dividat.com/releases/playos/validation/ \
+		--arg updateUrl https://dist.dividat.com/releases/playos/validation/ \
 		--arg deployUrl s3://dist.dividat.ch/releases/playos/validation/ \
 		--arg kioskUrl https://val-play.dividat.com/ \
 		--arg buildDisk false
@@ -47,7 +47,7 @@ master:
 	[[ $(BRANCH) = "master" ]]
 	nix-build \
 		--arg updateCert ./pki/master/cert.pem \
-		--arg updateUrl http://dist.dividat.com/releases/playos/master/ \
+		--arg updateUrl https://dist.dividat.com/releases/playos/master/ \
 		--arg deployUrl s3://dist.dividat.ch/releases/playos/master/ \
 		--arg kioskUrl https://play.dividat.com/ \
 		--arg buildDisk false

@@ -11,13 +11,13 @@ let log_src = Logs.Src.create "update"
 (** Type containing version information *)
 type version_info =
   {(* the latest available version *)
-    latest : Semver.t sexp_opaque * string
+    latest : (Semver.t [@sexp.opaque]) * string
 
   (* version of currently booted system *)
-  ; booted : Semver.t sexp_opaque * string
+  ; booted : (Semver.t [@sexp.opaque]) * string
 
   (* version of inactive system *)
-  ; inactive : Semver.t sexp_opaque * string
+  ; inactive : (Semver.t [@sexp.opaque]) * string
   }
 [@@deriving sexp]
 
