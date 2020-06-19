@@ -14,12 +14,12 @@ with lib;
 
   options = {
     playos.version = mkOption {
-      type = types.string;
+      type = types.str;
       default = version;
     };
 
     playos.kioskUrl = mkOption {
-      type = types.string;
+      type = types.str;
     };
 
     playos.updateCert = mkOption {

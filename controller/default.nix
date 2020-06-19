@@ -27,7 +27,6 @@ ocamlPackages.buildDunePackage rec {
   ];
 
   propagatedBuildInputs = with ocamlPackages; [
-    # server side
     opium
     ocaml_lwt
     logs
@@ -40,10 +39,5 @@ ocamlPackages.buildDunePackage rec {
     ezjsonm
     mustache
     containers
-
-    # client side
-    js_of_ocaml
-    js_of_ocaml-tyxml
-    cohttp-lwt-jsoo
   ];
 }
