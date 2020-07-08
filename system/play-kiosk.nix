@@ -21,9 +21,10 @@
   services.xserver = {
     enable = true;
 
+    displayManager.defaultSession = "kiosk-browser";
+
     desktopManager = {
       xterm.enable = false;
-      default = "kiosk-browser";
       session = [
         { name = "kiosk-browser";
           start = ''

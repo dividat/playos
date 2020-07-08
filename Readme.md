@@ -13,6 +13,8 @@ Running `nix build` will create following (in `result/`):
 - `playos-installer-VERSION.iso`: Bootable ISO image that can install the system.
 - `disk.img`: Preinstalled disk with bootloader, system partitions A/B and data partitions for testing (but without test instrumentation).
 
+### Choose what to build
+
 For quicker development cycles you may pass following arguments to the build:
 
 - `buildInstaller`: Should the installer ISO image be built.
@@ -28,14 +30,14 @@ A virtual machine (with test instrumentation) can be started without any of the 
 
 A helper is available to quickly start a virtual machine:
 
-
 ```
-nix build && ./result/bin/run-playos-in-vm
+make vm && ./result/bin/run-playos-in-vm
 ```
 
+In order to get the vm system journal, look at the output of `run-playos-in-vm`
+for a command starting with `socat`.
 
 See the output of `run-playos-in-vm --help` for more information.
-
 
 ## Deployment
 
@@ -55,6 +57,14 @@ make develop
 ### Key switch
 
 When switching key pairs on a channel, the new certficiate must be built into the bundle, which must then be signed with the old key. For this purpose, the `--override-cert` option of the deploy script is needed to provide RAUC with a certificate matching the new key.
+
+### Checklist
+
+- [ ] Update target branch (`master`/`validation`) with `git merge --no-ff --no-commit <source-branch>`
+- [ ] Set version in `default.nix`
+- [ ] Update Changelog
+- [ ] Create release commit and tag, push
+- [ ] Merge back to `develop` with `--no-ff --no-commit` and push
 
 ## Change Log
 

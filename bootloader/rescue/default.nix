@@ -81,21 +81,21 @@ in
     };
 
     # Use ConnMan
+    services.connman = {
+      enable = true;
+      enableVPN = false;
+      networkInterfaceBlacklist = [ "vmnet" "vboxnet" "virbr" "ifb" "ve" "zt" ];
+      extraConfig = ''
+        [General]
+        AllowHostnameUpdates=false
+        AllowDomainnameUpdates=false
+
+        # Disable calling home
+        EnableOnlineCheck=false
+      '';
+    };
     networking = {
       hostName = "playos-rescue";
-      connman = {
-        enable = true;
-        enableVPN = false;
-        networkInterfaceBlacklist = [ "vmnet" "vboxnet" "virbr" "ifb" "ve" "zt" ];
-        extraConfig = ''
-          [General]
-          AllowHostnameUpdates=false
-          AllowDomainnameUpdates=false
-
-          # Disable calling home
-          EnableOnlineCheck=false
-        '';
-      };
       # enable wpa_supplicant
       wireless = {
         enable = true;

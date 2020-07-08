@@ -1,3 +1,17 @@
+# [2020.7.0-VALIDATION] - 2020-07-08
+
+## Added
+
+- controller: Add update status types for manually pinned systems and dual-slot system failure
+
+## Changed
+
+- system: Update rauc to 1.2
+- system: Remember manual boot choice on reboot
+- os: Update nixpkgs channel to 20.03
+
+# [2020.1.0] - 2020-02-11
+
 # [2020.1.0-VALIDATION] - 2020-01-22
 
 ## Added

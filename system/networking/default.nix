@@ -6,27 +6,29 @@
   # Set up networking with ConnMan
   # We need to work around various issues in the interplay of
   # connman and wpa_supplicant for this to work.
+  services.connman = {
+    enable = true;
+    enableVPN = false;
+    networkInterfaceBlacklist = [ "vmnet" "vboxnet" "virbr" "ifb" "ve" "zt" ];
+    extraConfig = ''
+      [General]
+      AllowHostnameUpdates=false
+      AllowDomainnameUpdates=false
+
+      # Wifi will generally be used for internet, use as default route
+      PreferredTechnologies=wifi,ethernet
+
+      # Allow simultaneous connection to ethernet and wifi
+      SingleConnectedTechnology=false
+
+      # Enable online check to favour connected services
+      EnableOnlineCheck=true
+    '';
+  };
+
   networking = {
     hostName = "playos";
-    connman = {
-      enable = true;
-      enableVPN = false;
-      networkInterfaceBlacklist = [ "vmnet" "vboxnet" "virbr" "ifb" "ve" "zt" ];
-      extraConfig = ''
-        [General]
-        AllowHostnameUpdates=false
-        AllowDomainnameUpdates=false
 
-        # Wifi will generally be used for internet, use as default route
-        PreferredTechnologies=wifi,ethernet
-
-        # Allow simultaneous connection to ethernet and wifi
-        SingleConnectedTechnology=false
-
-        # Enable online check to favour connected services
-        EnableOnlineCheck=true
-      '';
-    };
     wireless = {
       enable = true;
 
@@ -59,19 +61,15 @@
   #          This addresses the problem of wpa_supplicant with connman not seeing any
   #          networks if wlan was initially soft blocked. (https://01.org/jira/browse/CM-670)
   services.udev.packages = [ pkgs.rfkill_udev ];
-  environment.etc = [
-    { source = pkgs.writeScript "rfkill.hook" ''
-      #!${pkgs.runtimeShell}
-      # States: 1 - normal, 0 - soft-blocked, 2 - hardware-blocked
-      if [ "$RFKILL_STATE" == 1 ]; then
-        # Wait an instant. Immediate restart gets wpa_supplicant stuck in the same way.
-        sleep 5
-        ${config.systemd.package}/bin/systemctl try-restart wpa_supplicant.service
-      fi
-      '';
-      target = "rfkill.hook";
-    }
-  ];
+  environment.etc."rfkill.hook".source = pkgs.writeShellScript "rfkill.hook" ''
+    # States: 1 - normal, 0 - soft-blocked, 2 - hardware-blocked
+    if [ "$RFKILL_STATE" == 1 ]; then
+      # Wait an instant. Immediate restart gets wpa_supplicant stuck in the same way.
+      sleep 5
+
+      ${config.systemd.package}/bin/systemctl try-restart wpa_supplicant.service
+    fi
+  '';
 
   # Make connman folder persistent
   volatileRoot.persistentFolders."/var/lib/connman" = {

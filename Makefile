@@ -1,5 +1,9 @@
 # Blatant misuse of make to create nice shortcuts for different build profiles. The real build tool is nix.
 
+# Allow unfree packages, required for zerotier using a BSL 1.1 licence
+# See https://nixos.wiki/wiki/FAQ/How_can_I_install_a_proprietary_or_unfree_package%3F
+export NIXPKGS_ALLOW_UNFREE=1
+
 # Get the git branch
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 

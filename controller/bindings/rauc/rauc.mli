@@ -24,7 +24,7 @@ end
 (** [get_booted_slot rauc] returns the currently booted slot *)
 val get_booted_slot : t -> Slot.t Lwt.t
 
-(** [mark_good rauc slot] marks the slot [slot] as good*)
+(** [mark_good rauc slot] marks the slot [slot] as good *)
 val mark_good : t -> Slot.t -> unit Lwt.t
 
 (** Rauc status *)
@@ -39,6 +39,9 @@ val json_of_status : status -> Ezjsonm.t
 
 (** [get_status rauc] returns current RAUC status *)
 val get_status : t -> status Lwt.t
+
+(** [get_primary rauc] returns current primary slot, if any *)
+val get_primary : t -> Slot.t option Lwt.t
 
 (** [install rauc source] install the bundle at path [source] *)
 val install : t -> string -> unit Lwt.t

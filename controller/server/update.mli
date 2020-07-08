@@ -22,6 +22,8 @@ type state =
   | Installing of string
   | ErrorInstalling of string
   | RebootRequired
+  | OutOfDateVersionSelected
+  | ReinstallRequired
 [@@deriving sexp]
 
 val start : rauc:Rauc.t -> update_url:string -> state Lwt_react.signal * unit Lwt.t
