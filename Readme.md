@@ -58,6 +58,14 @@ make develop
 
 When switching key pairs on a channel, the new certficiate must be built into the bundle, which must then be signed with the old key. For this purpose, the `--override-cert` option of the deploy script is needed to provide RAUC with a certificate matching the new key.
 
+### Checklist
+
+- [ ] Update target branch (`master`/`validation`) with `git merge --no-ff --no-commit <source-branch>`
+- [ ] Set version in `default.nix`
+- [ ] Update Changelog
+- [ ] Create release commit and tag, push
+- [ ] Merge back to `develop` with `--no-ff --no-commit` and push
+
 ## Change Log
 
 Update the change log for every release. See http://keepachangelog.com/ for formatting and conventions.
