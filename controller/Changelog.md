@@ -1,5 +1,7 @@
 # [UNRELEASED]
 
+# [2020.7.0-VALIDATION] - 2020-07-08
+
 ## Added
 
 - controller: Add update status types for manually pinned systems and dual-slot system failure
