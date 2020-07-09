@@ -189,7 +189,7 @@ struct
       method' : string
     ; address : string
     ; netmask : string
-    ; gateway : string
+    ; gateway : string option
     }
     [@@deriving sexp]
 
@@ -200,7 +200,7 @@ struct
          { method' = properties |> List.assoc "Method" |> cast_single basic_string
          ; address = properties |> List.assoc "Address" |> cast_single basic_string
          ; netmask = properties |> List.assoc "Netmask" |> cast_single basic_string
-         ; gateway = properties |> List.assoc "Gateway" |> cast_single basic_string
+         ; gateway = properties |> List.assoc_opt "Gateway" |> Option.map (cast_single basic_string)
          }
       )
       |> CCResult.guard
@@ -213,7 +213,7 @@ struct
       method' : string
     ; address : string
     ; prefix_length: int
-    ; gateway : string
+    ; gateway : string option
     ; privacy : string
     }
     [@@deriving sexp]
@@ -228,7 +228,7 @@ struct
                            |> List.assoc "PrefixLength"
                            |> cast_single basic_byte
                            |> int_of_char
-         ; gateway = properties |> List.assoc "Gateway" |> cast_single basic_string
+         ; gateway = properties |> List.assoc_opt "Gateway" |> Option.map (cast_single basic_string)
          ; privacy = properties |> List.assoc "Privacy" |> cast_single basic_string
          }
       )
