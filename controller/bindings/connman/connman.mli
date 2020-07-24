@@ -67,7 +67,7 @@ module Service : sig
       method' : string
     ; address : string
     ; netmask : string
-    ; gateway : string
+    ; gateway : string option
     }
     [@@deriving sexp]
   end
@@ -78,7 +78,7 @@ module Service : sig
       method' : string
     ; address : string
     ; prefix_length: int
-    ; gateway : string
+    ; gateway : string option
     ; privacy : string
     }
     [@@deriving sexp]
