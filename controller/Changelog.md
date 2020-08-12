@@ -1,5 +1,9 @@
 # [UNRELEASED]
 
+## Added
+
+- controller: Enable HTTPS support for system update hosts
+
 ## Fixed
 
 - controller: Display interfaces' IP even if there is no gateway
