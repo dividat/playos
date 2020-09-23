@@ -8,6 +8,8 @@
 
 - controller: Display interfaces' IP even if there is no gateway
 
+# [2020.7.0] - 2020-09-23
+
 # [2020.7.0-VALIDATION] - 2020-07-08
 
 ## Added
