@@ -2,11 +2,11 @@
 
 let
 
-  nixpkgs = (import <nixpkgs> {}).fetchFromGitHub {
-    owner = "NixOS";
-    repo = "nixpkgs";
-    rev = "19.03";
-    sha256 = "0q2m2qhyga9yq29yz90ywgjbn9hdahs7i8wwlq7b55rdbyiwa5dy";
+  nixpkgs = builtins.fetchGit {
+    name = "nixpkgs-20.03";
+    url = "git@github.com:nixos/nixpkgs.git";
+    rev = "5272327b81ed355bbed5659b8d303cf2979b6953";
+    ref = "refs/tags/20.03";
   };
 
   overlay =
@@ -49,11 +49,6 @@ let
         obus = self.callPackage ./ocaml-modules/obus {};
 
         mustache = self.callPackage ./ocaml-modules/mustache {};
-
-        cohttp-lwt-jsoo = super.cohttp.overrideAttrs (oldAttrs: {
-          buildPhase = "jbuilder build -p cohttp-lwt-jsoo";
-          propagatedBuildInputs = with self; [ cohttp cohttp-lwt ocaml_lwt js_of_ocaml js_of_ocaml-lwt js_of_ocaml-ppx ppx_tools_versioned ];
-        });
       });
 
       # Controller

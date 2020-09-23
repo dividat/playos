@@ -63,7 +63,7 @@ Installation takes around 5 to 10 minutes. After the installation completes succ
 
 The system will automatically boot and load Dividat Play.
 
-You may login using the provided credentials and start your training. 
+You may login using the provided credentials and start your training.
 
 Connection to Dividat Senso will automatically be configured. To manually configure connection please refer to the Dividat Play manual.
 
@@ -93,12 +93,13 @@ Information displayed:
 - Kiosk URL: Location of web application that is loaded automatically
 - Machine ID: A unique identifier for the machine
 - ZeroTier address: Network address for remote access to this machine
+- Local time: Current time with timezone
 
 ** Network
 
 The network screen shows the state of Internet connectivity.
 
-If system is connected to Internet a list of connected services (e.g. Wireless networks) is displayed:
+If system is connected to Internet, the connected service (e.g. Wireless network) is displayed:
 
 #+CAPTION: Internet connected
 #+NAME: fig:controller-network
@@ -128,7 +129,30 @@ A service that is connected may be removed (e.g. thus disconnecting from the Wir
 
 Ethernet connections are automatically configured using DHCP or link-local address autoconfiguration. Manual configuration is not possible.
 
+** Localization
+
+#+CAPTION: Localization
+#+NAME: fig:controller-localization
+#+attr_html: :width 800px
+[[../screenshots/controller-localization.png]]
+
+Setup timezone, language and keyboard layout of the system.
+
+** Changelog
+
+#+CAPTION: Changelog
+#+NAME: fig:controller-changelog
+#+attr_html: :width 800px
+[[../screenshots/controller-changelog.png]]
+
+Changelog can be displayed by clicking the *changelog* link in the bottom right of the screen.
+
 ** System Status
+
+#+CAPTION: System status
+#+NAME: fig:controller-system-status
+#+attr_html: :width 800px
+[[../screenshots/controller-system-status.png]]
 
 Advanced system status information can be displayed by clicking the *system status* link in the bottom right of the screen.
 

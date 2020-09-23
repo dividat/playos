@@ -1,0 +1,26 @@
+From 5925821b714477df544007aa93a9e6031518e4b6 Mon Sep 17 00:00:00 2001
+From: Johannes Emerich <johannes@emerich.de>
+Date: Wed, 25 Mar 2020 12:25:42 +0100
+Subject: [PATCH] Adapt notion of GRUB primary slot to allow for 2 unsuccessful
+ tries
+
+---
+ src/bootchooser.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/bootchooser.c b/src/bootchooser.c
+index 4a0e948..e50b479 100644
+--- a/src/bootchooser.c
++++ b/src/bootchooser.c
+@@ -579,7 +579,7 @@ static RaucSlot* grub_get_primary(GError **error)
+ 				return NULL;
+ 			}
+ 
+-			if ((g_ascii_strtoull(slot_ok->str, NULL, 0) != 1) || (g_ascii_strtoull(slot_try->str, NULL, 0) > 0)) {
++			if ((g_ascii_strtoull(slot_ok->str, NULL, 0) != 1) || (g_ascii_strtoull(slot_try->str, NULL, 0) > 2)) {
+ 				continue;
+ 			}
+ 
+-- 
+2.23.0
+

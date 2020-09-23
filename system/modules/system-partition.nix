@@ -11,14 +11,14 @@ in
       device = mkOption {
         default = null;
         example = "/dev/sda";
-        type = types.string;
+        type = types.str;
         description = "Location of the device.";
       };
 
       fsType = mkOption {
         default = "auto";
         example = "ext3";
-        type = types.string;
+        type = types.str;
         description = "Type of the file system.";
       };
 
@@ -26,7 +26,7 @@ in
         default = [ "ro" ];
         example = [ "data=journal" ];
         description = "Options used to mount the file system.";
-        type = types.listOf types.string;
+        type = types.listOf types.str;
       };
 
     };
@@ -52,6 +52,16 @@ in
       cd $targetRoot
       ln -s mnt/system/init init
       cd /
+    '';
+
+    # Replace /dev/root by /dev/disk/by-label/system.x in /etc/fstab
+    boot.postBootCommands = with pkgs; ''
+      SYSTEM_DEVICE=$(readlink /dev/root)
+      mv /etc/fstab /etc/fstab.old
+      cp -L /etc/fstab.old /etc/fstab
+      chmod u+w /etc/fstab
+      ${gnused}/bin/sed -i "s|/dev/root|$SYSTEM_DEVICE|" /etc/fstab
+      chmod u-w /etc/fstab
     '';
   };
 }

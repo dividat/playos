@@ -10,13 +10,13 @@ with lib;
         device = mkOption {
           default = null;
           example = "/dev/sda";
-          type = types.nullOr types.string;
+          type = types.nullOr types.str;
         };
 
         fsType = mkOption {
           default = "auto";
           example = "ext3";
-          type = types.string;
+          type = types.str;
           description = "Type of the file system.";
         };
 
@@ -24,7 +24,7 @@ with lib;
           default = [ "defaults" ];
           example = [ "data=journal" ];
           description = "Options used to mount the file system.";
-          type = types.listOf types.string;
+          type = types.listOf types.str;
         };
 
       };
