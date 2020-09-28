@@ -58,7 +58,7 @@ with lib;
       };
       wantedBy = [ "multi-user.target" ];
       requires = [ "connman.service" ];
-      after = [ "rauc.service" "connman.service" ];
+      after = [ "rauc.service" "connman.service" "pacrunner.service" ];
     };
 
   };

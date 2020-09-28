@@ -1,0 +1,144 @@
+diff --git a/cohttp-lwt/src/client.ml b/cohttp-lwt/src/client.ml
+index 9c24e08..b3c2e6f 100644
+--- a/cohttp-lwt/src/client.ml
++++ b/cohttp-lwt/src/client.ml
+@@ -47,9 +47,12 @@ module Make
+     | `DELETE -> false
+     | _ -> true
+ 
+-  let call ?(ctx=default_ctx) ?headers ?(body=`Empty) ?chunked meth uri =
++  let call ?(ctx=default_ctx) ?proxy ?headers ?(body=`Empty) ?chunked meth uri =
++    let target = match proxy with
++      | None -> uri
++      | Some x -> x in
+     let headers = match headers with None -> Header.init () | Some h -> h in
+-    Net.connect_uri ~ctx uri >>= fun (_conn, ic, oc) ->
++    Net.connect_uri ~ctx target >>= fun (_conn, ic, oc) ->
+     let closefn () = Net.close ic oc in
+     let chunked =
+       match chunked with
+@@ -74,25 +77,25 @@ module Make
+     read_response ~closefn ic oc meth
+ 
+   (* The HEAD should not have a response body *)
+-  let head ?ctx:_ ?headers uri =
+-    call ?headers `HEAD uri
++  let head ?ctx:_ ?proxy ?headers uri =
++    call ?proxy ?headers `HEAD uri
+     >|= fst
+ 
+-  let get ?ctx ?headers uri = call ?ctx ?headers `GET uri
+-  let delete ?ctx ?body ?chunked ?headers uri =
+-    call ?ctx ?headers ?body ?chunked `DELETE uri
+-  let post ?ctx ?body ?chunked ?headers uri =
+-    call ?ctx ?headers ?body ?chunked `POST uri
+-  let put ?ctx ?body ?chunked ?headers uri =
+-    call ?ctx ?headers ?body ?chunked `PUT uri
+-  let patch ?ctx ?body ?chunked ?headers uri =
+-    call ?ctx ?headers ?body ?chunked `PATCH uri
++  let get ?ctx ?proxy ?headers uri = call ?ctx ?proxy ?headers `GET uri
++  let delete ?ctx ?proxy ?body ?chunked ?headers uri =
++    call ?ctx ?proxy ?headers ?body ?chunked `DELETE uri
++  let post ?ctx ?proxy ?body ?chunked ?headers uri =
++    call ?ctx ?proxy ?headers ?body ?chunked `POST uri
++  let put ?ctx ?proxy ?body ?chunked ?headers uri =
++    call ?ctx ?proxy ?headers ?body ?chunked `PUT uri
++  let patch ?ctx ?proxy ?body ?chunked ?headers uri =
++    call ?ctx ?proxy ?headers ?body ?chunked `PATCH uri
+ 
+-  let post_form ?ctx ?headers ~params uri =
++  let post_form ?ctx ?proxy ?headers ~params uri =
+     let headers = Header.add_opt_unless_exists headers
+                     "content-type" "application/x-www-form-urlencoded" in
+     let body = Body.of_string (Uri.encoded_of_query params) in
+-    post ?ctx ~chunked:false ~headers ~body uri
++    post ?ctx ?proxy ~chunked:false ~headers ~body uri
+ 
+   let callv ?(ctx=default_ctx) uri reqs =
+     Net.connect_uri ~ctx uri >>= fun (_conn, ic, oc) ->
+diff --git a/cohttp-lwt/src/s.ml b/cohttp-lwt/src/s.ml
+index ec7dcf4..78534ab 100644
+--- a/cohttp-lwt/src/s.ml
++++ b/cohttp-lwt/src/s.ml
+@@ -43,6 +43,7 @@ module type Client = sig
+       {!get} and {!post} for some examples. *)
+   val call :
+     ?ctx:ctx ->
++    ?proxy:Uri.t ->
+     ?headers:Cohttp.Header.t ->
+     ?body:Body.t ->
+     ?chunked:bool ->
+@@ -51,16 +52,19 @@ module type Client = sig
+ 
+   val head :
+     ?ctx:ctx ->
++    ?proxy:Uri.t ->
+     ?headers:Cohttp.Header.t ->
+     Uri.t -> Cohttp.Response.t Lwt.t
+ 
+   val get :
+     ?ctx:ctx ->
++    ?proxy:Uri.t ->
+     ?headers:Cohttp.Header.t ->
+     Uri.t -> (Cohttp.Response.t * Body.t) Lwt.t
+ 
+   val delete :
+     ?ctx:ctx ->
++    ?proxy:Uri.t ->
+     ?body:Body.t ->
+     ?chunked:bool ->
+     ?headers:Cohttp.Header.t ->
+@@ -68,6 +72,7 @@ module type Client = sig
+ 
+   val post :
+     ?ctx:ctx ->
++    ?proxy:Uri.t ->
+     ?body:Body.t ->
+     ?chunked:bool ->
+     ?headers:Cohttp.Header.t ->
+@@ -75,6 +80,7 @@ module type Client = sig
+ 
+   val put :
+     ?ctx:ctx ->
++    ?proxy:Uri.t ->
+     ?body:Body.t ->
+     ?chunked:bool ->
+     ?headers:Cohttp.Header.t ->
+@@ -82,6 +88,7 @@ module type Client = sig
+ 
+   val patch :
+     ?ctx:ctx ->
++    ?proxy:Uri.t ->
+     ?body:Body.t ->
+     ?chunked:bool ->
+     ?headers:Cohttp.Header.t ->
+@@ -89,6 +96,7 @@ module type Client = sig
+ 
+   val post_form :
+     ?ctx:ctx ->
++    ?proxy:Uri.t ->
+     ?headers:Cohttp.Header.t ->
+     params:(string * string list) list ->
+     Uri.t -> (Cohttp.Response.t * Body.t) Lwt.t
+diff --git a/cohttp/src/request.ml b/cohttp/src/request.ml
+index 8e97cf4..d9c34db 100644
+--- a/cohttp/src/request.ml
++++ b/cohttp/src/request.ml
+@@ -172,10 +172,15 @@ module Make(IO : S.IO) = struct
+   let read_body_chunk = Transfer_IO.read
+ 
+   let write_header req oc =
++    let scheme = match Uri.scheme (uri req) with
++      | Some x -> x
++      | None -> "http" in
+     let fst_line =
+-      Printf.sprintf "%s %s %s\r\n"
++      Printf.sprintf "%s %s://%s%s %s\r\n"
+         (Code.string_of_method req.meth)
+-        (if req.resource = "" then "/" else req.resource)
++        scheme
++        (Uri.host_with_default ~default:"localhost" (uri req))
++        (Uri.path_and_query (uri req))
+         (Code.string_of_version req.version) in
+     let headers = req.headers in
+     let headers =

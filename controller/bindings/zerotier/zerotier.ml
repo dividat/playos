@@ -22,13 +22,14 @@ type status = {
   address: string
 }
 
-let get_status () =
+let get_status ~proxy =
   (
     let open Cohttp in
     let open Cohttp_lwt_unix in
     let%lwt authtoken = get_authtoken () in
     let%lwt response,body =
       Client.get
+        ?proxy
         ~headers:(Header.of_list ["X-ZT1-Auth", authtoken])
         (Uri.with_path base_url "status")
     in
@@ -45,4 +46,3 @@ let get_status () =
     |> return
   )
   |> Lwt_result.catch
-

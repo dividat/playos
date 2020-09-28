@@ -112,6 +112,7 @@ module Service : sig
   ; ipv4 : IPv4.t option
   ; ipv6 : IPv6.t option
   ; ethernet : Ethernet.t
+  ; proxy : string option
   }
   [@@deriving sexp]
 
@@ -123,6 +124,8 @@ module Service : sig
       Note that this is not a direct mapping, but offers limited fields usable for UI. For more exact representation use S-Exp.
   *)
   val to_json : t -> Ezjsonm.t
+
+  val set_proxy_url : t -> string -> unit Lwt.t
 
   val connect : ?input:Agent.input -> t -> unit Lwt.t
 

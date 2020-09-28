@@ -5,6 +5,21 @@
 </div>
 
 <dl class="d-Definitions">
+    <dt class="d-Definitions__Term">Proxy</dt>
+    <dd class="d-Definitions__Description">
+        {{#is_proxy_set}}
+            {{proxy}}
+        {{/is_proxy_set}}
+
+        {{^is_proxy_set}}
+            none
+        {{/is_proxy_set}}
+
+        <aside class="d-Network__Note">
+            Note that proxy change requires a restart.
+        </aside>
+    </dd>
+
     <dt class="d-Definitions__Term">Internet</dt>
     <dd class="d-Definitions__Description">
         {{#internet_connected}}
@@ -35,6 +50,13 @@
             </summary>
 
             <pre class="d-Preformatted">{{properties}}</pre>
+
+
+            <form action="/network/{{id}}/proxy" method="post" class="d-Network__Form">
+              <legend class="d-Network__Legend">Proxy</legend>
+              <input type="text" class="d-Input d-Network__Input" value="{{proxy}}" name="proxy_url" placeholder="192.168.1.10:8500">
+              <input type="submit" class="d-Button" value="Validate">
+            </form>
 
             {{^connected}}
                 <form action="/network/{{id}}/connect" method="post" class="d-Network__Form">

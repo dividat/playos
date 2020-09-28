@@ -58,11 +58,11 @@ let rec grouped n s =
   else
     List.cons (String.sub s 0 n) (grouped n (String.sub s n (l - n)))
 
-let get () =
+let get ~proxy =
   let%lwt ic = "/etc/machine-id" |> Lwt_io.(open_file ~mode:Input) in
   let%lwt machine_id = Lwt_io.read ic >|= String.trim >|= grouped 4 >|= String.concat "-" in
   let%lwt zerotier_address =
-    (match%lwt Zerotier.get_status () with
+    (match%lwt Zerotier.get_status ~proxy with
      | Ok status -> Some status.address |> return
      | Error _ -> None |> return
     )
@@ -86,4 +86,3 @@ let get () =
   ; local_time
   }
   |> return
-

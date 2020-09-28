@@ -1,5 +1,10 @@
 {config, pkgs, lib, ... }:
-{
+
+let
+  pacproxy = pkgs.writeShellScriptBin "pacproxy" ''
+    ${pkgs.python3.withPackages (p: [ p.dbus-python ])}/bin/python ${./pacproxy.py}
+  '';
+in {
   # Enable non-free firmware
   hardware.enableRedistributableFirmware = true;
 
@@ -76,5 +81,21 @@
     mode = "0700";
     user = "root";
     group = "root";
+  };
+
+  # Setup pacrunner service
+  environment.systemPackages = [ pkgs.pacrunner pacproxy ];
+  services.dbus.packages = [ pkgs.pacrunner ];
+  systemd.packages = [ pkgs.pacrunner ];
+  systemd.services.pacrunner = {
+    description = "Proxy configuration daemon";
+    before = [ "network.target" ];
+    wants = [ "network.target" ];
+    wantedBy = [ "multi-user.target"];
+    serviceConfig = {
+      Type = "dbus";
+      BusName = "org.pacrunner";
+      ExecStart  = "${pkgs.pacrunner}/bin/pacrunner --nodaemon";
+    };
   };
 }

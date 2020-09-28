@@ -34,11 +34,11 @@ let semver_of_string string =
     version, trimmed_string
 
 (** Get latest version available at [url] *)
-let get_latest_version url =
+let get_latest_version ~proxy url =
   let open Cohttp in
   let open Cohttp_lwt_unix in
   let%lwt response,body = try
-      Client.get (Uri.of_string (url ^ "latest"))
+      Client.get ?proxy (Uri.of_string (url ^ "latest"))
     with
     | exn -> Lwt.fail exn
   in
@@ -53,9 +53,9 @@ let get_latest_version url =
   |> return
 
 (** Get version information *)
-let get_version_info url rauc =
+let get_version_info ~proxy url rauc =
   (
-    let%lwt latest = get_latest_version url in
+    let%lwt latest = get_latest_version ~proxy url in
     let%lwt rauc_status = Rauc.get_status rauc in
 
     let system_a_version = rauc_status.a.version |> semver_of_string in
@@ -129,16 +129,16 @@ type state =
 
 
 (** Finite state machine handling updates *)
-let rec run ~update_url ~rauc ~set_state =
+let rec run ~proxy ~update_url ~rauc ~set_state =
   (* Helper to update state in signal and advance state machine *)
   let set state =
-    set_state state; run ~update_url ~rauc ~set_state state
+    set_state state; run ~proxy ~update_url ~rauc ~set_state state
   in
   function
   | GettingVersionInfo ->
     (* get version information and decide what to do *)
     begin
-      match%lwt get_version_info update_url rauc with
+      match%lwt get_version_info ~proxy update_url rauc with
       | Ok version_info ->
 
         (* Compare latest available version to version booted. *)
@@ -264,7 +264,7 @@ let rec run ~update_url ~rauc ~set_state =
     set GettingVersionInfo
 
 
-let start ~(rauc:Rauc.t) ~(update_url:string) =
+let start ~proxy ~(rauc:Rauc.t) ~(update_url:string) =
   let state_s, set_state = Lwt_react.S.create GettingVersionInfo in
   let () = Logs.info ~src:log_src (fun m -> m "update URL: %s" update_url) in
-  state_s, run ~update_url ~rauc ~set_state GettingVersionInfo
+  state_s, run ~proxy ~update_url ~rauc ~set_state GettingVersionInfo

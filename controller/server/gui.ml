@@ -14,7 +14,6 @@ let of_file f =
   |> Mustache.of_string
   |> return
 
-
 (* Require the resource directory to be at a directory fixed to the binary location. This is not optimal, but works for the moment. TODO: figure out a better way to do this.
 *)
 let resource_path end_path =
@@ -85,10 +84,10 @@ let error_handling =
 
 (** Display basic server information *)
 module InfoGui = struct
-  let build app =
+  let build ~proxy app =
     app
     |> get "/info" (fun _ ->
-        let%lwt server_info = Info.get () in
+        let%lwt server_info = Info.get ~proxy in
         page "info" [ "server_info", server_info |> Info.to_json ])
 end
 
@@ -97,10 +96,6 @@ module LocalizationGui = struct
   let overview req =
     let%lwt td_daemon = Timedate.daemon () in
     let%lwt current_timezone = Timedate.get_configured_timezone () in
-    let is_some = function
-      | Some _ -> true
-      | None -> false
-    in
     let is_some_thing thing = function
       | Some other -> String.equal other thing
       | None -> false
@@ -188,10 +183,10 @@ module LocalizationGui = struct
     in
     page "localization"
       [ "timezone_groups", tz_groups
-      ; "is_timezone_set", Ezjsonm.bool (is_some current_timezone)
+      ; "is_timezone_set", Ezjsonm.bool (Option.is_some current_timezone)
       ; "langs", langs
-      ; "is_lang_set", Ezjsonm.bool (is_some current_lang)
-      ; "is_keymap_set", Ezjsonm.bool (is_some current_keymap)
+      ; "is_lang_set", Ezjsonm.bool (Option.is_some current_lang)
+      ; "is_keymap_set", Ezjsonm.bool (Option.is_some current_keymap)
       ; "keymaps", keymaps
       ]
 
@@ -235,7 +230,7 @@ module LocalizationGui = struct
     in
     "/localization" |> Uri.of_string |> redirect'
 
-  let build app =
+  let build ~proxy app =
     app
     |> get "/localization" overview
     |> post "/localization/timezone" set_timezone
@@ -251,14 +246,31 @@ module NetworkGui = struct
 
   let overview
       ~(connman:Manager.t)
+      ~(proxy:Uri.t option)
       ~(internet:Internet.state Lwt_react.S.t)
       req =
 
-    (* Check if internet connected *)
+    (* Check if internet is connected *)
     let internet_connected =
         internet
         |> Lwt_react.S.value
         |> Internet.is_connected
+    in
+
+    (* Formatting to host:port instead of using Uri.to_string that also shows the scheme *)
+    let formatted_proxy =
+      Option.bind proxy (fun uri ->
+          Uri.host uri
+          |> Option.map (fun host ->
+              let port =
+                  Uri.port uri
+                  |> Option.map (fun p ->  ":" ^ string_of_int p)
+                  |> Option.value ~default:""
+              in
+              host ^ port
+          )
+      )
+      |> Option.value ~default:""
     in
 
     let%lwt services =
@@ -267,10 +279,11 @@ module NetworkGui = struct
       >|= List.filter (fun s -> not internet_connected || s |> Service.is_connected)
     in
 
-
     page "network"
       [
         "internet_connected", internet_connected |> Ezjsonm.bool
+      ; "is_proxy_set", Ezjsonm.bool (Option.is_some proxy)
+      ; "proxy", formatted_proxy |> Ezjsonm.string
       ; "services", services |> Ezjsonm.list (fun s -> s |> Service.to_json |> Ezjsonm.value)
       ]
 
@@ -301,6 +314,29 @@ module NetworkGui = struct
       >|= (fun () -> Format.sprintf "Connected with %s." service.name)
       >>= success
 
+  let update_proxy ~(connman:Connman.Manager.t) req =
+    let service_id = param req "id" in
+    let%lwt form_data =
+      urlencoded_pairs_of_body req
+    in
+    let url =
+      form_data
+      |> List.assoc "proxy_url"
+      |> List.hd
+      |> String.trim
+    in
+    match%lwt find_service ~connman service_id with
+    | None ->
+      fail_with (Format.sprintf "Service does not exist (%s)" service_id)
+    | Some service ->
+      Connman.Service.set_proxy_url service url
+      >|= (fun () ->
+        if url = "" then
+          Format.sprintf "The proxy of %s has been removed." service.name
+        else
+          Format.sprintf "The proxy of %s has been updated to %s." service.name url)
+      >>= success
+
   let remove ~(connman:Connman.Manager.t) req =
     let service_id = param req "id" in
     match%lwt find_service ~connman service_id with
@@ -313,11 +349,13 @@ module NetworkGui = struct
 
   let build
       ~(connman:Connman.Manager.t)
+      ~(proxy:Uri.t option)
       ~(internet:Network.Internet.state Lwt_react.S.t)
       app =
     app
-    |> get "/network" (overview ~connman ~internet)
+    |> get "/network" (overview ~connman ~proxy ~internet)
     |> post "/network/:id/connect" (connect ~connman)
+    |> post "/network/:id/proxy" (update_proxy ~connman)
     |> post "/network/:id/remove" (remove ~connman)
 
 end
@@ -327,13 +365,13 @@ end
 module LabelGui = struct
   open Label_printer
 
-  let make_label () =
+  let make_label ~proxy =
     let%lwt ethernet_interfaces =
       Network.Interface.get_all ()
       >|= List.filter (fun (i: Network.Interface.t) ->
           Re.execp (Re.seq [Re.start; Re.str "enp" ] |> Re.compile) i.name)
     in
-    let%lwt server_info = Info.get () in
+    let%lwt server_info = Info.get ~proxy in
     return
       ({ machine_id = server_info.machine_id
        ; mac_1 = CCOpt.(
@@ -350,8 +388,8 @@ module LabelGui = struct
            )
        } : Label_printer.label)
 
-  let overview req =
-    let%lwt label = make_label () in
+  let overview ~proxy req =
+    let%lwt label = make_label ~proxy in
     page "label"
       [ "machine_id", label.machine_id |> Ezjsonm.string
       ; "mac_1", label.mac_1 |> Ezjsonm.string
@@ -360,7 +398,7 @@ module LabelGui = struct
         "http://192.168.0.5:3000/play-computer" |> Ezjsonm.string
       ]
 
-  let print req =
+  let print ~proxy req =
     let%lwt form_data = urlencoded_pairs_of_body req in
     let url = form_data
               |> List.assoc "label_printer_url"
@@ -371,17 +409,17 @@ module LabelGui = struct
                 |> List.hd
                 |> int_of_string
     in
-    let%lwt label = make_label () in
+    let%lwt label = make_label ~proxy in
     CCList.replicate count ()
     |> Lwt_list.iter_s
-      (fun () -> Label_printer.print ~url label)
+      (fun () -> Label_printer.print ~proxy ~url label)
     >|= (fun () -> "Labels printed.")
     >>= success
 
-  let build app =
+  let build ~proxy app =
     app
-    |> get "/label" overview
-    |> post "/label/print" print
+    |> get "/label" (overview ~proxy)
+    |> post "/label/print" (print ~proxy)
 
 end
 
@@ -429,7 +467,7 @@ module ChangelogGui = struct
         ])
 end
 
-let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
+let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet ~proxy app =
   app
   |> middleware (static ())
   |> middleware error_handling
@@ -442,16 +480,16 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
       >|= respond
     )
 
-  |> InfoGui.build
-  |> NetworkGui.build ~connman ~internet
-  |> LocalizationGui.build
-  |> LabelGui.build
+  |> InfoGui.build ~proxy
+  |> NetworkGui.build ~connman ~proxy ~internet
+  |> LocalizationGui.build ~proxy
+  |> LabelGui.build ~proxy
   |> StatusGui.build ~health_s ~update_s ~rauc
   |> ChangelogGui.build
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
-let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman ~internet =
+let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman ~internet ~proxy =
   empty
   |> Opium.App.port port
-  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet
+  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet ~proxy
   |> start

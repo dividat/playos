@@ -273,6 +273,7 @@ struct
   ; ipv4 : IPv4.t option
   ; ipv6 : IPv6.t option
   ; ethernet : Ethernet.t
+  ; proxy : string option
   }
   [@@deriving sexp]
 
@@ -296,13 +297,22 @@ struct
       with
       | _ -> None
     in
+    let proxy_of_obus v =
+      (fun () ->
+         let open OBus_value.C in
+         let properties = v |> cast_single (dict string variant) in
+         properties |> List.assoc "Servers" |> cast_single (array basic_string) |> List.hd
+      )
+      |> CCResult.guard
+      |> CCResult.to_opt
+    in
     CCOpt.(
-      pure (fun name type' state strength favorite autoconnect ipv4 ipv6 ethernet ->
+      pure (fun name type' state strength favorite autoconnect ipv4 ipv6 ethernet proxy ->
           { _proxy = OBus_proxy.make (OBus_context.sender context) path
           ; _manager = manager
           ; id = path |> CCList.last 1 |> CCList.hd
           ; name ; type'; state; strength; favorite; autoconnect
-          ; ipv4; ipv6; ethernet
+          ; ipv4; ipv6; ethernet; proxy
           })
       <*> (properties |> List.assoc_opt "Name" >>= string_of_obus)
       <*> (properties |> List.assoc_opt "Type" >>= string_of_obus >>= Technology.type_of_string)
@@ -313,6 +323,7 @@ struct
       <*> (properties |> List.assoc_opt "IPv4" >>= IPv4.of_obus |> pure)
       <*> (properties |> List.assoc_opt "IPv6" >>= IPv6.of_obus |> pure)
       <*> (properties |> List.assoc_opt "Ethernet" >>= Ethernet.of_obus)
+      <*> (properties |> List.assoc_opt "Proxy" >>= proxy_of_obus |> pure)
     )
 
 
@@ -332,12 +343,25 @@ struct
       | Some s -> string_of_int s ^ "%"
       | None -> "") |> Ezjsonm.string
     ; "properties", s |> sexp_of_t |> Sexplib.Sexp.to_string_hum |> Ezjsonm.string
+    ; "proxy", (match s.proxy with
+      | Some p -> p
+      | None -> "") |> Ezjsonm.string
     ]
 
   let set_property service ~name ~value =
     OBus_method.call
       Connman_interfaces.Net_connman_Service.m_SetProperty
       service._proxy (name, value)
+
+  let set_proxy_url service url =
+    let dict =
+      OBus_value.C.make_single
+        (OBus_value.C.(dict string variant))
+        [ ("Method", OBus_value.C.(make_single basic_string) "manual")
+        ; ("Servers", OBus_value.C.(make_single (array basic_string)) [url])
+        ]
+    in
+    set_property service "Proxy.Configuration" dict
 
   let connect ?(input=Agent.None) service =
     let%lwt () = Logs_lwt.debug ~src:log_src

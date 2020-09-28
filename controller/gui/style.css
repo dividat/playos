@@ -76,6 +76,11 @@
     margin-bottom: 2rem;
 }
 
+.d-Network__Note {
+    font-style: italic;
+    font-size: 80%;
+}
+
 .d-Network__InternetConnected {
     color: green;
 }
@@ -96,6 +101,10 @@
 .d-Network__Form {
     display: flex;
     margin-bottom: 2rem;
+}
+
+.d-Network__Legend {
+    margin-right: 1rem;
 }
 
 .d-Network__Input {

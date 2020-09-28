@@ -14,6 +14,13 @@ let shutdown () =
   | _ ->
     Lwt.fail_with (Format.sprintf "shutdown failed")
 
+let get_proxy_from_pacrunner () =
+  let command = "/run/current-system/sw/bin/pacproxy", [| "pacproxy" |] in
+  let%lwt proxy = Lwt_process.pread command >|= String.trim in
+  if proxy = "" then
+    return None
+  else
+    return (Some (Uri.of_string ("http://" ^ proxy)))
 
 let main debug port =
   Logs.set_reporter (Logging.reporter ());
@@ -23,10 +30,18 @@ let main debug port =
   else
     Logs.set_level (Some Logs.Info);
 
-  let%lwt server_info = Info.get () in
+  let%lwt proxy = get_proxy_from_pacrunner () in
+
+  let%lwt server_info = Info.get ~proxy in
 
   let%lwt () =
     Logs_lwt.info (fun m -> m "PlayOS Controller Daemon (%s)" server_info.version)
+  in
+
+  let%lwt () =
+    match proxy with
+    | Some p -> Logs_lwt.info (fun m -> m "proxy: %s" (Uri.to_string p))
+    | None -> Logs_lwt.info (fun m -> m "proxy: none")
   in
 
   (* Connect with systemd *)
@@ -53,7 +68,7 @@ let main debug port =
   let%lwt connman = Connman.Manager.connect () in
 
   (* Get Internet state *)
-  let%lwt internet, internet_p = Network.Internet.get connman in
+  let%lwt internet, internet_p = Network.Internet.get connman ~proxy in
 
   (* Log changes to Internet state *)
   let%lwt () =
@@ -68,7 +83,7 @@ let main debug port =
   in
 
   (* Start the update mechanism *)
-  let update_s, update_p = Update.start ~rauc ~update_url:Info.update_url in
+  let update_s, update_p = Update.start ~proxy ~rauc ~update_url:Info.update_url in
 
   (* Log changes in update mechanism state *)
   let%lwt () =
@@ -92,6 +107,7 @@ let main debug port =
       ~internet
       ~update_s
       ~health_s
+      ~proxy
   in
 
   let%lwt () =
@@ -123,7 +139,7 @@ let () =
                        (info ~doc:"Enable debug output." ["d"; "debug"])
                      |> value)
   in
-  let port_a = Arg.(opt int 3333 
+  let port_a = Arg.(opt int 3333
                       (info ~doc:"Port on which to start gui (http server)." ~docv:"PORT" ["p"; "port"])
                     |> value)
   in

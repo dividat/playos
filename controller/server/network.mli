@@ -17,7 +17,7 @@ module Internet : sig
 
       The state of internet connectivity is made available via a signal.
   *)
-  val get: Connman.Manager.t -> (state Lwt_react.S.t * unit Lwt.t) Lwt.t
+  val get: proxy: Uri.t option -> Connman.Manager.t -> (state Lwt_react.S.t * unit Lwt.t) Lwt.t
 
 end
 

@@ -34,20 +34,23 @@ let
         };
       });
 
+      pacrunner = self.callPackage ./pacrunner.nix {};
+
       breeze-contrast-cursor-theme = super.callPackage ./breeze-contrast-cursor-theme {};
 
-      ocamlPackages = super.ocamlPackages.overrideScope' (self: super: {
-
-        hmap = self.callPackage ./ocaml-modules/hmap {};
+      ocamlPackages = super.ocamlPackages.overrideScope' (self: super: rec {
 
         semver = self.callPackage ./ocaml-modules/semver {};
-
-        opium_kernel = self.callPackage ./ocaml-modules/opium_kernel {};
-        opium = self.callPackage ./ocaml-modules/opium {};
 
         obus = self.callPackage ./ocaml-modules/obus {};
 
         mustache = self.callPackage ./ocaml-modules/mustache {};
+
+        # Apply a patch allowing the utilization of proxies, see inspiration:
+        # https://github.com/mirage/ocaml-cohttp/issues/459#issuecomment-186142690
+        cohttp = self.callPackage ./ocaml-modules/cohttp {};
+        cohttp-lwt = self.callPackage ./ocaml-modules/cohttp/lwt.nix {};
+        cohttp-lwt-unix = self.callPackage ./ocaml-modules/cohttp/lwt-unix.nix {};
       });
 
       # Controller

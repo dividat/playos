@@ -1,14 +1,18 @@
 import sys
-import itertools
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QApplication
 
-from kiosk_browser import main_widget
+from kiosk_browser import main_widget, proxy
 
 def start(primary_url, secondary_url, toggle_sequence, fullscreen = True):
 
     app = QApplication(sys.argv)
+
+    p = proxy.get_from_pacrunner()
+    if p != "":
+        proxy.update_env(p)
+        proxy.use_in_qt_app(p)
 
     mainWidget = main_widget.MainWidget(
         urls = [parseUrl(primary_url), parseUrl(secondary_url)],
