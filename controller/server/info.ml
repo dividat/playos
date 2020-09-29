@@ -46,9 +46,26 @@ let of_file f =
   |> Mustache.of_string
   |> return
 
+(** Format a 32-character string as groups of 4; leave other strings unchanged. *)
+let format_machine_id s =
+  if String.length s == 32 then
+    String.concat
+      "-"
+      [ String.sub s 0 4
+      ; String.sub s 4 4
+      ; String.sub s 8 4
+      ; String.sub s 12 4
+      ; String.sub s 16 4
+      ; String.sub s 20 4
+      ; String.sub s 24 4
+      ; String.sub s 28 4
+      ]
+  else
+    s
+
 let get () =
   let%lwt ic = "/etc/machine-id" |> Lwt_io.(open_file ~mode:Input) in
-  let%lwt machine_id = Lwt_io.read ic >|= String.trim in
+  let%lwt machine_id = Lwt_io.read ic >|= String.trim >|= format_machine_id in
   let%lwt zerotier_address =
     (match%lwt Zerotier.get_status () with
      | Ok status -> Some status.address |> return
