@@ -4,6 +4,10 @@
 
 - controller: Enable HTTPS support for system update hosts
 
+## Changed
+
+- controller: Format machine-id in groups of 4 for readability
+
 ## Fixed
 
 - controller: Display interfaces' IP even if there is no gateway
