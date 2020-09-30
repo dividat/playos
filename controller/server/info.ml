@@ -46,26 +46,21 @@ let of_file f =
   |> Mustache.of_string
   |> return
 
-(** Format a 32-character string as groups of 4; leave other strings unchanged. *)
-let format_machine_id s =
-  if String.length s == 32 then
-    String.concat
-      "-"
-      [ String.sub s 0 4
-      ; String.sub s 4 4
-      ; String.sub s 8 4
-      ; String.sub s 12 4
-      ; String.sub s 16 4
-      ; String.sub s 20 4
-      ; String.sub s 24 4
-      ; String.sub s 28 4
-      ]
+(** Break up a string into groups of size n *)
+let rec grouped n s =
+  let l = String.length s in
+  if n <= 0 then
+    invalid_arg "Group size must be above 0"
+  else if l == 0 then
+    []
+  else if l <= n then
+    [s]
   else
-    s
+    List.cons (String.sub s 0 n) (grouped n (String.sub s n (l - n)))
 
 let get () =
   let%lwt ic = "/etc/machine-id" |> Lwt_io.(open_file ~mode:Input) in
-  let%lwt machine_id = Lwt_io.read ic >|= String.trim >|= format_machine_id in
+  let%lwt machine_id = Lwt_io.read ic >|= String.trim >|= grouped 4 >|= String.concat "-" in
   let%lwt zerotier_address =
     (match%lwt Zerotier.get_status () with
      | Ok status -> Some status.address |> return
