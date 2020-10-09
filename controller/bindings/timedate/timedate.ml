@@ -30,7 +30,7 @@ let get_active_timezone daemon =
       (proxy daemon)
     |> OBus_property.get
   in
-  if String.length raw_tz == 0 then
+  if String.length raw_tz = 0 then
     None |> return
   else
     Some raw_tz |> return
