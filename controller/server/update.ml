@@ -145,13 +145,13 @@ let rec run ~update_url ~rauc ~set_state =
         let booted_version_compare = Semver.compare
             (fst version_info.latest)
             (fst version_info.booted) in
-        let booted_up_to_date = booted_version_compare == 0 in
+        let booted_up_to_date = booted_version_compare = 0 in
 
         (* Compare latest available version to version on inactive system partition. *)
         let inactive_version_compare = Semver.compare
             (fst version_info.latest)
             (fst version_info.inactive) in
-        let inactive_up_to_date = inactive_version_compare == 0 in
+        let inactive_up_to_date = inactive_version_compare = 0 in
         let inactive_update_available = inactive_version_compare > 0 in
 
         if booted_up_to_date || inactive_up_to_date then
@@ -162,7 +162,7 @@ let rec run ~update_url ~rauc ~set_state =
               UpToDate version_info |> set
             else
               let%lwt booted_slot = Rauc.get_booted_slot rauc in
-              if booted_slot == primary_slot then
+              if booted_slot = primary_slot then
                 (* Inactive is up to date while booted is out of date, but booted was specifically selected for boot *)
                 OutOfDateVersionSelected |> set
               else

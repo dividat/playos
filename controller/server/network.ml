@@ -68,7 +68,7 @@ struct
     with
 
     | Ok (resp, _) ->
-      if Response.status resp == `OK then
+      if Response.status resp = `OK then
         return Connected
       else
         return (NotConnected "Captive portal login required")
