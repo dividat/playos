@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+tput reset
+
+markdown Changelog.md > Changelog.html
+
+# The controller application requires certain artifacts to be in a specific location relative to binary location. The `dune build @install` command ensures this.
+# The `--profile release` option disables dune from failing on warnings (which are currently present in the `obus` library)
+dune build @install --profile release
+
+if [ "$?" -eq 0 ]; then
+
+  # Kill already running server if any
+  lsof -i tcp:3333 | grep LISTEN | awk '{print $2}' | xargs kill 2>/dev/null
+
+  echo -e "$(tput setaf 2)$(tput bold)\nCompilation succeeded\n$(tput sgr0)"
+  ./_build/install/default/bin/playos-controller &
+  LIVE_SERVER_PID="$!"
+
+else
+
+  echo -e "$(tput setaf 1)$(tput bold)\nCompilation failed\n$(tput sgr0)"
+
+fi
