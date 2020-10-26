@@ -5,10 +5,6 @@ from PyQt5.QtNetwork import QNetworkProxy
 def get_from_pacrunner():
     return subprocess.run(["pacproxy"], capture_output=True, text=True).stdout.rstrip()
 
-def update_env(proxy):
-    os.environ['http_proxy'] = proxy
-    os.environ['https_proxy'] = proxy
-
 def use_in_qt_app(proxy):
     if ":" in proxy:
         [proxy_host, proxy_port] = proxy.split(":")

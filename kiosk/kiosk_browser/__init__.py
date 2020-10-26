@@ -11,12 +11,12 @@ def start(primary_url, secondary_url, toggle_sequence, fullscreen = True):
 
     p = proxy.get_from_pacrunner()
     if p != "":
-        proxy.update_env(p)
         proxy.use_in_qt_app(p)
 
     mainWidget = main_widget.MainWidget(
         urls = [parseUrl(primary_url), parseUrl(secondary_url)],
-        toggle_sequence = QKeySequence(toggle_sequence)
+        toggle_sequence = QKeySequence(toggle_sequence),
+        proxy = p
     )
 
     mainWidget.setContextMenuPolicy(Qt.NoContextMenu)

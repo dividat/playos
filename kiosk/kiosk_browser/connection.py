@@ -15,9 +15,13 @@ class Status(Enum):
 
 class Connection():
 
-    def __init__(self, set_captive_portal_url):
+    def __init__(self, set_captive_portal_url, proxy):
         self._status = Status.DISCONNECTED
         self._set_captive_portal_url = set_captive_portal_url
+        if proxy != "":
+            self._proxies = { "http": proxy, "https": proxy }
+        else:
+            self._proxies = {}
 
     def start_daemon(self):
         thread = threading.Thread(target=self._check, args=[])
@@ -30,7 +34,10 @@ class Connection():
     def _check(self):
         while True:
             try:
-                r = requests.get(check_connection_url, allow_redirects = False)
+                r = requests.get(
+                    check_connection_url,
+                    allow_redirects = False,
+                    proxies = self._proxies)
 
                 if r.status_code == 200:
                     self._status = Status.CONNECTED
