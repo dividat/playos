@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd $(dirname "$0")/..
+
+clear
+
+if bin/build; then
+
+  bin/stop-server || true
+  echo -e "$(tput setaf 2)$(tput bold)\nSuccess\n$(tput sgr0)"
+  ./_build/install/default/bin/playos-controller &
+
+else
+
+  bin/stop-server || true
+  exit 1
+
+fi

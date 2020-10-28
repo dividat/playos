@@ -17,7 +17,7 @@ PlayOS controller is an OCaml application that manages various system tasks for 
 
 Run `nix-shell` to create a suitable development environment.
 
-Then, start the the controller with `./dev`.
+Then, start the the controller with `bin/dev-server`.
 
 ## Code style
 

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd $(dirname "$0")/..
+
+trap bin/stop-server EXIT
+
+bin/watch-command || true
+
+watchman-make \
+  --pattern \
+    'server/**' \
+    'bindings/**' \
+    'gui/**' \
+    dune \
+    Changelog.md \
+  --settle \
+    0.5 \
+  --run \
+    "bin/watch-command"
