@@ -2,16 +2,18 @@
 set -euo pipefail
 cd $(dirname "$0")/..
 
-function finish {
-  # Stop the running server
-  lsof -i tcp:3333 | grep LISTEN | awk '{print $2}' | xargs kill
-}
+trap bin/stop-server EXIT
 
-trap finish EXIT
-
-bin/watch-command &
+bin/watch-command || true
 
 watchman-make \
-  --pattern 'server/**' 'bindings/**' 'gui/**' dune Changelog.md \
-  --settle 0.5 \
-  --run "bin/watch-command"
+  --pattern \
+    'server/**' \
+    'bindings/**' \
+    'gui/**' \
+    dune \
+    Changelog.md \
+  --settle \
+    0.5 \
+  --run \
+    "bin/watch-command"
