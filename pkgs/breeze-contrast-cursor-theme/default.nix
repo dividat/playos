@@ -17,7 +17,7 @@ stdenv.mkDerivation rec {
   meta = {
     description = "Breeze Contrast cursor theme";
     homepage = https://kver.wordpress.com/2015/01/09/curses-i-mean-cursors/;
-    license = stdenv.lib.licenses.gpl3;
+    license = stdenv.lib.licenses.gpl2;
     platforms = stdenv.lib.platforms.all;
   };
 }

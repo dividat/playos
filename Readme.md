@@ -76,9 +76,11 @@ Update the change log for every release. See http://keepachangelog.com/ for form
 - [Buildroot](https://buildroot.org/): Builder for embedded Linux systems. Also not very well suited for desktop functionality.
 - [not-os](https://github.com/cleverca22/not-os): A NixOS based system generator. Much more minimal than NixOS, does not use systemd and is not compatible with existing NixOS modules.
 
-## Attribution
+## Attribution and Licensing
 
-This software contains portions from other open-source projects.
+Most code in this repository is authored by the Dividat AG and the project contributors. This code is licensed under an MIT license.
+
+Some source files in this project are portions of other open-source project and may be released under different licenses. The applicable licenses are stated here as well as in the relevant subdirectories.
 
 ### [nixpkgs](https://github.com/NixOS/nixpkgs)
 
