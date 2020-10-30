@@ -44,29 +44,21 @@
 
                 {{^connected}}
                     <form action="/network/{{id}}/connect" method="post" class="d-Network__Form">
-                        <input type="text" class="d-Input d-Network__Input" name="passphrase">
-                        <input type="submit" class="d-Button" value="Connect">
+                        <label for="passphrase" class="d-Network__Label">Passphrase</label>
+                        <input type="text" class="d-Input d-Network__Input" id="passphrase" name="passphrase">
+
+                        <label for="proxy" class="d-Network__Label">Proxy</label>
+                        <input type="text" class="d-Input d-Network__Input" id="proxy" value="{{proxy}}" name="proxy" placeholder="192.168.1.10:8500">
+
+                        <input type="submit" class="d-Button d-Network__Button" value="Connect">
                     </form>
                 {{/connected}}
 
                 {{#connected}}
                     <form action="/network/{{id}}/remove" method="post" class="d-Network__Form">
-                        <input type="submit" class="d-Button" value="Remove">
+                        <input type="submit" class="d-Button d-Network__Button" value="Remove">
                     </form>
                 {{/connected}}
-
-                <details>
-                    <summary>Proxy</summary>
-
-                    <form action="/network/{{id}}/proxy" method="post" class="d-Network__Form">
-                        <input type="text" class="d-Input d-Network__Input" id="proxy_url" value="{{proxy}}" name="proxy_url" placeholder="192.168.1.10:8500">
-                        <input type="submit" class="d-Button" value="Validate">
-                    </form>
-
-                    <p class="d-Network__Note">
-                        Note that this change requires a restart.
-                    </p>
-                </details>
             </div>
         </details>
     {{/services}}

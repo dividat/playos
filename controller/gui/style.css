@@ -100,18 +100,24 @@
 
 .d-Network__Form {
     display: flex;
+    flex-direction: column;
     margin: 1rem 0;
+}
+
+.d-Network__Label {
+    width: 50%;
+    padding-bottom: 0.5rem;
+    font-size: 1.2rem;
 }
 
 .d-Network__Input {
     width: 50%;
-    margin-right: 1rem;
+    margin-bottom: 1rem;
 }
 
-.d-Network__Note {
-    font-style: italic;
-    font-size: 80%;
-    margin: 1rem 0;
+.d-Network__Button {
+    width: 50%;
+    margin-top: 1rem;
 }
 
 /* Localization */

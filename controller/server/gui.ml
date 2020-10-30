@@ -299,29 +299,16 @@ module NetworkGui = struct
     let%lwt form_data =
       urlencoded_pairs_of_body req
     in
-    let input =
+    let passphrase =
       match form_data |> List.assoc_opt "passphrase" with
       | Some [ passphrase ] ->
         Connman.Agent.Passphrase passphrase
       | _ ->
         Connman.Agent.None
     in
-    match%lwt find_service ~connman service_id with
-    | None ->
-      fail_with (Format.sprintf "Service does not exist (%s)" service_id)
-    | Some service ->
-      Connman.Service.connect ~input service
-      >|= (fun () -> Format.sprintf "Connected with %s." service.name)
-      >>= success
-
-  let update_proxy ~(connman:Connman.Manager.t) req =
-    let service_id = param req "id" in
-    let%lwt form_data =
-      urlencoded_pairs_of_body req
-    in
-    let url =
+    let proxy =
       form_data
-      |> List.assoc "proxy_url"
+      |> List.assoc "proxy"
       |> List.hd
       |> String.trim
     in
@@ -329,12 +316,9 @@ module NetworkGui = struct
     | None ->
       fail_with (Format.sprintf "Service does not exist (%s)" service_id)
     | Some service ->
-      Connman.Service.set_proxy_url service url
-      >|= (fun () ->
-        if url = "" then
-          Format.sprintf "The proxy of %s has been removed." service.name
-        else
-          Format.sprintf "The proxy of %s has been updated to %s." service.name url)
+      Connman.Service.connect ~input: passphrase service
+      >>= (fun () -> Connman.Service.set_proxy_url service proxy)
+      >|= (fun () -> Format.sprintf "Connected with %s. Take note that proxy changes require a restart." service.name)
       >>= success
 
   let remove ~(connman:Connman.Manager.t) req =
@@ -355,7 +339,6 @@ module NetworkGui = struct
     app
     |> get "/network" (overview ~connman ~proxy ~internet)
     |> post "/network/:id/connect" (connect ~connman)
-    |> post "/network/:id/proxy" (update_proxy ~connman)
     |> post "/network/:id/remove" (remove ~connman)
 
 end
