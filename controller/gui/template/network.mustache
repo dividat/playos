@@ -44,11 +44,18 @@
 
                 {{^connected}}
                     <form action="/network/{{id}}/connect" method="post" class="d-Network__Form">
-                        <label for="passphrase" class="d-Network__Label">Passphrase</label>
-                        <input type="text" class="d-Input d-Network__Input" id="passphrase" name="passphrase">
+                        <label for="{{id}}-passphrase" class="d-Network__Label">Passphrase</label>
+                        <input type="text" class="d-Input d-Network__Input" id="{{id}}-passphrase" name="passphrase">
 
-                        <label for="proxy" class="d-Network__Label">Proxy</label>
-                        <input type="text" class="d-Input d-Network__Input" id="proxy" value="{{proxy}}" name="proxy" placeholder="192.168.1.10:8500">
+                        <details>
+                          <summary>Advanced Settings</summary>
+
+                          <div class="d-Network__AdvancedSettingsTitle">
+                            <label for="{{id}}-proxy" class="d-Network__Label">Proxy</label>
+                            <input type="text" class="d-Input d-Network__Input" id="{{id}}-proxy" value="{{proxy}}" name="proxy" placeholder="192.168.1.10:8500">
+                            <p class="d-Network__Note">Note that proxy change requires a restart.</p>
+                          </div>
+                        </details>
 
                         <input type="submit" class="d-Button d-Network__Button" value="Connect">
                     </form>
@@ -58,6 +65,16 @@
                     <form action="/network/{{id}}/remove" method="post" class="d-Network__Form">
                         <input type="submit" class="d-Button d-Network__Button" value="Remove">
                     </form>
+
+                    <details>
+                        <summary>Advanced Settings</summary>
+
+                        <form action="/network/{{id}}/proxy" method="post" class="d-Network__Form">
+                            <input type="text" class="d-Input d-Network__Input" value="{{proxy}}" name="proxy" placeholder="192.168.1.10:8500">
+                            <input type="submit" class="d-Button" value="Update Proxy">
+                            <p class="d-Network__Note">Note that proxy change requires a restart.</p>
+                        </form>
+                    </details>
                 {{/connected}}
             </div>
         </details>

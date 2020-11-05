@@ -318,9 +318,34 @@ module NetworkGui = struct
     | Some service ->
       Connman.Service.connect ~input: passphrase service
       >>= (fun () -> Connman.Service.set_proxy_url service proxy)
-      >|= (fun () -> Format.sprintf "Connected with %s. Take note that proxy changes require a restart." service.name)
+      >|= (fun () -> Format.sprintf "Connected with %s." service.name)
       >>= success
 
+  (** Update the proxy of a service *)
+  let update_proxy ~(connman:Connman.Manager.t) req =
+    let service_id = param req "id" in
+    let%lwt form_data =
+      urlencoded_pairs_of_body req
+    in
+    let proxy =
+      form_data
+      |> List.assoc "proxy"
+      |> List.hd
+      |> String.trim
+    in
+    match%lwt find_service ~connman service_id with
+    | None ->
+      fail_with (Format.sprintf "Service does not exist (%s)" service_id)
+    | Some service ->
+      Connman.Service.set_proxy_url service proxy
+      >|= (fun () ->
+        if proxy = "" then
+          Format.sprintf "The proxy of %s has been removed." service.name
+        else
+          Format.sprintf "The proxy of %s has been updated to %s." service.name proxy)
+      >>= success
+
+  (** Remove a service **)
   let remove ~(connman:Connman.Manager.t) req =
     let service_id = param req "id" in
     match%lwt find_service ~connman service_id with
@@ -339,6 +364,7 @@ module NetworkGui = struct
     app
     |> get "/network" (overview ~connman ~proxy ~internet)
     |> post "/network/:id/connect" (connect ~connman)
+    |> post "/network/:id/proxy" (update_proxy ~connman)
     |> post "/network/:id/remove" (remove ~connman)
 
 end
