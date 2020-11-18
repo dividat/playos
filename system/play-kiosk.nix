@@ -59,11 +59,12 @@
       lightdm = {
         enable = true;
         greeter.enable = false;
-        autoLogin = {
-          enable = true;
-          user = "play";
-          timeout = 0;
-        };
+        autoLogin.timeout = 0;
+      };
+
+      autoLogin = {
+        enable = true;
+        user = "play";
       };
 
       sessionCommands = ''

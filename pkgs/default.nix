@@ -3,9 +3,10 @@
 let
 
   nixpkgs = builtins.fetchGit {
-    name = "nixpkgs-20.03-snapshot";
+    name = "nixpkgs-20.09";
     url = "git@github.com:nixos/nixpkgs.git";
-    rev = "3f690bfcd4adde6dd0733c2d9f8f4d61e09dfc60";
+    rev = "cd63096d6d887d689543a0b97743d28995bc9bc3";
+    ref = "refs/tags/20.09";
   };
 
   overlay =
