@@ -38,17 +38,8 @@ let
       breeze-contrast-cursor-theme = super.callPackage ./breeze-contrast-cursor-theme {};
 
       ocamlPackages = super.ocamlPackages.overrideScope' (self: super: {
-
-        hmap = self.callPackage ./ocaml-modules/hmap {};
-
         semver = self.callPackage ./ocaml-modules/semver {};
-
-        opium_kernel = self.callPackage ./ocaml-modules/opium_kernel {};
-        opium = self.callPackage ./ocaml-modules/opium {};
-
         obus = self.callPackage ./ocaml-modules/obus {};
-
-        mustache = self.callPackage ./ocaml-modules/mustache {};
       });
 
       # Controller

@@ -20,6 +20,8 @@ ocamlPackages.buildDunePackage rec {
       ./server/info.ml
   '';
 
+  useDune2 = true;
+
   buildInputs = with ocamlPackages; [
     discount # Transform Markdown to HTML
     nodejs
