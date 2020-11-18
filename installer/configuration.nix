@@ -8,7 +8,6 @@ with lib;
 
   imports = [
     (pkgs.importFromNixos "modules/installer/cd-dvd/iso-image.nix")
-    (pkgs.importFromNixos "modules/profiles/minimal.nix")
   ];
 
   environment.systemPackages = [
