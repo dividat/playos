@@ -1,18 +1,25 @@
 import sys
-import itertools
+import logging
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QApplication
 
-from kiosk_browser import main_widget
+from kiosk_browser import main_widget, proxy
 
 def start(primary_url, secondary_url, toggle_sequence, fullscreen = True):
 
+    logging.basicConfig(level=logging.INFO)
+
     app = QApplication(sys.argv)
+
+    p = proxy.get_from_connman()
+    if p != "":
+        proxy.use_in_qt_app(p)
 
     mainWidget = main_widget.MainWidget(
         urls = [parseUrl(primary_url), parseUrl(secondary_url)],
-        toggle_sequence = QKeySequence(toggle_sequence)
+        toggle_sequence = QKeySequence(toggle_sequence),
+        proxy = p
     )
 
     mainWidget.setContextMenuPolicy(Qt.NoContextMenu)

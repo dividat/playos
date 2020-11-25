@@ -8,14 +8,14 @@ from kiosk_browser import browser_widget, captive_portal_message, connection
 
 class MainWidget(QWidget):
 
-    def __init__(self, urls, toggle_sequence):
+    def __init__(self, urls, toggle_sequence, proxy):
         super(MainWidget, self).__init__()
 
-        self._connection = connection.Connection(self.set_captive_portal_url)
+        self._connection = connection.Connection(self.set_captive_portal_url, proxy)
         self._captive_portal_url = ''
         self._urls = cycle(urls)
         self._current_url = next(self._urls)
-        self._browser_widget = browser_widget.BrowserWidget(self._current_url)
+        self._browser_widget = browser_widget.BrowserWidget(self._current_url, proxy)
         self._is_captive_portal_visible = False
         self._captive_portal_message = captive_portal_message.CaptivePortalMessage(self._toggle_captive_portal)
 
