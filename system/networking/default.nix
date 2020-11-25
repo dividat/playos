@@ -1,5 +1,10 @@
 {config, pkgs, lib, ... }:
-{
+
+let
+  connmanManualProxy = pkgs.writeShellScriptBin "connman-manual-proxy" ''
+    ${pkgs.python3.withPackages (p: [ p.dbus-python ])}/bin/python ${./connman-manual-proxy.py}
+  '';
+in {
   # Enable non-free firmware
   hardware.enableRedistributableFirmware = true;
 
@@ -69,4 +74,6 @@
     user = "root";
     group = "root";
   };
+
+  environment.systemPackages = [ connmanManualProxy ];
 }
