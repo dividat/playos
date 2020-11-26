@@ -44,6 +44,4 @@ with lib;
   # disable installation of documentation
   documentation.enable = false;
 
-  environment.systemPackages = with pkgs; [];
-
 }
