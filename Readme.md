@@ -31,7 +31,7 @@ A virtual machine (with test instrumentation) can be started without any of the 
 A helper is available to quickly start a virtual machine:
 
 ```
-make vm && ./result/bin/run-playos-in-vm
+./build vm
 ```
 
 In order to get the vm system journal, look at the output of `run-playos-in-vm`
@@ -45,12 +45,12 @@ Update bundles are hosted on Amazon S3. The script `bin/deploy-playos-update` wi
 
 The arguments `updateUrl` (from where updates will be fetched by PlayOS systems), `deployURL` (where bundles should be deployed to) must be specified. For example: `nix build --arg updateUrl https://dist.dividat.com/releases/playos/master/ --arg deployUrl s3://dist.dividat.ch/releases/playos/master/`.
 
-Commonly used update and deploy URLs (channels) can be used with shortcuts defined in the Makefile.
+Commonly used update and deploy URLs (channels) can be used with shortcuts defined in `./build`.
 
 To release an update to the `develop` channel:
 
 ```
-make develop
+./build develop
 ./result/bin/deploy-playos-update --key PATH_TO_KEY.pem
 ```
 
