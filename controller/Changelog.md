@@ -3,6 +3,7 @@
 ## Added
 
 - controller: Enable HTTPS support for system update hosts
+- controller: Support proxies
 
 ## Changed
 
