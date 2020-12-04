@@ -20,7 +20,7 @@ let read_from_file log_src path =
 let write_to_file log_src path str =
   try
     let%lwt fd =
-      Lwt_unix.openfile path [ O_WRONLY; O_CREAT ] 0o755
+      Lwt_unix.openfile path [ O_WRONLY; O_CREAT; O_TRUNC ] 0o755
     in
     let%lwt bytes_written =
       Lwt_unix.write_string fd str 0 (String.length str)

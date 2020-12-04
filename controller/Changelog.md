@@ -11,6 +11,7 @@
 ## Fixed
 
 - controller: Display interfaces' IP even if there is no gateway
+- controller: Fix timezone save when shorter than the previous saved one
 
 # [2020.7.0] - 2020-09-23
 
