@@ -4,8 +4,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 isAuthorized = False
-host = '127.0.0.1'
-port = 8000
 
 def textHtml(requestHandler, content):
     requestHandler.send_response(200)
@@ -22,27 +20,29 @@ def redirectTo(requestHandler, location):
 class requestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
-
+        host = self.headers['host']
         if self.path == '/portal':
             textHtml(self, '<form action="/portal" method="POST"><button>Login</button></form>')
 
         elif self.path == '/logout':
             global isAuthorized
             isAuthorized = False
-            redirectTo(self, 'http://localhost:8000/portal')
+            redirectTo(self, f'http://{host}/portal')
 
         elif isAuthorized:
             textHtml(self, 'Success')
 
         else:
-            redirectTo(self, 'http://localhost:8000/portal')
+            redirectTo(self, f'http://{host}/portal')
 
     def do_POST(self):
+        host = self.headers['host']
         if self.path == '/portal':
             global isAuthorized
             isAuthorized = True
-            redirectTo(self, 'http://localhost:8000')
+            redirectTo(self, f'http://{host}')
 
-with HTTPServer((host, port), requestHandler) as httpd:
+port = 8000
+with HTTPServer(('127.0.0.1', port), requestHandler) as httpd:
     print(f'Running captive portal on port {port}...')
     httpd.serve_forever()
