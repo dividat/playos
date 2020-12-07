@@ -1,7 +1,7 @@
 (executable
  (name server)
  (public_name playos-controller)
- (modules server update info gui health)
+ (modules server update info gui health connman_proxy)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium tyxml mustache
   rauc zerotier connman locale network timedate systemd label_printer

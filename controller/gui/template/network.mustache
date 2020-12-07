@@ -5,6 +5,15 @@
 </div>
 
 <dl class="d-Definitions">
+    {{#has_proxy_infos}}
+        <dt class="d-Definitions__Term">Proxy</dt>
+        <dd class="d-Definitions__Description">
+            {{#proxy_infos}}
+                <div>{{line}}</div>
+            {{/proxy_infos}}
+        </dd>
+    {{/has_proxy_infos}}
+
     <dt class="d-Definitions__Term">Internet</dt>
     <dd class="d-Definitions__Description">
         {{#internet_connected}}

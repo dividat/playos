@@ -236,10 +236,11 @@ module NetworkGui = struct
 
   let overview
       ~(connman:Manager.t)
+      ~(proxy:Proxy.t option)
       ~(internet:Internet.state Lwt_react.S.t)
       req =
 
-    (* Check if internet connected *)
+    (* Check if internet is connected *)
     let internet_connected =
         internet
         |> Lwt_react.S.value
@@ -258,9 +259,33 @@ module NetworkGui = struct
       { s with proxy = s.proxy |> Base.Fn.flip Option.bind blur }
     in
 
+    let after_restart_proxy =
+      services
+      |> List.find_map (fun s ->
+          if s.Service.autoconnect then
+            Option.bind s.Service.proxy Proxy.validate
+          else
+            None)
+    in
+
+    let proxy_infos =
+      [ proxy |> Option.map (Proxy.to_string ~hide_password:true)
+      ; (if after_restart_proxy <> proxy then
+          (match after_restart_proxy with
+          | Some p -> Some ("after restart: " ^ (Proxy.to_string ~hide_password:true p))
+          | None -> Some "after restart: removed")
+        else
+          None)
+      ]
+      |> Base.List.concat_map ~f:Option.to_list
+    in
+
     page "network"
       [
         "internet_connected", internet_connected |> Ezjsonm.bool
+      ; "has_proxy_infos", not (Base.List.is_empty proxy_infos) |> Ezjsonm.bool
+      ; "proxy_infos", proxy_infos |> Ezjsonm.list (fun line ->
+          Ezjsonm.dict [ "line", Ezjsonm.string line ])
       ; "services", services |> Ezjsonm.list (fun s ->
           s
           |> blur_service_proxy_password
@@ -339,10 +364,11 @@ module NetworkGui = struct
 
   let build
       ~(connman:Connman.Manager.t)
+      ~(proxy:Proxy.t option)
       ~(internet:Network.Internet.state Lwt_react.S.t)
       app =
     app
-    |> get "/network" (overview ~connman ~internet)
+    |> get "/network" (overview ~connman ~proxy ~internet)
     |> post "/network/:id/connect" (connect ~connman)
     |> post "/network/:id/proxy/update" (update_proxy ~connman)
     |> post "/network/:id/proxy/remove" (remove_proxy ~connman)
@@ -457,7 +483,7 @@ module ChangelogGui = struct
         ])
 end
 
-let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
+let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~proxy ~internet app =
   app
   |> middleware (static ())
   |> middleware error_handling
@@ -471,15 +497,15 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
     )
 
   |> InfoGui.build
-  |> NetworkGui.build ~connman ~internet
+  |> NetworkGui.build ~connman ~proxy ~internet
   |> LocalizationGui.build
   |> LabelGui.build
   |> StatusGui.build ~health_s ~update_s ~rauc
   |> ChangelogGui.build
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
-let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman ~internet =
+let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman ~proxy ~internet =
   empty
   |> Opium.App.port port
-  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet
+  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~proxy ~internet
   |> start

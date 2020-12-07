@@ -14,7 +14,6 @@ let shutdown () =
   | _ ->
     Lwt.fail_with (Format.sprintf "shutdown failed")
 
-
 let main debug port =
   Logs.set_reporter (Logging.reporter ());
 
@@ -51,6 +50,14 @@ let main debug port =
 
   (* Connect with ConnMan *)
   let%lwt connman = Connman.Manager.connect () in
+
+  let%lwt proxy = Connman_proxy.get () in
+
+  let%lwt () =
+    match proxy with
+    | Some p -> Logs_lwt.info (fun m -> m "proxy: %s" (Proxy.to_string ~hide_password:true p))
+    | None -> Logs_lwt.info (fun m -> m "proxy: none")
+  in
 
   (* Get Internet state *)
   let%lwt internet, internet_p = Network.Internet.get connman in
@@ -89,6 +96,7 @@ let main debug port =
       ~shutdown
       ~rauc
       ~connman
+      ~proxy
       ~internet
       ~update_s
       ~health_s
@@ -123,7 +131,7 @@ let () =
                        (info ~doc:"Enable debug output." ["d"; "debug"])
                      |> value)
   in
-  let port_a = Arg.(opt int 3333 
+  let port_a = Arg.(opt int 3333
                       (info ~doc:"Port on which to start gui (http server)." ~docv:"PORT" ["p"; "port"])
                     |> value)
   in
