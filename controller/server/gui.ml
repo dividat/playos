@@ -275,10 +275,24 @@ module NetworkGui = struct
     | Some s -> return s
     | None -> fail_with (Format.sprintf "Service does not exist (%s)" id)
 
+  (** Validate a proxy, fail if the proxy is given but invalid *)
+  let with_empty_or_valid_proxy form_data =
+    let proxy_str =
+      form_data
+      |> List.assoc "proxy"
+      |> List.hd
+    in
+    if String.trim proxy_str = "" then
+      return None
+    else
+      match Proxy.validate proxy_str with
+      | Some proxy -> return (Some proxy)
+      | None -> fail_with (Format.sprintf "Proxy '%s' is not valid." proxy_str)
+
   (** Connect to a service *)
   let connect ~(connman:Connman.Manager.t) req =
     let%lwt form_data = urlencoded_pairs_of_body req in
-    let input =
+    let passphrase =
       match form_data |> List.assoc_opt "passphrase" with
       | Some [ passphrase ] ->
         Connman.Agent.Passphrase passphrase
@@ -286,9 +300,38 @@ module NetworkGui = struct
         Connman.Agent.None
     in
     let%lwt service = with_service ~connman (param req "id") in
-    let%lwt () = Connman.Service.connect ~input service in
-    success (Format.sprintf "Connected with %s." service.name)
+    let%lwt proxy = with_empty_or_valid_proxy form_data in
+    let%lwt () = Connman.Service.connect ~input:passphrase service in
+    match proxy with
+    | None ->
+      (* Removing a proxy that would have been configured in the past *)
+      let%lwt () = Connman.Service.set_direct_proxy service in
+      success (Format.sprintf "Connected with %s." service.name)
+    | Some proxy ->
+      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string proxy) in
+      success (Format.sprintf
+        "Connected with %s and proxy '%s'. The proxy will only be used after a restart."
+        service.name
+        (Proxy.to_string ~hide_password:true proxy))
 
+  (** Update the proxy of a service *)
+  let update_proxy ~(connman:Connman.Manager.t) req =
+    let%lwt form_data = urlencoded_pairs_of_body req in
+    let%lwt service = with_service ~connman (param req "id") in
+    match%lwt with_empty_or_valid_proxy form_data with
+    | None ->
+      fail_with "Proxy must not be empty."
+    | Some proxy ->
+      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string proxy) in
+      redirect' (Uri.of_string "/network")
+
+  (** Remove the proxy of a service *)
+  let remove_proxy ~(connman:Connman.Manager.t) req =
+    let%lwt service = with_service ~connman (param req "id") in
+    let%lwt () = Connman.Service.set_direct_proxy service in
+    redirect' (Uri.of_string "/network")
+
+  (** Remove a service **)
   let remove ~(connman:Connman.Manager.t) req =
     let%lwt service = with_service ~connman (param req "id") in
     let%lwt () = Connman.Service.remove service in
@@ -301,6 +344,8 @@ module NetworkGui = struct
     app
     |> get "/network" (overview ~connman ~internet)
     |> post "/network/:id/connect" (connect ~connman)
+    |> post "/network/:id/proxy/update" (update_proxy ~connman)
+    |> post "/network/:id/proxy/remove" (remove_proxy ~connman)
     |> post "/network/:id/remove" (remove ~connman)
 
 end

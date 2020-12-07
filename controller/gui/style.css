@@ -85,7 +85,12 @@
 }
 
 .d-Network__ServiceDetail {
-    margin-left: 10px;
+    margin-left: 0.5rem;
+}
+
+.d-Network__Properties {
+    margin-left: 2rem;
+    margin-bottom: 2rem;
 }
 
 .d-Network__ServiceStrength {
@@ -94,13 +99,41 @@
 }
 
 .d-Network__Form {
+    margin: 1rem 0;
+}
+
+.d-Network__Label {
+    padding-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.d-Network__ProxyForm {
     display: flex;
-    margin-bottom: 2rem;
+}
+
+.d-Network__ProxyUpdate {
+    display: flex;
+    margin-right: 1rem;
 }
 
 .d-Network__Input {
-    width: 50%;
+    width: 400px;
+    margin-bottom: 1rem;
     margin-right: 1rem;
+}
+
+.d-Network__Button {
+    margin-top: 1rem;
+}
+
+.d-Network__AdvancedSettingsTitle {
+    margin-top: 1rem;
+}
+
+.d-Network__Note {
+    font-style: italic;
+    font-size: 80%;
+    margin-bottom: 1rem;
 }
 
 /* Localization */
