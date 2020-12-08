@@ -254,11 +254,20 @@ module NetworkGui = struct
       >|= List.filter (fun s -> not internet_connected || s |> Service.is_connected)
     in
 
+    let blur_service_proxy_password s =
+      let open Service in
+      let blur p = Proxy.validate p |> Option.map (Proxy.to_string ~hide_password:true) in
+      { s with proxy = s.proxy |> Base.Fn.flip Option.bind blur }
+    in
 
     page "network"
       [
         "internet_connected", internet_connected |> Ezjsonm.bool
-      ; "services", services |> Ezjsonm.list (fun s -> s |> Service.to_json |> Ezjsonm.value)
+      ; "services", services |> Ezjsonm.list (fun s ->
+          s
+          |> blur_service_proxy_password
+          |> Service.to_json
+          |> Ezjsonm.value)
       ]
 
   (** Helper to find a service by id *)
