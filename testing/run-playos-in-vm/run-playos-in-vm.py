@@ -54,7 +54,7 @@ def run_vm(system, qemu_opts, kernel_arguments):
             'rauc.slot=a', 'console=tty0', 'console=hvc1'
         ])
         initrd = sp + '/initrd'
-        virtfs_opts = 'local,path={},security_model=none,mount_tag=system,readonly'.format(
+        virtfs_opts = 'local,path={},security_model=none,multidevs=remap,mount_tag=system,readonly'.format(
             sp)
         print("\nsystem partition at:\n\t{}".format(sp))
         print("Kernel arguments:\n\t{}".format(kernel_arguments))
