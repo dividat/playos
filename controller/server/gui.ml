@@ -45,9 +45,7 @@ let page identifier page_values =
   >>= index_with_menu_flag
   >|= Response.of_string_body
 
-let success msg =
-  msg
-  |> index
+let success = index
 
 (* Pretty error printing middleware *)
 let error_handling =
@@ -271,17 +269,15 @@ module NetworkGui = struct
       ]
 
   (** Helper to find a service by id *)
-  let find_service ~connman id =
-    let open Connman in
-    Connman.Manager.get_services connman
-    >|= List.find_opt (fun (s:Service.t) -> s.id = id)
+  let with_service ~connman id =
+    let%lwt services = Connman.Manager.get_services connman in
+    match List.find_opt (fun s -> s.Service.id = id) services with
+    | Some s -> return s
+    | None -> fail_with (Format.sprintf "Service does not exist (%s)" id)
 
   (** Connect to a service *)
   let connect ~(connman:Connman.Manager.t) req =
-    let service_id = param req "id" in
-    let%lwt form_data =
-      urlencoded_pairs_of_body req
-    in
+    let%lwt form_data = urlencoded_pairs_of_body req in
     let input =
       match form_data |> List.assoc_opt "passphrase" with
       | Some [ passphrase ] ->
@@ -289,23 +285,14 @@ module NetworkGui = struct
       | _ ->
         Connman.Agent.None
     in
-    match%lwt find_service ~connman service_id with
-    | None ->
-      fail_with (Format.sprintf "Service does not exist (%s)" service_id)
-    | Some service ->
-      Connman.Service.connect ~input service
-      >|= (fun () -> Format.sprintf "Connected with %s." service.name)
-      >>= success
+    let%lwt service = with_service ~connman (param req "id") in
+    let%lwt () = Connman.Service.connect ~input service in
+    success (Format.sprintf "Connected with %s." service.name)
 
   let remove ~(connman:Connman.Manager.t) req =
-    let service_id = param req "id" in
-    match%lwt find_service ~connman service_id with
-    | None ->
-      fail_with (Format.sprintf "Service does not exist (%s)" service_id)
-    | Some service ->
-      Connman.Service.remove service
-      >|= (fun () -> Format.sprintf "Removed service %s." service.name)
-      >>= success
+    let%lwt service = with_service ~connman (param req "id") in
+    let%lwt () = Connman.Service.remove service in
+    success (Format.sprintf "Removed service %s." service.name)
 
   let build
       ~(connman:Connman.Manager.t)
