@@ -33,8 +33,3 @@ let write_to_file log_src path str =
       (fun m -> m "failed to write to %s: %s" path (Unix.error_message err))
     in
     Lwt.return false
-
-let from_maybe default maybe =
-  match maybe with
-    | Some v -> v
-    | None -> default

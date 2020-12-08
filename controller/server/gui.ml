@@ -97,10 +97,6 @@ module LocalizationGui = struct
   let overview req =
     let%lwt td_daemon = Timedate.daemon () in
     let%lwt current_timezone = Timedate.get_configured_timezone () in
-    let is_some = function
-      | Some _ -> true
-      | None -> false
-    in
     let is_some_thing thing = function
       | Some other -> String.equal other thing
       | None -> false
@@ -188,10 +184,10 @@ module LocalizationGui = struct
     in
     page "localization"
       [ "timezone_groups", tz_groups
-      ; "is_timezone_set", Ezjsonm.bool (is_some current_timezone)
+      ; "is_timezone_set", Ezjsonm.bool (Option.is_some current_timezone)
       ; "langs", langs
-      ; "is_lang_set", Ezjsonm.bool (is_some current_lang)
-      ; "is_keymap_set", Ezjsonm.bool (is_some current_keymap)
+      ; "is_lang_set", Ezjsonm.bool (Option.is_some current_lang)
+      ; "is_keymap_set", Ezjsonm.bool (Option.is_some current_keymap)
       ; "keymaps", keymaps
       ]
 
@@ -425,7 +421,7 @@ module ChangelogGui = struct
     |> get "/changelog" (fun _ ->
         let%lwt changelog = Util.read_from_file log_src (resource_path (Fpath.v "Changelog.html")) in
         page "changelog" [
-          "changelog", changelog |> Util.from_maybe "" |> Ezjsonm.string
+          "changelog", changelog |> Option.value ~default:"" |> Ezjsonm.string
         ])
 end
 
