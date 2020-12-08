@@ -11,9 +11,12 @@ class BrowserWidget(QWebEngineView):
     def __init__(self, url, *args, **kwargs):
         QWebEngineView.__init__(self, *args, **kwargs)
 
-        self._page = QWebEnginePage(get_profile())
-        self.setPage(self._page)
-        self.load(url)
+        self.page().profile().setHttpUserAgent(user_agent_with_system(
+            user_agent = self.page().profile().httpUserAgent(),
+            system_name = system.NAME,
+            system_version = system.VERSION
+        ))
+        self.page().setUrl(url)
 
         # Shortcut to manually reload
         self.reload_shortcut = QShortcut('CTRL+R', self)
@@ -35,20 +38,11 @@ class BrowserWidget(QWebEngineView):
         self.setSizePolicy(policy)
 
     def load(self, url):
-        self._page.setUrl(url)
+        self.page().setUrl(url)
 
     def _load_finished(self, success):
         if not success:
             QTimer.singleShot(5000, self.reload)
-
-def get_profile():
-    profile = QWebEngineProfile.defaultProfile()
-    profile.setHttpUserAgent(user_agent_with_system(
-        user_agent = profile.httpUserAgent(),
-        system_name = system.NAME,
-        system_version = system.VERSION
-    ))
-    return profile
 
 def user_agent_with_system(user_agent, system_name, system_version):
     """Inject a specific system into a user agent string"""

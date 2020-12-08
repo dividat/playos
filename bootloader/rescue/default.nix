@@ -59,10 +59,6 @@ let
 in
 (nixos {
   configuration = {config,...}: {
-    imports = [
-      (importFromNixos "modules/profiles/minimal.nix")
-    ];
-
     # disable installation of bootloader
     boot.loader.grub.enable = false;
 

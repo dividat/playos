@@ -27,8 +27,6 @@ python3Packages.buildPythonApplication rec {
     qtbase
     qtwebengine
     glib-networking
-    gst-plugins-base gst-plugins-good
-    gst-plugins-bad gst-plugins-ugly gst_all_1.gst-libav
   ];
 
   nativeBuildInputs = [
