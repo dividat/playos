@@ -16,6 +16,6 @@
 (library
  (name network)
  (modules network)
- (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman systemd)
+ (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman systemd curl)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 

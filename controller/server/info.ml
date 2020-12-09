@@ -82,4 +82,3 @@ let get () =
   ; local_time
   }
   |> return
-

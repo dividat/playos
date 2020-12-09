@@ -34,28 +34,17 @@ let semver_of_string string =
     version, trimmed_string
 
 (** Get latest version available at [url] *)
-let get_latest_version url =
-  let open Cohttp in
-  let open Cohttp_lwt_unix in
-  let%lwt response,body = try
-      Client.get (Uri.of_string (url ^ "latest"))
-    with
-    | exn -> Lwt.fail exn
-  in
-  let status = response |> Response.status  in
-  let%lwt version_string =
-    match status |> Code.code_of_status |> Code.is_success with
-    | true -> body |> Cohttp_lwt.Body.to_string
-    | false -> Lwt.fail_with (status|> Code.string_of_status)
-  in
-  version_string
-  |> semver_of_string
-  |> return
+let get_latest_version ~proxy url =
+  match%lwt Curl.request ?proxy (Uri.of_string (url ^ "latest")) with
+  | RequestSuccess (_, body) ->
+      return (semver_of_string body)
+  | RequestFailure error ->
+      Lwt.fail_with (Printf.sprintf "could not get latest version (%s)" (Curl.pretty_print_error error))
 
 (** Get version information *)
-let get_version_info url rauc =
+let get_version_info ~proxy url rauc =
   (
-    let%lwt latest = get_latest_version url in
+    let%lwt latest = get_latest_version ~proxy url in
     let%lwt rauc_status = Rauc.get_status rauc in
 
     let system_a_version = rauc_status.a.version |> semver_of_string in
@@ -81,33 +70,20 @@ let latest_download_url ~update_url version_string =
   Format.sprintf "%s%s/%s" update_url version_string bundle
 
 (** download RAUC bundle *)
-let download ~url ~version =
+let download ?proxy url version =
   let bundle = Format.sprintf "playos-%s.raucb" version in
   let bundle_path = Format.sprintf "/tmp/%s" bundle in
-  let command =
-    "/run/current-system/sw/bin/curl",
-    [| "curl"; url
-     (* resume download *)
-     ; "-C"; "-"
-     (* limit download speed *)
-     ; "--limit-rate"; "10M"
-     ; "-o"; bundle_path |]
+  let options =
+    [ "--continue-at"; "-" (* resume download *)
+    ; "--limit-rate"; "10M"
+    ; "--output"; bundle_path
+    ]
   in
-  let%lwt () =
-    Logs_lwt.debug (fun m -> m "download command: %s" (command |> snd |> Array.to_list |> String.concat " "))
-  in
-  match%lwt Lwt_process.exec
-              ~stdout:`Dev_null
-              ~stderr:`Dev_null
-              command with
-  | Unix.WEXITED 0 ->
-    return bundle_path
-  | Unix.WEXITED exit_code ->
-    Lwt.fail_with
-      (Format.sprintf "could not download RAUC bundle (exit code: %d)" exit_code)
-  | _ ->
-    Lwt.fail_with "could not download RAUC bundle"
-
+  match%lwt Curl.request ?proxy ~options url with
+  | RequestSuccess _ ->
+      return bundle_path
+  | RequestFailure error ->
+      Lwt.fail_with (Printf.sprintf "could not download RAUC bundle (%s)" (Curl.pretty_print_error error))
 
 (* Update mechanism process *)
 
@@ -129,16 +105,16 @@ type state =
 
 
 (** Finite state machine handling updates *)
-let rec run ~update_url ~rauc ~set_state =
+let rec run ~proxy ~update_url ~rauc ~set_state =
   (* Helper to update state in signal and advance state machine *)
   let set state =
-    set_state state; run ~update_url ~rauc ~set_state state
+    set_state state; run ~proxy ~update_url ~rauc ~set_state state
   in
   function
   | GettingVersionInfo ->
     (* get version information and decide what to do *)
     begin
-      match%lwt get_version_info update_url rauc with
+      match%lwt get_version_info ~proxy update_url rauc with
       | Ok version_info ->
 
         (* Compare latest available version to version booted. *)
@@ -209,7 +185,7 @@ let rec run ~update_url ~rauc ~set_state =
 
   | Downloading {url; version} ->
     (* download latest version *)
-    (match%lwt download url version |> Lwt_result.catch with
+    (match%lwt download ?proxy (Uri.of_string url) version |> Lwt_result.catch with
      | Ok bundle_path ->
        Installing bundle_path
        |> set
@@ -264,7 +240,7 @@ let rec run ~update_url ~rauc ~set_state =
     set GettingVersionInfo
 
 
-let start ~(rauc:Rauc.t) ~(update_url:string) =
+let start ~proxy ~(rauc:Rauc.t) ~(update_url:string) =
   let state_s, set_state = Lwt_react.S.create GettingVersionInfo in
   let () = Logs.info ~src:log_src (fun m -> m "update URL: %s" update_url) in
-  state_s, run ~update_url ~rauc ~set_state GettingVersionInfo
+  state_s, run ~proxy ~update_url ~rauc ~set_state GettingVersionInfo

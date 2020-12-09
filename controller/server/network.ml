@@ -58,25 +58,24 @@ struct
     | NotConnected of string
   [@@deriving sexp]
 
-  let http_check () =
-    let open Cohttp in
-    let open Cohttp_lwt_unix in
-    let%lwt () = Logs_lwt.debug ~src:log_src (fun m -> m "checking internet connectivity with HTTP.") in
-    match%lwt
-      Client.get (Uri.of_string "http://captive.dividat.com/")
-      |> Lwt_result.catch
-    with
-
-    | Ok (resp, _) ->
-      if Response.status resp = `OK then
+  let http_check ~proxy =
+    let%lwt () = Logs_lwt.debug ~src:log_src
+      (fun m -> m "checking internet connectivity with HTTP.") in
+    match%lwt Curl.request ?proxy (Uri.of_string "http://captive.dividat.com/") with
+    | RequestSuccess (200, _) ->
         return Connected
-      else
+
+    | RequestSuccess _ ->
         return (NotConnected "Captive portal login required")
 
-    | Error exn ->
-      NotConnected (Printexc.to_string exn) |> return
+    | RequestFailure (UnsuccessfulStatus _) ->
+        return (NotConnected "Captive portal login required")
+
+    | RequestFailure error ->
+        NotConnected (Curl.pretty_print_error error) |> return
 
   let rec check_loop
+      ~proxy
       ~update_state
       ~(network_change:unit Lwt_react.E.t)
       ~(retry_timeout:float)
@@ -91,12 +90,12 @@ struct
     in
 
     (* get new state *)
-    let%lwt new_state = http_check () in
+    let%lwt new_state = http_check ~proxy in
 
     (* helper to update and set timeout *)
     let update timeout s =
       update_state s;
-      check_loop ~update_state ~network_change ~retry_timeout:timeout
+      check_loop ~proxy ~update_state ~network_change ~retry_timeout:timeout
     in
 
     match new_state with
@@ -110,7 +109,7 @@ struct
       (* this should never happen *)
       update 5. new_state
 
-  let get connman =
+  let get ~proxy connman =
     let open Lwt_react in
     let%lwt network_change =
       Connman.Manager.get_services_signal connman
@@ -118,7 +117,7 @@ struct
       >|= E.map ignore (* don't care how the services changed *)
     in
     let state, update_state = S.create (Pending) in
-    return (state, check_loop ~update_state ~network_change  ~retry_timeout:5.0)
+    return (state, check_loop ~proxy ~update_state ~network_change  ~retry_timeout:5.0)
 
   let is_connected = function
     | Pending -> false

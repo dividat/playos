@@ -60,7 +60,7 @@ let main debug port =
   in
 
   (* Get Internet state *)
-  let%lwt internet, internet_p = Network.Internet.get connman in
+  let%lwt internet, internet_p = Network.Internet.get connman ~proxy in
 
   (* Log changes to Internet state *)
   let%lwt () =
@@ -75,7 +75,7 @@ let main debug port =
   in
 
   (* Start the update mechanism *)
-  let update_s, update_p = Update.start ~rauc ~update_url:Info.update_url in
+  let update_s, update_p = Update.start ~proxy ~rauc ~update_url:Info.update_url in
 
   (* Log changes in update mechanism state *)
   let%lwt () =
