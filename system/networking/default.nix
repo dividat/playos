@@ -45,19 +45,11 @@
         # Default is 2.
         bss_expiration_scan_count=1000
       '';
-
-      # Issue 1: Add a dummy network to make sure wpa_supplicant.conf
-      # is created (see https://github.com/NixOS/nixpkgs/issues/23196)
-      networks."12345-i-do-not-exist"= {
-        extraConfig = ''
-          disabled=1
-        '';
-      };
     };
   };
-  # Issue 2: Make sure connman starts after wpa_supplicant
+  # Issue 1: Make sure connman starts after wpa_supplicant
   systemd.services."connman".after = [ "wpa_supplicant.service" ];
-  # Issue 3: Restart wpa_supplicant (and thereby connman) after rfkill unblock of wlan
+  # Issue 2: Restart wpa_supplicant (and thereby connman) after rfkill unblock of wlan
   #          This addresses the problem of wpa_supplicant with connman not seeing any
   #          networks if wlan was initially soft blocked. (https://01.org/jira/browse/CM-670)
   services.udev.packages = [ pkgs.rfkill_udev ];

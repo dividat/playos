@@ -54,8 +54,6 @@ with lib;
     # enable wpa_supplicant
     wireless = {
       enable = true;
-      # Add a dummy network to make sure that wpa_supplicant.conf is created (see https://github.com/NixOS/nixpkgs/issues/23196)
-      networks."12345-i-do-not-exist"= {};
     };
   };
 
