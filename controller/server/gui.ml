@@ -272,9 +272,9 @@ module NetworkGui = struct
       if after_restart_proxy <> proxy then
         Some (match after_restart_proxy with
         | Some p ->
-            [ "Please restart the computer to have proxy configured as "
+            [ "Please restart the computer to have proxy configured as '"
             ; Proxy.to_string ~hide_password:true p
-            ; "."
+            ; "'."
             ] |> String.concat ""
         | None -> "Please restart the computer to disable proxy.")
       else
@@ -320,7 +320,7 @@ module NetworkGui = struct
     else
       match Proxy.validate proxy_str with
       | Some proxy -> return (Some proxy)
-      | None -> fail_with (Format.sprintf "Proxy '%s' is not valid." proxy_str)
+      | None -> fail_with (Format.sprintf "'%s' is not a valid proxy. It should be in the form 'http://user:password@host:port'." proxy_str)
 
   (** Connect to a service *)
   let connect ~(connman:Connman.Manager.t) req =

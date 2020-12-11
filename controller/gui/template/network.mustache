@@ -59,8 +59,10 @@
                             <div class="d-Network__Label">
                               <label for="{{id}}-proxy">Proxy</label>
                             </div>
-                            <input type="text" id="{{id}}-proxy" class="d-Input d-Network__Input" name="proxy" placeholder="http://user:password@host:port">
-                            <p class="d-Network__Note">Note that proxy change requires a restart.</p>
+                            <input type="text" id="{{id}}-proxy" class="d-Input d-Network__Input" name="proxy">
+                            <p class="d-Network__Note">
+                                URL in the form <em class="d-Code">http://user:password@host:port</em>
+                            </p>
                           </div>
                         </details>
 
@@ -83,7 +85,7 @@
 
                             <div class="d-Network__ProxyForm">
                                 <form action="/network/{{id}}/proxy/update" method="post" class="d-Network__ProxyUpdate">
-                                    <input type="text" id="{{id}}-proxy" class="d-Input d-Network__Input" name="proxy" value="{{proxy}}" placeholder="http://user:password@host:port">
+                                    <input type="text" id="{{id}}-proxy" class="d-Input d-Network__Input" name="proxy" value="{{proxy}}">
                                     <input type="submit" class="d-Button" value="Update">
                                 </form>
 
@@ -94,7 +96,9 @@
                                 {{/has_proxy}}
                             </div>
 
-                            <p class="d-Network__Note">Note that proxy change requires a restart.</p>
+                            <p class="d-Network__Note">
+                                URL in the form <em class="d-Code">http://user:password@host:port</em>
+                            </p>
                         </div>
                     </details>
                 {{/connected}}

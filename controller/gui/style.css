@@ -104,7 +104,6 @@
 
 .d-Network__Label {
     padding-bottom: 0.5rem;
-    font-size: 1.2rem;
 }
 
 .d-Network__ProxyForm {
@@ -131,8 +130,8 @@
 }
 
 .d-Network__Note {
-    font-style: italic;
     font-size: 80%;
+    color: #404040;
     margin-bottom: 1rem;
 }
 
@@ -268,4 +267,13 @@
     text-decoration: none;
     cursor: text;
     color: black;
+}
+
+.d-Code {
+    font-style: normal;
+    background-color: #F1F1F1;
+    color: #606060;
+    border: 0.1rem solid #E1E1E1;
+    border-radius: 0.4rem;
+    padding: 0.2rem 0.5rem;
 }
