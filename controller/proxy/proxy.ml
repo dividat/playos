@@ -29,7 +29,7 @@ let validate str =
   else
     None
 
-let to_string ?(hide_password = false) t =
+let to_string ~hide_password t =
   [ "http://"
   ; (match t.credentials with
     | Some credentials ->

@@ -25,7 +25,7 @@ val validate : string -> t option
       - http://127.0.0.1:1234.
       - http://user:password@host.com:8888.*)
 
-val to_string : ?hide_password:bool -> t -> string
+val to_string : hide_password:bool -> t -> string
 (** [to_string t] returns a string from [t].
 
     if [hide_password] is true, the password is replaced by a fixed number of

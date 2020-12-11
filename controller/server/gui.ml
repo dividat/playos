@@ -341,7 +341,7 @@ module NetworkGui = struct
       let%lwt () = Connman.Service.set_direct_proxy service in
       success (Format.sprintf "Connected with %s." service.name)
     | Some proxy ->
-      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string proxy) in
+      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
       success (Format.sprintf
         "Connected with %s and proxy '%s'. The proxy will only be used after a restart."
         service.name
@@ -355,7 +355,7 @@ module NetworkGui = struct
     | None ->
       fail_with "Proxy must not be empty."
     | Some proxy ->
-      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string proxy) in
+      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
       redirect' (Uri.of_string "/network")
 
   (** Remove the proxy of a service *)

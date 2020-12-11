@@ -65,7 +65,11 @@ let request ?proxy ?(headers = []) ?data ?(options = []) url =
          ; "--write-out"; Char.escaped http_code_marker ^ "%{http_code}"
         |]
       ; (match proxy with
-        | Some p -> [| "--proxy" ; Proxy.to_string p; "--proxy-anyauth" |]
+        | Some p ->
+            [| "--proxy"
+            ;  Proxy.to_string ~hide_password:false p
+            ;  "--proxy-anyauth"
+            |]
         | None -> [| |])
       ; (headers
           |> List.map (fun (k, v) -> [| "--header"; (k ^ ":" ^ v) |])
