@@ -88,9 +88,11 @@
                                     <input type="submit" class="d-Button" value="Update">
                                 </form>
 
-                                <form action="/network/{{id}}/proxy/remove" method="post">
-                                    <input type="submit" class="d-Button" value="Remove">
-                                </form>
+                                {{#has_proxy}}
+                                    <form action="/network/{{id}}/proxy/remove" method="post">
+                                        <input type="submit" class="d-Button" value="Remove">
+                                    </form>
+                                {{/has_proxy}}
                             </div>
 
                             <p class="d-Network__Note">Note that proxy change requires a restart.</p>

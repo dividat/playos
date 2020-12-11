@@ -354,6 +354,7 @@ struct
     ; "proxy", (match s.proxy with
       | Some p -> p
       | None -> "") |> Ezjsonm.string
+    ; "has_proxy", Option.is_some s.proxy |> Ezjsonm.bool
     ]
 
   let set_property service ~name ~value =
