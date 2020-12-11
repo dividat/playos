@@ -8,9 +8,8 @@
     {{#has_proxy_infos}}
         <dt class="d-Definitions__Term">Proxy</dt>
         <dd class="d-Definitions__Description">
-            {{#proxy_infos}}
-                <div>{{line}}</div>
-            {{/proxy_infos}}
+            {{proxy}}
+            <div class="d-Network__Note">{{proxy_restart_note}}</div>
         </dd>
     {{/has_proxy_infos}}
 

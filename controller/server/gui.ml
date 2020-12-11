@@ -268,24 +268,32 @@ module NetworkGui = struct
             None)
     in
 
-    let proxy_infos =
-      [ proxy |> Option.map (Proxy.to_string ~hide_password:true)
-      ; (if after_restart_proxy <> proxy then
-          (match after_restart_proxy with
-          | Some p -> Some ("after restart: " ^ (Proxy.to_string ~hide_password:true p))
-          | None -> Some "after restart: removed")
-        else
-          None)
-      ]
-      |> Base.List.concat_map ~f:Option.to_list
+    let proxy_restart_note =
+      if after_restart_proxy <> proxy then
+        Some (match after_restart_proxy with
+        | Some p ->
+            [ "Please restart the computer to have proxy configured as "
+            ; Proxy.to_string ~hide_password:true p
+            ; "."
+            ] |> String.concat ""
+        | None -> "Please restart the computer to disable proxy.")
+      else
+        None
     in
 
     page "network"
       [
         "internet_connected", internet_connected |> Ezjsonm.bool
-      ; "has_proxy_infos", not (Base.List.is_empty proxy_infos) |> Ezjsonm.bool
-      ; "proxy_infos", proxy_infos |> Ezjsonm.list (fun line ->
-          Ezjsonm.dict [ "line", Ezjsonm.string line ])
+      ; "has_proxy_infos",
+          (Option.is_some proxy || Option.is_some proxy_restart_note)
+            |> Ezjsonm.bool
+      ; "proxy", proxy
+          |> Option.map (Proxy.to_string ~hide_password:true)
+          |> Option.value ~default:""
+          |> Ezjsonm.string
+      ; "proxy_restart_note", proxy_restart_note
+          |> Option.value ~default:""
+          |> Ezjsonm.string
       ; "services", services |> Ezjsonm.list (fun s ->
           s
           |> blur_service_proxy_password
