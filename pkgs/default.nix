@@ -12,6 +12,8 @@ let
     patches = [
       # Fixed on *master* but not on *nixos-20.09*, as of 2020/11/30
       ./patches/fix-lvm2-warnings-on-activation.patch
+      # Fix from unmerged PR as of 2020/12/14: https://github.com/NixOS/nixpkgs/pull/104722
+      ./patches/fix-wpa_supplicant-udev-restart.patch
     ];
   };
 
