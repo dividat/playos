@@ -10,15 +10,13 @@ from kiosk_browser import system
 
 class BrowserWidget(QWebEngineView):
 
-    def __init__(self, url, proxy, *args, **kwargs):
+    def __init__(self, url, get_current_proxy, *args, **kwargs):
         QWebEngineView.__init__(self, *args, **kwargs)
 
         # Authenticate proxies
-        proxy_url = urllib.parse.urlparse(proxy)
-        if proxy_url.username != None and proxy_url.password != None:
-            self.page().proxyAuthenticationRequired.connect(
-                lambda url, auth, proxyHost: self._proxy_auth(
-                    proxy_url.username, proxy_url.password, url, auth, proxyHost))
+        self.page().proxyAuthenticationRequired.connect(
+            lambda url, auth, proxyHost: self._proxy_auth(
+                get_current_proxy, url, auth, proxyHost))
 
         # Override user agent
         self.page().profile().setHttpUserAgent(user_agent_with_system(
@@ -59,10 +57,14 @@ class BrowserWidget(QWebEngineView):
         if not success:
             QTimer.singleShot(5000, self.reload)
 
-    def _proxy_auth(self, username, password, url, auth, proxyHost):
-        logging.info(f"Authenticating proxy")
-        auth.setUser(username)
-        auth.setPassword(password)
+    def _proxy_auth(self, get_current_proxy, url, auth, proxyHost):
+        proxy = get_current_proxy()
+        if proxy is not None and proxy.username is not None and proxy.password is not None:
+            logging.info("Authenticating proxy")
+            auth.setUser(proxy.username)
+            auth.setPassword(proxy.password)
+        else:
+            logging.info("Ignoring proxy authentication")
 
 def user_agent_with_system(user_agent, system_name, system_version):
     """Inject a specific system into a user agent string"""
