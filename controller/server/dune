@@ -1,7 +1,7 @@
 (executable
  (name server)
  (public_name playos-controller)
- (modules server update info gui health connman_proxy)
+ (modules server update info gui health)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium tyxml mustache
   rauc zerotier connman locale network timedate systemd label_printer
@@ -16,6 +16,7 @@
 (library
  (name network)
  (modules network)
- (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman systemd curl)
+ (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman systemd curl
+  proxy)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 

@@ -105,14 +105,17 @@ type state =
 
 
 (** Finite state machine handling updates *)
-let rec run ~proxy ~update_url ~rauc ~set_state =
+let rec run ~connman ~update_url ~rauc ~set_state =
   (* Helper to update state in signal and advance state machine *)
   let set state =
-    set_state state; run ~proxy ~update_url ~rauc ~set_state state
+    set_state state; run ~connman ~update_url ~rauc ~set_state state
   in
   function
   | GettingVersionInfo ->
     (* get version information and decide what to do *)
+    let%lwt proxy =
+      Connman.Manager.get_services connman >|= Proxy.from_connected_service
+  in
     begin
       match%lwt get_version_info ~proxy update_url rauc with
       | Ok version_info ->
@@ -185,6 +188,9 @@ let rec run ~proxy ~update_url ~rauc ~set_state =
 
   | Downloading {url; version} ->
     (* download latest version *)
+    let%lwt proxy =
+      Connman.Manager.get_services connman >|= Proxy.from_connected_service
+    in
     (match%lwt download ?proxy (Uri.of_string url) version |> Lwt_result.catch with
      | Ok bundle_path ->
        Installing bundle_path
@@ -240,7 +246,7 @@ let rec run ~proxy ~update_url ~rauc ~set_state =
     set GettingVersionInfo
 
 
-let start ~proxy ~(rauc:Rauc.t) ~(update_url:string) =
+let start ~connman ~(rauc:Rauc.t) ~(update_url:string) =
   let state_s, set_state = Lwt_react.S.create GettingVersionInfo in
   let () = Logs.info ~src:log_src (fun m -> m "update URL: %s" update_url) in
-  state_s, run ~proxy ~update_url ~rauc ~set_state GettingVersionInfo
+  state_s, run ~connman ~update_url ~rauc ~set_state GettingVersionInfo

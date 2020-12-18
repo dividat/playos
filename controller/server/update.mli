@@ -26,4 +26,4 @@ type state =
   | ReinstallRequired
 [@@deriving sexp]
 
-val start : proxy: Proxy.t option -> rauc:Rauc.t -> update_url:string -> state Lwt_react.signal * unit Lwt.t
+val start : connman:Connman.Manager.t -> rauc:Rauc.t -> update_url:string -> state Lwt_react.signal * unit Lwt.t

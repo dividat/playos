@@ -236,7 +236,6 @@ module NetworkGui = struct
 
   let overview
       ~(connman:Manager.t)
-      ~(proxy:Proxy.t option)
       ~(internet:Internet.state Lwt_react.S.t)
       req =
 
@@ -253,45 +252,20 @@ module NetworkGui = struct
       >|= List.filter (fun s -> not internet_connected || s |> Service.is_connected)
     in
 
+    let proxy = Proxy.from_connected_service services in
+
     let blur_service_proxy_password s =
       let open Service in
       let blur p = Proxy.validate p |> Option.map (Proxy.to_string ~hide_password:true) in
       { s with proxy = s.proxy |> Base.Fn.flip Option.bind blur }
     in
 
-    let after_restart_proxy =
-      services
-      |> List.find_map (fun s ->
-          if s.Service.autoconnect then
-            Option.bind s.Service.proxy Proxy.validate
-          else
-            None)
-    in
-
-    let proxy_restart_note =
-      if after_restart_proxy <> proxy then
-        Some (match after_restart_proxy with
-        | Some p ->
-            [ "Please restart the computer to have proxy configured as '"
-            ; Proxy.to_string ~hide_password:true p
-            ; "'."
-            ] |> String.concat ""
-        | None -> "Please restart the computer to disable proxy.")
-      else
-        None
-    in
-
     page "network"
       [
         "internet_connected", internet_connected |> Ezjsonm.bool
-      ; "has_proxy_infos",
-          (Option.is_some proxy || Option.is_some proxy_restart_note)
-            |> Ezjsonm.bool
+      ; "has_proxy", Option.is_some proxy |> Ezjsonm.bool
       ; "proxy", proxy
           |> Option.map (Proxy.to_string ~hide_password:true)
-          |> Option.value ~default:""
-          |> Ezjsonm.string
-      ; "proxy_restart_note", proxy_restart_note
           |> Option.value ~default:""
           |> Ezjsonm.string
       ; "services", services |> Ezjsonm.list (fun s ->
@@ -343,7 +317,7 @@ module NetworkGui = struct
     | Some proxy ->
       let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
       success (Format.sprintf
-        "Connected with %s and proxy '%s'. The proxy will only be used after a restart."
+        "Connected with %s and proxy '%s'."
         service.name
         (Proxy.to_string ~hide_password:true proxy))
 
@@ -372,11 +346,10 @@ module NetworkGui = struct
 
   let build
       ~(connman:Connman.Manager.t)
-      ~(proxy:Proxy.t option)
       ~(internet:Network.Internet.state Lwt_react.S.t)
       app =
     app
-    |> get "/network" (overview ~connman ~proxy ~internet)
+    |> get "/network" (overview ~connman ~internet)
     |> post "/network/:id/connect" (connect ~connman)
     |> post "/network/:id/proxy/update" (update_proxy ~connman)
     |> post "/network/:id/proxy/remove" (remove_proxy ~connman)
@@ -491,7 +464,7 @@ module ChangelogGui = struct
         ])
 end
 
-let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~proxy ~internet app =
+let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
   app
   |> middleware (static ())
   |> middleware error_handling
@@ -505,15 +478,15 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~proxy ~internet app =
     )
 
   |> InfoGui.build
-  |> NetworkGui.build ~connman ~proxy ~internet
+  |> NetworkGui.build ~connman ~internet
   |> LocalizationGui.build
   |> LabelGui.build
   |> StatusGui.build ~health_s ~update_s ~rauc
   |> ChangelogGui.build
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
-let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman ~proxy ~internet =
+let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman ~internet =
   empty
   |> Opium.App.port port
-  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~proxy ~internet
+  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet
   |> start

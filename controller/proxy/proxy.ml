@@ -45,3 +45,12 @@ let to_string ~hide_password t =
   ; string_of_int t.port
   ]
   |> String.concat ""
+
+let from_connected_service services =
+  let open Connman.Service in
+  services
+  |> List.find_map (fun s ->
+    if s.state = Ready || s.state = Online then
+      Option.bind s.proxy validate
+    else
+      None)

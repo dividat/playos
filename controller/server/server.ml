@@ -51,16 +51,8 @@ let main debug port =
   (* Connect with ConnMan *)
   let%lwt connman = Connman.Manager.connect () in
 
-  let%lwt proxy = Connman_proxy.get () in
-
-  let%lwt () =
-    match proxy with
-    | Some p -> Logs_lwt.info (fun m -> m "proxy: %s" (Proxy.to_string ~hide_password:true p))
-    | None -> Logs_lwt.info (fun m -> m "proxy: none")
-  in
-
   (* Get Internet state *)
-  let%lwt internet, internet_p = Network.Internet.get connman ~proxy in
+  let%lwt internet, internet_p = Network.Internet.get ~connman in
 
   (* Log changes to Internet state *)
   let%lwt () =
@@ -75,7 +67,7 @@ let main debug port =
   in
 
   (* Start the update mechanism *)
-  let update_s, update_p = Update.start ~proxy ~rauc ~update_url:Info.update_url in
+  let update_s, update_p = Update.start ~connman ~rauc ~update_url:Info.update_url in
 
   (* Log changes in update mechanism state *)
   let%lwt () =
@@ -96,7 +88,6 @@ let main debug port =
       ~shutdown
       ~rauc
       ~connman
-      ~proxy
       ~internet
       ~update_s
       ~health_s

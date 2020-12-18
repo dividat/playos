@@ -58,9 +58,12 @@ struct
     | NotConnected of string
   [@@deriving sexp]
 
-  let http_check ~proxy =
+  let http_check ~connman =
     let%lwt () = Logs_lwt.debug ~src:log_src
       (fun m -> m "checking internet connectivity with HTTP.") in
+    let%lwt proxy =
+      Connman.Manager.get_services connman >|= Proxy.from_connected_service
+    in
     match%lwt Curl.request ?proxy (Uri.of_string "http://captive.dividat.com/") with
     | RequestSuccess (200, _) ->
         return Connected
@@ -75,7 +78,7 @@ struct
         NotConnected (Curl.pretty_print_error error) |> return
 
   let rec check_loop
-      ~proxy
+      ~connman
       ~update_state
       ~(network_change:unit Lwt_react.E.t)
       ~(retry_timeout:float)
@@ -90,12 +93,12 @@ struct
     in
 
     (* get new state *)
-    let%lwt new_state = http_check ~proxy in
+    let%lwt new_state = http_check ~connman in
 
     (* helper to update and set timeout *)
     let update timeout s =
       update_state s;
-      check_loop ~proxy ~update_state ~network_change ~retry_timeout:timeout
+      check_loop ~connman ~update_state ~network_change ~retry_timeout:timeout
     in
 
     match new_state with
@@ -109,7 +112,7 @@ struct
       (* this should never happen *)
       update 5. new_state
 
-  let get ~proxy connman =
+  let get ~connman =
     let open Lwt_react in
     let%lwt network_change =
       Connman.Manager.get_services_signal connman
@@ -117,7 +120,7 @@ struct
       >|= E.map ignore (* don't care how the services changed *)
     in
     let state, update_state = S.create (Pending) in
-    return (state, check_loop ~proxy ~update_state ~network_change  ~retry_timeout:5.0)
+    return (state, check_loop ~connman ~update_state ~network_change  ~retry_timeout:5.0)
 
   let is_connected = function
     | Pending -> false
