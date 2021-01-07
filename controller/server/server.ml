@@ -51,21 +51,6 @@ let main debug port =
   (* Connect with ConnMan *)
   let%lwt connman = Connman.Manager.connect () in
 
-  (* Get Internet state *)
-  let%lwt internet, internet_p = Network.Internet.get ~connman in
-
-  (* Log changes to Internet state *)
-  let%lwt () =
-    Lwt_react.S.(
-      map_s (fun state -> Logs_lwt.info (fun m -> m "internet: %s"
-                                            (state
-                                             |> Network.Internet.sexp_of_state
-                                             |> Sexplib.Sexp.to_string_hum)
-                                        )) internet
-      >|= keep
-    )
-  in
-
   (* Start the update mechanism *)
   let update_s, update_p = Update.start ~connman ~rauc ~update_url:Info.update_url in
 
@@ -88,7 +73,6 @@ let main debug port =
       ~shutdown
       ~rauc
       ~connman
-      ~internet
       ~update_s
       ~health_s
   in
@@ -108,7 +92,6 @@ let main debug port =
       gui_p (* GUI *)
     ; update_p (* Update mechanism *)
     ; health_p (* Health monitoring *)
-    ; internet_p (* Internet connectivity check *)
     ]
 
 

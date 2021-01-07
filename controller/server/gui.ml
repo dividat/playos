@@ -234,25 +234,28 @@ module NetworkGui = struct
   open Connman
   open Network
 
-  let overview
-      ~(connman:Manager.t)
-      ~(internet:Internet.state Lwt_react.S.t)
-      req =
+  let overview ~(connman:Manager.t) req =
 
-    (* Check if internet is connected *)
-    let internet_connected =
-        internet
-        |> Lwt_react.S.value
-        |> Internet.is_connected
+    let%lwt all_services = Manager.get_services connman in
+
+    let proxy = Proxy.from_connected_service all_services in
+
+    let%lwt is_internet_connected =
+      [ (match%lwt Curl.request ?proxy (Uri.of_string "http://captive.dividat.com/") with
+          | RequestSuccess (200, _) -> return true
+          | _ -> return false
+        )
+      ; (match%lwt Lwt_unix.timeout 1.0 |> Lwt_result.catch with
+          | _ -> return false
+          )
+      ] |> Lwt.pick
     in
 
-    let%lwt services =
-      Manager.get_services connman
-      (* If not connected show all services, otherwise show services that are connected *)
-      >|= List.filter (fun s -> not internet_connected || s |> Service.is_connected)
+    (* If not connected show all services, otherwise show services that are connected *)
+    let showed_services =
+      all_services
+        |> List.filter (fun s -> not is_internet_connected || Service.is_connected s)
     in
-
-    let proxy = Proxy.from_connected_service services in
 
     let blur_service_proxy_password s =
       let open Service in
@@ -262,13 +265,13 @@ module NetworkGui = struct
 
     page "network"
       [
-        "internet_connected", internet_connected |> Ezjsonm.bool
+        "internet_connected", is_internet_connected |> Ezjsonm.bool
       ; "has_proxy", Option.is_some proxy |> Ezjsonm.bool
       ; "proxy", proxy
           |> Option.map (Proxy.to_string ~hide_password:true)
           |> Option.value ~default:""
           |> Ezjsonm.string
-      ; "services", services |> Ezjsonm.list (fun s ->
+      ; "services", showed_services |> Ezjsonm.list (fun s ->
           s
           |> blur_service_proxy_password
           |> Service.to_json
@@ -323,6 +326,7 @@ module NetworkGui = struct
 
   (** Update the proxy of a service *)
   let update_proxy ~(connman:Connman.Manager.t) req =
+
     let%lwt form_data = urlencoded_pairs_of_body req in
     let%lwt service = with_service ~connman (param req "id") in
     match%lwt with_empty_or_valid_proxy form_data with
@@ -344,12 +348,9 @@ module NetworkGui = struct
     let%lwt () = Connman.Service.remove service in
     success (Format.sprintf "Removed service %s." service.name)
 
-  let build
-      ~(connman:Connman.Manager.t)
-      ~(internet:Network.Internet.state Lwt_react.S.t)
-      app =
+  let build ~(connman:Connman.Manager.t) app =
     app
-    |> get "/network" (overview ~connman ~internet)
+    |> get "/network" (overview ~connman)
     |> post "/network/:id/connect" (connect ~connman)
     |> post "/network/:id/proxy/update" (update_proxy ~connman)
     |> post "/network/:id/proxy/remove" (remove_proxy ~connman)
@@ -464,7 +465,7 @@ module ChangelogGui = struct
         ])
 end
 
-let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
+let routes ~shutdown ~health_s ~update_s ~rauc ~connman app =
   app
   |> middleware (static ())
   |> middleware error_handling
@@ -478,15 +479,15 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
     )
 
   |> InfoGui.build
-  |> NetworkGui.build ~connman ~internet
+  |> NetworkGui.build ~connman
   |> LocalizationGui.build
   |> LabelGui.build
   |> StatusGui.build ~health_s ~update_s ~rauc
   |> ChangelogGui.build
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
-let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman ~internet =
+let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman =
   empty
   |> Opium.App.port port
-  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet
+  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman
   |> start
