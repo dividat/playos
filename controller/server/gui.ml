@@ -326,7 +326,6 @@ module NetworkGui = struct
 
   (** Update the proxy of a service *)
   let update_proxy ~(connman:Connman.Manager.t) req =
-
     let%lwt form_data = urlencoded_pairs_of_body req in
     let%lwt service = with_service ~connman (param req "id") in
     match%lwt with_empty_or_valid_proxy form_data with
@@ -334,13 +333,16 @@ module NetworkGui = struct
       fail_with "Proxy must not be empty."
     | Some proxy ->
       let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
-      redirect' (Uri.of_string "/network")
+      success (Format.sprintf
+        "Proxy of %s has been updated to '%s'."
+        service.name
+        (Proxy.to_string ~hide_password:true proxy))
 
   (** Remove the proxy of a service *)
   let remove_proxy ~(connman:Connman.Manager.t) req =
     let%lwt service = with_service ~connman (param req "id") in
     let%lwt () = Connman.Service.set_direct_proxy service in
-    redirect' (Uri.of_string "/network")
+    success (Format.sprintf "Proxy of %s has been removed." service.name)
 
   (** Remove a service **)
   let remove ~(connman:Connman.Manager.t) req =
