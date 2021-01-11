@@ -76,12 +76,14 @@ class Proxy():
 
         bus = dbus.SystemBus()
 
-        self._update(get_current_proxy(bus))
-
         bus.add_signal_receiver(
             handler_function = self._handler_function,
             bus_name = 'net.connman',
             member_keyword = 'PropertyChanged')
+
+        # Initialize after the monitoring is running, so that we do not miss
+        # any proxy modification.
+        self._update(get_current_proxy(bus))
 
         loop = GLib.MainLoop()
         loop.run()
