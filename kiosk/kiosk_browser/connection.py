@@ -26,7 +26,7 @@ class Connection():
         self._get_current_proxy = get_current_proxy
         self._set_captive_portal_url = set_captive_portal_url
 
-    def start_daemon(self):
+    def start_monitoring_daemon(self):
         thread = threading.Thread(target=self._check, args=[])
         thread.daemon = True
         thread.start()

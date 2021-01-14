@@ -8,6 +8,18 @@ from PyQt5.QtNetwork import QNetworkProxy
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 
+def parse_url(url):
+    if url.startswith('http://'):
+        parsed = urllib.parse.urlparse(url)
+    else:
+        parsed = urllib.parse.urlparse(f'http://{url}')
+
+    if parsed.hostname != None and parsed.port != None:
+        return parsed
+    else:
+        logging.warn(f"Hostname or port missing in proxy url")
+        return None
+
 def extract_manual_proxy(config):
     """Extract manual proxy from dbus configuration
 
@@ -23,11 +35,7 @@ def extract_manual_proxy(config):
             if 'Servers' in config:
                 servers = config['Servers']
                 if len(servers) >= 1:
-                    url = servers[0]
-                    if url.startswith('http://'):
-                        return url
-                    else:
-                        return f'http://{url}'
+                    return parse_url(servers[0])
     else:
         return None
 
@@ -61,48 +69,45 @@ def set_no_proxy_in_qt_app():
 class Proxy():
 
     def __init__(self):
-        self._proxy = None
+        DBusGMainLoop(set_as_default=True)
+        self._bus = dbus.SystemBus()
+        self._proxy = get_current_proxy(self._bus)
 
-    def start_daemon(self):
-        thread = threading.Thread(target=self._set_initial_and_monitor, args=[])
+    def start_monitoring_daemon(self):
+        """Use initial proxy in Qt application and watch for changes."""
+        self._use_in_qt_app()
+        thread = threading.Thread(target=self._monitor, args=[])
         thread.daemon = True
         thread.start()
 
-    def current(self):
+    def get_current(self):
         return self._proxy
 
-    def _set_initial_and_monitor(self):
-        DBusGMainLoop(set_as_default=True)
-
-        bus = dbus.SystemBus()
-
-        bus.add_signal_receiver(
-            handler_function = self._handler_function,
+    def _monitor(self):
+        self._bus.add_signal_receiver(
+            handler_function = self._on_property_changed,
             bus_name = 'net.connman',
             member_keyword = 'PropertyChanged')
 
-        # Initialize after the monitoring is running, so that we do not miss
-        # any proxy modification.
-        self._update(get_current_proxy(bus))
+        # Update just after monitoring is on, so that we do not miss any proxy
+        # modification that could have happen before.
+        self._update(get_current_proxy(self._bus))
 
         loop = GLib.MainLoop()
         loop.run()
 
-    def _handler_function(self, *args, **kwargs):
+    def _on_property_changed(self, *args, **kwargs):
         if len(args) >= 2 and args[0] == 'Proxy':
             self._update(extract_manual_proxy(args[1]))
 
-    def _update(self, proxy):
-        """Update proxy state and apply it in Qt application"""
-        if proxy is not None:
-            url = urllib.parse.urlparse(proxy)
-            if url.hostname != None and url.port != None:
-                self._proxy = url
-                set_proxy_in_qt_app(url.hostname, url.port)
-            else:
-                logging.info(f"Hostname or port missing in proxy url")
-                self._proxy = None
-                set_no_proxy_in_qt_app()
+    def _update(self, new_proxy):
+        """Update the proxy and use in Qt application, if the value has changed."""
+        if new_proxy != self._proxy:
+            self._proxy = new_proxy
+            self._use_in_qt_app()
+
+    def _use_in_qt_app(self):
+        if self._proxy is not None:
+            set_proxy_in_qt_app(self._proxy.hostname, self._proxy.port)
         else:
-            self._proxy = None
             set_no_proxy_in_qt_app()
