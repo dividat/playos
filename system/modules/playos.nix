@@ -10,6 +10,7 @@ with lib;
   imports = [
     ./system-partition.nix
     ./volatile-root.nix
+    ./playos-status.nix
   ];
 
   options = {
