@@ -3,6 +3,7 @@
 ## Added
 
 - controller: Enable HTTPS support for system update hosts
+- system: Add status screen to tty8
 
 ## Changed
 
