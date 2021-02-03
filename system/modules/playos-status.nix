@@ -8,11 +8,11 @@ let
   script =
     pkgs.writeShellScriptBin "print-status" ''
       while :; do
-        printf "\033c"
         screen=$(xrandr --current | grep '*' | awk '{print $1}')
         network=$(connmanctl technologies | grep 'Type\|Connected')
         rfid=$(curl -s "${driverUrl}/rfid/readers" | jq -r ".readers" | jq length)
         controller=$(systemctl is-active playos-controller)
+        printf "\033c"
         printf "%s\n" \
           "Screen dimensions: $screen" \
           "Network connection:" \
