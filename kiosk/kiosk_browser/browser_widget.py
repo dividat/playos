@@ -13,7 +13,7 @@ class BrowserWidget(QWebEngineView):
     def __init__(self, url, get_current_proxy, *args, **kwargs):
         QWebEngineView.__init__(self, *args, **kwargs)
 
-        # Authenticate proxies
+        # Register proxy authentication handler
         self.page().proxyAuthenticationRequired.connect(
             lambda url, auth, proxyHost: self._proxy_auth(
                 get_current_proxy, url, auth, proxyHost))
@@ -64,7 +64,7 @@ class BrowserWidget(QWebEngineView):
             auth.setUser(proxy.username)
             auth.setPassword(proxy.password)
         else:
-            logging.info("Ignoring proxy authentication")
+            logging.info("Proxy authentication request ignored because credentials are not provided.")
 
 def user_agent_with_system(user_agent, system_name, system_version):
     """Inject a specific system into a user agent string"""
