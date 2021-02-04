@@ -43,28 +43,32 @@ class Connection():
             proxy = self._get_current_proxy()
 
             if proxy is not None:
-                self._status = Status.PROXY
+                self._set_status(Status.PROXY)
             else:
                 try:
-                    r = requests.get(
-                        check_connection_url,
-                        allow_redirects = False)
+                    r = requests.get(check_connection_url, allow_redirects = False)
 
                     if r.status_code == 200:
-                        self._status = Status.CONNECTED
-                        self._set_captive_portal_url('')
+                        self._set_status(Status.CONNECTED)
+
                     elif r.status_code in [301, 302, 303, 307]:
-                        self._status = Status.CAPTIVE
+                        self._set_status(Status.CAPTIVE)
                         self._set_captive_portal_url(r.headers['Location'])
+
                     else:
-                        self._status = Status.DISCONNECTED
-                        self._set_captive_portal_url('')
+                        self._set_status(Status.DISCONNECTED)
 
                 except requests.exceptions.RequestException as e:
-                    self._status = Status.DISCONNECTED
+                    self._set_status(Status.DISCONNECTED)
                     logging.error('Connection request exception: ' + str(e))
+
                 except Exception as e:
-                    self._status = Status.DISCONNECTED
+                    self._set_status(Status.DISCONNECTED)
                     logging.error('Connection exception: ' + str(e))
 
             sleep(self._status)
+
+    def _set_status(self, status):
+        self._status = status
+        if self._status != Status.CAPTIVE:
+            self._set_captive_portal_url('')
