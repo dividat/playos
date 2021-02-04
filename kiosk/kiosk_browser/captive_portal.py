@@ -1,6 +1,7 @@
-"""Monitor the connection
+"""Detect captive portals
 
-Regularly detect captive portals, unless a proxy is in use."""
+Regularly monitor the connection. Ignore captive portals if the connection is
+behind a proxy."""
 
 import requests
 import tempfile
@@ -14,8 +15,7 @@ check_connection_url = 'http://captive.dividat.com/'
 """
 Connection Status
 
-The connection is either behind a proxy, or direct. If the kiosk is behind a
-proxy, it does not detect captive portals.
+The connection is either behind a proxy, or direct.
 """
 class Status(Enum):
     DIRECT_DISCONNECTED = auto()
@@ -29,7 +29,7 @@ def sleep(status):
     else:
         time.sleep(60)
 
-class Connection():
+class CaptivePortal():
 
     def __init__(self, get_current_proxy, set_captive_portal_url):
         self._status = Status.DIRECT_DISCONNECTED

@@ -4,7 +4,7 @@ from PyQt5.QtCore import pyqtSlot, Qt, QUrl
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QWidget, QPushButton, QBoxLayout, QShortcut
 
-from kiosk_browser import browser_widget, captive_portal_message, connection
+from kiosk_browser import browser_widget, captive_portal_message, captive_portal
 from kiosk_browser import proxy as proxy_module
 
 class MainWidget(QWidget):
@@ -15,8 +15,8 @@ class MainWidget(QWidget):
         proxy = proxy_module.Proxy()
         proxy.start_monitoring_daemon()
 
-        self._connection = connection.Connection(proxy.get_current, self.set_captive_portal_url)
-        self._connection.start_monitoring_daemon()
+        self._captive_portal = captive_portal.CaptivePortal(proxy.get_current, self.set_captive_portal_url)
+        self._captive_portal.start_monitoring_daemon()
 
         self._captive_portal_url = ''
         self._urls = cycle(urls)
@@ -56,7 +56,7 @@ class MainWidget(QWidget):
 
     def _toggle_captive_portal(self):
         if self._is_captive_portal_visible:
-            if not self._connection.is_captive():
+            if not self._captive_portal.is_captive():
                 self._captive_portal_message.setParent(None)
             self._browser_widget.load(self._current_url)
         else:
@@ -66,6 +66,6 @@ class MainWidget(QWidget):
 
     def _update_captive_portal_message(self):
         if self._is_captive_portal_visible:
-            self._captive_portal_message.setCloseMessage(self._connection.is_captive())
+            self._captive_portal_message.setCloseMessage(self._captive_portal.is_captive())
         else:
             self._captive_portal_message.setOpenMessage()
