@@ -58,7 +58,7 @@
                             </div>
                             <input type="text" id="{{id}}-proxy" class="d-Input d-Network__Input" name="proxy">
                             <p class="d-Network__Note">
-                                URL in the form <em class="d-Code">http://user:password@host:port</em>
+                                URL in the form <em class="d-Code">http://host:port</em> or <em class="d-Code">http://user:password@host:port</em>
                             </p>
                           </div>
                         </details>
@@ -88,7 +88,7 @@
 
                                 {{#has_proxy}}
                                     <form action="/network/{{id}}/proxy/remove" method="post">
-                                        <input type="submit" class="d-Button" value="Remove">
+                                        <input type="submit" class="d-Button" value="Disable proxy">
                                     </form>
                                 {{/has_proxy}}
                             </div>

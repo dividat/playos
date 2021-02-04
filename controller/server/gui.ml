@@ -330,7 +330,7 @@ module NetworkGui = struct
     let%lwt service = with_service ~connman (param req "id") in
     match%lwt with_empty_or_valid_proxy form_data with
     | None ->
-      fail_with "Proxy must not be empty."
+      fail_with "Proxy address may not be empty. Use the 'Disable proxy' button instead."
     | Some proxy ->
       let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
       success (Format.sprintf
