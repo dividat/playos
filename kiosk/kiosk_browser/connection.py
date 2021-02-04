@@ -6,18 +6,22 @@ import requests
 import tempfile
 import threading
 import time
+import logging
 from enum import Enum, auto
 
 check_connection_url = 'http://captive.dividat.com/'
-sleep_time_not_connected = 5
-sleep_time_connected = 6
-sleep_time_proxy = 6
 
 class Status(Enum):
     DISCONNECTED = auto()
     CAPTIVE = auto()
     CONNECTED = auto()
     PROXY = auto()
+
+def sleep(status):
+    if status == Status.DISCONNECTED or status == Status.CAPTIVE:
+        time.sleep(5)
+    else:
+        time.sleep(60)
 
 class Connection():
 
@@ -40,7 +44,6 @@ class Connection():
 
             if proxy is not None:
                 self._status = Status.PROXY
-                time.sleep(sleep_time_proxy)
             else:
                 try:
                     r = requests.get(
@@ -58,11 +61,10 @@ class Connection():
                         self._set_captive_portal_url('')
 
                 except requests.exceptions.RequestException as e:
-                    print('Connection request exception:', e)
+                    self._status = Status.DISCONNECTED
+                    logging.error('Connection request exception: ' + str(e))
                 except Exception as e:
-                    print('Connection exception:', e)
+                    self._status = Status.DISCONNECTED
+                    logging.error('Connection exception: ' + str(e))
 
-                if self._status == Status.CONNECTED:
-                    time.sleep(sleep_time_connected)
-                else:
-                    time.sleep(sleep_time_not_connected)
+            sleep(self._status)
