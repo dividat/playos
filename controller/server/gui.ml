@@ -297,7 +297,7 @@ module NetworkGui = struct
     else
       match Proxy.validate proxy_str with
       | Some proxy -> return (Some proxy)
-      | None -> fail_with (Format.sprintf "'%s' is not a valid proxy. It should be in the form 'http://user:password@host:port'." proxy_str)
+      | None -> fail_with (Format.sprintf "'%s' is not a valid proxy. It should be in the form 'http://host:port' or 'http://user:password@host:port'." proxy_str)
 
   (** Connect to a service *)
   let connect ~(connman:Connman.Manager.t) req =
@@ -342,7 +342,7 @@ module NetworkGui = struct
   let remove_proxy ~(connman:Connman.Manager.t) req =
     let%lwt service = with_service ~connman (param req "id") in
     let%lwt () = Connman.Service.set_direct_proxy service in
-    success (Format.sprintf "Proxy of %s has been removed." service.name)
+    success (Format.sprintf "Proxy of %s has been disabled." service.name)
 
   (** Remove a service **)
   let remove ~(connman:Connman.Manager.t) req =
