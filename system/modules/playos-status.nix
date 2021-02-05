@@ -9,14 +9,15 @@ let
     pkgs.writeShellScriptBin "print-status" ''
       while :; do
         screen=$(xrandr --current | grep '*' | awk '{print $1}')
-        network=$(connmanctl technologies | grep 'Type\|Connected')
+        networkCount=$(connmanctl services | grep wifi | wc -l)
+        networkConnected=$(connmanctl services | grep wifi | grep "*" | awk '{ print $2 }')
         rfid=$(curl -s "${driverUrl}/rfid/readers" | jq -r ".readers" | jq length)
         controller=$(systemctl is-active playos-controller)
         printf "\033c"
         printf "%s\n" \
           "Screen dimensions: $screen" \
-          "Network connection:" \
-          "$network" \
+          "Wifi networks found: $networkCount" \
+          "Connected to network: $networkConnected" \
           "RFID: $rfid" \
           "Controller: $controller" \
           > ${ttyPath}
