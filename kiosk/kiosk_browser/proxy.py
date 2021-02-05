@@ -42,17 +42,22 @@ def extract_manual_proxy(config):
 def get_current_proxy(bus):
     """Get current proxy from dbus
 
-    Return  the proxy of a ready or connected service."""
+    Return the proxy of a connected service preferentially, or of a ready
+    service.
+    """
 
     client = dbus.Interface(
         bus.get_object('net.connman', '/'),
         'net.connman.Manager')
 
-    connected_services = [s for s in client.GetServices() if s[1]['State'] in ['ready', 'online']]
+    # List services, each service is a (id, properties) struct
+    services = client.GetServices()
+    online_services = [s for s in services if s[1]['State'] == 'online']
+    ready_services = [s for s in services if s[1]['State'] == 'ready']
+    online_or_ready_services = online_services + ready_services
 
-    if connected_services:
-        service = connected_services[0][1]
-        return extract_manual_proxy(service['Proxy'])
+    if online_or_ready_services:
+        return extract_manual_proxy(online_or_ready_services[0][1]['Proxy'])
 
 def set_proxy_in_qt_app(hostname, port):
     logging.info(f"Set proxy to {hostname}:{port} in Qt application")

@@ -46,11 +46,10 @@ let to_string ~hide_password t =
   ]
   |> String.concat ""
 
-let from_connected_service services =
+let from_online_or_ready_service services =
   let open Connman.Service in
-  services
-  |> List.find_map (fun s ->
-    if s.state = Ready || s.state = Online then
-      Option.bind s.proxy validate
-    else
-      None)
+  Base.Option.first_some
+    (List.find_opt (fun s -> s.state = Online) services)
+    (List.find_opt (fun s -> s.state = Ready) services)
+    |> Base.Fn.flip Option.bind (fun s -> s.proxy)
+    |> Base.Fn.flip Option.bind validate

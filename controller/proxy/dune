@@ -1,4 +1,4 @@
 (library
  (name proxy)
  (modules proxy)
- (libraries uri connman))
+ (libraries uri connman base))
