@@ -201,7 +201,7 @@ module LocalizationGui = struct
       | Some [ tz_id ] ->
         Timedate.set_timezone tz_id
       | _ ->
-        return false
+        return ()
     in
     "/localization" |> Uri.of_string |> redirect'
 
@@ -214,7 +214,7 @@ module LocalizationGui = struct
       | Some [ lang ] ->
         Locale.set_lang lang
       | _ ->
-        return false
+        return ()
     in
     "/localization" |> Uri.of_string |> redirect'
 
@@ -227,7 +227,7 @@ module LocalizationGui = struct
       | Some [ keymap ] ->
         Locale.set_keymap keymap
       | _ ->
-        return false
+        return ()
     in
     "/localization" |> Uri.of_string |> redirect'
 

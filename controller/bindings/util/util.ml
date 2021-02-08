@@ -27,11 +27,12 @@ let write_to_file log_src path str =
     let%lwt bytes_written =
       Lwt_unix.write_string fd str 0 (String.length str)
     in
-    let%lwt () = Lwt_unix.close fd in
-    Lwt.return true
+    Lwt_unix.close fd
   with
-  | Unix.Unix_error (err, fn, _) ->
+  | (Unix.Unix_error (err, fn, _)) as exn ->
     let%lwt () = Logs_lwt.err ~src:log_src
       (fun m -> m "failed to write to %s: %s" path (Unix.error_message err))
     in
-    Lwt.return false
+    fail exn
+  | exn ->
+    fail exn
