@@ -53,7 +53,9 @@ let success msg =
 let error_handling =
   let open Opium_kernel.Rock in
   let filter handler req =
-    match%lwt handler req |> Lwt_result.catch with
+    (* Catch any exceptions that previously escaped Lwt *)
+    let res = try handler req with exn -> Lwt.fail exn in
+    match%lwt res |> Lwt_result.catch with
     | Ok res ->
       return res
     | Error exn ->
