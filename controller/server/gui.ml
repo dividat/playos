@@ -421,7 +421,7 @@ module ChangelogGui = struct
     |> get "/changelog" (fun _ ->
         let%lwt changelog = Util.read_from_file log_src (resource_path (Fpath.v "Changelog.html")) in
         page "changelog" [
-          "changelog", changelog |> Option.value ~default:"" |> Ezjsonm.string
+          "changelog", changelog |> Ezjsonm.string
         ])
 end
 
