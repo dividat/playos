@@ -15,6 +15,9 @@ let read_from_file log_src path =
       in
       fail exn
     | exn ->
+      let%lwt () = Logs_lwt.err ~src:log_src
+        (fun m -> m "failed to read from %s: %s" path (Printexc.to_string exn))
+      in
       fail exn
   else
     fail (Failure ("File does not exist: " ^ path))
@@ -35,4 +38,7 @@ let write_to_file log_src path str =
     in
     fail exn
   | exn ->
+    let%lwt () = Logs_lwt.err ~src:log_src
+      (fun m -> m "failed to write to %s: %s" path (Printexc.to_string exn))
+    in
     fail exn
