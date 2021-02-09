@@ -5,16 +5,6 @@ open Opium.App
 
 let log_src = Logs.Src.create "gui"
 
-(* Helper to load file *)
-let of_file f =
-  let%lwt ic = Lwt_io.(open_file ~mode:Lwt_io.Input) f in
-  let%lwt template_f = Lwt_io.read ic in
-  let%lwt () = Lwt_io.close ic in
-  template_f
-  |> Mustache.of_string
-  |> return
-
-
 (* Require the resource directory to be at a directory fixed to the binary location. This is not optimal, but works for the moment. TODO: figure out a better way to do this.
 *)
 let resource_path end_path =
@@ -23,12 +13,11 @@ let resource_path end_path =
   |> to_string
 
 (* Load a template file
-
-   TODO: cache templates
 *)
 let template name =
   Fpath.(resource_path (v "template" / (name ^ ".mustache")))
-  |> of_file
+  |> Util.read_from_file log_src
+  >|= Mustache.of_string
 
 (* Helper to render template *)
 let render name dict =
@@ -64,7 +53,9 @@ let success msg =
 let error_handling =
   let open Opium_kernel.Rock in
   let filter handler req =
-    match%lwt handler req |> Lwt_result.catch with
+    (* Catch any exceptions that previously escaped Lwt *)
+    let res = try handler req with exn -> Lwt.fail exn in
+    match%lwt res |> Lwt_result.catch with
     | Ok res ->
       return res
     | Error exn ->
@@ -201,7 +192,7 @@ module LocalizationGui = struct
       | Some [ tz_id ] ->
         Timedate.set_timezone tz_id
       | _ ->
-        return false
+        return ()
     in
     "/localization" |> Uri.of_string |> redirect'
 
@@ -214,7 +205,7 @@ module LocalizationGui = struct
       | Some [ lang ] ->
         Locale.set_lang lang
       | _ ->
-        return false
+        return ()
     in
     "/localization" |> Uri.of_string |> redirect'
 
@@ -227,7 +218,7 @@ module LocalizationGui = struct
       | Some [ keymap ] ->
         Locale.set_keymap keymap
       | _ ->
-        return false
+        return ()
     in
     "/localization" |> Uri.of_string |> redirect'
 
@@ -421,7 +412,7 @@ module ChangelogGui = struct
     |> get "/changelog" (fun _ ->
         let%lwt changelog = Util.read_from_file log_src (resource_path (Fpath.v "Changelog.html")) in
         page "changelog" [
-          "changelog", changelog |> Option.value ~default:"" |> Ezjsonm.string
+          "changelog", changelog |> Ezjsonm.string
         ])
 end
 

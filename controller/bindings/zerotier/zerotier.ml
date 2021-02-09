@@ -1,5 +1,7 @@
 open Lwt
 
+let log_src = Logs.Src.create "zerotier"
+
 let base_url =
   Uri.make
     ~scheme:"http"
@@ -8,15 +10,9 @@ let base_url =
     ()
 
 let get_authtoken () =
-  let%lwt ic =
-    Lwt_io.(open_file ~mode:Lwt_io.Input)
-      "/var/lib/zerotier-one/authtoken.secret"
-  in
-  let%lwt authtoken = Lwt_io.read ic in
-  let%lwt () = Lwt_io.close ic in
-  authtoken
-  |> String.trim
-  |> return
+  Util.read_from_file
+    log_src
+    "/var/lib/zerotier-one/authtoken.secret"
 
 type status = {
   address: string
