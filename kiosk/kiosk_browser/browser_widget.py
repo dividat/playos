@@ -1,7 +1,7 @@
 import re
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QShortcut
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage, QWebEngineProfile
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings
 from PyQt5.QtWidgets import QSizePolicy
 
 from kiosk_browser import system
@@ -16,6 +16,10 @@ class BrowserWidget(QWebEngineView):
             system_name = system.NAME,
             system_version = system.VERSION
         ))
+
+        # Allow sound playback without user gesture
+        self.page().settings().setAttribute(QWebEngineSettings.PlaybackRequiresUserGesture, False)
+
         self.page().setUrl(url)
 
         # Shortcut to manually reload
