@@ -242,11 +242,21 @@ module NetworkGui = struct
 
     let%lwt is_internet_connected =
       [ (match%lwt Curl.request ?proxy (Uri.of_string "http://captive.dividat.com/") with
-          | RequestSuccess (200, _) -> return true
-          | _ -> return false
+          | RequestSuccess (200, _) ->
+            return true
+          | RequestSuccess (status, _) ->
+            let%lwt () = Logs_lwt.err (fun m -> m "Non-OK status code reaching captive portal: %s" (string_of_int status)) in
+            return false
+          | RequestFailure err ->
+            let%lwt () = Logs_lwt.err (fun m -> m "Error reaching captive portal: %s" (Curl.pretty_print_error err)) in
+            return false
         )
       ; (match%lwt Lwt_unix.timeout 1.0 |> Lwt_result.catch with
-          | _ -> return false
+          | Error Lwt.Canceled ->
+            return false
+          | _ ->
+            let%lwt () = Logs_lwt.err (fun m -> m "Timeout reaching captive portal") in
+            return false
           )
       ] |> Lwt.pick
     in
