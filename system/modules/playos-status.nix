@@ -11,7 +11,7 @@ let
         screen=$(xrandr --current | grep '*' | awk '{print $1}')
         networkCount=$(connmanctl services | grep wifi | wc -l)
         networkConnected=$(connmanctl services | grep wifi | grep "*" | awk '{ print $2 }')
-        rfid=$(curl -s "${driverUrl}/rfid/readers" | jq -r ".readers" | jq length)
+        rfid=$(opensc-tool --list-readers)
         controller=$(systemctl is-active playos-controller)
         time=$(date +'%T %Z')
         printf "\033c"
@@ -19,7 +19,8 @@ let
           "Screen dimensions: $screen" \
           "Wifi networks found: $networkCount" \
           "Connected to network: $networkConnected" \
-          "RFID: $rfid" \
+          "RFID: " \
+          " $rfid" \
           "Controller: $controller" \
           "Updated at: $time" \
           > ${ttyPath}
@@ -37,11 +38,10 @@ in
       };
       path = with pkgs; [
         connman
-        curl
         gnugrep
         gawk
-        jq
         xorg.xrandr
+        opensc
       ];
       description = "PlayOS status";
       wantedBy = [ "multi-user.target" ];
