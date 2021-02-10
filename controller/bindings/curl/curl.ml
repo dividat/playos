@@ -4,6 +4,10 @@ type error =
   | ProcessExit of int * string
   | ProcessKill of int
   | ProcessStop of int
+  | UnixError of string
+  | EndOfFile
+  | ChannelClosed of string
+  | Exception of string
 
 let pretty_print_error error =
   match error with
@@ -21,6 +25,18 @@ let pretty_print_error error =
 
   | ProcessStop n ->
       Printf.sprintf "curl stopped by signal %d" n
+
+  | UnixError err ->
+      Printf.sprintf "unix error: %s" err
+
+  | EndOfFile ->
+      "end of file"
+
+  | ChannelClosed err ->
+      Printf.sprintf "channel closed: %s" err
+
+  | Exception err ->
+      Printf.sprintf "exception: %s" err
 
 type result =
   | RequestSuccess of int * string
@@ -80,22 +96,34 @@ let request ?proxy ?(headers = []) ?data ?(options = []) url =
       ; Base.List.to_array options
       ])
   in
-  match%lwt exec cmd with
-  | (Unix.WEXITED 0, stdout, _) ->
-      (match parse_status_code_and_body stdout with
-      | Some (code, body) ->
-          if Cohttp.Code.is_success code then
-            Lwt.return (RequestSuccess (code, body))
-          else
-            Lwt.return (RequestFailure (UnsuccessfulStatus (code, body)))
-      | None ->
-          Lwt.return (RequestFailure (UnreadableStatus stdout)))
+  match%lwt (try exec cmd with exn -> Lwt.fail exn) |> Lwt_result.catch with
+  | Ok (Unix.WEXITED 0, stdout, _) ->
+    (match parse_status_code_and_body stdout with
+    | Some (code, body) ->
+      if Cohttp.Code.is_success code then
+        Lwt.return (RequestSuccess (code, body))
+      else
+        Lwt.return (RequestFailure (UnsuccessfulStatus (code, body)))
+    | None ->
+      Lwt.return (RequestFailure (UnreadableStatus stdout)))
 
-  | (Unix.WEXITED n, _, stderr) ->
-      Lwt.return (RequestFailure (ProcessExit (n, stderr)))
+  | Ok (Unix.WEXITED n, _, stderr) ->
+    Lwt.return (RequestFailure (ProcessExit (n, stderr)))
 
-  | (Unix.WSIGNALED signal, _, stderr) ->
-      Lwt.return (RequestFailure (ProcessKill signal))
+  | Ok (Unix.WSIGNALED signal, _, stderr) ->
+    Lwt.return (RequestFailure (ProcessKill signal))
 
-  | (Unix.WSTOPPED signal, _, stderr) ->
-      Lwt.return (RequestFailure (ProcessStop signal))
+  | Ok (Unix.WSTOPPED signal, _, stderr) ->
+    Lwt.return (RequestFailure (ProcessStop signal))
+
+  | Error (Unix.Unix_error (err, _, _)) ->
+    Lwt.return (RequestFailure (UnixError (Unix.error_message err)))
+
+  | Error End_of_file ->
+    Lwt.return (RequestFailure EndOfFile)
+
+  | Error (Lwt_io.Channel_closed err) ->
+    Lwt.return (RequestFailure (ChannelClosed err))
+
+  | Error exn ->
+    Lwt.return (RequestFailure (Exception (Printexc.to_string exn)))

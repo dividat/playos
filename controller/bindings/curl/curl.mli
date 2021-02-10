@@ -4,6 +4,10 @@ type error =
   | ProcessExit of int * string
   | ProcessKill of int
   | ProcessStop of int
+  | UnixError of string
+  | EndOfFile
+  | ChannelClosed of string
+  | Exception of string
 
 type result =
   | RequestSuccess of int * string
