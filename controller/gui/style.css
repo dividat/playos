@@ -84,12 +84,7 @@
     color: red;
 }
 
-.d-Network__ServiceDetail {
-    margin-left: 0.5rem;
-}
-
 .d-Network__Properties {
-    margin-left: 2rem;
     margin-bottom: 2rem;
 }
 
@@ -133,6 +128,29 @@
     font-size: 80%;
     color: #404040;
     margin-bottom: 1rem;
+}
+
+.d-NetworkList__Network {
+  line-height: 1;
+  display: flex;
+  justify-content: space-between;
+  padding-right: 1.5rem;
+  padding-bottom: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--form-border-color);
+}
+
+.d-NetworkList__Network *:not(:last-child) {
+  margin-bottom: 0.5rem;
+}
+
+.d-NetworkList__NetworkName {
+  font-weight: bold;
+}
+
+.d-NetworkList__NetworkId {
+  color: #606060;
+  font-size: 1rem;
 }
 
 /* Localization */
@@ -276,4 +294,18 @@
     border: 0.1rem solid #E1E1E1;
     border-radius: 0.4rem;
     padding: 0.2rem 0.5rem;
+}
+
+.d-BackLink {
+  color: blue;
+  font-size: 1rem;
+  text-decoration: none;
+}
+
+.d-BackLink:hover {
+    text-decoration: underline;
+}
+
+.d-BackLink:before {
+  content: "❮ ";
 }
