@@ -245,7 +245,7 @@ module NetworkGui = struct
           | RequestSuccess (200, _) ->
             return true
           | RequestSuccess (status, _) ->
-            let%lwt () = Logs_lwt.err (fun m -> m "Non-OK status code reaching captive portal: %s" (string_of_int status)) in
+            let%lwt () = Logs_lwt.err (fun m -> m "Non-OK status code reaching captive portal: %d" status) in
             return false
           | RequestFailure err ->
             let%lwt () = Logs_lwt.err (fun m -> m "Error reaching captive portal: %s" (Curl.pretty_print_error err)) in
