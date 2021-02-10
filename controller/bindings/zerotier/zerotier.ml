@@ -33,5 +33,5 @@ let get_status () =
       |> get_string
       |> fun address -> return {address}
   | RequestFailure error ->
-      Lwt.fail_with (Printf.sprintf "could not get zerotier status (%s)" (Curl.pretty_print_error error)))
+      Lwt.fail_with (Curl.pretty_print_error error))
   |> Lwt_result.catch

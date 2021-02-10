@@ -61,7 +61,9 @@ let get () =
   let%lwt zerotier_address =
     (match%lwt Zerotier.get_status () with
      | Ok status -> Some status.address |> return
-     | Error _ -> None |> return
+     | Error err ->
+       let%lwt () = Logs_lwt.err (fun m -> m "Error getting zerotier status: %s" (Printexc.to_string err)) in
+       return None
     )
   in
   let%lwt timedate_daemon = Timedate.daemon () in
