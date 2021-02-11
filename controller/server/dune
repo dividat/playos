@@ -5,7 +5,7 @@
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium tyxml mustache
   rauc zerotier connman locale network timedate systemd label_printer
-  semver2)
+  semver2 proxy)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 
 (library
@@ -16,6 +16,7 @@
 (library
  (name network)
  (modules network)
- (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman systemd)
+ (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman systemd curl
+  proxy)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 

@@ -37,6 +37,8 @@ python3Packages.buildPythonApplication rec {
     pyqt5
     pyqtwebengine
     requests
+    dbus-python
+    pygobject3
   ];
 
   makeWrapperArgs = [

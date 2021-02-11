@@ -1,4 +1,5 @@
 {config, pkgs, lib, ... }:
+
 {
   # Enable non-free firmware
   hardware.enableRedistributableFirmware = true;

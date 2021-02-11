@@ -19,26 +19,19 @@ type status = {
 }
 
 let get_status () =
-  (
-    let open Cohttp in
-    let open Cohttp_lwt_unix in
-    let%lwt authtoken = get_authtoken () in
-    let%lwt response,body =
-      Client.get
-        ~headers:(Header.of_list ["X-ZT1-Auth", authtoken])
-        (Uri.with_path base_url "status")
-    in
-    let%lwt address =
-      Ezjsonm.(
-        Cohttp_lwt.Body.to_string body
-        >|= from_string
-        >|= get_dict
-        >|= List.assoc "address"
-        >|= get_string
-      )
-    in
-    {address}
-    |> return
-  )
+  (let%lwt authtoken = get_authtoken () in
+  match%lwt
+    Curl.request
+      ~headers:[("X-ZT1-Auth", authtoken)]
+      (Uri.with_path base_url "status")
+  with
+  | RequestSuccess (_, body) ->
+      let open Ezjsonm in
+      from_string body
+      |> get_dict
+      |> List.assoc "address"
+      |> get_string
+      |> fun address -> return {address}
+  | RequestFailure error ->
+      Lwt.fail_with (Curl.pretty_print_error error))
   |> Lwt_result.catch
-

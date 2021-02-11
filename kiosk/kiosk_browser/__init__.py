@@ -1,5 +1,5 @@
 import sys
-import itertools
+import logging
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QApplication
@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import QApplication
 from kiosk_browser import main_widget
 
 def start(primary_url, secondary_url, toggle_sequence, fullscreen = True):
+
+    logging.basicConfig(level=logging.INFO)
 
     app = QApplication(sys.argv)
 

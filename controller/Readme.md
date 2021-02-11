@@ -12,8 +12,11 @@ PlayOS controller is an OCaml application that manages various system tasks for 
 - `gui/`: static gui assets
 - `nix/`: nix stuff
 - `server/`: main application code
+- `bin/`: binaries to start a dev server
 
 ## Quick start
+
+Prerequisites: `connman` must be running on your system.
 
 Run `nix-shell` to create a suitable development environment.
 

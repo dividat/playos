@@ -5,6 +5,11 @@
 </div>
 
 <dl class="d-Definitions">
+    {{#has_proxy}}
+        <dt class="d-Definitions__Term">Proxy</dt>
+        <dd class="d-Definitions__Description">{{proxy}}</dd>
+    {{/has_proxy}}
+
     <dt class="d-Definitions__Term">Internet</dt>
     <dd class="d-Definitions__Description">
         {{#internet_connected}}
@@ -34,20 +39,67 @@
                 </span>
             </summary>
 
-            <pre class="d-Preformatted">{{properties}}</pre>
+            <div class="d-Network__Properties">
+                <pre class="d-Preformatted">{{properties}}</pre>
 
-            {{^connected}}
-                <form action="/network/{{id}}/connect" method="post" class="d-Network__Form">
-                    <input type="text" class="d-Input d-Network__Input" name="passphrase">
-                    <input type="submit" class="d-Button" value="Connect">
-                </form>
-            {{/connected}}
+                {{^connected}}
+                    <form action="/network/{{id}}/connect" method="post" class="d-Network__Form">
+                        <div class="d-Network__Label">
+                          <label for="{{id}}-passphrase">Passphrase</label>
+                        </div>
+                        <input type="text" class="d-Input d-Network__Input" id="{{id}}-passphrase" name="passphrase">
 
-            {{#connected}}
-                <form action="/network/{{id}}/remove" method="post" class="d-Network__Form">
-                    <input type="submit" class="d-Button" value="Remove">
-                </form>
-            {{/connected}}
+                        <details>
+                          <summary>Advanced Settings</summary>
+
+                          <div class="d-Network__AdvancedSettingsTitle">
+                            <div class="d-Network__Label">
+                              <label for="{{id}}-proxy">Proxy</label>
+                            </div>
+                            <input type="text" id="{{id}}-proxy" class="d-Input d-Network__Input" name="proxy">
+                            <p class="d-Network__Note">
+                                URL in the form <em class="d-Code">http://host:port</em> or <em class="d-Code">http://user:password@host:port</em>
+                            </p>
+                          </div>
+                        </details>
+
+                        <input type="submit" class="d-Button d-Network__Button" value="Connect">
+                    </form>
+                {{/connected}}
+
+                {{#connected}}
+                    <form action="/network/{{id}}/remove" method="post" class="d-Network__Form">
+                        <input type="submit" class="d-Button d-Network__Button" value="Remove">
+                    </form>
+
+                    <details>
+                        <summary>Advanced Settings</summary>
+
+                        <div class="d-Network__Form">
+                            <div class="d-Network__Label">
+                              <label for="{{id}}-proxy">Proxy</label>
+                            </div>
+
+                            <div class="d-Network__ProxyForm">
+                                <form action="/network/{{id}}/proxy/update" method="post" class="d-Network__ProxyUpdate">
+                                    <input type="text" id="{{id}}-proxy" class="d-Input d-Network__Input" name="proxy" value="{{proxy}}">
+                                    <input type="submit" class="d-Button" value="Update">
+                                </form>
+
+                                {{#has_proxy}}
+                                    <form action="/network/{{id}}/proxy/remove" method="post">
+                                        <input type="submit" class="d-Button" value="Disable proxy">
+                                    </form>
+                                {{/has_proxy}}
+                            </div>
+
+                            <p class="d-Network__Note">
+                                URL in the form <em class="d-Code">http://host:port</em> or <em class="d-Code">http://user:password@host:port</em>
+                            </p>
+                        </div>
+                    </details>
+                {{/connected}}
+            </div>
         </details>
     {{/services}}
 
