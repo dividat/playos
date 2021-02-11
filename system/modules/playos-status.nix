@@ -16,8 +16,8 @@ let
         printf "\033c"
         printf "%s\n" \
           "Screen dimensions: $screen" \
-          "Wifi networks found: $networkCount" \
-          "RFID: " \
+          "Wi-Fi networks found: $networkCount" \
+          "RFID readers connected: " \
           " $rfid" \
           "Controller: $controller" \
           "Updated at: $time" \
