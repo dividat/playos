@@ -52,12 +52,18 @@ def get_current_proxy(bus):
 
     # List services, each service is a (id, properties) struct
     services = client.GetServices()
-    online_services = [s for s in services if s[1]['State'] == 'online']
-    ready_services = [s for s in services if s[1]['State'] == 'ready']
-    online_or_ready_services = online_services + ready_services
 
-    if online_or_ready_services:
-        return extract_manual_proxy(online_or_ready_services[0][1]['Proxy'])
+    # The service with the default route will always be sorted at the top of
+    # the list. (From connman doc/overview-api.txt)
+    default_service = find(
+        lambda s: s[1]['State'] == 'online' or s[1]['State'] == 'ready',
+        services)
+
+    if default_service:
+        return extract_manual_proxy(default_service[1]['Proxy'])
+
+def find(f, xs):
+    return next((x for x in xs if f(x)), None)
 
 def set_proxy_in_qt_app(hostname, port):
     logging.info(f"Set proxy to {hostname}:{port} in Qt application")

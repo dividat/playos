@@ -238,7 +238,7 @@ module NetworkGui = struct
 
     let%lwt all_services = Manager.get_services connman in
 
-    let proxy = Proxy.from_online_or_ready_service all_services in
+    let proxy = Proxy.from_default_service all_services in
 
     let%lwt is_internet_connected =
       [ (match%lwt Curl.request ?proxy (Uri.of_string "http://captive.dividat.com/") with

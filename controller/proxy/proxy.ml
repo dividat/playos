@@ -46,10 +46,12 @@ let to_string ~hide_password t =
   ]
   |> String.concat ""
 
-let from_online_or_ready_service services =
+(* Extract the proxy from the default route.
+ *
+ * The service with the default route will always be sorted at the top of the
+ * list. (From connman doc/overview-api.txt *)
+let from_default_service services =
   let open Connman.Service in
-  Base.Option.first_some
-    (List.find_opt (fun s -> s.state = Online) services)
-    (List.find_opt (fun s -> s.state = Ready) services)
+  List.find_opt (fun s -> s.state = Online || s.state == Ready) services
     |> Base.Fn.flip Option.bind (fun s -> s.proxy)
     |> Base.Fn.flip Option.bind validate

@@ -31,6 +31,6 @@ val to_string : hide_password:bool -> t -> string
     if [hide_password] is true, the password is replaced by a fixed number of
     stars in the output.*)
 
-val from_online_or_ready_service : Connman.Service.t list -> t option
-(** [from_online_or_ready_service sevrices] returns the [proxy] of the ready or
+val from_default_service : Connman.Service.t list -> t option
+(** [from_default_service sevrices] returns the [proxy] of the ready or
     connected service in [services].*)
