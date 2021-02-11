@@ -109,7 +109,7 @@ class Proxy():
 
     def _on_property_changed(self, *args, **kwargs):
         if len(args) >= 2 and args[0] == 'Proxy':
-            self._update(extract_manual_proxy(args[1]))
+            self._update(get_current_proxy(self._bus))
 
     def _update(self, new_proxy):
         """Update the proxy and use in Qt application, if the value has changed."""
