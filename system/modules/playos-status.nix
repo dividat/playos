@@ -10,7 +10,6 @@ let
       while :; do
         screen=$(xrandr --current | grep '*' | awk '{print $1}')
         networkCount=$(connmanctl services | grep wifi | wc -l)
-        networkConnected=$(connmanctl services | grep wifi | grep "*" | awk '{ print $2 }')
         rfid=$(opensc-tool --list-readers)
         controller=$(systemctl is-active playos-controller)
         time=$(date +'%T %Z')
@@ -18,7 +17,6 @@ let
         printf "%s\n" \
           "Screen dimensions: $screen" \
           "Wifi networks found: $networkCount" \
-          "Connected to network: $networkConnected" \
           "RFID: " \
           " $rfid" \
           "Controller: $controller" \
