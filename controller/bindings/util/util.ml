@@ -7,15 +7,20 @@ let read_from_file log_src path =
       let%lwt in_chan = Lwt_io.(open_file ~mode:Lwt_io.Input) path in
       let%lwt contents = Lwt_io.read in_chan >|= String.trim in
       let%lwt () = Lwt_io.close in_chan in
-      Some contents |> Lwt.return
+      return contents
     with
-    | Unix.Unix_error (err, fn, _) ->
+    | (Unix.Unix_error (err, fn, _)) as exn ->
       let%lwt () = Logs_lwt.err ~src:log_src
         (fun m -> m "failed to read from %s: %s" path (Unix.error_message err))
       in
-      Lwt.return None
+      fail exn
+    | exn ->
+      let%lwt () = Logs_lwt.err ~src:log_src
+        (fun m -> m "failed to read from %s: %s" path (Printexc.to_string exn))
+      in
+      fail exn
   else
-    Lwt.return None
+    fail (Failure ("File does not exist: " ^ path))
 
 let write_to_file log_src path str =
   try
@@ -25,11 +30,15 @@ let write_to_file log_src path str =
     let%lwt bytes_written =
       Lwt_unix.write_string fd str 0 (String.length str)
     in
-    let%lwt () = Lwt_unix.close fd in
-    Lwt.return true
+    Lwt_unix.close fd
   with
-  | Unix.Unix_error (err, fn, _) ->
+  | (Unix.Unix_error (err, fn, _)) as exn ->
     let%lwt () = Logs_lwt.err ~src:log_src
       (fun m -> m "failed to write to %s: %s" path (Unix.error_message err))
     in
-    Lwt.return false
+    fail exn
+  | exn ->
+    let%lwt () = Logs_lwt.err ~src:log_src
+      (fun m -> m "failed to write to %s: %s" path (Printexc.to_string exn))
+    in
+    fail exn

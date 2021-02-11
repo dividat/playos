@@ -85,7 +85,12 @@
 }
 
 .d-Network__ServiceDetail {
-    margin-left: 10px;
+    margin-left: 0.5rem;
+}
+
+.d-Network__Properties {
+    margin-left: 2rem;
+    margin-bottom: 2rem;
 }
 
 .d-Network__ServiceStrength {
@@ -94,13 +99,40 @@
 }
 
 .d-Network__Form {
+    margin: 1rem 0;
+}
+
+.d-Network__Label {
+    padding-bottom: 0.5rem;
+}
+
+.d-Network__ProxyForm {
     display: flex;
-    margin-bottom: 2rem;
+}
+
+.d-Network__ProxyUpdate {
+    display: flex;
+    margin-right: 1rem;
 }
 
 .d-Network__Input {
-    width: 50%;
+    width: 400px;
+    margin-bottom: 1rem;
     margin-right: 1rem;
+}
+
+.d-Network__Button {
+    margin-top: 1rem;
+}
+
+.d-Network__AdvancedSettingsTitle {
+    margin-top: 1rem;
+}
+
+.d-Network__Note {
+    font-size: 80%;
+    color: #404040;
+    margin-bottom: 1rem;
 }
 
 /* Localization */
@@ -235,4 +267,13 @@
     text-decoration: none;
     cursor: text;
     color: black;
+}
+
+.d-Code {
+    font-style: normal;
+    background-color: #F1F1F1;
+    color: #606060;
+    border: 0.1rem solid #E1E1E1;
+    border-radius: 0.4rem;
+    padding: 0.2rem 0.5rem;
 }

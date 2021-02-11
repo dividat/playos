@@ -5,4 +5,4 @@ type label =
   }
 [@@deriving sexp]
 
-val print :  url : string -> label -> unit Lwt.t
+val print : url : string -> label -> unit Lwt.t

@@ -5,16 +5,6 @@ open Opium.App
 
 let log_src = Logs.Src.create "gui"
 
-(* Helper to load file *)
-let of_file f =
-  let%lwt ic = Lwt_io.(open_file ~mode:Lwt_io.Input) f in
-  let%lwt template_f = Lwt_io.read ic in
-  let%lwt () = Lwt_io.close ic in
-  template_f
-  |> Mustache.of_string
-  |> return
-
-
 (* Require the resource directory to be at a directory fixed to the binary location. This is not optimal, but works for the moment. TODO: figure out a better way to do this.
 *)
 let resource_path end_path =
@@ -23,12 +13,11 @@ let resource_path end_path =
   |> to_string
 
 (* Load a template file
-
-   TODO: cache templates
 *)
 let template name =
   Fpath.(resource_path (v "template" / (name ^ ".mustache")))
-  |> of_file
+  |> Util.read_from_file log_src
+  >|= Mustache.of_string
 
 (* Helper to render template *)
 let render name dict =
@@ -56,15 +45,15 @@ let page identifier page_values =
   >>= index_with_menu_flag
   >|= Response.of_string_body
 
-let success msg =
-  msg
-  |> index
+let success = index
 
 (* Pretty error printing middleware *)
 let error_handling =
   let open Opium_kernel.Rock in
   let filter handler req =
-    match%lwt handler req |> Lwt_result.catch with
+    (* Catch any exceptions that previously escaped Lwt *)
+    let res = try handler req with exn -> Lwt.fail exn in
+    match%lwt res |> Lwt_result.catch with
     | Ok res ->
       return res
     | Error exn ->
@@ -201,7 +190,7 @@ module LocalizationGui = struct
       | Some [ tz_id ] ->
         Timedate.set_timezone tz_id
       | _ ->
-        return false
+        return ()
     in
     "/localization" |> Uri.of_string |> redirect'
 
@@ -214,7 +203,7 @@ module LocalizationGui = struct
       | Some [ lang ] ->
         Locale.set_lang lang
       | _ ->
-        return false
+        return ()
     in
     "/localization" |> Uri.of_string |> redirect'
 
@@ -227,7 +216,7 @@ module LocalizationGui = struct
       | Some [ keymap ] ->
         Locale.set_keymap keymap
       | _ ->
-        return false
+        return ()
     in
     "/localization" |> Uri.of_string |> redirect'
 
@@ -245,75 +234,138 @@ module NetworkGui = struct
   open Connman
   open Network
 
-  let overview
-      ~(connman:Manager.t)
-      ~(internet:Internet.state Lwt_react.S.t)
-      req =
+  let overview ~(connman:Manager.t) req =
 
-    (* Check if internet connected *)
-    let internet_connected =
-        internet
-        |> Lwt_react.S.value
-        |> Internet.is_connected
+    let%lwt all_services = Manager.get_services connman in
+
+    let proxy = Proxy.from_default_service all_services in
+
+    let%lwt is_internet_connected =
+      [ (match%lwt Curl.request ?proxy (Uri.of_string "http://captive.dividat.com/") with
+          | RequestSuccess (200, _) ->
+            return true
+          | RequestSuccess (status, _) ->
+            let%lwt () = Logs_lwt.err (fun m -> m "Non-OK status code reaching captive portal: %d" status) in
+            return false
+          | RequestFailure err ->
+            let%lwt () = Logs_lwt.err (fun m -> m "Error reaching captive portal: %s" (Curl.pretty_print_error err)) in
+            return false
+        )
+      ; (match%lwt Lwt_unix.timeout 1.0 |> Lwt_result.catch with
+          | Error Lwt.Canceled ->
+            return false
+          | _ ->
+            let%lwt () = Logs_lwt.err (fun m -> m "Timeout reaching captive portal") in
+            return false
+          )
+      ] |> Lwt.pick
     in
 
-    let%lwt services =
-      Manager.get_services connman
-      (* If not connected show all services, otherwise show services that are connected *)
-      >|= List.filter (fun s -> not internet_connected || s |> Service.is_connected)
+    (* If not connected show all services, otherwise show services that are connected *)
+    let showed_services =
+      all_services
+        |> List.filter (fun s -> not is_internet_connected || Service.is_connected s)
     in
 
+    let blur_service_proxy_password s =
+      let open Service in
+      let blur p = Proxy.validate p |> Option.map (Proxy.to_string ~hide_password:true) in
+      { s with proxy = s.proxy |> Base.Fn.flip Option.bind blur }
+    in
 
     page "network"
       [
-        "internet_connected", internet_connected |> Ezjsonm.bool
-      ; "services", services |> Ezjsonm.list (fun s -> s |> Service.to_json |> Ezjsonm.value)
+        "internet_connected", is_internet_connected |> Ezjsonm.bool
+      ; "has_proxy", Option.is_some proxy |> Ezjsonm.bool
+      ; "proxy", proxy
+          |> Option.map (Proxy.to_string ~hide_password:true)
+          |> Option.value ~default:""
+          |> Ezjsonm.string
+      ; "services", showed_services |> Ezjsonm.list (fun s ->
+          s
+          |> blur_service_proxy_password
+          |> Service.to_json
+          |> Ezjsonm.value)
       ]
 
   (** Helper to find a service by id *)
-  let find_service ~connman id =
-    let open Connman in
-    Connman.Manager.get_services connman
-    >|= List.find_opt (fun (s:Service.t) -> s.id = id)
+  let with_service ~connman id =
+    let%lwt services = Connman.Manager.get_services connman in
+    match List.find_opt (fun s -> s.Service.id = id) services with
+    | Some s -> return s
+    | None -> fail_with (Format.sprintf "Service does not exist (%s)" id)
+
+  (** Validate a proxy, fail if the proxy is given but invalid *)
+  let with_empty_or_valid_proxy form_data =
+    let proxy_str =
+      form_data
+      |> List.assoc "proxy"
+      |> List.hd
+    in
+    if String.trim proxy_str = "" then
+      return None
+    else
+      match Proxy.validate proxy_str with
+      | Some proxy -> return (Some proxy)
+      | None -> fail_with (Format.sprintf "'%s' is not a valid proxy. It should be in the form 'http://host:port' or 'http://user:password@host:port'." proxy_str)
 
   (** Connect to a service *)
   let connect ~(connman:Connman.Manager.t) req =
-    let service_id = param req "id" in
-    let%lwt form_data =
-      urlencoded_pairs_of_body req
-    in
-    let input =
+    let%lwt form_data = urlencoded_pairs_of_body req in
+    let passphrase =
       match form_data |> List.assoc_opt "passphrase" with
       | Some [ passphrase ] ->
         Connman.Agent.Passphrase passphrase
       | _ ->
         Connman.Agent.None
     in
-    match%lwt find_service ~connman service_id with
+    let%lwt service = with_service ~connman (param req "id") in
+    let%lwt proxy = with_empty_or_valid_proxy form_data in
+    let%lwt () = Connman.Service.connect ~input:passphrase service in
+    match proxy with
     | None ->
-      fail_with (Format.sprintf "Service does not exist (%s)" service_id)
-    | Some service ->
-      Connman.Service.connect ~input service
-      >|= (fun () -> Format.sprintf "Connected with %s." service.name)
-      >>= success
+      (* Removing a proxy that would have been configured in the past *)
+      let%lwt () = Connman.Service.set_direct_proxy service in
+      success (Format.sprintf "Connected with %s." service.name)
+    | Some proxy ->
+      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
+      success (Format.sprintf
+        "Connected with %s and proxy '%s'."
+        service.name
+        (Proxy.to_string ~hide_password:true proxy))
 
+  (** Update the proxy of a service *)
+  let update_proxy ~(connman:Connman.Manager.t) req =
+    let%lwt form_data = urlencoded_pairs_of_body req in
+    let%lwt service = with_service ~connman (param req "id") in
+    match%lwt with_empty_or_valid_proxy form_data with
+    | None ->
+      fail_with "Proxy address may not be empty. Use the 'Disable proxy' button instead."
+    | Some proxy ->
+      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
+      success (Format.sprintf
+        "Proxy of %s has been updated to '%s'."
+        service.name
+        (Proxy.to_string ~hide_password:true proxy))
+
+  (** Remove the proxy of a service *)
+  let remove_proxy ~(connman:Connman.Manager.t) req =
+    let%lwt service = with_service ~connman (param req "id") in
+    let%lwt () = Connman.Service.set_direct_proxy service in
+    success (Format.sprintf "Proxy of %s has been disabled." service.name)
+
+  (** Remove a service **)
   let remove ~(connman:Connman.Manager.t) req =
-    let service_id = param req "id" in
-    match%lwt find_service ~connman service_id with
-    | None ->
-      fail_with (Format.sprintf "Service does not exist (%s)" service_id)
-    | Some service ->
-      Connman.Service.remove service
-      >|= (fun () -> Format.sprintf "Removed service %s." service.name)
-      >>= success
+    let%lwt service = with_service ~connman (param req "id") in
+    let%lwt () = Connman.Service.remove service in
+    success (Format.sprintf "Removed service %s." service.name)
 
-  let build
-      ~(connman:Connman.Manager.t)
-      ~(internet:Network.Internet.state Lwt_react.S.t)
-      app =
+  let build ~(connman:Connman.Manager.t) app =
     app
-    |> get "/network" (overview ~connman ~internet)
+    |> get "/network" (overview ~connman)
     |> post "/network/:id/connect" (connect ~connman)
+    |> post "/network/:id/proxy/update" (update_proxy ~connman)
+    |> post "/network/:id/proxy/remove" (remove_proxy ~connman)
     |> post "/network/:id/remove" (remove ~connman)
 
 end
@@ -421,11 +473,11 @@ module ChangelogGui = struct
     |> get "/changelog" (fun _ ->
         let%lwt changelog = Util.read_from_file log_src (resource_path (Fpath.v "Changelog.html")) in
         page "changelog" [
-          "changelog", changelog |> Option.value ~default:"" |> Ezjsonm.string
+          "changelog", changelog |> Ezjsonm.string
         ])
 end
 
-let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
+let routes ~shutdown ~health_s ~update_s ~rauc ~connman app =
   app
   |> middleware (static ())
   |> middleware error_handling
@@ -439,15 +491,15 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
     )
 
   |> InfoGui.build
-  |> NetworkGui.build ~connman ~internet
+  |> NetworkGui.build ~connman
   |> LocalizationGui.build
   |> LabelGui.build
   |> StatusGui.build ~health_s ~update_s ~rauc
   |> ChangelogGui.build
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
-let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman ~internet =
+let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman =
   empty
   |> Opium.App.port port
-  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet
+  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman
   |> start

@@ -5,5 +5,4 @@ val start :
   -> update_s : Update.state Lwt_react.S.t
   -> rauc : Rauc.t
   -> connman : Connman.Manager.t
-  -> internet: Network.Internet.state Lwt_react.S.t
   -> unit Lwt.t
