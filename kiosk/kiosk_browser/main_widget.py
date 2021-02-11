@@ -15,9 +15,6 @@ class MainWidget(QWidget):
         proxy = proxy_module.Proxy()
         proxy.start_monitoring_daemon()
 
-        self._captive_portal = captive_portal.CaptivePortal(proxy.get_current, self.set_captive_portal_url)
-        self._captive_portal.start_monitoring_daemon()
-
         self._captive_portal_url = ''
         self._urls = cycle(urls)
         self._current_url = next(self._urls)
@@ -29,6 +26,10 @@ class MainWidget(QWidget):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
         self._layout.addWidget(self._browser_widget)
+
+        # Start captive portal when state is initialized
+        self._captive_portal = captive_portal.CaptivePortal(proxy.get_current, self.set_captive_portal_url)
+        self._captive_portal.start_monitoring_daemon()
 
         QShortcut(toggle_sequence, self).activated.connect(self._load_next_url)
 
