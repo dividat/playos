@@ -10,15 +10,15 @@ let
       while :; do
         screen=$(xrandr --current | grep '*' | awk '{print $1}')
         networkCount=$(connmanctl services | grep wifi | wc -l)
-        rfid=$(opensc-tool --list-readers)
+        rfid=$(opensc-tool --list-readers | pr -T -o 2)
         controller=$(systemctl is-active playos-controller)
         time=$(date +'%T %Z')
         printf "\033c"
-        printf "%s\n" \
+        printf "%s\n\n" \
           "Screen dimensions: $screen" \
           "Wi-Fi networks found: $networkCount" \
-          "RFID readers connected: " \
-          " $rfid" \
+          "RFID readers connected:" \
+          "$rfid" \
           "Controller: $controller" \
           "Updated at: $time" \
           > ${ttyPath}
@@ -40,6 +40,7 @@ in
         gawk
         xorg.xrandr
         opensc
+        coreutils
       ];
       description = "PlayOS status";
       wantedBy = [ "multi-user.target" ];
