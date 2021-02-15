@@ -1,6 +1,7 @@
 #!@python36@/bin/python
 
 import argparse
+import hashlib
 import subprocess
 import os
 import os.path
@@ -48,6 +49,14 @@ def _query_continue(question, default=False):
         else:
             sys.stdout.write("Please respond with 'yes' or 'no'")
 
+def compute_sha256(filepath):
+    hash = hashlib.sha256()
+    buff = bytearray(128 * 1024)
+    mem_view = memoryview(buff)
+    with open(filepath, "rb", buffering=0) as f:
+        for n in iter(lambda : f.readinto(mem_view), 0):
+            hash.update(mem_view[:n])
+    return hash.hexdigest()
 
 def sign_rauc_bundle(key, cert, out):
     with tempfile.NamedTemporaryFile(
@@ -151,7 +160,11 @@ def _main(opts):
             ],
             check=True)
 
-        print("Deployment completed.")
+        installer_checksum = compute_sha256(installer_iso_src)
+        installer_iso_url = UPDATE_URL + VERSION + "/" + installer_iso_filename
+        print("Deployment completed.\n")
+        print("Installer URL: %s" % installer_iso_url)
+        print("Installer checksum (SHA256): %s" % installer_checksum)
 
         exit(0)
 
