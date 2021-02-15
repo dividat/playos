@@ -1,12 +1,18 @@
 <a class="d-BackLink" href="/network">Back to networks</a>
 
 {{#service}}
-    <h1 class="d-Title">{{name}}</h1>
-    {{#strength}}
-       <span class="d-Network__ServiceStrength">
-           Signal strength: {{.}}
-       </span>
-    {{/strength}}
+    <h1 class="d-Title">
+        <div class="d-Network__Title">
+            <div>
+                {{name}}
+            </div>
+            {{#strength}}
+                <div class="d-Network__SignalStrength">
+                    {{>signal}}
+                </div>
+            {{/strength}}
+        </div>
+    </h1>
     <div class="d-Network__Properties">
         <pre class="d-Preformatted">{{properties}}</pre>
         {{^connected}}

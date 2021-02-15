@@ -1,3 +1,5 @@
+
+
 <h1 class="d-Title">Network</h1>
 
 <div class="d-Network__Refresh">
@@ -28,17 +30,20 @@
 
 <section>
     <h2 class="d-Subtitle">Services</h2>
-
     <ul class="d-NetworkList">
         {{#services}}
-            <li class="d-NetworkList__Network">
-                <div>
-                   <div class="d-NetworkList__NetworkName" >{{name}}</div>
-                   <div class="d-NetworkList__NetworkId">{{id}}</div>
-                </div>
-                <div class="d-NetworkList__Configure">
-                    <a class="d-Button" href="/network/{{id}}">Configure</a>
-                </div>
+            <li>
+                <a class="d-NetworkList__Network" href="/network/{{id}}">
+                   <div>
+                       {{name}}
+                   </div>
+                   <div class="d-NetworkList__SignalStrength">
+                       {{#strength}}
+                           {{>signal}}
+                       {{/strength}}
+                   </div>
+                   <div class="d-NetworkList__Chevron">ᐳ</div>
+                </a>
             </li>
         {{/services}}
 

@@ -348,7 +348,10 @@ struct
     ; "favorite", s.favorite |> Ezjsonm.bool
     ; "connected", s |> is_connected |> Ezjsonm.bool
     ; "strength", (match s.strength with
-      | Some s -> string_of_int s ^ "%"
+      | Some s -> if s < 25 then "None"
+                 else if s >= 25 && s < 50 then "Weak"
+                 else if s >= 50 && s < 75 then "Medium"
+                 else "Strong"
       | None -> "") |> Ezjsonm.string
     ; "properties", s |> sexp_of_t |> Sexplib.Sexp.to_string_hum |> Ezjsonm.string
     ; "proxy", (match s.proxy with
@@ -380,6 +383,7 @@ struct
         ]
     in
     set_property service "Proxy.Configuration" dict
+
 
   let connect ?(input=Agent.None) service =
     let%lwt () = Logs_lwt.debug ~src:log_src

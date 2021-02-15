@@ -84,13 +84,19 @@
     color: red;
 }
 
-.d-Network__Properties {
-    margin-bottom: 2rem;
+.d-Network__Title {
+    display: flex;
+    line-height: 1;
 }
 
-.d-Network__ServiceStrength {
-    color: #777777;
-    font-size: 80%;
+.d-Network__SignalStrength {
+    height: 3rem;
+    width: 3rem;
+    margin-left: 3rem;
+}
+
+.d-Network__Properties {
+    margin-bottom: 2rem;
 }
 
 .d-Network__Form {
@@ -131,26 +137,32 @@
 }
 
 .d-NetworkList__Network {
+  text-decoration: none;
+  color: black;
   line-height: 1;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 10fr 1fr 1fr;
+  align-items: center;
   padding-right: 1.5rem;
+  padding-left: 1.5rem;
   padding-bottom: 0.5rem;
   padding-top: 0.5rem;
   border-top: 1px solid var(--form-border-color);
 }
 
-.d-NetworkList__Network *:not(:last-child) {
-  margin-bottom: 0.5rem;
+.d-NetworkList__Network:hover {
+    background: #E0CB52;
 }
 
-.d-NetworkList__NetworkName {
-  font-weight: bold;
-}
-
-.d-NetworkList__NetworkId {
+.d-NetworkList__Chevron {
   color: #606060;
+  text-align: right;
   font-size: 1rem;
+}
+
+.d-NetworkList__SignalStrength {
+    width: 2rem;
+    height: 2rem;
 }
 
 /* Localization */
@@ -308,4 +320,33 @@
 
 .d-BackLink:before {
   content: "❮ ";
+}
+
+.d-WifiSignal {
+    width: 100%;
+    height: 100%;
+}
+
+/*Medium signal*/
+.d-WifiSignal--Medium .d-WifiSignal__Wave--Outer {
+    opacity:.3;
+    stroke-width:.5;
+}
+
+/*Weak signal*/
+.d-WifiSignal--Weak .d-WifiSignal__Wave--Outer,
+.d-WifiSignal--Weak .d-WifiSignal__Wave--Middle {
+    opacity:.3;
+    stroke-width:.5;
+}
+
+/*No signal*/
+.d-WifiSignal--None .d-WifiSignal__Base {
+    fill:#848484;
+}
+
+.d-WifiSignal--None *:not(.d-WifiSignal__Base) {
+    stroke:#848484;
+    opacity:.3;
+    stroke-width:.5;
 }

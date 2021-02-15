@@ -12,6 +12,7 @@ let resource_path end_path =
   (Sys.argv.(0) |> v |> parent) / ".." / "share" // end_path
   |> to_string
 
+
 (* Load a template file
 *)
 let template name =
@@ -19,10 +20,30 @@ let template name =
   |> Util.read_from_file log_src
   >|= Mustache.of_string
 
+(* Load a partial file
+ * This had to be defined separately from the function loading templates,
+ * because its has to have the type string -> Mustache.t option (cannot use lwt).
+*)
+let load_partial name =
+   let load_file f =
+     let ic = open_in f in
+     let n = in_channel_length ic in
+     let s = Bytes.create n in
+     really_input ic s 0 n;
+     close_in ic;
+     Bytes.to_string s
+   in
+   let partial =
+     Fpath.(resource_path (v "template" / "partials" / (name ^ ".mustache")))
+     |> load_file
+     |> Mustache.of_string
+   in
+   Some partial
+
 (* Helper to render template *)
 let render name dict =
   let%lwt template = template name in
-  Mustache.render ~strict:false template (Ezjsonm.dict dict)
+  Mustache.render ~strict:false ~partials:load_partial template (Ezjsonm.dict dict)
   |> return
 
 (* Middleware that makes static content available *)
