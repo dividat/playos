@@ -71,6 +71,10 @@ Connection to Dividat Senso will automatically be configured. To manually config
 
 The system may be shut down by pressing the power button on the computer or alternatively from the administrator menu.
 
+* Status screen
+
+A status screen providing a brief status report about various components of the system is available on `tty8`. It can be accessed using the key combination ~Ctrl-Alt-F8~. To get back from the status screen to the graphical interface, use ~Ctrl-Alt-F7~.
+
 * Administration
 
 A menu for system administration is provided and may be accessed with the key combination ~Ctrl-Shift-F12~.

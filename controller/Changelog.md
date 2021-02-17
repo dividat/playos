@@ -4,6 +4,7 @@
 
 - controller: Enable HTTPS support for system update hosts
 - os: Support manually configured authenticated proxies
+- system: Add status screen to tty8
 
 ## Changed
 
