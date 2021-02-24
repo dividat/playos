@@ -349,8 +349,8 @@ struct
     ; "connected", s |> is_connected |> Ezjsonm.bool
     ; "strength", (match s.strength with
       | Some s -> if s < 25 then "None"
-                 else if s >= 25 && s < 50 then "Weak"
-                 else if s >= 50 && s < 75 then "Medium"
+                 else if s < 50 then "Weak"
+                 else if s < 75 then "Medium"
                  else "Strong"
       | None -> "") |> Ezjsonm.string
     ; "properties", s |> sexp_of_t |> Sexplib.Sexp.to_string_hum |> Ezjsonm.string
