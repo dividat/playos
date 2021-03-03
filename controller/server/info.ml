@@ -12,22 +12,6 @@ type t =
   ; local_time : string
   }
 
-let to_json { app; version; update_url; kiosk_url; machine_id; zerotier_address; local_time } =
-  Ezjsonm.(
-    dict [
-      "app", string app
-    ; "version", string version
-    ; "update_url", string update_url
-    ; "kiosk_url", string kiosk_url
-    ; "machine_id", string machine_id
-    ; "zerotier_address", (match zerotier_address with
-      | Some address -> string address
-      | None -> string "—"
-    )
-    ; "local_time", string local_time
-    ]
-  )
-
 (** Version, set by build system *)
 let version =
   "@PLAYOS_VERSION@"

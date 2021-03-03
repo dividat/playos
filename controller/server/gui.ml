@@ -66,6 +66,11 @@ let page identifier page_values =
   >>= index_with_menu_flag
   >|= Response.of_string_body
 
+let tyxml_page menu content =
+  View.page menu content
+  |> Format.asprintf "%a" (Tyxml.Html.pp ())
+  |> Response.of_string_body
+
 let success = index
 
 (* Pretty error printing middleware *)
@@ -98,8 +103,8 @@ module InfoGui = struct
   let build app =
     app
     |> get "/info" (fun _ ->
-        let%lwt server_info = Info.get () in
-        page "info" [ "server_info", server_info |> Info.to_json ])
+        let%lwt infos = Info.get () in
+        Lwt.return (tyxml_page View.Info (Info_page.html infos)))
 end
 
 (** Localization GUI *)

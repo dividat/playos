@@ -48,6 +48,7 @@ let
       ocamlPackages = super.ocamlPackages.overrideScope' (self: super: {
         semver = self.callPackage ./ocaml-modules/semver {};
         obus = self.callPackage ./ocaml-modules/obus {};
+        tyxml-ppx = self.callPackage ./ocaml-modules/tyxml-ppx {};
       });
 
       # Controller

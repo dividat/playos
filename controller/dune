@@ -6,7 +6,6 @@
   (gui/style.css as static/style.css)
   (gui/template/changelog.mustache as template/changelog.mustache)
   (gui/template/index.mustache as template/index.mustache)
-  (gui/template/info.mustache as template/info.mustache)
   (gui/template/network.mustache as template/network.mustache)
   (gui/template/network_details.mustache as template/network_details.mustache)
   (gui/template/localization.mustache as template/localization.mustache)

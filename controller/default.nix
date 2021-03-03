@@ -34,6 +34,7 @@ ocamlPackages.buildDunePackage rec {
     logs
     fpath
     tyxml
+    tyxml-ppx
     cohttp-lwt-unix
     obus
     semver

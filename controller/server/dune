@@ -1,12 +1,15 @@
+(include_subdirs unqualified)
+
 (executable
  (name server)
  (public_name playos-controller)
- (modules server update info gui health)
+ (modules server update info gui health
+   view info_page)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
-  opium tyxml mustache
+  opium mustache tyxml
   rauc zerotier connman locale network timedate systemd label_printer
   semver2 proxy)
- (preprocess (pps lwt_ppx ppx_sexp_conv)))
+ (preprocess (pps lwt_ppx ppx_sexp_conv tyxml-ppx)))
 
 (library
  (name logging)
