@@ -119,12 +119,6 @@ module Service : sig
   (** Helper to decide if service is connected *)
   val is_connected : t -> bool
 
-  (** Encode service as JSON.
-
-      Note that this is not a direct mapping, but offers limited fields usable for UI. For more exact representation use S-Exp.
-  *)
-  val to_json : t -> Ezjsonm.t
-
   val set_direct_proxy : t -> unit Lwt.t
 
   val set_manual_proxy : t -> string -> unit Lwt.t

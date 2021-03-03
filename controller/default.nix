@@ -39,7 +39,6 @@ ocamlPackages.buildDunePackage rec {
     semver
     sexplib
     ezjsonm
-    mustache
     containers
   ];
 }

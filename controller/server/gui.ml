@@ -5,46 +5,13 @@ open Opium.App
 
 let log_src = Logs.Src.create "gui"
 
-(* Require the resource directory to be at a directory fixed to the binary location. This is not optimal, but works for the moment. TODO: figure out a better way to do this.
-*)
+(* Require the resource directory to be at a directory fixed to the binary
+ * location. This is not optimal, but works for the moment. *)
 let resource_path end_path =
   let open Fpath in
   (Sys.argv.(0) |> v |> parent) / ".." / "share" // end_path
   |> to_string
 
-
-(* Load a template file
-*)
-let template name =
-  Fpath.(resource_path (v "template" / (name ^ ".mustache")))
-  |> Util.read_from_file log_src
-  >|= Mustache.of_string
-
-(* Load a partial file
- * This had to be defined separately from the function loading templates,
- * because its has to have the type string -> Mustache.t option (cannot use lwt).
-*)
-let load_partial name =
-   let load_file f =
-     let ic = open_in f in
-     let n = in_channel_length ic in
-     let s = Bytes.create n in
-     really_input ic s 0 n;
-     close_in ic;
-     Bytes.to_string s
-   in
-   let partial =
-     Fpath.(resource_path (v "template" / "partials" / (name ^ ".mustache")))
-     |> load_file
-     |> Mustache.of_string
-   in
-   Some partial
-
-(* Helper to render template *)
-let render name dict =
-  let%lwt template = template name in
-  Mustache.render ~strict:false ~partials:load_partial template (Ezjsonm.dict dict)
-  |> return
 
 (* Middleware that makes static content available *)
 let static () =
@@ -52,21 +19,12 @@ let static () =
   Logs.debug (fun m -> m "static content dir: %s" static_dir);
   Opium.Middleware.static ~local_path:static_dir ~uri_prefix:"/static" ()
 
-(* Main page *)
-let index content =
-  render "index" ["content", content |> Ezjsonm.string]
-  >|= Response.of_string_body
+let page html =
+  Format.asprintf "%a" (Tyxml.Html.pp ()) html
+  |> Response.of_string_body
 
-let page identifier page_values =
-  let menu_flag = ( "is_" ^ identifier, Ezjsonm.bool true ) in
-  let index_with_menu_flag content =
-    render "index" (menu_flag :: ["content", content |> Ezjsonm.string])
-  in
-  render identifier page_values
-  >>= index_with_menu_flag
-  >|= Response.of_string_body
-
-let success = index
+let success content =
+  page (Page.html (Tyxml.Html.txt content))
 
 (* Pretty error printing middleware *)
 let error_handling =
@@ -79,17 +37,14 @@ let error_handling =
       return res
     | Error exn ->
       let%lwt () = Logs_lwt.err (fun m -> m "GUI Error: %s" (Printexc.to_string exn)) in
-      page "error"
-        Ezjsonm.([
-            "exn", exn
-                   |> Sexplib.Std.sexp_of_exn
-                   |> Sexplib.Sexp.to_string_hum
-                   |> string
-          ; "request", req
-                       |> Request.sexp_of_t
-                       |> Sexplib.Sexp.to_string_hum
-                       |> string
-          ])
+      Lwt.return (page (Error_page.html
+        { exn = exn
+            |> Sexplib.Std.sexp_of_exn
+            |> Sexplib.Sexp.to_string_hum
+        ; request = req
+            |> Request.sexp_of_t
+            |> Sexplib.Sexp.to_string_hum
+        }))
   in
   Middleware.create ~name:"Error" ~filter
 
@@ -99,7 +54,7 @@ module InfoGui = struct
     app
     |> get "/info" (fun _ ->
         let%lwt server_info = Info.get () in
-        page "info" [ "server_info", server_info |> Info.to_json ])
+        Lwt.return (page (Info_page.html server_info)))
 end
 
 (** Localization GUI *)
@@ -107,12 +62,8 @@ module LocalizationGui = struct
   let overview req =
     let%lwt td_daemon = Timedate.daemon () in
     let%lwt current_timezone = Timedate.get_configured_timezone () in
-    let is_some_thing thing = function
-      | Some other -> String.equal other thing
-      | None -> false
-    in
     let%lwt all_timezones = Timedate.get_available_timezones td_daemon in
-    let tz_groups =
+    let timezone_groups =
       List.fold_right
         (fun tz groups ->
           let re_spaced = String.map (fun c -> if Char.equal c '_' then ' ' else c) tz in
@@ -130,26 +81,11 @@ module LocalizationGui = struct
             | Some entries -> entries
             | None -> []
           in
-          ( group_id
-          , ( [ "id", Ezjsonm.string tz
-              ; "name", Ezjsonm.string (name)
-              ; "active", Ezjsonm.bool (is_some_thing tz current_timezone)
-              ]
-              |> Ezjsonm.dict
-            )
-            :: prev_entries
-          )
+          ( group_id, (tz, name) :: prev_entries)
           :: List.remove_assoc group_id groups
         )
         all_timezones
         []
-        |> Ezjsonm.list
-        (fun (group_id, entries) ->
-          Ezjsonm.dict
-            [ "group", Ezjsonm.string group_id
-            ; "entries", Ezjsonm.list (fun x -> x) entries
-            ]
-        )
     in
     let%lwt current_lang = Locale.get_lang () in
     let langs =
@@ -162,14 +98,6 @@ module LocalizationGui = struct
       ; "it_IT.UTF-8", "Italian"
       ; "es_ES.UTF-8", "Spanish"
       ]
-      |> Ezjsonm.list
-        (fun (id, name) ->
-          [ "id", id |> Ezjsonm.string
-          ; "name", name |> Ezjsonm.string
-          ; "active", is_some_thing id current_lang |> Ezjsonm.bool
-          ]
-          |> Ezjsonm.dict
-        )
     in
     let%lwt current_keymap = Locale.get_keymap () in
     let keymaps =
@@ -183,23 +111,15 @@ module LocalizationGui = struct
       ; "it", "Italian"
       ; "es", "Spanish"
       ]
-      |> Ezjsonm.list
-        (fun (id, name) ->
-          [ "id", id |> Ezjsonm.string
-          ; "name", name |> Ezjsonm.string
-          ; "active", is_some_thing id current_keymap |> Ezjsonm.bool
-          ]
-          |> Ezjsonm.dict
-        )
     in
-    page "localization"
-      [ "timezone_groups", tz_groups
-      ; "is_timezone_set", Ezjsonm.bool (Option.is_some current_timezone)
-      ; "langs", langs
-      ; "is_lang_set", Ezjsonm.bool (Option.is_some current_lang)
-      ; "is_keymap_set", Ezjsonm.bool (Option.is_some current_keymap)
-      ; "keymaps", keymaps
-      ]
+    Lwt.return (page (Localization_page.html
+      { timezone_groups
+      ; current_timezone
+      ; langs
+      ; current_lang
+      ; keymaps
+      ; current_keymap
+      }))
 
   let set_timezone req =
     let%lwt td_daemon = Timedate.daemon () in
@@ -293,20 +213,13 @@ module NetworkGui = struct
         |> List.filter (fun s -> not is_internet_connected || Service.is_connected s)
     in
 
-    page "network"
-      [
-        "internet_connected", is_internet_connected |> Ezjsonm.bool
-      ; "has_proxy", Option.is_some proxy |> Ezjsonm.bool
-      ; "proxy", proxy
+    Lwt.return (page (Network_list_page.html
+      { proxy = proxy
           |> Option.map (Proxy.to_string ~hide_password:true)
-          |> Option.value ~default:""
-          |> Ezjsonm.string
-      ; "services", showed_services |> Ezjsonm.list (fun s ->
-          s
-          |> blur_service_proxy_password
-          |> Service.to_json
-          |> Ezjsonm.value)
-      ]
+      ; is_internet_connected
+      ; services = showed_services
+          |> List.map blur_service_proxy_password
+      }))
 
   (** Helper to find a service by id *)
   let with_service ~connman id =
@@ -317,10 +230,8 @@ module NetworkGui = struct
 
   let details ~connman req =
     let service_id = param req "id" in
-    let%lwt service = with_service connman service_id in
-  page "network_details" [
-    "service", service |> blur_service_proxy_password |> Service.to_json |> Ezjsonm.value
-  ]
+    let%lwt service = with_service connman service_id >|= blur_service_proxy_password in
+    Lwt.return (page (Network_details_page.html service))
 
   (** Validate a proxy, fail if the proxy is given but invalid *)
   let with_empty_or_valid_proxy form_data =
@@ -353,13 +264,13 @@ module NetworkGui = struct
     | None ->
       (* Removing a proxy that would have been configured in the past *)
       let%lwt () = Connman.Service.set_direct_proxy service in
-      success (Format.sprintf "Connected with %s." service.name)
+      Lwt.return (success (Format.sprintf "Connected with %s." service.name))
     | Some proxy ->
       let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
-      success (Format.sprintf
+      Lwt.return (success (Format.sprintf
         "Connected with %s and proxy '%s'."
         service.name
-        (Proxy.to_string ~hide_password:true proxy))
+        (Proxy.to_string ~hide_password:true proxy)))
 
   (** Update the proxy of a service *)
   let update_proxy ~(connman:Connman.Manager.t) req =
@@ -370,22 +281,22 @@ module NetworkGui = struct
       fail_with "Proxy address may not be empty. Use the 'Disable proxy' button instead."
     | Some proxy ->
       let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
-      success (Format.sprintf
+      Lwt.return (success (Format.sprintf
         "Proxy of %s has been updated to '%s'."
         service.name
-        (Proxy.to_string ~hide_password:true proxy))
+        (Proxy.to_string ~hide_password:true proxy)))
 
   (** Remove the proxy of a service *)
   let remove_proxy ~(connman:Connman.Manager.t) req =
     let%lwt service = with_service ~connman (param req "id") in
     let%lwt () = Connman.Service.set_direct_proxy service in
-    success (Format.sprintf "Proxy of %s has been disabled." service.name)
+    Lwt.return (success (Format.sprintf "Proxy of %s has been disabled." service.name))
 
   (** Remove a service **)
   let remove ~(connman:Connman.Manager.t) req =
     let%lwt service = with_service ~connman (param req "id") in
     let%lwt () = Connman.Service.remove service in
-    success (Format.sprintf "Removed service %s." service.name)
+    Lwt.return (success (Format.sprintf "Removed service %s." service.name))
 
   let build ~(connman:Connman.Manager.t) app =
     app
@@ -428,13 +339,7 @@ module LabelGui = struct
 
   let overview req =
     let%lwt label = make_label () in
-    page "label"
-      [ "machine_id", label.machine_id |> Ezjsonm.string
-      ; "mac_1", label.mac_1 |> Ezjsonm.string
-      ; "mac_2", label.mac_2 |> Ezjsonm.string
-      ; "default_label_printer_url",
-        "http://192.168.0.5:3000/play-computer" |> Ezjsonm.string
-      ]
+    Lwt.return (page (Label_page.html label))
 
   let print req =
     let%lwt form_data = urlencoded_pairs_of_body req in
@@ -452,7 +357,7 @@ module LabelGui = struct
     |> Lwt_list.iter_s
       (fun () -> Label_printer.print ~url label)
     >|= (fun () -> "Labels printed.")
-    >>= success
+    >|= success
 
   let build app =
     app
@@ -474,24 +379,20 @@ module StatusGui = struct
                         |> return)
         in
         let%lwt interfaces = Network.Interface.get_all () in
-        page "status" [
-          "update", update_s
-                    |> Lwt_react.S.value
-                    |> Update.sexp_of_state
-                    |> Sexplib.Sexp.to_string_hum
-                    |> Ezjsonm.string
-        ; "rauc", rauc
-                  |> Ezjsonm.string
-        ; "health", health_s
-                    |> Lwt_react.S.value
-                    |> Health.sexp_of_state
-                    |> Sexplib.Sexp.to_string_hum
-                    |> Ezjsonm.string
-        ; "interfaces", interfaces
-                        |> [%sexp_of: Network.Interface.t list]
-                        |> Sexplib.Sexp.to_string_hum
-                        |> Ezjsonm.string
-        ]
+        Lwt.return (page (Status_page.html
+          { health = health_s
+              |> Lwt_react.S.value
+              |> Health.sexp_of_state
+              |> Sexplib.Sexp.to_string_hum
+          ; update = update_s
+              |> Lwt_react.S.value
+              |> Update.sexp_of_state
+              |> Sexplib.Sexp.to_string_hum
+          ; rauc
+          ; interfaces = interfaces
+              |> [%sexp_of: Network.Interface.t list]
+              |> Sexplib.Sexp.to_string_hum
+          }))
       )
 end
 
@@ -499,10 +400,9 @@ module ChangelogGui = struct
   let build app =
     app
     |> get "/changelog" (fun _ ->
+        let open Tyxml.Html in
         let%lwt changelog = Util.read_from_file log_src (resource_path (Fpath.v "Changelog.html")) in
-        page "changelog" [
-          "changelog", changelog |> Ezjsonm.string
-        ])
+        Lwt.return (page (Changelog_page.html changelog)))
 end
 
 let routes ~shutdown ~health_s ~update_s ~rauc ~connman app =
