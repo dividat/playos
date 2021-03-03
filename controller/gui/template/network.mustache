@@ -1,3 +1,5 @@
+
+
 <h1 class="d-Title">Network</h1>
 
 <div class="d-Network__Refresh">
@@ -28,82 +30,25 @@
 
 <section>
     <h2 class="d-Subtitle">Services</h2>
+    <ul class="d-NetworkList">
+        {{#services}}
+            <li>
+                <a class="d-NetworkList__Network" href="/network/{{id}}">
+                   <div>
+                       {{name}}
+                   </div>
+                   <div class="d-NetworkList__SignalStrength">
+                       {{#strength}}
+                           {{>signal}}
+                       {{/strength}}
+                   </div>
+                   <div class="d-NetworkList__Chevron">ᐳ</div>
+                </a>
+            </li>
+        {{/services}}
 
-    {{#services}}
-        <details class="d-Network__ServiceDetail">
-            <summary>
-                {{name}}
-
-                <span class="d-Network__ServiceStrength">
-                    {{strength}}
-                </span>
-            </summary>
-
-            <div class="d-Network__Properties">
-                <pre class="d-Preformatted">{{properties}}</pre>
-
-                {{^connected}}
-                    <form action="/network/{{id}}/connect" method="post" class="d-Network__Form">
-                        <div class="d-Network__Label">
-                          <label for="{{id}}-passphrase">Passphrase</label>
-                        </div>
-                        <input type="text" class="d-Input d-Network__Input" id="{{id}}-passphrase" name="passphrase">
-
-                        <details>
-                          <summary>Advanced Settings</summary>
-
-                          <div class="d-Network__AdvancedSettingsTitle">
-                            <div class="d-Network__Label">
-                              <label for="{{id}}-proxy">Proxy</label>
-                            </div>
-                            <input type="text" id="{{id}}-proxy" class="d-Input d-Network__Input" name="proxy">
-                            <p class="d-Network__Note">
-                                URL in the form <em class="d-Code">http://host:port</em> or <em class="d-Code">http://user:password@host:port</em>
-                            </p>
-                          </div>
-                        </details>
-
-                        <input type="submit" class="d-Button d-Network__Button" value="Connect">
-                    </form>
-                {{/connected}}
-
-                {{#connected}}
-                    <form action="/network/{{id}}/remove" method="post" class="d-Network__Form">
-                        <input type="submit" class="d-Button d-Network__Button" value="Remove">
-                    </form>
-
-                    <details>
-                        <summary>Advanced Settings</summary>
-
-                        <div class="d-Network__Form">
-                            <div class="d-Network__Label">
-                              <label for="{{id}}-proxy">Proxy</label>
-                            </div>
-
-                            <div class="d-Network__ProxyForm">
-                                <form action="/network/{{id}}/proxy/update" method="post" class="d-Network__ProxyUpdate">
-                                    <input type="text" id="{{id}}-proxy" class="d-Input d-Network__Input" name="proxy" value="{{proxy}}">
-                                    <input type="submit" class="d-Button" value="Update">
-                                </form>
-
-                                {{#has_proxy}}
-                                    <form action="/network/{{id}}/proxy/remove" method="post">
-                                        <input type="submit" class="d-Button" value="Disable proxy">
-                                    </form>
-                                {{/has_proxy}}
-                            </div>
-
-                            <p class="d-Network__Note">
-                                URL in the form <em class="d-Code">http://host:port</em> or <em class="d-Code">http://user:password@host:port</em>
-                            </p>
-                        </div>
-                    </details>
-                {{/connected}}
-            </div>
-        </details>
-    {{/services}}
-
-    {{^services}}
-          No services available.
-    {{/services}}
+        {{^services}}
+              No services available.
+        {{/services}}
+    </ul>
 </section>

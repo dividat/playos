@@ -12,6 +12,7 @@ let resource_path end_path =
   (Sys.argv.(0) |> v |> parent) / ".." / "share" // end_path
   |> to_string
 
+
 (* Load a template file
 *)
 let template name =
@@ -19,10 +20,30 @@ let template name =
   |> Util.read_from_file log_src
   >|= Mustache.of_string
 
+(* Load a partial file
+ * This had to be defined separately from the function loading templates,
+ * because its has to have the type string -> Mustache.t option (cannot use lwt).
+*)
+let load_partial name =
+   let load_file f =
+     let ic = open_in f in
+     let n = in_channel_length ic in
+     let s = Bytes.create n in
+     really_input ic s 0 n;
+     close_in ic;
+     Bytes.to_string s
+   in
+   let partial =
+     Fpath.(resource_path (v "template" / "partials" / (name ^ ".mustache")))
+     |> load_file
+     |> Mustache.of_string
+   in
+   Some partial
+
 (* Helper to render template *)
 let render name dict =
   let%lwt template = template name in
-  Mustache.render ~strict:false template (Ezjsonm.dict dict)
+  Mustache.render ~strict:false ~partials:load_partial template (Ezjsonm.dict dict)
   |> return
 
 (* Middleware that makes static content available *)
@@ -234,6 +255,11 @@ module NetworkGui = struct
   open Connman
   open Network
 
+  let blur_service_proxy_password s =
+    let open Service in
+    let blur p = Proxy.validate p |> Option.map (Proxy.to_string ~hide_password:true) in
+    { s with proxy = s.proxy |> Base.Fn.flip Option.bind blur }
+
   let overview ~(connman:Manager.t) req =
 
     let%lwt all_services = Manager.get_services connman in
@@ -267,12 +293,6 @@ module NetworkGui = struct
         |> List.filter (fun s -> not is_internet_connected || Service.is_connected s)
     in
 
-    let blur_service_proxy_password s =
-      let open Service in
-      let blur p = Proxy.validate p |> Option.map (Proxy.to_string ~hide_password:true) in
-      { s with proxy = s.proxy |> Base.Fn.flip Option.bind blur }
-    in
-
     page "network"
       [
         "internet_connected", is_internet_connected |> Ezjsonm.bool
@@ -294,6 +314,13 @@ module NetworkGui = struct
     match List.find_opt (fun s -> s.Service.id = id) services with
     | Some s -> return s
     | None -> fail_with (Format.sprintf "Service does not exist (%s)" id)
+
+  let details ~connman req =
+    let service_id = param req "id" in
+    let%lwt service = with_service connman service_id in
+  page "network_details" [
+    "service", service |> blur_service_proxy_password |> Service.to_json |> Ezjsonm.value
+  ]
 
   (** Validate a proxy, fail if the proxy is given but invalid *)
   let with_empty_or_valid_proxy form_data =
@@ -363,6 +390,7 @@ module NetworkGui = struct
   let build ~(connman:Connman.Manager.t) app =
     app
     |> get "/network" (overview ~connman)
+    |> get "/network/:id" (details ~connman)
     |> post "/network/:id/connect" (connect ~connman)
     |> post "/network/:id/proxy/update" (update_proxy ~connman)
     |> post "/network/:id/proxy/remove" (remove_proxy ~connman)
