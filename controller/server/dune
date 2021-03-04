@@ -4,7 +4,7 @@
  (name server)
  (public_name playos-controller)
  (modules server update info gui health
-   view info_page)
+   view info_page localization_page)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium mustache tyxml
   rauc zerotier connman locale network timedate systemd label_printer

@@ -112,12 +112,8 @@ module LocalizationGui = struct
   let overview req =
     let%lwt td_daemon = Timedate.daemon () in
     let%lwt current_timezone = Timedate.get_configured_timezone () in
-    let is_some_thing thing = function
-      | Some other -> String.equal other thing
-      | None -> false
-    in
     let%lwt all_timezones = Timedate.get_available_timezones td_daemon in
-    let tz_groups =
+    let timezone_groups =
       List.fold_right
         (fun tz groups ->
           let re_spaced = String.map (fun c -> if Char.equal c '_' then ' ' else c) tz in
@@ -135,26 +131,11 @@ module LocalizationGui = struct
             | Some entries -> entries
             | None -> []
           in
-          ( group_id
-          , ( [ "id", Ezjsonm.string tz
-              ; "name", Ezjsonm.string (name)
-              ; "active", Ezjsonm.bool (is_some_thing tz current_timezone)
-              ]
-              |> Ezjsonm.dict
-            )
-            :: prev_entries
-          )
+          ( group_id, (tz, name) :: prev_entries)
           :: List.remove_assoc group_id groups
         )
         all_timezones
         []
-        |> Ezjsonm.list
-        (fun (group_id, entries) ->
-          Ezjsonm.dict
-            [ "group", Ezjsonm.string group_id
-            ; "entries", Ezjsonm.list (fun x -> x) entries
-            ]
-        )
     in
     let%lwt current_lang = Locale.get_lang () in
     let langs =
@@ -167,14 +148,6 @@ module LocalizationGui = struct
       ; "it_IT.UTF-8", "Italian"
       ; "es_ES.UTF-8", "Spanish"
       ]
-      |> Ezjsonm.list
-        (fun (id, name) ->
-          [ "id", id |> Ezjsonm.string
-          ; "name", name |> Ezjsonm.string
-          ; "active", is_some_thing id current_lang |> Ezjsonm.bool
-          ]
-          |> Ezjsonm.dict
-        )
     in
     let%lwt current_keymap = Locale.get_keymap () in
     let keymaps =
@@ -188,23 +161,15 @@ module LocalizationGui = struct
       ; "it", "Italian"
       ; "es", "Spanish"
       ]
-      |> Ezjsonm.list
-        (fun (id, name) ->
-          [ "id", id |> Ezjsonm.string
-          ; "name", name |> Ezjsonm.string
-          ; "active", is_some_thing id current_keymap |> Ezjsonm.bool
-          ]
-          |> Ezjsonm.dict
-        )
     in
-    page "localization"
-      [ "timezone_groups", tz_groups
-      ; "is_timezone_set", Ezjsonm.bool (Option.is_some current_timezone)
-      ; "langs", langs
-      ; "is_lang_set", Ezjsonm.bool (Option.is_some current_lang)
-      ; "is_keymap_set", Ezjsonm.bool (Option.is_some current_keymap)
-      ; "keymaps", keymaps
-      ]
+    Lwt.return (tyxml_page View.Localization (Localization_page.html
+      { timezone_groups
+      ; current_timezone
+      ; langs
+      ; current_lang
+      ; keymaps
+      ; current_keymap
+      }))
 
   let set_timezone req =
     let%lwt td_daemon = Timedate.daemon () in
