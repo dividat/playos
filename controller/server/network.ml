@@ -33,7 +33,7 @@ let enable_and_scan_wifi_devices ~connman =
   |> Lwt_result.catch
 
 
-let init ~systemd ~connman =
+let init ~connman =
   let%lwt () = Logs_lwt.info (fun m -> m "initializing network connections") in
 
   match%lwt enable_and_scan_wifi_devices ~connman with
