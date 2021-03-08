@@ -70,6 +70,13 @@
     filter: invert(70%) sepia(70%) saturate(100%);
 }
 
+/* Info */
+
+.d-Info__RemoteManagementForm {
+    display: inline;
+    margin-left: 1rem;
+}
+
 /* Network list */
 
 .d-NetworkList__Network {
@@ -165,6 +172,16 @@
     font-size: 80%;
     color: #404040;
     margin-bottom: 1rem;
+}
+
+/* Switch */
+
+.d-Switch--On {
+    color: green;
+}
+
+.d-Switch--Off {
+    color: red;
 }
 
 /* Wifi signal */

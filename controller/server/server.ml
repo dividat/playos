@@ -69,6 +69,7 @@ let main debug port =
   (* Start the GUI *)
   let gui_p =
     Gui.start
+      ~systemd
       ~port
       ~shutdown
       ~rauc

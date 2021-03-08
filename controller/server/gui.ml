@@ -404,7 +404,19 @@ module ChangelogGui = struct
         Lwt.return (page (Changelog_page.html changelog)))
 end
 
-let routes ~shutdown ~health_s ~update_s ~rauc ~connman app =
+module RemoteManagementGui = struct
+  let build ~systemd app =
+    app
+    |> post "/remote-management/enable" (fun _ ->
+        let%lwt _ = Systemd.Manager.start_unit systemd "zerotierone.service" in
+        Lwt.return (success (Format.sprintf "Starting remote management service.")))
+    |> post "/remote-management/disable" (fun _ ->
+        let%lwt _ = Systemd.Manager.stop_unit systemd "zerotierone.service" in
+        Lwt.return (success (Format.sprintf "Stopping remote management service.")))
+end
+
+
+let routes ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman app =
   app
   |> middleware (static ())
   |> middleware error_handling
@@ -423,10 +435,11 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman app =
   |> LabelGui.build
   |> StatusGui.build ~health_s ~update_s ~rauc
   |> ChangelogGui.build
+  |> RemoteManagementGui.build ~systemd
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
-let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman =
+let start ~port ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman =
   empty
   |> Opium.App.port port
-  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman
+  |> routes ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman
   |> start

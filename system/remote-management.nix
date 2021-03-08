@@ -6,6 +6,8 @@
     # from the ext.dividat.com network.
     joinNetworks = [ "a09acf02330ccc60" ];
   };
+  # Prevent ZeroTier from running on startup
+  systemd.services.zerotierone.wantedBy = lib.mkForce [];
 
   # Make the zerotier data directory persistent (on user data partition). This
   # means zerotier id of this machine will be persisted on updates but not when
