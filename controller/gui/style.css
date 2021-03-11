@@ -363,9 +363,9 @@
 }
 
 .d-BackLink {
-  color: blue;
-  font-size: 1rem;
-  text-decoration: none;
+    color: blue;
+    font-size: 1rem;
+    text-decoration: none;
 }
 
 .d-BackLink:hover {
@@ -373,5 +373,5 @@
 }
 
 .d-BackLink:before {
-  content: "❮ ";
+    content: "❮ ";
 }
