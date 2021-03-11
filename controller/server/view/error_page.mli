@@ -1,5 +1,5 @@
 type params =
-  { exn: string
+  { message: string
   ; request: string
   }
 

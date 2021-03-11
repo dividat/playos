@@ -140,7 +140,7 @@ let html service =
     |> sexp_of_t
     |> Sexplib.Sexp.to_string_hum
   in
-  Page.html ~menu_focus:Page.Network (
+  Page.html ~current_page:Page.Network (
     div
       [ a ~a:[
           a_class [ "d-BackLink" ]

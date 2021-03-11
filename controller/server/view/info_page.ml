@@ -2,7 +2,7 @@ open Info
 open Tyxml.Html
 
 let html server_info =
-  Page.html ~menu_focus:Page.Info (
+  Page.html ~current_page:Page.Info (
     div
       [ h1 ~a:[ a_class [ "d-Title" ] ] [ txt "Information" ]
       ; Definition.list

@@ -1,10 +1,10 @@
-type menu_focus =
+type page =
   | Info
   | Network
   | Localization
   | Shutdown
 
 val html :
-  ?menu_focus:menu_focus ->
+  ?current_page:page ->
   [< Html_types.main_content_fun ] Tyxml.Html.elt ->
   [> Html_types.html ] Tyxml.Html.elt

@@ -1,6 +1,6 @@
 open Tyxml.Html
 
-type generic_form_parameters =
+type select_form_params =
   { action_url: string
   ; legend: string
   ; select_name: string
@@ -42,8 +42,8 @@ let select_option current_id (id, name) =
     (txt name)
 
 let timezone_form timezone_groups current_timezone =
-  let timezone_group (group_id, tzs) =
-    optgroup ~label:group_id (List.map (select_option current_timezone) tzs)
+  let timezone_group (group_id, timezones) =
+    optgroup ~label:group_id (List.map (select_option current_timezone) timezones)
   in
   select_form
     { action_url = "/localization/timezone"
@@ -93,7 +93,7 @@ type params =
   }
 
 let html params =
-  Page.html ~menu_focus:Page.Localization (
+  Page.html ~current_page:Page.Localization (
     div
       [ h1 ~a:[ a_class [ "d-Title" ] ] [ txt "Localization" ]
       ; timezone_form params.timezone_groups params.current_timezone

@@ -27,7 +27,7 @@ type params =
   }
 
 let html { proxy; is_internet_connected; services } =
-  Page.html ~menu_focus:Page.Network (
+  Page.html ~current_page:Page.Network (
     div
       [ h1 ~a:[ a_class [ "d-Title" ] ] [ txt "Network" ]
 

@@ -1,50 +1,50 @@
 open Tyxml.Html
 
-type menu_focus =
+type page =
   | Info
   | Network
   | Localization
   | Shutdown
 
-let menu_link menu_focus =
-  match menu_focus with
+let menu_link page =
+  match page with
   | Info -> "/info"
   | Network -> "/network"
   | Localization -> "/localization"
   | Shutdown -> "/shutdown"
 
-let menu_icon menu_focus =
-  match menu_focus with
+let menu_icon page =
+  match page with
   | Info -> "/static/info.svg"
   | Network -> "/static/wifi.svg"
   | Localization -> "/static/world.svg"
   | Shutdown -> "/static/power.svg"
 
-let menu_alt menu_focus =
-  match menu_focus with
+let menu_alt page =
+  match page with
   | Info -> "Information"
   | Network -> "Network"
   | Localization -> "Localization"
   | Shutdown -> "Shutdown"
 
-let menu_item menu_focus m =
+let menu_item current_page page =
   let class_ =
     "d-Menu__Item" ::
-      (if menu_focus = Some m then [ "d-Menu__Item--Active" ] else [])
+      (if current_page = Some page then [ "d-Menu__Item--Active" ] else [])
   in
   div
     ~a:[ a_class class_ ]
     [ a
-        ~a:[ a_href (menu_link m) ]
+        ~a:[ a_href (menu_link page) ]
         [ img
-            ~src:(menu_icon m)
-            ~alt:(menu_alt m)
+            ~src:(menu_icon page)
+            ~alt:(menu_alt page)
             ~a:[ a_class [ "d-Menu__ItemIcon" ] ]
             ()
         ]
     ]
 
-let html ?menu_focus content =
+let html ?current_page content =
   html
     ~a:[ a_lang "en" ]
     (head
@@ -60,7 +60,7 @@ let html ?menu_focus content =
       ; nav
           ~a:[ a_class [ "d-Menu" ] ]
           ([ Info; Network; Localization; Shutdown ]
-              |> List.map (menu_item menu_focus))
+              |> List.map (menu_item current_page))
       ; main
           ~a:[ a_class [ "d-Content" ] ]
           [ content ]

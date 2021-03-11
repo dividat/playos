@@ -38,7 +38,7 @@ let error_handling =
     | Error exn ->
       let%lwt () = Logs_lwt.err (fun m -> m "GUI Error: %s" (Printexc.to_string exn)) in
       Lwt.return (page (Error_page.html
-        { exn = exn
+        { message = exn
             |> Sexplib.Std.sexp_of_exn
             |> Sexplib.Sexp.to_string_hum
         ; request = req
@@ -400,7 +400,6 @@ module ChangelogGui = struct
   let build app =
     app
     |> get "/changelog" (fun _ ->
-        let open Tyxml.Html in
         let%lwt changelog = Util.read_from_file log_src (resource_path (Fpath.v "Changelog.html")) in
         Lwt.return (page (Changelog_page.html changelog)))
 end
