@@ -4,8 +4,7 @@ type generic_form_parameters =
   { action_url: string
   ; legend: string
   ; select_name: string
-  ; has_value: bool
-  ; no_value_msg: string
+  ; placeholder: string option
   }
 
 let select_form params options =
@@ -22,11 +21,10 @@ let select_form params options =
         ; a_class [ "d-Select"; "d-Localization__Select" ]
         ; a_required ()
         ]
-        ([ option
-            ~a:([ a_disabled () ]
-              @ (if not params.has_value then [ a_selected () ] else []))
-            (txt params.no_value_msg)
-        ] @ options)
+        ((params.placeholder
+          |> Option.map (fun p -> option ~a:[ a_disabled (); a_selected ()] (txt p))
+          |> Base.Option.to_list)
+        @ options)
     ; input
         ~a:[ a_input_type `Submit
         ; a_class [ "d-Button" ]
@@ -51,8 +49,11 @@ let timezone_form timezone_groups current_timezone =
     { action_url = "/localization/timezone"
     ; legend = "Timezone"
     ; select_name = "timezone"
-    ; has_value = Option.is_some current_timezone
-    ; no_value_msg = "Select your closest timezone…"
+    ; placeholder =
+      if Option.is_none current_timezone then
+        Some "Select your closest timezone…"
+      else
+        None
     }
     (List.map timezone_group timezone_groups)
 
@@ -61,8 +62,11 @@ let language_form langs current_lang =
     { action_url = "/localization/lang"
     ; legend = "Language"
     ; select_name = "lang"
-    ; has_value = Option.is_some current_lang
-    ; no_value_msg = "Select your language…"
+    ; placeholder =
+      if Option.is_none current_lang then
+        Some "Select your language…"
+      else
+        None
     }
     (List.map (select_option current_lang) langs)
 
@@ -71,8 +75,11 @@ let keyboard_form keymaps current_keymap =
     { action_url = "/localization/keymap"
     ; legend = "Keyboard"
     ; select_name = "keymap"
-    ; has_value = Option.is_some current_keymap
-    ; no_value_msg = "Select your keyboard layout…"
+    ; placeholder =
+      if Option.is_none current_keymap then
+        Some "Select your keyboard layout…"
+      else
+        None
     }
     (List.map (select_option current_keymap) keymaps)
 
