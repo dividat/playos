@@ -334,31 +334,11 @@ struct
       <*> (properties |> List.assoc_opt "Proxy" >>= proxy_of_obus |> pure)
     )
 
-
   let is_connected t =
     match t.state with
     | Ready -> true
     | Online -> true
     | _ -> false
-
-  let to_json s =
-    Ezjsonm.dict [
-      "id", s.id |> Ezjsonm.string
-    ; "name", s.name |> Ezjsonm.string
-    ; "favorite", s.favorite |> Ezjsonm.bool
-    ; "connected", s |> is_connected |> Ezjsonm.bool
-    ; "strength", (match s.strength with
-      | Some s -> if s < 25 then "None"
-                 else if s < 50 then "Weak"
-                 else if s < 75 then "Medium"
-                 else "Strong"
-      | None -> "") |> Ezjsonm.string
-    ; "properties", s |> sexp_of_t |> Sexplib.Sexp.to_string_hum |> Ezjsonm.string
-    ; "proxy", (match s.proxy with
-      | Some p -> p
-      | None -> "") |> Ezjsonm.string
-    ; "has_proxy", Option.is_some s.proxy |> Ezjsonm.bool
-    ]
 
   let set_property service ~name ~value =
     OBus_method.call
