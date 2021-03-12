@@ -11,6 +11,7 @@
 - controller: Format machine-id in groups of 4 for readability
 - os: Update nixpkgs channel to 20.09
 - controller: Display network configuration on separate pages
+- controller: Enable remote management on demand only
 
 ## Fixed
 
