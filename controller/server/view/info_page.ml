@@ -1,7 +1,7 @@
 open Info
 open Tyxml.Html
 
-let zerotier_form action button_label =
+let remote_management_form action button_label =
   form
     ~a:[ a_action ("/remote-management/" ^ action)
     ; a_method `Post
@@ -15,15 +15,15 @@ let zerotier_form action button_label =
         ()
     ]
 
-let zerotier address =
+let remote_management address =
   match address with
   | Some address ->
       [ span ~a:[ a_class [ "d-Switch--On" ] ] [ txt address ]
-      ; zerotier_form "disable" "Disable"
+      ; remote_management_form "disable" "Disable"
       ]
   | None ->
       [ span ~a:[ a_class [ "d-Switch--Off" ] ] [ txt "off" ]
-      ; zerotier_form "enable" "Enable"
+      ; remote_management_form "enable" "Enable"
       ]
 
 let html server_info =
@@ -44,7 +44,7 @@ let html server_info =
           ; Definition.description [ txt server_info.machine_id ]
 
           ; Definition.term [ txt "Remote management" ]
-          ; Definition.description (zerotier server_info.zerotier_address)
+          ; Definition.description (remote_management server_info.zerotier_address)
 
           ; Definition.term [ txt "Local time" ]
           ; Definition.description [ txt server_info.local_time ]
