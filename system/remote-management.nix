@@ -9,15 +9,6 @@
   # Prevent ZeroTier from running on startup
   systemd.services.zerotierone.wantedBy = lib.mkForce [];
 
-  # Make the zerotier data directory persistent (on user data partition). This
-  # means zerotier id of this machine will be persisted on updates but not when
-  # wiping user data partition.
-  volatileRoot.persistentFolders."/var/lib/zerotier-one/" = {
-    mode = "0700";
-    user = "root";
-    group = "root";
-  };
-
   # Allow remote access via OpenSSH
   services.openssh = {
     enable = true;
