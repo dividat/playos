@@ -110,6 +110,7 @@ module Service : sig
   ; favorite : bool
   ; autoconnect : bool
   ; ipv4 : IPv4.t option
+  ; ipv4_user_config : IPv4.t option
   ; ipv6 : IPv6.t option
   ; ethernet : Ethernet.t
   ; proxy : string option

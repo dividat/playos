@@ -276,7 +276,13 @@ struct
   ; strength : int option
   ; favorite : bool
   ; autoconnect : bool
+
+  (* The ipv4 field represents the actual system configuration,
+     while the ipv4_user_config represents values manually configured by the user.
+  *)
   ; ipv4 : IPv4.t option
+  ; ipv4_user_config : IPv4.t option
+
   ; ipv6 : IPv6.t option
   ; ethernet : Ethernet.t
   ; proxy : string option
@@ -322,12 +328,12 @@ struct
         _ -> None
     in
     CCOpt.(
-      pure (fun name type' state strength favorite autoconnect ipv4 ipv6 ethernet proxy nameservers ->
+      pure (fun name type' state strength favorite autoconnect ipv4 ipv4_user_config ipv6 ethernet proxy nameservers ->
           { _proxy = OBus_proxy.make (OBus_context.sender context) path
           ; _manager = manager
           ; id = path |> CCList.last 1 |> CCList.hd
           ; name ; type'; state; strength; favorite; autoconnect
-          ; ipv4; ipv6; ethernet; proxy; nameservers
+          ; ipv4; ipv4_user_config; ipv6; ethernet; proxy; nameservers
           })
       <*> (properties |> List.assoc_opt "Name" >>= string_of_obus)
       <*> (properties |> List.assoc_opt "Type" >>= string_of_obus >>= Technology.type_of_string)
@@ -336,6 +342,7 @@ struct
       <*> (properties |> List.assoc_opt "Favorite" >>= bool_of_obus)
       <*> (properties |> List.assoc_opt "AutoConnect" >>= bool_of_obus)
       <*> (properties |> List.assoc_opt "IPv4" >>= IPv4.of_obus |> pure)
+      <*> (properties |> List.assoc_opt "IPv4.Configuration" >>= IPv4.of_obus |> pure)
       <*> (properties |> List.assoc_opt "IPv6" >>= IPv6.of_obus |> pure)
       <*> (properties |> List.assoc_opt "Ethernet" >>= Ethernet.of_obus)
       <*> (properties |> List.assoc_opt "Proxy" >>= proxy_of_obus |> pure)
