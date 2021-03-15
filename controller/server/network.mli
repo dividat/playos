@@ -1,6 +1,6 @@
 (** Initialize Network connectivity *)
-val init : systemd : Systemd.Manager.t
-  -> connman : Connman.Manager.t
+val init
+  : connman : Connman.Manager.t
   -> (unit,exn) Lwt_result.t
 
 module Interface : sig

@@ -53,11 +53,11 @@ let html { proxy; is_internet_connected; services } =
           ; Definition.description
               [ if is_internet_connected then
                   span
-                    ~a:[ a_class [ "d-Network__InternetConnected" ] ]
+                    ~a:[ a_class [ "d-Switch--On" ] ]
                     [ txt "Connected" ]
                 else
                   span
-                    ~a:[ a_class [ "d-Network__InternetNotConnected" ] ]
+                    ~a:[ a_class [ "d-Switch--Off" ] ]
                     [ txt "Not connected" ]
               ]
           ]

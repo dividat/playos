@@ -69,6 +69,7 @@ let main debug port =
   (* Start the GUI *)
   let gui_p =
     Gui.start
+      ~systemd
       ~port
       ~shutdown
       ~rauc
@@ -80,7 +81,7 @@ let main debug port =
   let%lwt () =
     (* Initialize Network, parallel to starting server *)
     begin
-      match%lwt Network.init ~systemd ~connman with
+      match%lwt Network.init ~connman with
       | Ok () ->
         return_unit
       | Error exn ->

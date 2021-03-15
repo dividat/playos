@@ -11,7 +11,7 @@ module Manager : sig
   (** connect with systemd D-Bus API *)
   val connect : unit -> t Lwt.t
 
-  (** System state *) 
+  (** System state *)
   type system_state =
     | Initializing
     | Starting
@@ -29,7 +29,7 @@ module Manager : sig
   (** [get_unit t name] returns the unit [name] *)
   val get_unit : t -> string -> Unit.t Lwt.t
 
-  (** [restart_unit t name] a unit with name [unit].
+  (** [restart_unit t name] a unit with name [name].
 
       Example:
 
@@ -37,5 +37,23 @@ module Manager : sig
 
   *)
   val restart_unit : t -> string -> unit Lwt.t
+
+  (** [start_unit t name] a unit with name [name].
+
+      Example:
+
+        start_unit t "zerotierone.service"
+
+   *)
+  val start_unit : t -> string -> unit Lwt.t
+
+  (** [stop_unit t name] a unit with name [name].
+
+      Example:
+
+        stop_unit t "zerotierone.service"
+
+   *)
+  val stop_unit : t -> string -> unit Lwt.t
 
 end
