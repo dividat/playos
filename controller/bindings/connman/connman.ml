@@ -379,6 +379,26 @@ struct
     set_property service "Proxy.Configuration" dict
 
 
+  let set_ipv4 ?address ?netmask ?gateway service ~method'  =
+    let values =
+      List.fold_right (fun (name, value) acc ->
+          match value with
+          | Some v -> acc @ [ (name, OBus_value.C.(make_single basic_string) v) ]
+          | None -> acc
+        ) [ ("Method", Some method')
+          ; ("Address", address)
+          ; ("Netmask", netmask)
+          ; ("Gateway", gateway)
+          ]
+        []
+    in
+    let dict =
+      OBus_value.C.make_single
+        (OBus_value.C.(dict string variant))
+        values
+     in
+     set_property service "IPv4.Configuration" dict
+
   let set_nameservers service nameservers =
     let config =
         OBus_value.C.make_single

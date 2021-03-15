@@ -300,13 +300,35 @@ module NetworkGui = struct
     let%lwt () = Connman.Service.set_direct_proxy service in
     Lwt.return (success (Format.sprintf "Proxy of %s has been disabled." service.name))
 
+  (** Set static IP configuration on a service *)
+  let update_static_ip ~(connman: Connman.Manager.t) req =
+    let%lwt form_data = urlencoded_pairs_of_body req in
+    let%lwt service = with_service ~connman (param req "id") in
+    let get_prop s =
+      form_data
+      |> List.assoc s
+      |> List.hd
+    in
+    let address = get_prop "address" in
+    let netmask = get_prop "netmask" in
+    let gateway = get_prop "gateway" in
+    let%lwt () = Connman.Service.set_ipv4 service  ~method':"manual" ~address ~netmask ~gateway in
+    Lwt.return (success (Format.sprintf "Configured static IP for %s." service.name))
+
+  (** Remove static IP configuration from a service *)
+  let remove_static_ip ~(connman: Connman.Manager.t) req =
+    let%lwt form_data = urlencoded_pairs_of_body req in
+    let%lwt service = with_service ~connman (param req "id") in
+    let%lwt () = Connman.Service.set_ipv4 service  ~method':"dhcp" in
+    Lwt.return (success (Format.sprintf "Removed static IP configuration of %s." service.name))
+
   (** Add nameserver to a service *)
   let add_nameserver ~(connman:Connman.Manager.t) req =
     let%lwt service = with_service ~connman (param req "id") in
     let%lwt form_data = urlencoded_pairs_of_body req in
     let new_nameserver = List.assoc "nameserver" form_data |> List.hd in
     let%lwt () = Connman.Service.set_nameservers service (service.nameservers @ [ new_nameserver ]) in
-    Lwt.return (success (Format.sprintf "Added %s to the nameservers of %s" new_nameserver service.name))
+    Lwt.return (success (Format.sprintf "Added %s to nameservers of %s" new_nameserver service.name))
 
   (** Remove a nameserver from a service *)
   let remove_nameserver ~(connman:Connman.Manager.t) req =
@@ -318,6 +340,11 @@ module NetworkGui = struct
   (** Remove a service **)
   let remove ~(connman:Connman.Manager.t) req =
     let%lwt service = with_service ~connman (param req "id") in
+
+    (* Clear settings that might have been configured on the service. *)
+    let%lwt () = Connman.Service.set_nameservers service [] in
+    let%lwt () = Connman.Service.set_ipv4 service ~method':"dhcp" in
+
     let%lwt () = Connman.Service.remove service in
     Lwt.return (success (Format.sprintf "Removed service %s." service.name))
 
@@ -329,6 +356,8 @@ module NetworkGui = struct
     |> post "/network/:id/proxy/update" (update_proxy ~connman)
     |> post "/network/:id/proxy/remove" (remove_proxy ~connman)
     |> post "/network/:id/remove" (remove ~connman)
+    |> post "/network/:id/staticip/update" (update_static_ip ~connman)
+    |> post "/network/:id/staticip/remove" (remove_static_ip ~connman)
     |> post "/network/:id/nameservers/add" (add_nameserver ~connman)
     |> post "/network/:id/nameservers/:nameserver/remove" (remove_nameserver ~connman)
 
