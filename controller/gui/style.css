@@ -177,6 +177,31 @@
     margin-bottom: 1rem;
 }
 
+
+
+/* Nameserver form */
+
+.d-NameserverRemoveForm {
+    margin-bottom: 0.5rem;
+    align-items: center;
+    line-height: 1;
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-columns: 20ch min-content;
+    height: var(--form-component-height);
+}
+
+.d-NameserverRemoveForm__Nameserver {
+    background: #f1f1f1;
+    width: 100%;
+    height: calc(100%);
+    padding: 0.5rem;
+    font-size: var(--form-component-font-size);
+    display: flex;
+    align-items: center;
+}
+
+
 /* Switch */
 
 .d-Switch--On {
@@ -374,4 +399,8 @@
 
 .d-BackLink:before {
     content: "❮ ";
+}
+
+.d-TabularNums {
+    font-variant-numeric: tabular-nums;
 }

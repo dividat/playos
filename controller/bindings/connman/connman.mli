@@ -113,6 +113,7 @@ module Service : sig
   ; ipv6 : IPv6.t option
   ; ethernet : Ethernet.t
   ; proxy : string option
+  ; nameservers : string list
   }
   [@@deriving sexp]
 
@@ -122,6 +123,8 @@ module Service : sig
   val set_direct_proxy : t -> unit Lwt.t
 
   val set_manual_proxy : t -> string -> unit Lwt.t
+
+  val set_nameservers : t -> string list -> unit Lwt.t
 
   val connect : ?input:Agent.input -> t -> unit Lwt.t
 

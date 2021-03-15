@@ -53,7 +53,7 @@ let not_connected_form service =
           ]
           ()
       ; details
-          (summary [ txt "Advanced Settings" ])
+          (summary [ txt "Proxy Settings" ])
           [ div
               ~a:[ a_class [ "d-Network__AdvancedSettingsTitle" ] ]
               [ proxy_label service.id
@@ -82,6 +82,47 @@ let disable_proxy_form service =
           ()
       ]
 
+(* Regex pattern to validate IP addresses
+ * From: https://stackoverflow.com/a/36760050 *)
+let ip_address_regex_pattern =
+  "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\\.(?!$)|$)){4}$"
+
+let nameservers_form service =
+  let nameserver_remove_form nameserver =
+    form ~a:[ a_action ("/network/" ^ service.id ^ "/nameservers/" ^ nameserver ^ "/remove")
+            ; a_method `Post
+            ; a_class [ "d-NameserverRemoveForm" ]
+            ]
+      [ div ~a: [ a_class [ "d-TabularNums"; "d-NameserverRemoveForm__Nameserver" ] ] [ txt nameserver ]
+      ; input ~a:[ a_input_type `Submit
+                 ; a_class [ "d-Button" ]
+                 ; a_value "Remove"
+                 ] ()
+      ]
+  in
+  let nameserver_add_form =
+    form
+      ~a:[ a_action ("/network/" ^ service.id ^ "/nameservers/add")
+         ; a_method `Post
+         ; a_class []
+         ]
+      [ input ~a:[ a_class [ "d-Input"; "d-Network__Input" ]
+                 ; a_input_type `Text
+                 ; a_name "nameserver"
+                 ; a_required ()
+                 ; a_pattern ip_address_regex_pattern
+                 ] ()
+      ; input
+          ~a:[ a_input_type `Submit
+             ; a_class [ "d-Button" ]
+             ; a_value "Add"
+             ]
+          ()
+      ]
+  in
+  div ~a:[ a_class [ "d-Network__Form" ] ]
+    ((service.nameservers |> List.map nameserver_remove_form) @ [ nameserver_add_form ])
+
 let connected_form service =
   div
     [ form
@@ -97,7 +138,7 @@ let connected_form service =
             ()
         ]
     ; details
-        (summary [ txt "Advanced Settings" ])
+        (summary [ txt "Proxy Settings" ])
         [ div
             ~a:[ a_class [ "d-Network__Form" ] ]
             [ proxy_label service.id
@@ -124,6 +165,8 @@ let connected_form service =
             ; proxy_form_note
             ]
         ]
+    ; details (summary [ txt "Nameservers" ])
+      [ nameservers_form service ]
     ]
 
 let html service =

@@ -300,6 +300,21 @@ module NetworkGui = struct
     let%lwt () = Connman.Service.set_direct_proxy service in
     Lwt.return (success (Format.sprintf "Proxy of %s has been disabled." service.name))
 
+  (** Add nameserver to a service *)
+  let add_nameserver ~(connman:Connman.Manager.t) req =
+    let%lwt service = with_service ~connman (param req "id") in
+    let%lwt form_data = urlencoded_pairs_of_body req in
+    let new_nameserver = List.assoc "nameserver" form_data |> List.hd in
+    let%lwt () = Connman.Service.set_nameservers service (service.nameservers @ [ new_nameserver ]) in
+    Lwt.return (success (Format.sprintf "Added %s to the nameservers of %s" new_nameserver service.name))
+
+  (** Remove a nameserver from a service *)
+  let remove_nameserver ~(connman:Connman.Manager.t) req =
+    let%lwt service = with_service ~connman (param req "id") in
+    let nameserver = param req "nameserver" in
+    let%lwt () = Connman.Service.set_nameservers service (service.nameservers |> List.filter(fun ns -> ns <> nameserver)) in
+    Lwt.return (success (Format.sprintf "Removed %s from nameservers of %s." nameserver service.name))
+
   (** Remove a service **)
   let remove ~(connman:Connman.Manager.t) req =
     let%lwt service = with_service ~connman (param req "id") in
@@ -314,6 +329,8 @@ module NetworkGui = struct
     |> post "/network/:id/proxy/update" (update_proxy ~connman)
     |> post "/network/:id/proxy/remove" (remove_proxy ~connman)
     |> post "/network/:id/remove" (remove ~connman)
+    |> post "/network/:id/nameservers/add" (add_nameserver ~connman)
+    |> post "/network/:id/nameservers/:nameserver/remove" (remove_nameserver ~connman)
 
 end
 
