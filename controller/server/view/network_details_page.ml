@@ -83,9 +83,11 @@ let disable_proxy_form service =
       ]
 
 (* Regex pattern to validate IP addresses
- * From: https://stackoverflow.com/a/36760050 *)
+ * It matches a single address, or a comma-separated list of addresses
+ * Based on: https://stackoverflow.com/a/36760050 *)
 let ip_address_regex_pattern =
-  "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\\.(?!$)|$)){4}$"
+  {|(((((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|\b)){4}))(,( +)?)?)+|}
+
 
 let static_ip_form service =
   let is_static =
@@ -105,7 +107,7 @@ let static_ip_form service =
                ]()
     ]
   in
-  let inputValue f =
+  let ipv4_value f =
     if is_static then
       service.ipv4_user_config |> Option.map (fun (ipv4:IPv4.t) -> f ipv4) |> Option.value ~default:""
     else
@@ -120,17 +122,22 @@ let static_ip_form service =
                   ~id:"static-ip-address"
                   ~labelTxt:"Address"
                   ~name:"address"
-                  ~value:(inputValue(fun ipv4 -> ipv4.address))
+                  ~value:(ipv4_value(fun ipv4 -> ipv4.address))
                 @ ip_input
                   ~id:"static-ip-netmask"
                   ~labelTxt:"Netmask"
                   ~name:"netmask"
-                  ~value:(inputValue(fun ipv4 -> ipv4.netmask))
+                  ~value:(ipv4_value(fun ipv4 -> ipv4.netmask))
                 @ ip_input
                   ~id:"static-ip-gateway"
                   ~labelTxt:"Gateway"
                   ~name:"gateway"
-                  ~value:(inputValue(fun ipv4 -> ipv4.gateway |> Option.value ~default:""))
+                  ~value:(ipv4_value(fun ipv4 -> ipv4.gateway |> Option.value ~default:""))
+                @ ip_input
+                  ~id:"static-ip-nameservers"
+                  ~labelTxt:"Nameservers"
+                  ~name:"nameservers"
+                  ~value:(if is_static then String.concat ", " service.nameservers else "")
               )
         ]
     ; div
@@ -154,41 +161,6 @@ let static_ip_form service =
           ]
     ]
 
-let nameservers_form service =
-  let nameserver_remove_form nameserver =
-    form ~a:[ a_action ("/network/" ^ service.id ^ "/nameservers/" ^ nameserver ^ "/remove")
-            ; a_method `Post
-            ; a_class [ "d-NameserverRemoveForm" ]
-            ]
-      [ div ~a: [ a_class [ "d-TabularNums"; "d-NameserverRemoveForm__Nameserver" ] ] [ txt nameserver ]
-      ; input ~a:[ a_input_type `Submit
-                 ; a_class [ "d-Button" ]
-                 ; a_value "Remove"
-                 ] ()
-      ]
-  in
-  let nameserver_add_form =
-    form
-      ~a:[ a_action ("/network/" ^ service.id ^ "/nameservers/add")
-         ; a_method `Post
-         ; a_class []
-         ]
-      [ input ~a:[ a_class [ "d-Input"; "d-Network__Input" ]
-                 ; a_input_type `Text
-                 ; a_name "nameserver"
-                 ; a_required ()
-                 ; a_pattern ip_address_regex_pattern
-                 ] ()
-      ; input
-          ~a:[ a_input_type `Submit
-             ; a_class [ "d-Button" ]
-             ; a_value "Add"
-             ]
-          ()
-      ]
-  in
-  div ~a:[ a_class [ "d-Network__Form" ] ]
-    ((service.nameservers |> List.map nameserver_remove_form) @ [ nameserver_add_form ])
 
 let connected_form service =
   div
@@ -235,8 +207,6 @@ let connected_form service =
 
     ; details (summary [ txt "Static IP" ])
       [ static_ip_form service ]
-    ; details (summary [ txt "Nameservers" ])
-      [ nameservers_form service ]
     ]
 
 let html service =
