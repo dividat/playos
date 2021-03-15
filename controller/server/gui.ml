@@ -26,6 +26,16 @@ let page html =
 let success content =
   page (Page.html (Tyxml.Html.txt content))
 
+type 'a timeout_params =
+  { duration: float
+  ; on_timeout: unit -> 'a Lwt.t
+  }
+
+let with_timeout { duration; on_timeout } f =
+  [ f ()
+  ; (let%lwt () = Lwt_unix.sleep duration in on_timeout ())
+  ] |> Lwt.pick
+
 (* Pretty error printing middleware *)
 let error_handling =
   let open Opium_kernel.Rock in
@@ -187,24 +197,22 @@ module NetworkGui = struct
     let proxy = Proxy.from_default_service all_services in
 
     let%lwt is_internet_connected =
-      [ (match%lwt Curl.request ?proxy (Uri.of_string "http://captive.dividat.com/") with
-          | RequestSuccess (200, _) ->
-            return true
-          | RequestSuccess (status, _) ->
-            let%lwt () = Logs_lwt.err (fun m -> m "Non-OK status code reaching captive portal: %d" status) in
-            return false
-          | RequestFailure err ->
-            let%lwt () = Logs_lwt.err (fun m -> m "Error reaching captive portal: %s" (Curl.pretty_print_error err)) in
-            return false
-        )
-      ; (match%lwt Lwt_unix.timeout 1.0 |> Lwt_result.catch with
-          | Error Lwt.Canceled ->
-            return false
-          | _ ->
+      with_timeout
+        { duration = 1.0
+        ; on_timeout = fun () ->
             let%lwt () = Logs_lwt.err (fun m -> m "Timeout reaching captive portal") in
             return false
-          )
-      ] |> Lwt.pick
+        }
+        (fun () ->
+            match%lwt Curl.request ?proxy (Uri.of_string "http://captive.dividat.com/") with
+            | RequestSuccess (200, _) ->
+              return true
+            | RequestSuccess (status, _) ->
+              let%lwt () = Logs_lwt.err (fun m -> m "Non-OK status code reaching captive portal: %d" status) in
+              return false
+            | RequestFailure err ->
+              let%lwt () = Logs_lwt.err (fun m -> m "Error reaching captive portal: %s" (Curl.pretty_print_error err)) in
+              return false)
     in
 
     (* If not connected show all services, otherwise show services that are connected *)
@@ -405,14 +413,31 @@ module ChangelogGui = struct
 end
 
 module RemoteManagementGui = struct
+
+  let rec wait_until_zerotier_is_on () =
+    match%lwt Zerotier.get_status () with
+    | Ok _ ->
+        redirect' (Uri.of_string "/info")
+    | Error _ ->
+        let%lwt () = Lwt_unix.sleep 0.1 in
+        wait_until_zerotier_is_on ()
+
   let build ~systemd app =
     app
     |> post "/remote-management/enable" (fun _ ->
-        let%lwt _ = Systemd.Manager.start_unit systemd "zerotierone.service" in
-        Lwt.return (success (Format.sprintf "Starting remote management service.")))
+        let%lwt () = Systemd.Manager.start_unit systemd "zerotierone.service" in
+        with_timeout
+          { duration = 2.0
+          ; on_timeout = fun () ->
+              let msg = "Timeout starting remote management service." in
+              let%lwt () = Logs_lwt.err (fun m -> m "%s" msg) in
+              Lwt.return (success msg)
+          }
+          wait_until_zerotier_is_on)
+
     |> post "/remote-management/disable" (fun _ ->
-        let%lwt _ = Systemd.Manager.stop_unit systemd "zerotierone.service" in
-        Lwt.return (success (Format.sprintf "Stopping remote management service.")))
+        let%lwt () = Systemd.Manager.stop_unit systemd "zerotierone.service" in
+        redirect' (Uri.of_string "/info"))
 end
 
 

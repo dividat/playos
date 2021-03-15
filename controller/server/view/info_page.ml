@@ -19,7 +19,7 @@ let remote_management address =
   match address with
   | Some address ->
       [ span
-          ~a:[ a_class [ "d-Switch--On"; "d-Info__RemoteManagementAddress" ] ]
+          ~a:[ a_class [ "d-Info__RemoteManagementAddress" ] ]
           [ txt address ]
       ; remote_management_form "disable" "Disable"
       ]
