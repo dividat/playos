@@ -196,9 +196,14 @@ module NetworkGui = struct
 
     let proxy = Proxy.from_default_service all_services in
 
+    let check_timeout =
+      try (Opium.Std.param req "timeout" |> float_of_string |> min 5.0 |> max 0.0)
+      with _ -> 0.2
+    in
+
     let%lwt is_internet_connected =
       with_timeout
-        { duration = 1.0
+        { duration = check_timeout
         ; on_timeout = fun () ->
             let%lwt () = Logs_lwt.err (fun m -> m "Timeout reaching captive portal") in
             return false
