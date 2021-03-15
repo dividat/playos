@@ -18,13 +18,13 @@ let remote_management_form action button_label =
 let remote_management address =
   match address with
   | Some address ->
-      [ span ~a:[ a_class [ "d-Switch--On" ] ] [ txt address ]
+      [ span
+          ~a:[ a_class [ "d-Switch--On"; "d-Info__RemoteManagementAddress" ] ]
+          [ txt address ]
       ; remote_management_form "disable" "Disable"
       ]
   | None ->
-      [ span ~a:[ a_class [ "d-Switch--Off" ] ] [ txt "off" ]
-      ; remote_management_form "enable" "Enable"
-      ]
+      [ remote_management_form "enable" "Enable" ]
 
 let html server_info =
   Page.html ~current_page:Page.Info (

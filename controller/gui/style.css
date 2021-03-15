@@ -74,7 +74,10 @@
 
 .d-Info__RemoteManagementForm {
     display: inline;
-    margin-left: 1rem;
+}
+
+.d-Info__RemoteManagementAddress {
+    margin-right: 1rem;
 }
 
 /* Network list */
