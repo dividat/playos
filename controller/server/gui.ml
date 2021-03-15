@@ -207,7 +207,7 @@ module NetworkGui = struct
       with_timeout
         { duration = check_timeout
         ; on_timeout = fun () ->
-            let%lwt () = Logs_lwt.err (fun m -> m "Timeout reaching captive portal") in
+            let%lwt () = Logs_lwt.err (fun m -> m "Timeout reaching captive portal (%f s)" check_timeout) in
             return false
         }
         (fun () ->
