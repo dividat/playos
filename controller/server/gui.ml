@@ -197,8 +197,10 @@ module NetworkGui = struct
     let proxy = Proxy.from_default_service all_services in
 
     let check_timeout =
-      try (Opium.Std.param req "timeout" |> float_of_string |> min 5.0 |> max 0.0)
-      with _ -> 0.2
+      Option.bind (Uri.get_query_param (Request.uri req) "timeout") Float.of_string_opt
+        |> Option.map (min 5.0)
+        |> Option.map (max 0.0)
+        |> Option.value ~default:0.2
     in
 
     let%lwt is_internet_connected =
