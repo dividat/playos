@@ -125,7 +125,9 @@ module Service : sig
 
   val set_manual_proxy : t -> string -> unit Lwt.t
 
-  val set_ipv4 : ?address:string -> ?netmask:string -> ?gateway:string -> t -> method':string -> unit Lwt.t
+  val set_manual_ipv4 : t -> address:string -> netmask:string -> gateway:string -> unit Lwt.t
+
+  val set_dhcp_ipv4 : t -> unit Lwt.t
 
   val set_nameservers : t -> string list -> unit Lwt.t
 

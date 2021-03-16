@@ -313,7 +313,7 @@ module NetworkGui = struct
     let netmask = get_prop "netmask" in
     let gateway = get_prop "gateway" in
     let nameservers = get_prop "nameservers" |> String.split_on_char ',' |> List.map (String.trim) in
-    let%lwt () = Connman.Service.set_ipv4 service  ~method':"manual" ~address ~netmask ~gateway in
+    let%lwt () = Connman.Service.set_manual_ipv4 service ~address ~netmask ~gateway in
     let%lwt () = Connman.Service.set_nameservers service nameservers in
     Lwt.return (success (Format.sprintf "Configured static IP for %s." service.name))
 
@@ -321,7 +321,7 @@ module NetworkGui = struct
   let remove_static_ip ~(connman: Connman.Manager.t) req =
     let%lwt form_data = urlencoded_pairs_of_body req in
     let%lwt service = with_service ~connman (param req "id") in
-    let%lwt () = Connman.Service.set_ipv4 service  ~method':"dhcp" in
+    let%lwt () = Connman.Service.set_dhcp_ipv4 service in
     let%lwt () = Connman.Service.set_nameservers service [] in
     Lwt.return (success (Format.sprintf "Removed static IP configuration of %s." service.name))
 
@@ -331,7 +331,7 @@ module NetworkGui = struct
 
     (* Clear settings that might have been configured on the service. *)
     let%lwt () = Connman.Service.set_nameservers service [] in
-    let%lwt () = Connman.Service.set_ipv4 service ~method':"dhcp" in
+    let%lwt () = Connman.Service.set_dhcp_ipv4 service in
 
     let%lwt () = Connman.Service.remove service in
     Lwt.return (success (Format.sprintf "Removed service %s." service.name))
