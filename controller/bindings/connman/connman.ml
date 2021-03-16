@@ -276,13 +276,7 @@ struct
   ; strength : int option
   ; favorite : bool
   ; autoconnect : bool
-
-  (* The ipv4 field represents the actual system configuration,
-     while the ipv4_user_config represents values manually configured by the user.
-  *)
   ; ipv4 : IPv4.t option
-  ; ipv4_user_config : IPv4.t option
-
   ; ipv6 : IPv6.t option
   ; ethernet : Ethernet.t
   ; proxy : string option
@@ -333,7 +327,8 @@ struct
           ; _manager = manager
           ; id = path |> CCList.last 1 |> CCList.hd
           ; name ; type'; state; strength; favorite; autoconnect
-          ; ipv4; ipv4_user_config; ipv6; ethernet; proxy; nameservers
+          ; ipv4 = (if Option.is_some ipv4_user_config then ipv4_user_config else ipv4)
+          ; ipv6; ethernet; proxy; nameservers
           })
       <*> (properties |> List.assoc_opt "Name" >>= string_of_obus)
       <*> (properties |> List.assoc_opt "Type" >>= string_of_obus >>= Technology.type_of_string)

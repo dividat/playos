@@ -109,7 +109,7 @@ let static_ip_form service =
   in
   let ipv4_value f =
     if is_static then
-      service.ipv4_user_config |> Option.map (fun (ipv4:IPv4.t) -> f ipv4) |> Option.value ~default:""
+      service.ipv4 |> Option.map (fun (ipv4:IPv4.t) -> f ipv4) |> Option.value ~default:""
     else
       ""
   in
