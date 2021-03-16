@@ -9,7 +9,7 @@ let proxy_label service_id =
     ~a:[ a_class [ "d-Network__Label" ] ]
     [ label
         ~a:[ a_label_for (proxy_id service_id) ]
-        [ txt "Proxy" ]
+        [ txt "URL" ]
     ]
 
 let proxy_input ?proxy service_id =
