@@ -118,7 +118,9 @@ let static_ip_form service =
   in
   div ~a:[ a_class [ "d-Network__Form" ]]
     [ p ~a: [ a_class ["d-Network__Note"]  ][
-          txt "A valid IP address must be in the form of n.n.n.n,"
+          txt "A valid IP address must be in the form of "
+        ; code ~a:[ a_class [ "d-Code" ] ] [ txt "n.n.n.n" ]
+        ; txt ","
         ; br ()
         ; txt "where n is a number in the range of 0-255."
         ]
