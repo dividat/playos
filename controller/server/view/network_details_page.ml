@@ -119,7 +119,7 @@ let static_ip_form service =
         ; br ()
         ; txt "where n is a number in the range of 0-255."
         ]
-    ; form ~a:[ a_action ("/network/" ^ service.id ^ "/staticip/update")
+    ; form ~a:[ a_action ("/network/" ^ service.id ^ "/static-ip/update")
               ; a_id "static-ip-form"
               ; a_method `Post
               ]
@@ -158,7 +158,7 @@ let static_ip_form service =
                      ; a_class [ "d-Button" ]
                      ]()
           ; if is_static then
-              form ~a:[ a_action ( "/network/" ^ service.id ^ "/staticip/remove" )
+              form ~a:[ a_action ( "/network/" ^ service.id ^ "/static-ip/remove" )
                       ; a_method `Post
                       ; a_style "display: inline; margin-left: 0.5rem"
                       ]

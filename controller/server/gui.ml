@@ -344,8 +344,8 @@ module NetworkGui = struct
     |> post "/network/:id/proxy/update" (update_proxy ~connman)
     |> post "/network/:id/proxy/remove" (remove_proxy ~connman)
     |> post "/network/:id/remove" (remove ~connman)
-    |> post "/network/:id/staticip/update" (update_static_ip ~connman)
-    |> post "/network/:id/staticip/remove" (remove_static_ip ~connman)
+    |> post "/network/:id/static-ip/update" (update_static_ip ~connman)
+    |> post "/network/:id/static-ip/remove" (remove_static_ip ~connman)
 end
 
 
