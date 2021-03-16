@@ -83,9 +83,12 @@ let disable_proxy_form service =
       ]
 
 (* Regex pattern to validate IP addresses
- * It matches a single address, or a comma-separated list of addresses
- * Based on: https://stackoverflow.com/a/36760050 *)
+ * From: https://stackoverflow.com/a/36760050 *)
 let ip_address_regex_pattern =
+  {|^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$|}
+
+(* Regex pattern to match single IP address or a comma separated list of IP addresses *)
+let multi_ip_address_regex_pattern =
   {|(((((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|\b)){4}))(,( +)?)?)+|}
 
 
@@ -95,7 +98,7 @@ let static_ip_form service =
     |> Option.map(fun (ipv4: IPv4.t) -> ipv4.method' = "manual")
     |> Option.value ~default:false
   in
-  let ip_input ~id ~labelTxt ~name ~value =
+  let ip_input ~id ~labelTxt ~name ~value ~pattern =
     [
       div ~a:[ a_class [ "d-Network__Label" ] ] [ label ~a:[ a_label_for id ] [ txt labelTxt ] ]
     ; input ~a:[ a_id id
@@ -103,7 +106,7 @@ let static_ip_form service =
                ; a_class [ "d-Input"; "d-Network__Input" ]
                ; a_name name
                ; a_required ()
-               ; a_pattern ip_address_regex_pattern
+               ; a_pattern pattern
                ]()
     ]
   in
@@ -128,21 +131,25 @@ let static_ip_form service =
                   ~labelTxt:"Address"
                   ~name:"address"
                   ~value:(ipv4_value(fun ipv4 -> ipv4.address))
+                  ~pattern:ip_address_regex_pattern
                 @ ip_input
                   ~id:"static-ip-netmask"
                   ~labelTxt:"Netmask"
                   ~name:"netmask"
                   ~value:(ipv4_value(fun ipv4 -> ipv4.netmask))
+                  ~pattern:ip_address_regex_pattern
                 @ ip_input
                   ~id:"static-ip-gateway"
                   ~labelTxt:"Gateway"
                   ~name:"gateway"
                   ~value:(ipv4_value(fun ipv4 -> ipv4.gateway |> Option.value ~default:""))
+                  ~pattern:ip_address_regex_pattern
                 @ ip_input
                   ~id:"static-ip-nameservers"
                   ~labelTxt:"Nameservers"
                   ~name:"nameservers"
                   ~value:(if is_static then String.concat ", " service.nameservers else "")
+                  ~pattern:multi_ip_address_regex_pattern
                 @ [ p ~a:[a_class ["d-Network__Note"]][
                     txt  "To set multiple nameservers, use a comma separated list of addresses."
                   ; br ()
