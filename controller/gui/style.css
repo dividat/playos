@@ -376,7 +376,3 @@
 .d-BackLink:before {
     content: "❮ ";
 }
-
-.d-TabularNums {
-    font-variant-numeric: tabular-nums;
-}
