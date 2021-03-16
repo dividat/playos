@@ -114,7 +114,12 @@ let static_ip_form service =
       ""
   in
   div ~a:[ a_class [ "d-Network__Form" ]]
-    [ form ~a:[ a_action ("/network/" ^ service.id ^ "/staticip/update")
+    [ p ~a: [ a_class ["d-Network__Note"]  ][
+          txt "A valid IP address must be in the form of n.n.n.n,"
+        ; br ()
+        ; txt "where n is a number in the range of 0-255."
+        ]
+    ; form ~a:[ a_action ("/network/" ^ service.id ^ "/staticip/update")
               ; a_id "static-ip-form"
               ; a_method `Post
               ]
@@ -138,6 +143,12 @@ let static_ip_form service =
                   ~labelTxt:"Nameservers"
                   ~name:"nameservers"
                   ~value:(if is_static then String.concat ", " service.nameservers else "")
+                @ [ p ~a:[a_class ["d-Network__Note"]][
+                    txt  "To set multiple nameservers, use a comma separated list of addresses."
+                  ; br ()
+                  ; txt "eg. 1.1.1.1, 8.8.8.8"
+                  ]
+                  ]
               )
         ]
     ; div
