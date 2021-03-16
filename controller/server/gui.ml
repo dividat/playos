@@ -268,7 +268,7 @@ module NetworkGui = struct
     let%lwt service = with_service ~connman (param req "id") in
 
     (* Clear settings that might have been configured previously. *)
-    let%lwt () =     Connman.Service.set_nameservers service [] in
+    let%lwt () = Connman.Service.set_nameservers service [] in
     let%lwt () = Connman.Service.set_dhcp_ipv4 service in
 
     let%lwt proxy = with_empty_or_valid_proxy form_data in
