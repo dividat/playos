@@ -196,11 +196,18 @@ module NetworkGui = struct
 
     let proxy = Proxy.from_default_service all_services in
 
+    let check_timeout =
+      Option.bind (Uri.get_query_param (Request.uri req) "timeout") Float.of_string_opt
+        |> Option.map (min 5.0)
+        |> Option.map (max 0.0)
+        |> Option.value ~default:0.2
+    in
+
     let%lwt is_internet_connected =
       with_timeout
-        { duration = 1.0
+        { duration = check_timeout
         ; on_timeout = fun () ->
-            let%lwt () = Logs_lwt.err (fun m -> m "Timeout reaching captive portal") in
+            let%lwt () = Logs_lwt.err (fun m -> m "Timeout reaching captive portal (%f s)" check_timeout) in
             return false
         }
         (fun () ->
