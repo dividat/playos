@@ -9,7 +9,7 @@ let proxy_label service_id =
     ~a:[ a_class [ "d-Network__Label" ] ]
     [ label
         ~a:[ a_label_for (proxy_id service_id) ]
-        [ txt "Proxy" ]
+        [ txt "URL" ]
     ]
 
 let proxy_input ?proxy service_id =
@@ -53,7 +53,7 @@ let not_connected_form service =
           ]
           ()
       ; details
-          (summary [ txt "Advanced Settings" ])
+          (summary [ txt "Proxy Settings" ])
           [ div
               ~a:[ a_class [ "d-Network__AdvancedSettingsTitle" ] ]
               [ proxy_label service.id
@@ -82,6 +82,106 @@ let disable_proxy_form service =
           ()
       ]
 
+(* Regex pattern to validate IP addresses
+ * From: https://stackoverflow.com/a/36760050 *)
+let ip_address_regex_pattern =
+  {|^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$|}
+
+(* Regex pattern to match single IP address or a comma separated list of IP addresses *)
+let multi_ip_address_regex_pattern =
+  {|(((((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|\b)){4}))(,( +)?)?)+|}
+
+
+let static_ip_form service =
+  let is_static =
+    service.ipv4
+    |> Option.map(fun (ipv4: IPv4.t) -> ipv4.method' = "manual")
+    |> Option.value ~default:false
+  in
+  let ip_input ~id ~labelTxt ~name ~value ~pattern =
+    [
+      div ~a:[ a_class [ "d-Network__Label" ] ] [ label ~a:[ a_label_for id ] [ txt labelTxt ] ]
+    ; input ~a:[ a_id id
+               ; a_value value
+               ; a_class [ "d-Input"; "d-Network__Input" ]
+               ; a_name name
+               ; a_required ()
+               ; a_pattern pattern
+               ]()
+    ]
+  in
+  let ipv4_value f =
+    if is_static then
+      service.ipv4 |> Option.map (fun (ipv4:IPv4.t) -> f ipv4) |> Option.value ~default:""
+    else
+      ""
+  in
+  div ~a:[ a_class [ "d-Network__Form" ]]
+    [ p ~a: [ a_class ["d-Network__Note"]  ][
+          txt "A valid IP address must be in the form of "
+        ; code ~a:[ a_class [ "d-Code" ] ] [ txt "n.n.n.n" ]
+        ; txt ","
+        ; br ()
+        ; txt "where n is a number in the range of 0-255."
+        ]
+    ; form ~a:[ a_action ("/network/" ^ service.id ^ "/static-ip/update")
+              ; a_id "static-ip-form"
+              ; a_method `Post
+              ]
+        [ div ( ip_input
+                  ~id:"static-ip-address"
+                  ~labelTxt:"Address"
+                  ~name:"address"
+                  ~value:(ipv4_value(fun ipv4 -> ipv4.address))
+                  ~pattern:ip_address_regex_pattern
+                @ ip_input
+                  ~id:"static-ip-netmask"
+                  ~labelTxt:"Netmask"
+                  ~name:"netmask"
+                  ~value:(ipv4_value(fun ipv4 -> ipv4.netmask))
+                  ~pattern:ip_address_regex_pattern
+                @ ip_input
+                  ~id:"static-ip-gateway"
+                  ~labelTxt:"Gateway"
+                  ~name:"gateway"
+                  ~value:(ipv4_value(fun ipv4 -> ipv4.gateway |> Option.value ~default:""))
+                  ~pattern:ip_address_regex_pattern
+                @ ip_input
+                  ~id:"static-ip-nameservers"
+                  ~labelTxt:"Nameservers"
+                  ~name:"nameservers"
+                  ~value:(if is_static then String.concat ", " service.nameservers else "")
+                  ~pattern:multi_ip_address_regex_pattern
+                @ [ p ~a:[a_class ["d-Network__Note"]][
+                    txt  "To set multiple nameservers, use a comma separated list of addresses."
+                  ; br ()
+                  ; txt "eg. 1.1.1.1, 8.8.8.8"
+                  ]
+                  ]
+              )
+        ]
+    ; div
+        [ input ~a:[ a_value "Update"
+                     ; a_form "static-ip-form"
+                     ; a_input_type `Submit
+                     ; a_class [ "d-Button" ]
+                     ]()
+          ; if is_static then
+              form ~a:[ a_action ( "/network/" ^ service.id ^ "/static-ip/remove" )
+                      ; a_method `Post
+                      ; a_style "display: inline; margin-left: 0.5rem"
+                      ]
+                [ input ~a:[ a_value "Remove"
+                           ; a_input_type `Submit
+                           ; a_class [ "d-Button" ]
+                           ]()
+                ]
+            else
+              txt ""
+          ]
+    ]
+
+
 let connected_form service =
   div
     [ form
@@ -97,7 +197,7 @@ let connected_form service =
             ()
         ]
     ; details
-        (summary [ txt "Advanced Settings" ])
+        (summary [ txt "Proxy Settings" ])
         [ div
             ~a:[ a_class [ "d-Network__Form" ] ]
             [ proxy_label service.id
@@ -124,6 +224,9 @@ let connected_form service =
             ; proxy_form_note
             ]
         ]
+
+    ; details (summary [ txt "Static IP" ])
+      [ static_ip_form service ]
     ]
 
 let html service =
