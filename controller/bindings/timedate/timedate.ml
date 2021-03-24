@@ -9,6 +9,8 @@ type t = OBus_peer.Private.t
 
 let get_configured_timezone () =
   Util.read_from_file log_src "/var/lib/gui-localization/timezone"
+  |> Lwt_result.catch
+  >|= Base.Result.ok
 
 let set_timezone timezone =
   Util.write_to_file log_src "/var/lib/gui-localization/timezone" timezone
@@ -30,7 +32,7 @@ let get_active_timezone daemon =
       (proxy daemon)
     |> OBus_property.get
   in
-  if String.length raw_tz == 0 then
+  if String.length raw_tz = 0 then
     None |> return
   else
     Some raw_tz |> return

@@ -64,6 +64,20 @@ struct
     (* but we don't use it. *)
     return_unit
 
+  let start_unit proxy name =
+    let%lwt (context, x1) =
+      OBus_method.call_with_context
+        Org_freedesktop_systemd1_Manager.m_StartUnit proxy (name, "replace")
+    in
+    return_unit
+
+  let stop_unit proxy name =
+    let%lwt (context, x1) =
+      OBus_method.call_with_context
+        Org_freedesktop_systemd1_Manager.m_StopUnit proxy (name, "replace")
+    in
+    return_unit
+
 end
 
 

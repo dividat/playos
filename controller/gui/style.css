@@ -70,6 +70,47 @@
     filter: invert(70%) sepia(70%) saturate(100%);
 }
 
+/* Info */
+
+.d-Info__RemoteManagementForm {
+    display: inline;
+}
+
+.d-Info__RemoteManagementAddress {
+    margin-right: 1rem;
+}
+
+/* Network list */
+
+.d-NetworkList__Network {
+  text-decoration: none;
+  color: black;
+  line-height: 1;
+  display: grid;
+  grid-template-columns: 10fr 1fr 1fr;
+  align-items: center;
+  padding-right: 1.5rem;
+  padding-left: 1.5rem;
+  padding-bottom: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--form-border-color);
+}
+
+.d-NetworkList__Network:hover {
+    background: #E0CB52;
+}
+
+.d-NetworkList__Chevron {
+  color: #606060;
+  text-align: right;
+  font-size: 1rem;
+}
+
+.d-NetworkList__SignalStrength {
+    width: 2rem;
+    height: 2rem;
+}
+
 /* Network */
 
 .d-Network__Refresh {
@@ -84,24 +125,100 @@
     color: red;
 }
 
-.d-Network__ServiceDetail {
-    margin-left: 10px;
-}
-
-.d-Network__ServiceStrength {
-    color: #777777;
-    font-size: 80%;
-}
-
-.d-Network__Form {
+.d-Network__Title {
     display: flex;
+    line-height: 1;
+}
+
+.d-Network__SignalStrength {
+    height: 3rem;
+    width: 3rem;
+    margin-left: 3rem;
+}
+
+.d-Network__Properties {
     margin-bottom: 2rem;
 }
 
-.d-Network__Input {
-    width: 50%;
+.d-Network__Form {
+    margin: 1rem 0;
+}
+
+.d-Network__Label {
+    padding-bottom: 0.5rem;
+}
+
+.d-Network__ProxyForm {
+    display: flex;
+}
+
+.d-Network__ProxyUpdate {
+    display: flex;
     margin-right: 1rem;
 }
+
+.d-Network__Input {
+    width: 400px;
+    margin-bottom: 1rem;
+    margin-right: 1rem;
+}
+
+.d-Network__Button {
+    margin-top: 1rem;
+}
+
+.d-Network__AdvancedSettingsTitle {
+    margin-top: 1rem;
+}
+
+.d-Network__Note {
+    font-size: 80%;
+    color: #404040;
+    margin-bottom: 1rem;
+}
+
+
+/* Switch */
+
+.d-Switch--On {
+    color: green;
+}
+
+.d-Switch--Off {
+    color: red;
+}
+
+/* Wifi signal */
+
+.d-WifiSignal {
+    width: 100%;
+    height: 100%;
+}
+
+/* Medium signal */
+.d-WifiSignal--Medium .d-WifiSignal__Wave--Outer {
+    opacity:.3;
+    stroke-width:.5;
+}
+
+/* Weak signal */
+.d-WifiSignal--Weak .d-WifiSignal__Wave--Outer,
+.d-WifiSignal--Weak .d-WifiSignal__Wave--Middle {
+    opacity:.3;
+    stroke-width:.5;
+}
+
+/* No signal */
+.d-WifiSignal--None .d-WifiSignal__Base {
+    fill:#848484;
+}
+
+.d-WifiSignal--None *:not(.d-WifiSignal__Base) {
+    stroke:#848484;
+    opacity:.3;
+    stroke-width:.5;
+}
+
 
 /* Localization */
 
@@ -235,4 +352,27 @@
     text-decoration: none;
     cursor: text;
     color: black;
+}
+
+.d-Code {
+    font-style: normal;
+    background-color: #F1F1F1;
+    color: #606060;
+    border: 0.1rem solid #E1E1E1;
+    border-radius: 0.4rem;
+    padding: 0.2rem 0.5rem;
+}
+
+.d-BackLink {
+    color: blue;
+    font-size: 1rem;
+    text-decoration: none;
+}
+
+.d-BackLink:hover {
+    text-decoration: underline;
+}
+
+.d-BackLink:before {
+    content: "❮ ";
 }

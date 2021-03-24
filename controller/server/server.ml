@@ -14,7 +14,6 @@ let shutdown () =
   | _ ->
     Lwt.fail_with (Format.sprintf "shutdown failed")
 
-
 let main debug port =
   Logs.set_reporter (Logging.reporter ());
 
@@ -52,23 +51,8 @@ let main debug port =
   (* Connect with ConnMan *)
   let%lwt connman = Connman.Manager.connect () in
 
-  (* Get Internet state *)
-  let%lwt internet, internet_p = Network.Internet.get connman in
-
-  (* Log changes to Internet state *)
-  let%lwt () =
-    Lwt_react.S.(
-      map_s (fun state -> Logs_lwt.info (fun m -> m "internet: %s"
-                                            (state
-                                             |> Network.Internet.sexp_of_state
-                                             |> Sexplib.Sexp.to_string_hum)
-                                        )) internet
-      >|= keep
-    )
-  in
-
   (* Start the update mechanism *)
-  let update_s, update_p = Update.start ~rauc ~update_url:Info.update_url in
+  let update_s, update_p = Update.start ~connman ~rauc ~update_url:Info.update_url in
 
   (* Log changes in update mechanism state *)
   let%lwt () =
@@ -85,11 +69,11 @@ let main debug port =
   (* Start the GUI *)
   let gui_p =
     Gui.start
+      ~systemd
       ~port
       ~shutdown
       ~rauc
       ~connman
-      ~internet
       ~update_s
       ~health_s
   in
@@ -97,7 +81,7 @@ let main debug port =
   let%lwt () =
     (* Initialize Network, parallel to starting server *)
     begin
-      match%lwt Network.init ~systemd ~connman with
+      match%lwt Network.init ~connman with
       | Ok () ->
         return_unit
       | Error exn ->
@@ -109,7 +93,6 @@ let main debug port =
       gui_p (* GUI *)
     ; update_p (* Update mechanism *)
     ; health_p (* Health monitoring *)
-    ; internet_p (* Internet connectivity check *)
     ]
 
 
@@ -123,7 +106,7 @@ let () =
                        (info ~doc:"Enable debug output." ["d"; "debug"])
                      |> value)
   in
-  let port_a = Arg.(opt int 3333 
+  let port_a = Arg.(opt int 3333
                       (info ~doc:"Port on which to start gui (http server)." ~docv:"PORT" ["p"; "port"])
                     |> value)
   in

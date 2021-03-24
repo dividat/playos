@@ -11,8 +11,8 @@ buildDunePackage rec {
   src = fetchFromGitHub {
     owner = "ocaml-community";
     repo = "obus";
-    rev = "59c93162a4d4fc239761874f83d489332844e7c7"; # 1.2.0
-    sha256 = "0qb42634dmx8g6rf6vv5js88d8vgbzz8646dsg638352yzgsi3a3";
+    rev = "8aaf3d4e5538e42a62ae206dcfc01d2b898e54dc"; # 1.2.2
+    sha256 = "145c9ir0a4ld054npq80q8974fangirmd4r7z0736qjva27raqr7";
   };
 
   buildInputs = [ ];
@@ -25,7 +25,6 @@ buildDunePackage rec {
     ocaml_lwt
     ppxlib
     react
-    type_conv
     xmlm
   ];
 

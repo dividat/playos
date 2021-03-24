@@ -1,3 +1,26 @@
+# [2021.3.0-VALIDATION] - 2021-03-24
+
+## Added
+
+- controller: Enable HTTPS support for system update hosts
+- os: Support manually configured authenticated proxies
+- system: Add status screen to tty8
+- controller: Add support for static IP configuration
+
+## Changed
+
+- controller: Format machine-id in groups of 4 for readability
+- os: Update nixpkgs channel to 20.09
+- controller: Display network configuration on separate pages
+- controller: Enable remote management on demand only
+
+## Fixed
+
+- controller: Display interfaces' IP even if there is no gateway
+- controller: Fix timezone save when shorter than the previous saved one
+
+# [2020.7.0] - 2020-09-23
+
 # [2020.7.0-VALIDATION] - 2020-07-08
 
 ## Added

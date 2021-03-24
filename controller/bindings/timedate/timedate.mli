@@ -16,7 +16,7 @@ val get_active_timezone : t -> (string option) Lwt.t
 val get_configured_timezone : unit -> (string option) Lwt.t
 
 (** [set_timezone daemon timezone] sets the timezone *)
-val set_timezone : string -> bool Lwt.t
+val set_timezone : string -> unit Lwt.t
 
 module Org_freedesktop_timedate1 : sig
   val timezone : OBus_proxy.t -> (string, [ `readable ]) OBus_property.t

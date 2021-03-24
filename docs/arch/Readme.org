@@ -128,7 +128,7 @@ For debugging the [[https://doc.qt.io/qt-5/qtwebengine-debugging.html][Qt WebEng
 
 The PlayOS Controller is an application that manages system updates, checks system health and offers a unified graphical user interface for system configuration. The PlayOS Controller runs as a system service.
 
-PlayOS controller is implemented in [[https://ocaml.org/][OCaml]]. OCaml allows [[https://ocaml.github.io/ocamlunix/ocamlunix.html][lower-level system programming]] offers an excellent [[https://github.com/diml/obus][D-Bus interface]] and various libraries/tools for creating web-based user interfaces (e.g. [[https://github.com/rgrinberg/opium][opium]], [[https://ocsigen.org/js_of_ocaml/3.1.0/manual/overview][Js_of_ocaml]] and [[https://github.com/rgrinberg/ocaml-mustache][ocaml-mustache]]).
+PlayOS controller is implemented in [[https://ocaml.org/][OCaml]]. OCaml allows [[https://ocaml.github.io/ocamlunix/ocamlunix.html][lower-level system programming]] offers an excellent [[https://github.com/diml/obus][D-Bus interface]] and various libraries/tools for creating web-based user interfaces (e.g. [[https://github.com/rgrinberg/opium][opium]] and [[https://github.com/ocsigen/tyxml][tyxml]]).
 
 *** Update Mechanism
 

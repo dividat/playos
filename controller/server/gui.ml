@@ -5,36 +5,13 @@ open Opium.App
 
 let log_src = Logs.Src.create "gui"
 
-(* Helper to load file *)
-let of_file f =
-  let%lwt ic = Lwt_io.(open_file ~mode:Lwt_io.Input) f in
-  let%lwt template_f = Lwt_io.read ic in
-  let%lwt () = Lwt_io.close ic in
-  template_f
-  |> Mustache.of_string
-  |> return
-
-
-(* Require the resource directory to be at a directory fixed to the binary location. This is not optimal, but works for the moment. TODO: figure out a better way to do this.
-*)
+(* Require the resource directory to be at a directory fixed to the binary
+ * location. This is not optimal, but works for the moment. *)
 let resource_path end_path =
   let open Fpath in
   (Sys.argv.(0) |> v |> parent) / ".." / "share" // end_path
   |> to_string
 
-(* Load a template file
-
-   TODO: cache templates
-*)
-let template name =
-  Fpath.(resource_path (v "template" / (name ^ ".mustache")))
-  |> of_file
-
-(* Helper to render template *)
-let render name dict =
-  let%lwt template = template name in
-  Mustache.render ~strict:false template (Ezjsonm.dict dict)
-  |> return
 
 (* Middleware that makes static content available *)
 let static () =
@@ -42,44 +19,42 @@ let static () =
   Logs.debug (fun m -> m "static content dir: %s" static_dir);
   Opium.Middleware.static ~local_path:static_dir ~uri_prefix:"/static" ()
 
-(* Main page *)
-let index content =
-  render "index" ["content", content |> Ezjsonm.string]
-  >|= Response.of_string_body
+let page html =
+  Format.asprintf "%a" (Tyxml.Html.pp ()) html
+  |> Response.of_string_body
 
-let page identifier page_values =
-  let menu_flag = ( "is_" ^ identifier, Ezjsonm.bool true ) in
-  let index_with_menu_flag content =
-    render "index" (menu_flag :: ["content", content |> Ezjsonm.string])
-  in
-  render identifier page_values
-  >>= index_with_menu_flag
-  >|= Response.of_string_body
+let success content =
+  page (Page.html (Tyxml.Html.txt content))
 
-let success msg =
-  msg
-  |> index
+type 'a timeout_params =
+  { duration: float
+  ; on_timeout: unit -> 'a Lwt.t
+  }
+
+let with_timeout { duration; on_timeout } f =
+  [ f ()
+  ; (let%lwt () = Lwt_unix.sleep duration in on_timeout ())
+  ] |> Lwt.pick
 
 (* Pretty error printing middleware *)
 let error_handling =
   let open Opium_kernel.Rock in
   let filter handler req =
-    match%lwt handler req |> Lwt_result.catch with
+    (* Catch any exceptions that previously escaped Lwt *)
+    let res = try handler req with exn -> Lwt.fail exn in
+    match%lwt res |> Lwt_result.catch with
     | Ok res ->
       return res
     | Error exn ->
       let%lwt () = Logs_lwt.err (fun m -> m "GUI Error: %s" (Printexc.to_string exn)) in
-      page "error"
-        Ezjsonm.([
-            "exn", exn
-                   |> Sexplib.Std.sexp_of_exn
-                   |> Sexplib.Sexp.to_string_hum
-                   |> string
-          ; "request", req
-                       |> Request.sexp_of_t
-                       |> Sexplib.Sexp.to_string_hum
-                       |> string
-          ])
+      Lwt.return (page (Error_page.html
+        { message = exn
+            |> Sexplib.Std.sexp_of_exn
+            |> Sexplib.Sexp.to_string_hum
+        ; request = req
+            |> Request.sexp_of_t
+            |> Sexplib.Sexp.to_string_hum
+        }))
   in
   Middleware.create ~name:"Error" ~filter
 
@@ -89,7 +64,7 @@ module InfoGui = struct
     app
     |> get "/info" (fun _ ->
         let%lwt server_info = Info.get () in
-        page "info" [ "server_info", server_info |> Info.to_json ])
+        Lwt.return (page (Info_page.html server_info)))
 end
 
 (** Localization GUI *)
@@ -97,16 +72,8 @@ module LocalizationGui = struct
   let overview req =
     let%lwt td_daemon = Timedate.daemon () in
     let%lwt current_timezone = Timedate.get_configured_timezone () in
-    let is_some = function
-      | Some _ -> true
-      | None -> false
-    in
-    let is_some_thing thing = function
-      | Some other -> String.equal other thing
-      | None -> false
-    in
     let%lwt all_timezones = Timedate.get_available_timezones td_daemon in
-    let tz_groups =
+    let timezone_groups =
       List.fold_right
         (fun tz groups ->
           let re_spaced = String.map (fun c -> if Char.equal c '_' then ' ' else c) tz in
@@ -124,26 +91,11 @@ module LocalizationGui = struct
             | Some entries -> entries
             | None -> []
           in
-          ( group_id
-          , ( [ "id", Ezjsonm.string tz
-              ; "name", Ezjsonm.string (name)
-              ; "active", Ezjsonm.bool (is_some_thing tz current_timezone)
-              ]
-              |> Ezjsonm.dict
-            )
-            :: prev_entries
-          )
+          ( group_id, (tz, name) :: prev_entries)
           :: List.remove_assoc group_id groups
         )
         all_timezones
         []
-        |> Ezjsonm.list
-        (fun (group_id, entries) ->
-          Ezjsonm.dict
-            [ "group", Ezjsonm.string group_id
-            ; "entries", Ezjsonm.list (fun x -> x) entries
-            ]
-        )
     in
     let%lwt current_lang = Locale.get_lang () in
     let langs =
@@ -156,14 +108,6 @@ module LocalizationGui = struct
       ; "it_IT.UTF-8", "Italian"
       ; "es_ES.UTF-8", "Spanish"
       ]
-      |> Ezjsonm.list
-        (fun (id, name) ->
-          [ "id", id |> Ezjsonm.string
-          ; "name", name |> Ezjsonm.string
-          ; "active", is_some_thing id current_lang |> Ezjsonm.bool
-          ]
-          |> Ezjsonm.dict
-        )
     in
     let%lwt current_keymap = Locale.get_keymap () in
     let keymaps =
@@ -177,23 +121,15 @@ module LocalizationGui = struct
       ; "it", "Italian"
       ; "es", "Spanish"
       ]
-      |> Ezjsonm.list
-        (fun (id, name) ->
-          [ "id", id |> Ezjsonm.string
-          ; "name", name |> Ezjsonm.string
-          ; "active", is_some_thing id current_keymap |> Ezjsonm.bool
-          ]
-          |> Ezjsonm.dict
-        )
     in
-    page "localization"
-      [ "timezone_groups", tz_groups
-      ; "is_timezone_set", Ezjsonm.bool (is_some current_timezone)
-      ; "langs", langs
-      ; "is_lang_set", Ezjsonm.bool (is_some current_lang)
-      ; "is_keymap_set", Ezjsonm.bool (is_some current_keymap)
-      ; "keymaps", keymaps
-      ]
+    Lwt.return (page (Localization_page.html
+      { timezone_groups
+      ; current_timezone
+      ; langs
+      ; current_lang
+      ; keymaps
+      ; current_keymap
+      }))
 
   let set_timezone req =
     let%lwt td_daemon = Timedate.daemon () in
@@ -205,7 +141,7 @@ module LocalizationGui = struct
       | Some [ tz_id ] ->
         Timedate.set_timezone tz_id
       | _ ->
-        return false
+        return ()
     in
     "/localization" |> Uri.of_string |> redirect'
 
@@ -218,7 +154,7 @@ module LocalizationGui = struct
       | Some [ lang ] ->
         Locale.set_lang lang
       | _ ->
-        return false
+        return ()
     in
     "/localization" |> Uri.of_string |> redirect'
 
@@ -231,7 +167,7 @@ module LocalizationGui = struct
       | Some [ keymap ] ->
         Locale.set_keymap keymap
       | _ ->
-        return false
+        return ()
     in
     "/localization" |> Uri.of_string |> redirect'
 
@@ -249,77 +185,174 @@ module NetworkGui = struct
   open Connman
   open Network
 
-  let overview
-      ~(connman:Manager.t)
-      ~(internet:Internet.state Lwt_react.S.t)
-      req =
+  let blur_service_proxy_password s =
+    let open Service in
+    let blur p = Proxy.validate p |> Option.map (Proxy.to_string ~hide_password:true) in
+    { s with proxy = s.proxy |> Base.Fn.flip Option.bind blur }
 
-    (* Check if internet connected *)
-    let internet_connected =
-        internet
-        |> Lwt_react.S.value
-        |> Internet.is_connected
+  let overview ~(connman:Manager.t) req =
+
+    let%lwt all_services = Manager.get_services connman in
+
+    let proxy = Proxy.from_default_service all_services in
+
+    let check_timeout =
+      Option.bind (Uri.get_query_param (Request.uri req) "timeout") Float.of_string_opt
+        |> Option.map (min 5.0)
+        |> Option.map (max 0.0)
+        |> Option.value ~default:0.2
     in
 
-    let%lwt services =
-      Manager.get_services connman
-      (* If not connected show all services, otherwise show services that are connected *)
-      >|= List.filter (fun s -> not internet_connected || s |> Service.is_connected)
+    let%lwt is_internet_connected =
+      with_timeout
+        { duration = check_timeout
+        ; on_timeout = fun () ->
+            let%lwt () = Logs_lwt.err (fun m -> m "Timeout reaching captive portal (%f s)" check_timeout) in
+            return false
+        }
+        (fun () ->
+            match%lwt Curl.request ?proxy (Uri.of_string "http://captive.dividat.com/") with
+            | RequestSuccess (200, _) ->
+              return true
+            | RequestSuccess (status, _) ->
+              let%lwt () = Logs_lwt.err (fun m -> m "Non-OK status code reaching captive portal: %d" status) in
+              return false
+            | RequestFailure err ->
+              let%lwt () = Logs_lwt.err (fun m -> m "Error reaching captive portal: %s" (Curl.pretty_print_error err)) in
+              return false)
     in
 
+    (* If not connected show all services, otherwise show services that are connected *)
+    let showed_services =
+      all_services
+        |> List.filter (fun s -> not is_internet_connected || Service.is_connected s)
+    in
 
-    page "network"
-      [
-        "internet_connected", internet_connected |> Ezjsonm.bool
-      ; "services", services |> Ezjsonm.list (fun s -> s |> Service.to_json |> Ezjsonm.value)
-      ]
+    Lwt.return (page (Network_list_page.html
+      { proxy = proxy
+          |> Option.map (Proxy.to_string ~hide_password:true)
+      ; is_internet_connected
+      ; services = showed_services
+          |> List.map blur_service_proxy_password
+      }))
 
   (** Helper to find a service by id *)
-  let find_service ~connman id =
-    let open Connman in
-    Connman.Manager.get_services connman
-    >|= List.find_opt (fun (s:Service.t) -> s.id = id)
+  let with_service ~connman id =
+    let%lwt services = Connman.Manager.get_services connman in
+    match List.find_opt (fun s -> s.Service.id = id) services with
+    | Some s -> return s
+    | None -> fail_with (Format.sprintf "Service does not exist (%s)" id)
+
+  let details ~connman req =
+    let service_id = param req "id" in
+    let%lwt service = with_service connman service_id >|= blur_service_proxy_password in
+    Lwt.return (page (Network_details_page.html service))
+
+  (** Validate a proxy, fail if the proxy is given but invalid *)
+  let with_empty_or_valid_proxy form_data =
+    let proxy_str =
+      form_data
+      |> List.assoc "proxy"
+      |> List.hd
+    in
+    if String.trim proxy_str = "" then
+      return None
+    else
+      match Proxy.validate proxy_str with
+      | Some proxy -> return (Some proxy)
+      | None -> fail_with (Format.sprintf "'%s' is not a valid proxy. It should be in the form 'http://host:port' or 'http://user:password@host:port'." proxy_str)
 
   (** Connect to a service *)
   let connect ~(connman:Connman.Manager.t) req =
-    let service_id = param req "id" in
-    let%lwt form_data =
-      urlencoded_pairs_of_body req
-    in
-    let input =
+    let%lwt form_data = urlencoded_pairs_of_body req in
+    let passphrase =
       match form_data |> List.assoc_opt "passphrase" with
       | Some [ passphrase ] ->
         Connman.Agent.Passphrase passphrase
       | _ ->
         Connman.Agent.None
     in
-    match%lwt find_service ~connman service_id with
-    | None ->
-      fail_with (Format.sprintf "Service does not exist (%s)" service_id)
-    | Some service ->
-      Connman.Service.connect ~input service
-      >|= (fun () -> Format.sprintf "Connected with %s." service.name)
-      >>= success
+    let%lwt service = with_service ~connman (param req "id") in
 
+    (* Clear settings that might have been configured previously. *)
+    let%lwt () = Connman.Service.set_nameservers service [] in
+    let%lwt () = Connman.Service.set_dhcp_ipv4 service in
+
+    let%lwt proxy = with_empty_or_valid_proxy form_data in
+    let%lwt () = Connman.Service.connect ~input:passphrase service in
+    match proxy with
+    | None ->
+      (* Removing a proxy that would have been configured in the past *)
+      let%lwt () = Connman.Service.set_direct_proxy service in
+      Lwt.return (success (Format.sprintf "Connected with %s." service.name))
+    | Some proxy ->
+      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
+      Lwt.return (success (Format.sprintf
+        "Connected with %s and proxy '%s'."
+        service.name
+        (Proxy.to_string ~hide_password:true proxy)))
+
+  (** Update the proxy of a service *)
+  let update_proxy ~(connman:Connman.Manager.t) req =
+    let%lwt form_data = urlencoded_pairs_of_body req in
+    let%lwt service = with_service ~connman (param req "id") in
+    match%lwt with_empty_or_valid_proxy form_data with
+    | None ->
+      fail_with "Proxy address may not be empty. Use the 'Disable proxy' button instead."
+    | Some proxy ->
+      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
+      Lwt.return (success (Format.sprintf
+        "Proxy of %s has been updated to '%s'."
+        service.name
+        (Proxy.to_string ~hide_password:true proxy)))
+
+  (** Remove the proxy of a service *)
+  let remove_proxy ~(connman:Connman.Manager.t) req =
+    let%lwt service = with_service ~connman (param req "id") in
+    let%lwt () = Connman.Service.set_direct_proxy service in
+    Lwt.return (success (Format.sprintf "Proxy of %s has been disabled." service.name))
+
+  (** Set static IP configuration on a service *)
+  let update_static_ip ~(connman: Connman.Manager.t) req =
+    let%lwt form_data = urlencoded_pairs_of_body req in
+    let%lwt service = with_service ~connman (param req "id") in
+    let get_prop s =
+      form_data
+      |> List.assoc s
+      |> List.hd
+    in
+    let address = get_prop "address" in
+    let netmask = get_prop "netmask" in
+    let gateway = get_prop "gateway" in
+    let nameservers = get_prop "nameservers" |> String.split_on_char ',' |> List.map (String.trim) in
+    let%lwt () = Connman.Service.set_manual_ipv4 service ~address ~netmask ~gateway in
+    let%lwt () = Connman.Service.set_nameservers service nameservers in
+    Lwt.return (success (Format.sprintf "Configured static IP for %s." service.name))
+
+  (** Remove static IP configuration from a service *)
+  let remove_static_ip ~(connman: Connman.Manager.t) req =
+    let%lwt form_data = urlencoded_pairs_of_body req in
+    let%lwt service = with_service ~connman (param req "id") in
+    let%lwt () = Connman.Service.set_dhcp_ipv4 service in
+    let%lwt () = Connman.Service.set_nameservers service [] in
+    Lwt.return (success (Format.sprintf "Removed static IP configuration of %s." service.name))
+
+  (** Remove a service **)
   let remove ~(connman:Connman.Manager.t) req =
-    let service_id = param req "id" in
-    match%lwt find_service ~connman service_id with
-    | None ->
-      fail_with (Format.sprintf "Service does not exist (%s)" service_id)
-    | Some service ->
-      Connman.Service.remove service
-      >|= (fun () -> Format.sprintf "Removed service %s." service.name)
-      >>= success
+    let%lwt service = with_service ~connman (param req "id") in
+    let%lwt () = Connman.Service.remove service in
+    Lwt.return (success (Format.sprintf "Removed service %s." service.name))
 
-  let build
-      ~(connman:Connman.Manager.t)
-      ~(internet:Network.Internet.state Lwt_react.S.t)
-      app =
+  let build ~(connman:Connman.Manager.t) app =
     app
-    |> get "/network" (overview ~connman ~internet)
+    |> get "/network" (overview ~connman)
+    |> get "/network/:id" (details ~connman)
     |> post "/network/:id/connect" (connect ~connman)
+    |> post "/network/:id/proxy/update" (update_proxy ~connman)
+    |> post "/network/:id/proxy/remove" (remove_proxy ~connman)
     |> post "/network/:id/remove" (remove ~connman)
-
+    |> post "/network/:id/static-ip/update" (update_static_ip ~connman)
+    |> post "/network/:id/static-ip/remove" (remove_static_ip ~connman)
 end
 
 
@@ -352,13 +385,7 @@ module LabelGui = struct
 
   let overview req =
     let%lwt label = make_label () in
-    page "label"
-      [ "machine_id", label.machine_id |> Ezjsonm.string
-      ; "mac_1", label.mac_1 |> Ezjsonm.string
-      ; "mac_2", label.mac_2 |> Ezjsonm.string
-      ; "default_label_printer_url",
-        "http://192.168.0.5:3000/play-computer" |> Ezjsonm.string
-      ]
+    Lwt.return (page (Label_page.html label))
 
   let print req =
     let%lwt form_data = urlencoded_pairs_of_body req in
@@ -376,7 +403,7 @@ module LabelGui = struct
     |> Lwt_list.iter_s
       (fun () -> Label_printer.print ~url label)
     >|= (fun () -> "Labels printed.")
-    >>= success
+    >|= success
 
   let build app =
     app
@@ -398,24 +425,20 @@ module StatusGui = struct
                         |> return)
         in
         let%lwt interfaces = Network.Interface.get_all () in
-        page "status" [
-          "update", update_s
-                    |> Lwt_react.S.value
-                    |> Update.sexp_of_state
-                    |> Sexplib.Sexp.to_string_hum
-                    |> Ezjsonm.string
-        ; "rauc", rauc
-                  |> Ezjsonm.string
-        ; "health", health_s
-                    |> Lwt_react.S.value
-                    |> Health.sexp_of_state
-                    |> Sexplib.Sexp.to_string_hum
-                    |> Ezjsonm.string
-        ; "interfaces", interfaces
-                        |> [%sexp_of: Network.Interface.t list]
-                        |> Sexplib.Sexp.to_string_hum
-                        |> Ezjsonm.string
-        ]
+        Lwt.return (page (Status_page.html
+          { health = health_s
+              |> Lwt_react.S.value
+              |> Health.sexp_of_state
+              |> Sexplib.Sexp.to_string_hum
+          ; update = update_s
+              |> Lwt_react.S.value
+              |> Update.sexp_of_state
+              |> Sexplib.Sexp.to_string_hum
+          ; rauc
+          ; interfaces = interfaces
+              |> [%sexp_of: Network.Interface.t list]
+              |> Sexplib.Sexp.to_string_hum
+          }))
       )
 end
 
@@ -424,12 +447,39 @@ module ChangelogGui = struct
     app
     |> get "/changelog" (fun _ ->
         let%lwt changelog = Util.read_from_file log_src (resource_path (Fpath.v "Changelog.html")) in
-        page "changelog" [
-          "changelog", changelog |> Util.from_maybe "" |> Ezjsonm.string
-        ])
+        Lwt.return (page (Changelog_page.html changelog)))
 end
 
-let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
+module RemoteManagementGui = struct
+
+  let rec wait_until_zerotier_is_on () =
+    match%lwt Zerotier.get_status () with
+    | Ok _ ->
+        redirect' (Uri.of_string "/info")
+    | Error _ ->
+        let%lwt () = Lwt_unix.sleep 0.1 in
+        wait_until_zerotier_is_on ()
+
+  let build ~systemd app =
+    app
+    |> post "/remote-management/enable" (fun _ ->
+        let%lwt () = Systemd.Manager.start_unit systemd "zerotierone.service" in
+        with_timeout
+          { duration = 2.0
+          ; on_timeout = fun () ->
+              let msg = "Timeout starting remote management service." in
+              let%lwt () = Logs_lwt.err (fun m -> m "%s" msg) in
+              Lwt.return (success msg)
+          }
+          wait_until_zerotier_is_on)
+
+    |> post "/remote-management/disable" (fun _ ->
+        let%lwt () = Systemd.Manager.stop_unit systemd "zerotierone.service" in
+        redirect' (Uri.of_string "/info"))
+end
+
+
+let routes ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman app =
   app
   |> middleware (static ())
   |> middleware error_handling
@@ -443,15 +493,16 @@ let routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet app =
     )
 
   |> InfoGui.build
-  |> NetworkGui.build ~connman ~internet
+  |> NetworkGui.build ~connman
   |> LocalizationGui.build
   |> LabelGui.build
   |> StatusGui.build ~health_s ~update_s ~rauc
   |> ChangelogGui.build
+  |> RemoteManagementGui.build ~systemd
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
-let start ~port ~shutdown ~health_s ~update_s ~rauc ~connman ~internet =
+let start ~port ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman =
   empty
   |> Opium.App.port port
-  |> routes ~shutdown ~health_s ~update_s ~rauc ~connman ~internet
+  |> routes ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman
   |> start

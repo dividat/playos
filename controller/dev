@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-markdown Changelog.md > Changelog.html
-
-# The controller application requires certain artifacts to be in a specific location relative to binary location. The `dune build @install` command ensures this.
-# The `--profile release` option disables dune from failing on warnings (which are currently present in the `obus` library)
-dune build @install --profile release
-
-./_build/install/default/bin/playos-controller

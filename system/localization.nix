@@ -1,5 +1,11 @@
 {config, pkgs, lib, ... }:
-{
+
+let
+
+  timezonePath = "/var/lib/gui-localization/timezone";
+
+in {
+
   # Localization configuration
   volatileRoot.persistentFolders."/var/lib/gui-localization" = {
     mode = "0755";
@@ -13,16 +19,21 @@
   # mount this on persistent partition. Hence this service restores the timezone.
   systemd.services."set-timezone" = {
     description = "Set system timezone";
+    wantedBy = [ "default.target" ]; # Run at startup
     serviceConfig = {
       User = "root";
-      ExecStart = "/run/current-system/sw/bin/bash -c '/run/current-system/sw/bin/timedatectl set-timezone $(cat /var/lib/gui-localization/timezone)'";
+      Group = "root";
+      ExecStart = pkgs.writeShellScript "set-timezone" ''
+        if [ -f ${timezonePath} ]; then
+          timedatectl set-timezone $(cat ${timezonePath})
+        fi
+      '';
     };
   };
 
-  # Existence or modification of timezone file triggers service to set it.
+  # Modification of timezone file triggers service to set it.
   systemd.paths."set-timezone" = {
-    pathConfig.PathExists = "/var/lib/gui-localization/timezone";
-    pathConfig.PathChanged = "/var/lib/gui-localization/timezone";
+    pathConfig.PathChanged = timezonePath;
     wantedBy = [ "multi-user.target" ];
   };
 

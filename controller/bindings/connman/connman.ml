@@ -19,6 +19,12 @@ let bool_of_obus value =
   with
     _ -> None
 
+let string_list_of_obus value =
+   try
+    OBus_value.C.(value |> cast_single (array basic_string))
+   with
+     _ -> []
+
 module Technology =
 struct
   type type' =
@@ -36,7 +42,7 @@ struct
     | _ -> None
 
   type t = {
-    _proxy: OBus_proxy.t sexp_opaque
+    _proxy: (OBus_proxy.t [@sexp.opaque])
   ; name : string
   ; type' : type'
   ; powered : bool
@@ -189,7 +195,7 @@ struct
       method' : string
     ; address : string
     ; netmask : string
-    ; gateway : string
+    ; gateway : string option
     }
     [@@deriving sexp]
 
@@ -200,7 +206,7 @@ struct
          { method' = properties |> List.assoc "Method" |> cast_single basic_string
          ; address = properties |> List.assoc "Address" |> cast_single basic_string
          ; netmask = properties |> List.assoc "Netmask" |> cast_single basic_string
-         ; gateway = properties |> List.assoc "Gateway" |> cast_single basic_string
+         ; gateway = properties |> List.assoc_opt "Gateway" |> Option.map (cast_single basic_string)
          }
       )
       |> CCResult.guard
@@ -213,7 +219,7 @@ struct
       method' : string
     ; address : string
     ; prefix_length: int
-    ; gateway : string
+    ; gateway : string option
     ; privacy : string
     }
     [@@deriving sexp]
@@ -228,7 +234,7 @@ struct
                            |> List.assoc "PrefixLength"
                            |> cast_single basic_byte
                            |> int_of_char
-         ; gateway = properties |> List.assoc "Gateway" |> cast_single basic_string
+         ; gateway = properties |> List.assoc_opt "Gateway" |> Option.map (cast_single basic_string)
          ; privacy = properties |> List.assoc "Privacy" |> cast_single basic_string
          }
       )
@@ -261,8 +267,8 @@ struct
   end
 
   type t = {
-    _proxy : OBus_proxy.t sexp_opaque
-  ; _manager : OBus_proxy.t sexp_opaque
+    _proxy : (OBus_proxy.t [@sexp.opaque])
+  ; _manager : (OBus_proxy.t [@sexp.opaque])
   ; id : string
   ; name : string
   ; type' : Technology.type'
@@ -273,6 +279,8 @@ struct
   ; ipv4 : IPv4.t option
   ; ipv6 : IPv6.t option
   ; ethernet : Ethernet.t
+  ; proxy : string option
+  ; nameservers : string list
   }
   [@@deriving sexp]
 
@@ -296,13 +304,31 @@ struct
       with
       | _ -> None
     in
+    let proxy_of_obus v =
+      try
+         let open OBus_value.C in
+         let properties = v |> cast_single (dict string variant) in
+         let proxy_method = properties |> List.assoc "Method" |> cast_single basic_string in
+         if proxy_method = "manual" then
+           Some (
+             properties
+             |> List.assoc "Servers"
+             |> cast_single (array basic_string)
+             |> List.hd
+           )
+         else
+           None
+      with
+        _ -> None
+    in
     CCOpt.(
-      pure (fun name type' state strength favorite autoconnect ipv4 ipv6 ethernet ->
+      pure (fun name type' state strength favorite autoconnect ipv4 ipv4_user_config ipv6 ethernet proxy nameservers ->
           { _proxy = OBus_proxy.make (OBus_context.sender context) path
           ; _manager = manager
           ; id = path |> CCList.last 1 |> CCList.hd
           ; name ; type'; state; strength; favorite; autoconnect
-          ; ipv4; ipv6; ethernet
+          ; ipv4 = (if Option.is_some ipv4_user_config then ipv4_user_config else ipv4)
+          ; ipv6; ethernet; proxy; nameservers
           })
       <*> (properties |> List.assoc_opt "Name" >>= string_of_obus)
       <*> (properties |> List.assoc_opt "Type" >>= string_of_obus >>= Technology.type_of_string)
@@ -311,10 +337,11 @@ struct
       <*> (properties |> List.assoc_opt "Favorite" >>= bool_of_obus)
       <*> (properties |> List.assoc_opt "AutoConnect" >>= bool_of_obus)
       <*> (properties |> List.assoc_opt "IPv4" >>= IPv4.of_obus |> pure)
+      <*> (properties |> List.assoc_opt "IPv4.Configuration" >>= IPv4.of_obus |> pure)
       <*> (properties |> List.assoc_opt "IPv6" >>= IPv6.of_obus |> pure)
       <*> (properties |> List.assoc_opt "Ethernet" >>= Ethernet.of_obus)
-    )
-
+      <*> (properties |> List.assoc_opt "Proxy" >>= proxy_of_obus |> pure)
+      <*> (properties |> List.assoc_opt "Nameservers.Configuration" >|= string_list_of_obus))
 
   let is_connected t =
     match t.state with
@@ -322,22 +349,59 @@ struct
     | Online -> true
     | _ -> false
 
-  let to_json s =
-    Ezjsonm.dict [
-      "id", s.id |> Ezjsonm.string
-    ; "name", s.name |> Ezjsonm.string
-    ; "favorite", s.favorite |> Ezjsonm.bool
-    ; "connected", s |> is_connected |> Ezjsonm.bool
-    ; "strength", (match s.strength with
-      | Some s -> string_of_int s ^ "%"
-      | None -> "") |> Ezjsonm.string
-    ; "properties", s |> sexp_of_t |> Sexplib.Sexp.to_string_hum |> Ezjsonm.string
-    ]
-
   let set_property service ~name ~value =
     OBus_method.call
       Connman_interfaces.Net_connman_Service.m_SetProperty
       service._proxy (name, value)
+
+  let set_direct_proxy service =
+    let dict =
+      OBus_value.C.make_single
+        (OBus_value.C.(dict string variant))
+        [ ("Method", OBus_value.C.(make_single basic_string) "direct")
+        ]
+    in
+    set_property service "Proxy.Configuration" dict
+
+  let set_manual_proxy service url =
+    let dict =
+      OBus_value.C.make_single
+        (OBus_value.C.(dict string variant))
+        [ ("Method", OBus_value.C.(make_single basic_string) "manual")
+        ; ("Servers", OBus_value.C.(make_single (array basic_string)) [url])
+        ]
+    in
+    set_property service "Proxy.Configuration" dict
+
+
+  let set_manual_ipv4 service ~address ~netmask ~gateway =
+    let dict =
+      OBus_value.C.make_single
+        (OBus_value.C.(dict string variant))
+        [ ("Method", OBus_value.C.(make_single basic_string) "manual")
+        ; ("Address", OBus_value.C.(make_single basic_string) address)
+        ; ("Netmask", OBus_value.C.(make_single basic_string) netmask)
+        ; ("Gateway", OBus_value.C.(make_single basic_string) gateway)
+        ]
+    in
+    set_property service "IPv4.Configuration" dict
+
+  let set_dhcp_ipv4 service =
+    let dict =
+      OBus_value.C.make_single
+        (OBus_value.C.(dict string variant))
+        [("Method", OBus_value.C.(make_single basic_string) "dhcp")]
+    in
+    set_property service "IPv4.Configuration" dict
+
+  let set_nameservers service nameservers =
+    let config =
+        OBus_value.C.make_single
+          (OBus_value.C.(array basic_string)) nameservers
+    in
+    set_property service "Nameservers.Configuration" config
+
+
 
   let connect ?(input=Agent.None) service =
     let%lwt () = Logs_lwt.debug ~src:log_src

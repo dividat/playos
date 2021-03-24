@@ -1,5 +1,7 @@
 open Lwt
 
+let log_src = Logs.Src.create "zerotier"
+
 let base_url =
   Uri.make
     ~scheme:"http"
@@ -8,41 +10,28 @@ let base_url =
     ()
 
 let get_authtoken () =
-  let%lwt ic =
-    Lwt_io.(open_file ~mode:Lwt_io.Input)
-      "/var/lib/zerotier-one/authtoken.secret"
-  in
-  let%lwt authtoken = Lwt_io.read ic in
-  let%lwt () = Lwt_io.close ic in
-  authtoken
-  |> String.trim
-  |> return
+  Util.read_from_file
+    log_src
+    "/var/lib/zerotier-one/authtoken.secret"
 
 type status = {
   address: string
 }
 
 let get_status () =
-  (
-    let open Cohttp in
-    let open Cohttp_lwt_unix in
-    let%lwt authtoken = get_authtoken () in
-    let%lwt response,body =
-      Client.get
-        ~headers:(Header.of_list ["X-ZT1-Auth", authtoken])
-        (Uri.with_path base_url "status")
-    in
-    let%lwt address =
-      Ezjsonm.(
-        Cohttp_lwt.Body.to_string body
-        >|= from_string
-        >|= get_dict
-        >|= List.assoc "address"
-        >|= get_string
-      )
-    in
-    {address}
-    |> return
-  )
+  (let%lwt authtoken = get_authtoken () in
+  match%lwt
+    Curl.request
+      ~headers:[("X-ZT1-Auth", authtoken)]
+      (Uri.with_path base_url "status")
+  with
+  | RequestSuccess (_, body) ->
+      let open Ezjsonm in
+      from_string body
+      |> get_dict
+      |> List.assoc "address"
+      |> get_string
+      |> fun address -> return {address}
+  | RequestFailure error ->
+      Lwt.fail_with (Curl.pretty_print_error error))
   |> Lwt_result.catch
-
