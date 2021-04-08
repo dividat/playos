@@ -6,8 +6,10 @@
   users.users.play = {
     isNormalUser = true;
     home = "/home/play";
-    # who can play audio.
-    extraGroups = [ "audio" ];
+    extraGroups = [
+      "audio" # Play audio
+      "dialout" # Access to serial ports for the Senso flex
+    ];
   };
 
   # Note that setting up "/home" as persistent fails due to https://github.com/NixOS/nixpkgs/issues/6481
