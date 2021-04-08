@@ -58,7 +58,7 @@ let mark_good daemon slot =
       ("good", slot |> Slot.string_of_t)
   in
   let%lwt () = Logs_lwt.info ~src:log_src (fun m -> m "%s" msg) in
-  if Slot.of_string marked == slot then
+  if Slot.of_string marked = slot then
     return_unit
   else
     Lwt.fail_with "Wrong slot marked good."

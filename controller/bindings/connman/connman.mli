@@ -14,7 +14,7 @@ module Technology : sig
       Note that not all properties are encoded.
   *)
   type t = {
-    _proxy: OBus_proxy.t Sexplib.Conv.sexp_opaque
+    _proxy: (OBus_proxy.t [@sexp.opaque])
   ; name : string
   ; type' : type'
   ; powered : bool
@@ -67,7 +67,7 @@ module Service : sig
       method' : string
     ; address : string
     ; netmask : string
-    ; gateway : string
+    ; gateway : string option
     }
     [@@deriving sexp]
   end
@@ -78,7 +78,7 @@ module Service : sig
       method' : string
     ; address : string
     ; prefix_length: int
-    ; gateway : string
+    ; gateway : string option
     ; privacy : string
     }
     [@@deriving sexp]
@@ -100,8 +100,8 @@ module Service : sig
       Note that not all properties are encoded.
   *)
   type t = {
-    _proxy : OBus_proxy.t Sexplib.Conv.sexp_opaque
-  ; _manager: OBus_proxy.t Sexplib.Conv.sexp_opaque
+    _proxy : (OBus_proxy.t [@sexp.opaque])
+  ; _manager: (OBus_proxy.t [@sexp.opaque])
   ; id : string
   ; name : string
   ; type' : Technology.type'
@@ -112,17 +112,23 @@ module Service : sig
   ; ipv4 : IPv4.t option
   ; ipv6 : IPv6.t option
   ; ethernet : Ethernet.t
+  ; proxy : string option
+  ; nameservers : string list
   }
   [@@deriving sexp]
 
   (** Helper to decide if service is connected *)
   val is_connected : t -> bool
 
-  (** Encode service as JSON.
+  val set_direct_proxy : t -> unit Lwt.t
 
-      Note that this is not a direct mapping, but offers limited fields usable for UI. For more exact representation use S-Exp.
-  *)
-  val to_json : t -> Ezjsonm.t
+  val set_manual_proxy : t -> string -> unit Lwt.t
+
+  val set_manual_ipv4 : t -> address:string -> netmask:string -> gateway:string -> unit Lwt.t
+
+  val set_dhcp_ipv4 : t -> unit Lwt.t
+
+  val set_nameservers : t -> string list -> unit Lwt.t
 
   val connect : ?input:Agent.input -> t -> unit Lwt.t
 

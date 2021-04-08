@@ -11,13 +11,13 @@ let log_src = Logs.Src.create "update"
 (** Type containing version information *)
 type version_info =
   {(* the latest available version *)
-    latest : Semver.t sexp_opaque * string
+    latest : (Semver.t [@sexp.opaque]) * string
 
   (* version of currently booted system *)
-  ; booted : Semver.t sexp_opaque * string
+  ; booted : (Semver.t [@sexp.opaque]) * string
 
   (* version of inactive system *)
-  ; inactive : Semver.t sexp_opaque * string
+  ; inactive : (Semver.t [@sexp.opaque]) * string
   }
 [@@deriving sexp]
 
@@ -34,28 +34,17 @@ let semver_of_string string =
     version, trimmed_string
 
 (** Get latest version available at [url] *)
-let get_latest_version url =
-  let open Cohttp in
-  let open Cohttp_lwt_unix in
-  let%lwt response,body = try
-      Client.get (Uri.of_string (url ^ "latest"))
-    with
-    | exn -> Lwt.fail exn
-  in
-  let status = response |> Response.status  in
-  let%lwt version_string =
-    match status |> Code.code_of_status |> Code.is_success with
-    | true -> body |> Cohttp_lwt.Body.to_string
-    | false -> Lwt.fail_with (status|> Code.string_of_status)
-  in
-  version_string
-  |> semver_of_string
-  |> return
+let get_latest_version ~proxy url =
+  match%lwt Curl.request ?proxy (Uri.of_string (url ^ "latest")) with
+  | RequestSuccess (_, body) ->
+      return (semver_of_string body)
+  | RequestFailure error ->
+      Lwt.fail_with (Printf.sprintf "could not get latest version (%s)" (Curl.pretty_print_error error))
 
 (** Get version information *)
-let get_version_info url rauc =
+let get_version_info ~proxy url rauc =
   (
-    let%lwt latest = get_latest_version url in
+    let%lwt latest = get_latest_version ~proxy url in
     let%lwt rauc_status = Rauc.get_status rauc in
 
     let system_a_version = rauc_status.a.version |> semver_of_string in
@@ -81,33 +70,20 @@ let latest_download_url ~update_url version_string =
   Format.sprintf "%s%s/%s" update_url version_string bundle
 
 (** download RAUC bundle *)
-let download ~url ~version =
+let download ?proxy url version =
   let bundle = Format.sprintf "playos-%s.raucb" version in
   let bundle_path = Format.sprintf "/tmp/%s" bundle in
-  let command =
-    "/run/current-system/sw/bin/curl",
-    [| "curl"; url
-     (* resume download *)
-     ; "-C"; "-"
-     (* limit download speed *)
-     ; "--limit-rate"; "10M"
-     ; "-o"; bundle_path |]
+  let options =
+    [ "--continue-at"; "-" (* resume download *)
+    ; "--limit-rate"; "10M"
+    ; "--output"; bundle_path
+    ]
   in
-  let%lwt () =
-    Logs_lwt.debug (fun m -> m "download command: %s" (command |> snd |> Array.to_list |> String.concat " "))
-  in
-  match%lwt Lwt_process.exec
-              ~stdout:`Dev_null
-              ~stderr:`Dev_null
-              command with
-  | Unix.WEXITED 0 ->
-    return bundle_path
-  | Unix.WEXITED exit_code ->
-    Lwt.fail_with
-      (Format.sprintf "could not download RAUC bundle (exit code: %d)" exit_code)
-  | _ ->
-    Lwt.fail_with "could not download RAUC bundle"
-
+  match%lwt Curl.request ?proxy ~options url with
+  | RequestSuccess _ ->
+      return bundle_path
+  | RequestFailure error ->
+      Lwt.fail_with (Printf.sprintf "could not download RAUC bundle (%s)" (Curl.pretty_print_error error))
 
 (* Update mechanism process *)
 
@@ -129,29 +105,32 @@ type state =
 
 
 (** Finite state machine handling updates *)
-let rec run ~update_url ~rauc ~set_state =
+let rec run ~connman ~update_url ~rauc ~set_state =
   (* Helper to update state in signal and advance state machine *)
   let set state =
-    set_state state; run ~update_url ~rauc ~set_state state
+    set_state state; run ~connman ~update_url ~rauc ~set_state state
   in
   function
   | GettingVersionInfo ->
     (* get version information and decide what to do *)
+    let%lwt proxy =
+      Connman.Manager.get_services connman >|= Proxy.from_default_service
+  in
     begin
-      match%lwt get_version_info update_url rauc with
+      match%lwt get_version_info ~proxy update_url rauc with
       | Ok version_info ->
 
         (* Compare latest available version to version booted. *)
         let booted_version_compare = Semver.compare
             (fst version_info.latest)
             (fst version_info.booted) in
-        let booted_up_to_date = booted_version_compare == 0 in
+        let booted_up_to_date = booted_version_compare = 0 in
 
         (* Compare latest available version to version on inactive system partition. *)
         let inactive_version_compare = Semver.compare
             (fst version_info.latest)
             (fst version_info.inactive) in
-        let inactive_up_to_date = inactive_version_compare == 0 in
+        let inactive_up_to_date = inactive_version_compare = 0 in
         let inactive_update_available = inactive_version_compare > 0 in
 
         if booted_up_to_date || inactive_up_to_date then
@@ -162,7 +141,7 @@ let rec run ~update_url ~rauc ~set_state =
               UpToDate version_info |> set
             else
               let%lwt booted_slot = Rauc.get_booted_slot rauc in
-              if booted_slot == primary_slot then
+              if booted_slot = primary_slot then
                 (* Inactive is up to date while booted is out of date, but booted was specifically selected for boot *)
                 OutOfDateVersionSelected |> set
               else
@@ -209,7 +188,10 @@ let rec run ~update_url ~rauc ~set_state =
 
   | Downloading {url; version} ->
     (* download latest version *)
-    (match%lwt download url version |> Lwt_result.catch with
+    let%lwt proxy =
+      Connman.Manager.get_services connman >|= Proxy.from_default_service
+    in
+    (match%lwt download ?proxy (Uri.of_string url) version |> Lwt_result.catch with
      | Ok bundle_path ->
        Installing bundle_path
        |> set
@@ -264,7 +246,7 @@ let rec run ~update_url ~rauc ~set_state =
     set GettingVersionInfo
 
 
-let start ~(rauc:Rauc.t) ~(update_url:string) =
+let start ~connman ~(rauc:Rauc.t) ~(update_url:string) =
   let state_s, set_state = Lwt_react.S.create GettingVersionInfo in
   let () = Logs.info ~src:log_src (fun m -> m "update URL: %s" update_url) in
-  state_s, run ~update_url ~rauc ~set_state GettingVersionInfo
+  state_s, run ~connman ~update_url ~rauc ~set_state GettingVersionInfo

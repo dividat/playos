@@ -31,7 +31,7 @@ A virtual machine (with test instrumentation) can be started without any of the 
 A helper is available to quickly start a virtual machine:
 
 ```
-make vm && ./result/bin/run-playos-in-vm
+./build vm
 ```
 
 In order to get the vm system journal, look at the output of `run-playos-in-vm`
@@ -39,18 +39,22 @@ for a command starting with `socat`.
 
 See the output of `run-playos-in-vm --help` for more information.
 
+#### Guest networking
+
+The default user-mode network stack is used to create a virtual Ethernet connection with bridged Internet access for the guest. If you find that the guest has a dysfunctional Internet connection, check your host's firewall settings. If using ConnMan, make sure that the virtual bridge interfaces (`virbr0` etc.) are not blacklisted.
+
 ## Deployment
 
 Update bundles are hosted on Amazon S3. The script `bin/deploy-playos-update` will handle signing and uploading of bundle.
 
 The arguments `updateUrl` (from where updates will be fetched by PlayOS systems), `deployURL` (where bundles should be deployed to) must be specified. For example: `nix build --arg updateUrl https://dist.dividat.com/releases/playos/master/ --arg deployUrl s3://dist.dividat.ch/releases/playos/master/`.
 
-Commonly used update and deploy URLs (channels) can be used with shortcuts defined in the Makefile.
+Commonly used update and deploy URLs (channels) can be used with shortcuts defined in `./build`.
 
 To release an update to the `develop` channel:
 
 ```
-make develop
+./build develop
 ./result/bin/deploy-playos-update --key PATH_TO_KEY.pem
 ```
 
@@ -58,17 +62,15 @@ make develop
 
 When switching key pairs on a channel, the new certficiate must be built into the bundle, which must then be signed with the old key. For this purpose, the `--override-cert` option of the deploy script is needed to provide RAUC with a certificate matching the new key.
 
-### Checklist
-
-- [ ] Update target branch (`master`/`validation`) with `git merge --no-ff --no-commit <source-branch>`
-- [ ] Set version in `default.nix`
-- [ ] Update Changelog
-- [ ] Create release commit and tag, push
-- [ ] Merge back to `develop` with `--no-ff --no-commit` and push
-
 ## Change Log
 
 Update the change log for every release. See http://keepachangelog.com/ for formatting and conventions.
+
+## Dev tools
+
+The following [dev tools](dev-tools/Readme.md) are available:
+
+- Simulate a captive portal
 
 ## Related work
 
@@ -76,9 +78,11 @@ Update the change log for every release. See http://keepachangelog.com/ for form
 - [Buildroot](https://buildroot.org/): Builder for embedded Linux systems. Also not very well suited for desktop functionality.
 - [not-os](https://github.com/cleverca22/not-os): A NixOS based system generator. Much more minimal than NixOS, does not use systemd and is not compatible with existing NixOS modules.
 
-## Attribution
+## Attribution and Licensing
 
-This software contains portions from other open-source projects.
+Most code in this repository is authored by the Dividat AG and the project contributors. This code is licensed under an MIT license.
+
+Some source files in this project are portions of other open-source project and may be released under different licenses. The applicable licenses are stated here as well as in the relevant subdirectories.
 
 ### [nixpkgs](https://github.com/NixOS/nixpkgs)
 

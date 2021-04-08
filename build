@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+TARGET="${1:-default}"
+
+# Allow unfree packages, required for zerotier using a BSL 1.1 licence
+# See https://nixos.wiki/wiki/FAQ/How_can_I_install_a_proprietary_or_unfree_package%3F
+export NIXPKGS_ALLOW_UNFREE=1
+
+function ensure_branch {
+  CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+  if [ "$CURRENT_BRANCH" != "$1" ]; then
+    echo
+    echo "You should be on branch '$1', but you are currently on branch '$CURRENT_BRANCH'."
+    echo "Aborting."
+    exit 1
+  fi
+}
+
+if [ "$TARGET" == "vm" ]; then
+
+  (set -x; nix-build \
+    --arg buildInstaller false \
+    --arg buildBundle false \
+    --arg buildLive false \
+    --arg buildDisk false)
+
+  echo
+  echo "Run ./result/bin/run-playos-in-vm to start a VM."
+  echo
+  echo "- unfocus: ctrl-alt-g"
+  echo "- quit: ctrl-alt-q"
+  echo "- tty: ctrl-alt-2, sendkey ctrl-alt-f1, ctrl-alt-1"
+
+elif [ "$TARGET" == "develop" ]; then
+
+  ensure_branch "develop"
+
+  (set -x; nix-build \
+    --arg updateCert ./pki/develop/cert.pem \
+    --arg updateUrl https://dist.dividat.com/releases/playos/develop/ \
+    --arg deployUrl s3://dist.dividat.ch/releases/playos/develop/ \
+    --arg kioskUrl https://dev-play.dividat.com/ \
+    --arg buildDisk false)
+
+  echo
+  echo "Run ./result/bin/deploy-playos-update to deploy."
+
+elif [ "$TARGET" == "validation" ]; then
+
+  ensure_branch "validation"
+
+  (set -x; nix-build \
+    --arg updateCert ./pki/validation/cert.pem \
+    --arg updateUrl https://dist.dividat.com/releases/playos/validation/ \
+    --arg deployUrl s3://dist.dividat.ch/releases/playos/validation/ \
+    --arg kioskUrl https://val-play.dividat.com/ \
+    --arg buildDisk false)
+
+  echo
+  echo "Run ./result/bin/deploy-playos-update to deploy."
+
+elif [ "$TARGET" == "master" ]; then
+
+  ensure_branch "master"
+
+  (set -x; nix-build \
+    --arg updateCert ./pki/master/cert.pem \
+    --arg updateUrl https://dist.dividat.com/releases/playos/master/ \
+    --arg deployUrl s3://dist.dividat.ch/releases/playos/master/ \
+    --arg kioskUrl https://play.dividat.com/ \
+    --arg buildDisk false)
+
+  echo
+  echo "Run ./result/bin/deploy-playos-update to deploy."
+
+elif [ "$TARGET" == "lab-key" ]; then
+
+  (set -x; nix-build \
+    --arg kioskUrl https://lab.dividat.com/ \
+    --arg buildInstaller false \
+    --arg buildBundle false \
+    --arg buildDisk false)
+
+elif [ "$TARGET" == "default" ]; then
+
+  (set -x; nix-build)
+
+else
+
+  echo
+  echo "I do not know how to build '$TARGET'."
+  echo "Aborting."
+  exit 1
+
+fi
