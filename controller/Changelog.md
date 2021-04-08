@@ -1,5 +1,9 @@
 # [UNRELEASED]
 
+## Added
+
+- driver: Upgrade to support Senso Flex
+
 # [2021.3.0] - 2021-04-08
 
 # [2021.3.0-VALIDATION] - 2021-03-24
