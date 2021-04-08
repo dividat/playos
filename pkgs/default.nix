@@ -25,7 +25,8 @@ let
       rauc = (import ./rauc) super;
 
       dividat-driver = (import ./dividat-driver) {
-        inherit (super) stdenv fetchurl;
+        inherit (super) stdenv fetchFromGitHub buildGoPackage;
+        pkgs = self;
       };
 
       playos-kiosk-browser = import ../kiosk {

@@ -1,18 +1,22 @@
-{stdenv, fetchurl}:
-stdenv.mkDerivation rec {
+{stdenv, fetchFromGitHub, buildGoPackage, pkgs}:
+
+let
+  sources = fetchFromGitHub {
+    owner = "dividat";
+    repo = "driver";
+    rev = "6b1f9c925bdb4f91cb3b92393ed5425bb95cd351";
+    sha256 = "11xpgkbpl5l1n3xg770zjyg48h5zkwrfhw98ii7iw2lxpiis3gm7";
+  };
+in
+buildGoPackage rec {
   name = "dividat-driver-${version}";
   version = "2.1.0";
-  channel = "master";
 
-  src = fetchurl {
-    url = "https://dist.dividat.com/releases/driver2/${channel}/${version}/dividat-driver-linux-amd64-${version}";
-    sha256 = "0f5hd7mxrhsaxmwdyys1vk9z5rxm57y3w7qjlqj7l5v2v41g0vrm";
-  };
+  src = "${sources}/src/dividat-driver";
 
-  buildCommand = ''
-    mkdir -p $out/bin
-    cp $src $out/bin/dividat-driver
-    chmod +x $out/bin/dividat-driver
-  '';
+  goPackagePath = "dividat-driver";
+  goDeps = "${sources}/nix/deps.nix";
 
+  nativeBuildInputs = with pkgs; [ pkgconfig pcsclite ];
+  buildInputs = with pkgs; [ pcsclite ];
 }
