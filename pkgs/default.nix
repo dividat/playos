@@ -25,7 +25,7 @@ let
       rauc = (import ./rauc) super;
 
       dividat-driver = (import ./dividat-driver) {
-        inherit (super) stdenv fetchFromGitHub buildGoPackage;
+        inherit (super) stdenv fetchFromGitHub buildGoModule;
         pkgs = self;
       };
 
