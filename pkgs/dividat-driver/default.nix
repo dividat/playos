@@ -4,7 +4,7 @@ let
 
   channel = "develop";
 
-  version = "unstable";
+  version = "2.2.0-rc2";
 
   releaseUrl = "https://dist.dividat.com/releases/driver2/";
 
