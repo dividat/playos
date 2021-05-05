@@ -45,13 +45,12 @@ let not_connected_form service =
               ~a:[ a_label_for passphrase_id ]
               [ txt "Passphrase" ]
           ]
-      ; input
-          ~a:[ a_input_type `Text
-          ; a_class [ "d-Input";  "d-Network__Input" ]
+      ; Unsafe.node "password-input"
+          ~a:[ a_class [ "d-Input"; "d-Network__Input" ]
           ; a_id passphrase_id
           ; a_name "passphrase"
           ]
-          ()
+          []
       ; details
           (summary [ txt "Proxy Settings" ])
           [ div

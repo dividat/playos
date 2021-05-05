@@ -77,5 +77,6 @@ let html ?current_page content =
               ]
               [ txt "system status" ]
           ]
+      ; script ~a:[ a_src "/static/client.js" ] (txt "")
       ]
     )
