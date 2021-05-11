@@ -34,7 +34,7 @@ customElements.define(
         root.removeAttribute(attr.nodeName)
       }
 
-      let isShowed = false
+      let isShown = false
       button.type = 'button'
       button.value = 'SHOW'
       button.style = `
@@ -50,8 +50,8 @@ customElements.define(
         cursor: pointer;
       `
       button.onclick = function() {
-        isShowed = !isShowed
-        if (isShowed) {
+        isShown = !isShown
+        if (isShown) {
           button.value = 'HIDE'
           input.type = 'text'
         } else {
