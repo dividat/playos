@@ -1,13 +1,14 @@
 /* Password input web component with a SHOW/HIDE toggle button
  */
 customElements.define(
-  'password-input',
-  class extends HTMLElement {
+  'show-password',
+  class extends HTMLInputElement {
     constructor() {
       super()
 
-      const root = this
-      const input = document.createElement('input')
+      const parentNode = this.parentNode
+      const input = this
+      const root = document.createElement('span')
       const button = document.createElement('input')
 
       let isPasswordShown = false
@@ -22,16 +23,15 @@ customElements.define(
         }
       }
 
-      // If the input has a right margin, position the button accordingly
-      const rightMargin = parseFloat(
-        window.getComputedStyle(root).getPropertyValue('margin-right'))
-
-      root.style = 'position: relative'
+      // Move the input (current root) under the new artificial root, and also
+      // append the button
+      parentNode.replaceChild(root, input)
       root.appendChild(input)
       root.appendChild(button)
+      root.style = 'position: relative'
 
       input.type = 'password'
-      input.style = 'padding-right: 3.5rem';
+      input.style = 'padding-right: 3.5rem'; // Space for the button
       input.oninput = function (e) {
         if (e.target.value.length > 0) {
           button.style.visibility = 'visible'
@@ -41,11 +41,8 @@ customElements.define(
         }
       }
 
-      // Move root attributes to the input
-      for (const attr of root.attributes) {
-        input.setAttribute(attr.nodeName, attr.nodeValue)
-        root.removeAttribute(attr.nodeName)
-      }
+      // If the input has a right margin, position the button accordingly
+      const rightMargin = parseFloat(window.getComputedStyle(input).getPropertyValue('margin-right'))
 
       button.type = 'button'
       button.value = 'SHOW'
@@ -65,5 +62,6 @@ customElements.define(
         updatePasswordVisibility(!isPasswordShown)
       }
     }
-  }
+  },
+  { extends: 'input' }
 )
