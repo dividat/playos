@@ -10,6 +10,18 @@ customElements.define(
       const input = document.createElement('input')
       const button = document.createElement('input')
 
+      let isPasswordShown = false
+      function updatePasswordVisibility(b) {
+        isPasswordShown = b
+        if (isPasswordShown) {
+          button.value = 'HIDE'
+          input.type = 'text'
+        } else {
+          button.value = 'SHOW'
+          input.type = 'password'
+        }
+      }
+
       // If the input has a right margin, position the button accordingly
       const rightMargin = parseFloat(
         window.getComputedStyle(root).getPropertyValue('margin-right'))
@@ -25,6 +37,7 @@ customElements.define(
           button.style.visibility = 'visible'
         } else {
           button.style.visibility = 'hidden'
+          updatePasswordVisibility(false)
         }
       }
 
@@ -34,7 +47,6 @@ customElements.define(
         root.removeAttribute(attr.nodeName)
       }
 
-      let isShown = false
       button.type = 'button'
       button.value = 'SHOW'
       button.style = `
@@ -50,14 +62,7 @@ customElements.define(
         cursor: pointer;
       `
       button.onclick = function() {
-        isShown = !isShown
-        if (isShown) {
-          button.value = 'HIDE'
-          input.type = 'text'
-        } else {
-          button.value = 'SHOW'
-          input.type = 'password'
-        }
+        updatePasswordVisibility(!isPasswordShown)
       }
     }
   }
