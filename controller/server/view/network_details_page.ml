@@ -46,13 +46,15 @@ let not_connected_form service =
               [ txt "Passphrase" ]
           ]
       ; input
-          ~a:[ a_input_type `Text
-          ; a_class [ "d-Input";  "d-Network__Input" ]
+          ~a:[ a_input_type `Password
+          ; a_class [ "d-Input"; "d-Network__Input" ]
           ; a_id passphrase_id
           ; a_name "passphrase"
+          ; Unsafe.string_attrib "is" "show-password"
           ]
           ()
       ; details
+          ~a:[ a_class [ "d-Details" ] ]
           (summary [ txt "Proxy Settings" ])
           [ div
               ~a:[ a_class [ "d-Network__AdvancedSettingsTitle" ] ]
@@ -63,7 +65,7 @@ let not_connected_form service =
           ]
       ; input
           ~a:[ a_input_type `Submit
-          ; a_class [ "d-Button"; "d-Network__Button" ]
+          ; a_class [ "d-Button" ]
           ; a_value "Connect"
           ]
           ()
@@ -191,12 +193,13 @@ let connected_form service =
         ]
         [ input
             ~a:[ a_input_type `Submit
-            ; a_class [ "d-Button"; "d-Network__Button" ]
+            ; a_class [ "d-Button" ]
             ; a_value "Remove"
             ]
             ()
         ]
     ; details
+        ~a:[ a_class [ "d-Details" ] ]
         (summary [ txt "Proxy Settings" ])
         [ div
             ~a:[ a_class [ "d-Network__Form" ] ]
@@ -225,7 +228,7 @@ let connected_form service =
             ]
         ]
 
-    ; details (summary [ txt "Static IP" ])
+    ; details ~a:[ a_class [ "d-Details" ] ] (summary [ txt "Static IP" ])
       [ static_ip_form service ]
     ]
 

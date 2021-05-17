@@ -163,10 +163,6 @@
     margin-right: 1rem;
 }
 
-.d-Network__Button {
-    margin-top: 1rem;
-}
-
 .d-Network__AdvancedSettingsTitle {
     margin-top: 1rem;
 }
@@ -218,7 +214,6 @@
     opacity:.3;
     stroke-width:.5;
 }
-
 
 /* Localization */
 
@@ -375,4 +370,8 @@
 
 .d-BackLink:before {
     content: "❮ ";
+}
+
+.d-Details {
+    margin-bottom: 1rem;
 }

@@ -3,6 +3,7 @@
 ## Added
 
 - driver: Upgrade to support Senso Flex
+- controller: Hide the passphrase by default in the network form
 
 # [2021.3.0] - 2021-04-08
 
