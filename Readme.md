@@ -1,6 +1,6 @@
 # PlayOS
 
-A custom Linux system ([NixOS](https://nixos.org/)) for running Dividat Play.
+A custom Linux system ([NixOS](https://nixos.org/)) to run web applications in a fullscreen kiosk. Built for Dividat Play.
 
 See the [documentation](docs/arch) for more information.
 
