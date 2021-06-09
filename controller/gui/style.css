@@ -1,5 +1,9 @@
 /* Template */
 
+:root {
+    --color-hint: #404040;
+}
+
 .d-Container {
     font-family: monospace;
     padding: 5vh 5vw 5vh 5vw;
@@ -169,7 +173,7 @@
 
 .d-Network__Note {
     font-size: 80%;
-    color: #404040;
+    color: var(--color-hint);
     margin-bottom: 1rem;
 }
 
