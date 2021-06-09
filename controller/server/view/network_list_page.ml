@@ -1,7 +1,7 @@
 open Connman.Service
 open Tyxml.Html
 
-let service { id; name; strength } =
+let service { id; name; strength; ipv4 } =
   let strength =
     match strength with
     | Some s -> [ Signal_strength.html s ]
@@ -13,6 +13,12 @@ let service { id; name; strength } =
         ; a_href ("/network/" ^ id)
         ]
         [ div [ txt name ]
+        ; (match ipv4 with
+          | Some ipv4_addr ->
+                div ~a:[ a_class [ "d-NetworkList__Address" ] ] [ txt (ipv4_addr.address) ]
+          | None ->
+                space ()
+          )
         ; div
             ~a:[ a_class [ "d-NetworkList__SignalStrength" ] ]
             strength

@@ -91,7 +91,8 @@
   color: black;
   line-height: 1;
   display: grid;
-  grid-template-columns: 10fr 1fr 1fr;
+  grid-template-columns: 10fr auto auto auto;
+  grid-gap: 1rem;
   align-items: center;
   padding-right: 1.5rem;
   padding-left: 1.5rem;
@@ -102,6 +103,11 @@
 
 .d-NetworkList__Network:hover {
     background: #E0CB52;
+}
+
+.d-NetworkList__Address {
+  color: var(--color-hint);
+  font-size: small;
 }
 
 .d-NetworkList__Chevron {
