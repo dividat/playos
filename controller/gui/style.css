@@ -1,5 +1,9 @@
 /* Template */
 
+:root {
+    --color-hint: #404040;
+}
+
 .d-Container {
     font-family: monospace;
     padding: 5vh 5vw 5vh 5vw;
@@ -87,7 +91,8 @@
   color: black;
   line-height: 1;
   display: grid;
-  grid-template-columns: 10fr 1fr 1fr;
+  grid-template-columns: 10fr auto auto auto;
+  grid-gap: 3rem;
   align-items: center;
   padding-right: 1.5rem;
   padding-left: 1.5rem;
@@ -98,6 +103,11 @@
 
 .d-NetworkList__Network:hover {
     background: #E0CB52;
+}
+
+.d-NetworkList__Address {
+  color: var(--color-hint);
+  font-size: small;
 }
 
 .d-NetworkList__Chevron {
@@ -169,7 +179,7 @@
 
 .d-Network__Note {
     font-size: 80%;
-    color: #404040;
+    color: var(--color-hint);
     margin-bottom: 1rem;
 }
 
