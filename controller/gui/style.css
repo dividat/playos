@@ -92,7 +92,7 @@
   line-height: 1;
   display: grid;
   grid-template-columns: 10fr auto auto auto;
-  grid-gap: 1rem;
+  grid-gap: 3rem;
   align-items: center;
   padding-right: 1.5rem;
   padding-left: 1.5rem;
