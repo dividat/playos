@@ -75,7 +75,9 @@ let html { proxy; is_internet_connected; services; interfaces } =
           ; if List.length services = 0 then
               txt "No services available"
             else
-              ul ~a:[ a_class [ "d-NetworkList" ] ] (List.map service services)
+              ul
+                ~a:[ a_class [ "d-NetworkList" ]; a_role [ "list" ] ]
+                (List.map service services)
           ]
 
       ; section

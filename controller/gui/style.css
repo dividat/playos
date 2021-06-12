@@ -86,7 +86,9 @@
 
 /* Network list */
 
-.d-NetworkList[class] {
+.d-NetworkList {
+  list-style: none;
+  padding: 0;
   margin-bottom: 1rem;
 }
 
