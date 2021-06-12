@@ -86,6 +86,10 @@
 
 /* Network list */
 
+.d-NetworkList[class] {
+  margin-bottom: 1rem;
+}
+
 .d-NetworkList__Network {
   text-decoration: none;
   color: black;
