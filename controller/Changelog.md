@@ -6,6 +6,10 @@
 - controller: Hide the passphrase by default in the network form
 - controller: Display IP addresses in network list
 
+## Changed
+
+- controller: Move network interface list to network page
+
 # [2021.3.0] - 2021-04-08
 
 # [2021.3.0-VALIDATION] - 2021-03-24
