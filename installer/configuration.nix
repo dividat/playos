@@ -19,12 +19,12 @@ with lib;
   services.udisks2.enable = mkDefault false;
 
   # Automatically log in at the virtual consoles.
-  services.mingetty.autologinUser = "root";
+  services.getty.autologinUser = "root";
 
   # Allow the user to log in as root without a password.
   users.users.root.initialHashedPassword = "";
 
-  services.mingetty.greetingLine = greeting "Dividat PlayOS installer (${version})";
+  services.getty.greetingLine = greeting "Dividat PlayOS installer (${version})";
 
   environment.loginShellInit = ''
     install-playos --reboot

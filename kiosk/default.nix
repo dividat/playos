@@ -2,14 +2,13 @@
 
 with pkgs;
 
-let qtx=qt5; in
-
 python3Packages.buildPythonApplication rec {
+
   pname = "playos_kiosk_browser";
   version = "0.1.0";
 
   src = builtins.filterSource
-    (path: type: type != "directory" ||  baseNameOf path != "venv")
+    (path: type: type != "directory" || baseNameOf path != "venv")
     ./.;
 
   postPatch = ''
@@ -20,35 +19,24 @@ python3Packages.buildPythonApplication rec {
 
   doCheck = false;
 
-  qtbase = qtx.qtbase;
-  qtwebengine = qtx.qtwebengine;
-
-  buildInputs = [
-    qtbase
-    qtwebengine
-    glib-networking
-  ];
-
-  nativeBuildInputs = [
-    makeWrapper
-  ];
+  nativeBuildInputs = [ qt5.wrapQtAppsHook ];
 
   propagatedBuildInputs = with python3Packages; [
-    pyqt5
     pyqtwebengine
     requests
     dbus-python
     pygobject3
   ];
 
-  makeWrapperArgs = [
-    "--set QT_QPA_PLATFORM_PLUGIN_PATH ${qtbase.bin}/lib/qt-*/plugins/platforms"
-    "--set QT_PLUGIN_PATH ${qtbase.bin}/lib/qt-*/plugins"
-  ];
+  dontWrapQtApps = true;
+  makeWrapperArgs = [ "\${qtWrapperArgs[@]}" ];
 
   shellHook = ''
-    export QT_QPA_PLATFORM_PLUGIN_PATH="$(echo ${qtx.qtbase.bin}/lib/qt-*/plugins/platforms)"
-    export QT_PLUGIN_PATH="$(echo ${qtbase.bin}/lib/qt-*/plugins)"
-    export PYTHONPATH=./:$PYTHONPATH # Give access to kiosk_browser module
+    # Give access to kiosk_browser module
+    export PYTHONPATH=./:$PYTHONPATH
+
+    # Give access to Qt platform plugin "xcb" in nix-shell
+    export QT_QPA_PLATFORM_PLUGIN_PATH="${qt5.qtbase.bin}/lib/qt-${qt5.qtbase.version}/plugins";
   '';
+
 }
