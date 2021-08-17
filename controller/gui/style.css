@@ -183,12 +183,6 @@
     margin-top: 1rem;
 }
 
-.d-Network__Note {
-    font-size: 80%;
-    color: var(--color-hint);
-    margin-bottom: 1rem;
-}
-
 
 /* Switch */
 
@@ -199,6 +193,16 @@
 .d-Switch--Off {
     color: red;
 }
+
+
+/* Side note */
+
+.d-Note {
+    font-size: 80%;
+    color: var(--color-hint);
+    margin-bottom: 1rem;
+}
+
 
 /* Wifi signal */
 

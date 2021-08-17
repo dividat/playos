@@ -24,7 +24,7 @@ let proxy_input ?proxy service_id =
 
 let proxy_form_note =
   p
-    ~a:[ a_class [ "d-Network__Note" ] ]
+    ~a:[ a_class [ "d-Note" ] ]
     [ txt "URL in the form "
     ; em ~a:[ a_class [ "d-Code" ] ] [ txt "http://host:port" ]
     ; txt " or "
@@ -119,7 +119,7 @@ let static_ip_form service =
       ""
   in
   div ~a:[ a_class [ "d-Network__Form" ]]
-    [ p ~a: [ a_class ["d-Network__Note"]  ][
+    [ p ~a: [ a_class ["d-Note"]  ][
           txt "A valid IP address must be in the form of "
         ; code ~a:[ a_class [ "d-Code" ] ] [ txt "n.n.n.n" ]
         ; txt ","
@@ -154,7 +154,7 @@ let static_ip_form service =
                   ~name:"nameservers"
                   ~value:(if is_static then String.concat ", " service.nameservers else "")
                   ~pattern:multi_ip_address_regex_pattern
-                @ [ p ~a:[a_class ["d-Network__Note"]][
+                @ [ p ~a:[a_class ["d-Note"]][
                     txt  "To set multiple nameservers, use a comma separated list of addresses."
                   ; br ()
                   ; txt "eg. 1.1.1.1, 8.8.8.8"
