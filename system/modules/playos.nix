@@ -45,8 +45,10 @@ with lib;
     };
 
     # 'Welcome Screen'
-    services.mingetty.greetingLine = greeting "Dividat PlayOS (${version})";
-    services.mingetty.helpLine = "";
+    services.getty = {
+      greetingLine = greeting "Dividat PlayOS (${version})";
+      helpLine = "";
+    };
 
     # Start controller
     systemd.services.playos-controller = {

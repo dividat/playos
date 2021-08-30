@@ -40,5 +40,6 @@ ocamlPackages.buildDunePackage rec {
     sexplib
     ezjsonm
     containers
+    fieldslib
   ];
 }

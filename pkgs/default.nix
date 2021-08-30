@@ -4,16 +4,14 @@ let
 
   nixpkgs = import ./patch-nixpkgs.nix {
     src = builtins.fetchGit {
-      name = "nixpkgs-20.09";
-      url = "git@github.com:nixos/nixpkgs.git";
-      rev = "cd63096d6d887d689543a0b97743d28995bc9bc3";
-      ref = "refs/tags/20.09";
+      name = "nixos-21.05-2021-08-02";
+      url = "https://github.com/nixos/nixpkgs";
+      ref = "refs/heads/nixos-21.05";
+      rev = "d4590d21006387dcb190c516724cb1e41c0f8fdf";
     };
     patches = [
-      # Fixed on *master* but not on *nixos-20.09*, as of 2020/11/30
-      ./patches/fix-lvm2-warnings-on-activation.patch
-      # Fix from unmerged PR as of 2020/12/14: https://github.com/NixOS/nixpkgs/pull/104722
-      ./patches/fix-wpa_supplicant-udev-restart.patch
+      # Fix merged in master 2021/08/12: https://github.com/NixOS/nixpkgs/pull/127595
+      ./patches/nixos-wireless-use-udev-to-wait-for-interfaces.patch
     ];
   };
 

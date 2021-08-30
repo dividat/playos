@@ -1,4 +1,4 @@
-{ stdenv, fetchzip, ... }:
+{ stdenv, fetchzip, lib, ... }:
 
 # Inspiration:
 # https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=breeze-contrast-cursor-theme
@@ -17,7 +17,7 @@ stdenv.mkDerivation rec {
   meta = {
     description = "Breeze Contrast cursor theme";
     homepage = https://kver.wordpress.com/2015/01/09/curses-i-mean-cursors/;
-    license = stdenv.lib.licenses.gpl2;
-    platforms = stdenv.lib.platforms.all;
+    license = lib.licenses.gpl2;
+    platforms = lib.platforms.all;
   };
 }
