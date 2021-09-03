@@ -107,5 +107,13 @@
   services.pcscd.enable = true;
   # Blacklist NFC modules conflicting with CCID (https://ludovicrousseau.blogspot.com/2013/11/linux-nfc-driver-conflicts-with-ccid.html)
   boot.blacklistedKernelModules = [ "pn533_usb" "pn533" "nfc" ];
+  # Allow play user to access pcsc
+  security.polkit.extraConfig = ''
+      polkit.addRule(function(action, subject) {
+        if (subject.user == "play" && (action.id == "org.debian.pcsc-lite.access_pcsc" || action.id == "org.debian.pcsc-lite.access_card")) {
+          return polkit.Result.YES;
+        }
+      });
+  '';
 
 }
