@@ -9,6 +9,7 @@
 ## Changed
 
 - controller: Move network interface list to network page
+- os: Make system journal persist across reboots
 
 # [2021.3.0] - 2021-04-08
 
