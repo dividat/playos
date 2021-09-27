@@ -44,4 +44,15 @@ with lib;
   # disable installation of documentation
   documentation.enable = false;
 
+  # Enable persistent journaling with low maximum size
+  volatileRoot.persistentFolders."/var/log/journal" = {
+    mode = "0755";
+    user = "root";
+    group = "root";
+  };
+  services.journald.extraConfig = ''
+    Storage=persistent
+    SystemMaxUse=1G
+  '';
+
 }
