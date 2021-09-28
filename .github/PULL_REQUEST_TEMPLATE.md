@@ -4,3 +4,4 @@
 
 -   [ ] Changelog updated
 -   [ ] Code documented
+-   [ ] User manual updated
