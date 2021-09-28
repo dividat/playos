@@ -24,7 +24,12 @@ let remote_management address =
       ; remote_management_form "disable" "Disable"
       ]
   | None ->
-      [ remote_management_form "enable" "Enable" ]
+      [ div
+          ~a:[ a_class [ "d-Note" ] ]
+          [ txt "Enabling remote management allows Dividat to access this computer at a distance. For this purpose the computer's public IP address is shared with ZeroTier, a US-based company providing an overlay network."
+          ]
+      ; remote_management_form "enable" "Enable"
+      ]
 
 let html server_info =
   Page.html ~current_page:Page.Info (
@@ -43,11 +48,11 @@ let html server_info =
           ; Definition.term [ txt "Machine ID" ]
           ; Definition.description [ txt server_info.machine_id ]
 
-          ; Definition.term [ txt "Remote management" ]
-          ; Definition.description (remote_management server_info.zerotier_address)
-
           ; Definition.term [ txt "Local time" ]
           ; Definition.description [ txt server_info.local_time ]
+
+          ; Definition.term [ txt "Remote management" ]
+          ; Definition.description (remote_management server_info.zerotier_address)
           ]
       ]
   )

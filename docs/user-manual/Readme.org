@@ -90,20 +90,21 @@ The initial page displayed is a page displaying basic system information.
 #+attr_html: :width 800px
 [[../screenshots/controller-information.png]]
 
-Information displayed:
+Items:
 
 - Version: The version of the currently running PlayOS system
 - Update URL: The location from where updates will be installed
 - Kiosk URL: Location of web application that is loaded automatically
 - Machine ID: A unique identifier for the machine
-- ZeroTier address: Network address for remote access to this machine
 - Local time: Current time with timezone
+- Remote maintenance: Button to enable remote maintenance mode
+
 
 ** Network
 
 The network screen shows the state of Internet connectivity.
 
-If system is connected to Internet, the connected service (e.g. Wireless network) is displayed:
+If system is connected to Internet, the connected service (e.g. wireless network) is displayed:
 
 #+CAPTION: Internet connected
 #+NAME: fig:controller-network
@@ -117,14 +118,14 @@ If system is not connected to Internet a list of available services is displayed
 #+attr_html: :width 800px
 [[../screenshots/controller-network-not-connected.png]]
 
-A service may be expanded by clicking on the triangle to the left of the service name. This will display more information on the service. For wireless networks an input field to enter a WEP/WPA passphrase and connect with the service is displayed:
+A service may be selected for configuration by clicking on it. This is where passwords for wireless networks, proxy servers and static IP addresses may be configured:
 
 #+CAPTION: Connect with a service
 #+NAME: fig:controller-network-connect
 #+attr_html: :width 800px
 [[../screenshots/controller-network-connect.png]]
 
-A service that is connected may be removed (e.g. thus disconnecting from the Wireless network) by expanding the service information and clicking the *Remove* button.
+A service that is connected may be removed (e.g. thus disconnecting from the wireless network) by expanding the service information and clicking the *Remove* button.
 
 #+CAPTION: Remove a service
 #+NAME: fig:controller-network-remove
@@ -132,6 +133,10 @@ A service that is connected may be removed (e.g. thus disconnecting from the Wir
 [[../screenshots/controller-network-remove.png]]
 
 Ethernet connections are automatically configured using DHCP or link-local address autoconfiguration. Manual configuration is not possible.
+
+*** Network interface addresses
+
+The MAC addresses of the computer's network interfaces are displayed at the bottom of the [[*Network][Network]] page.
 
 ** Localization
 
@@ -159,10 +164,6 @@ Changelog can be displayed by clicking the *changelog* link in the bottom right 
 [[../screenshots/controller-system-status.png]]
 
 Advanced system status information can be displayed by clicking the *system status* link in the bottom right of the screen.
-
-** Network interface addresses
-
-The addresses of the Ethernet interfaces (MAC addresses) are printed on the label of the computer. They are also displayed in the [[*System Status][System Status]] page.
 
 ** Wiping user data
 

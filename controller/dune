@@ -4,6 +4,7 @@
   (Changelog.html as Changelog.html)
   (gui/reset.css as static/reset.css)
   (gui/style.css as static/style.css)
+  (gui/client.js as static/client.js)
   (gui/info.svg as static/info.svg)
   (gui/check.svg as static/check.svg)
   (gui/wifi.svg as static/wifi.svg)

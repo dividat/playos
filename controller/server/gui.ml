@@ -227,6 +227,7 @@ module NetworkGui = struct
       all_services
         |> List.filter (fun s -> not is_internet_connected || Service.is_connected s)
     in
+    let%lwt interfaces = Network.Interface.get_all () in
 
     Lwt.return (page (Network_list_page.html
       { proxy = proxy
@@ -234,6 +235,9 @@ module NetworkGui = struct
       ; is_internet_connected
       ; services = showed_services
           |> List.map blur_service_proxy_password
+      ; interfaces = interfaces
+          |> [%sexp_of: Network.Interface.t list]
+          |> Sexplib.Sexp.to_string_hum
       }))
 
   (** Helper to find a service by id *)
@@ -424,7 +428,6 @@ module StatusGui = struct
             (fun exn -> Printexc.to_string exn
                         |> return)
         in
-        let%lwt interfaces = Network.Interface.get_all () in
         Lwt.return (page (Status_page.html
           { health = health_s
               |> Lwt_react.S.value
@@ -435,9 +438,6 @@ module StatusGui = struct
               |> Update.sexp_of_state
               |> Sexplib.Sexp.to_string_hum
           ; rauc
-          ; interfaces = interfaces
-              |> [%sexp_of: Network.Interface.t list]
-              |> Sexplib.Sexp.to_string_hum
           }))
       )
 end
