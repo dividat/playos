@@ -10,10 +10,9 @@ type params =
   { health: string
   ; update: string
   ; rauc: string
-  ; interfaces: string
   }
 
-let html { health; update; rauc; interfaces } =
+let html { health; update; rauc } =
   Page.html (
     div
       [ h1
@@ -28,6 +27,5 @@ let html { health; update; rauc; interfaces } =
       ; section "Health" health
       ; section "Update State" update
       ; section "RAUC" rauc
-      ; section "Interfaces" interfaces
       ]
   )

@@ -107,7 +107,7 @@ in
 
     # Set up automatic login and start a rescue kiosk
     users.users.root.initialHashedPassword = "";
-    services.mingetty.autologinUser = "root";
+    services.getty.autologinUser = "root";
     programs.bash.loginShellInit = ''
       ${rescue_kiosk}
     '';

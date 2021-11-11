@@ -24,7 +24,7 @@ let proxy_input ?proxy service_id =
 
 let proxy_form_note =
   p
-    ~a:[ a_class [ "d-Network__Note" ] ]
+    ~a:[ a_class [ "d-Note" ] ]
     [ txt "URL in the form "
     ; em ~a:[ a_class [ "d-Code" ] ] [ txt "http://host:port" ]
     ; txt " or "
@@ -46,13 +46,15 @@ let not_connected_form service =
               [ txt "Passphrase" ]
           ]
       ; input
-          ~a:[ a_input_type `Text
-          ; a_class [ "d-Input";  "d-Network__Input" ]
+          ~a:[ a_input_type `Password
+          ; a_class [ "d-Input"; "d-Network__Input" ]
           ; a_id passphrase_id
           ; a_name "passphrase"
+          ; Unsafe.string_attrib "is" "show-password"
           ]
           ()
       ; details
+          ~a:[ a_class [ "d-Details" ] ]
           (summary [ txt "Proxy Settings" ])
           [ div
               ~a:[ a_class [ "d-Network__AdvancedSettingsTitle" ] ]
@@ -63,7 +65,7 @@ let not_connected_form service =
           ]
       ; input
           ~a:[ a_input_type `Submit
-          ; a_class [ "d-Button"; "d-Network__Button" ]
+          ; a_class [ "d-Button" ]
           ; a_value "Connect"
           ]
           ()
@@ -117,7 +119,7 @@ let static_ip_form service =
       ""
   in
   div ~a:[ a_class [ "d-Network__Form" ]]
-    [ p ~a: [ a_class ["d-Network__Note"]  ][
+    [ p ~a: [ a_class ["d-Note"]  ][
           txt "A valid IP address must be in the form of "
         ; code ~a:[ a_class [ "d-Code" ] ] [ txt "n.n.n.n" ]
         ; txt ","
@@ -152,7 +154,7 @@ let static_ip_form service =
                   ~name:"nameservers"
                   ~value:(if is_static then String.concat ", " service.nameservers else "")
                   ~pattern:multi_ip_address_regex_pattern
-                @ [ p ~a:[a_class ["d-Network__Note"]][
+                @ [ p ~a:[a_class ["d-Note"]][
                     txt  "To set multiple nameservers, use a comma separated list of addresses."
                   ; br ()
                   ; txt "eg. 1.1.1.1, 8.8.8.8"
@@ -191,12 +193,13 @@ let connected_form service =
         ]
         [ input
             ~a:[ a_input_type `Submit
-            ; a_class [ "d-Button"; "d-Network__Button" ]
+            ; a_class [ "d-Button" ]
             ; a_value "Remove"
             ]
             ()
         ]
     ; details
+        ~a:[ a_class [ "d-Details" ] ]
         (summary [ txt "Proxy Settings" ])
         [ div
             ~a:[ a_class [ "d-Network__Form" ] ]
@@ -225,7 +228,7 @@ let connected_form service =
             ]
         ]
 
-    ; details (summary [ txt "Static IP" ])
+    ; details ~a:[ a_class [ "d-Details" ] ] (summary [ txt "Static IP" ])
       [ static_ip_form service ]
     ]
 

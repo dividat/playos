@@ -28,7 +28,6 @@ let
 in
 {
   config = {
-    console.extraTTYs = [ tty ];
     systemd.services.playos-status = {
       environment = {
         XAUTHORITY = "${config.users.users.play.home}/.Xauthority";

@@ -1,18 +1,35 @@
-{stdenv, fetchurl}:
-stdenv.mkDerivation rec {
-  name = "dividat-driver-${version}";
-  version = "2.1.0";
-  channel = "master";
+{ stdenv, fetchFromGitHub, pkgs, buildGoModule }:
 
-  src = fetchurl {
-    url = "https://dist.dividat.com/releases/driver2/${channel}/${version}/dividat-driver-linux-amd64-${version}";
-    sha256 = "0f5hd7mxrhsaxmwdyys1vk9z5rxm57y3w7qjlqj7l5v2v41g0vrm";
+let
+
+  channel = "develop";
+
+  version = "2.2.0-rc2";
+
+  releaseUrl = "https://dist.dividat.com/releases/driver2/";
+
+in buildGoModule rec {
+
+  pname = "dividat-driver";
+  inherit version;
+
+  src = fetchFromGitHub {
+    owner = "dividat";
+    repo = "driver";
+    rev = "9146cbf2f540cd5aa9cea5828f83993c8629657b";
+    sha256 = "1lsh0lyjwdhk24zrryaqszl1k3356yzckzx32q7mbcvvkh17hs9q";
   };
 
-  buildCommand = ''
-    mkdir -p $out/bin
-    cp $src $out/bin/dividat-driver
-    chmod +x $out/bin/dividat-driver
-  '';
+  vendorSha256 = "1lvgp9q3g3mpmj6khbg6f1z9zgdlmwgf65rqx4d7v50a1m7g9a0m";
+
+  nativeBuildInputs = with pkgs; [ pkgconfig pcsclite ];
+  buildInputs = with pkgs; [ pcsclite ];
+
+  buildFlagsArray = [
+    "-ldflags="
+    "-X github.com/dividat/driver/src/dividat-driver/server.channel=${channel}"
+    "-X github.com/dividat/driver/src/dividat-driver/server.version=${version}"
+    "-X github.com/dividat/driver/src/dividat-driver/update.releaseUrl=${releaseUrl}"
+  ];
 
 }

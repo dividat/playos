@@ -1,3 +1,18 @@
+# [2021.9.0] - 2021-11-11
+
+# [2021.9.0-VALIDATION] - 2021-09-28
+
+## Added
+
+- driver: Upgrade to support Senso Flex
+- controller: Hide the passphrase by default in the network form
+- controller: Display IP addresses in network list
+
+## Changed
+
+- controller: Move network interface list to network page
+- os: Make system journal persist across reboots
+
 # [2021.3.0] - 2021-04-08
 
 # [2021.3.0-VALIDATION] - 2021-03-24

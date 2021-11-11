@@ -74,6 +74,15 @@ elif [ "$TARGET" == "master" ]; then
   echo
   echo "Run ./result/bin/deploy-playos-update to deploy."
 
+# Create a stuck system that will not self-update
+# usage: ./build stuck https://url-for-kiosk
+elif [ "$TARGET" == "stuck" ]; then
+
+  (set -x; nix-build \
+    --arg kioskUrl "$2" \
+    --arg buildBundle false \
+    --arg buildDisk false)
+
 elif [ "$TARGET" == "lab-key" ]; then
 
   (set -x; nix-build \
