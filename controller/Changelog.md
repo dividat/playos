@@ -1,5 +1,9 @@
 # [UNRELEASED]
 
+## Changed
+
+- os: Update nixpkgs channel to 21.11
+
 # [2021.9.0] - 2021-11-11
 
 # [2021.9.0-VALIDATION] - 2021-09-28
