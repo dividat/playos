@@ -373,13 +373,13 @@ module LabelGui = struct
     let%lwt server_info = Info.get () in
     return
       ({ machine_id = server_info.machine_id
-       ; mac_1 = CCOpt.(
+       ; mac_1 = CCOption.(
              ethernet_interfaces
              |> CCList.get_at_idx 0
              >|= (fun i -> i.address)
              |> get_or ~default:"-"
            )
-       ; mac_2 = CCOpt.(
+       ; mac_2 = CCOption.(
              ethernet_interfaces
              |> CCList.get_at_idx 1
              >|= (fun i -> i.address)

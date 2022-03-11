@@ -41,7 +41,7 @@ See the output of `run-playos-in-vm --help` for more information.
 
 #### Guest networking
 
-The default user-mode network stack is used to create a virtual Ethernet connection with bridged Internet access for the guest. If you find that the guest has a dysfunctional Internet connection, check your host's firewall settings. If using ConnMan, make sure that the virtual bridge interfaces (`virbr0` etc.) are not blacklisted.
+The default user-mode network stack is used to create a virtual Ethernet connection with bridged Internet access for the guest. If you find that the guest has a dysfunctional Internet connection, check your host's firewall settings. If using ConnMan, restart ConnMan service and try again.
 
 ## Deployment
 

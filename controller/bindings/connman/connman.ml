@@ -300,7 +300,7 @@ struct
       try
         OBus_value.C.(v |> cast_single basic_byte)
         |> int_of_char
-        |> CCOpt.return
+        |> CCOption.return
       with
       | _ -> None
     in
@@ -321,7 +321,7 @@ struct
       with
         _ -> None
     in
-    CCOpt.(
+    CCOption.(
       pure (fun name type' state strength favorite autoconnect ipv4 ipv4_user_config ipv6 ethernet proxy nameservers ->
           { _proxy = OBus_proxy.make (OBus_context.sender context) path
           ; _manager = manager
@@ -456,7 +456,7 @@ struct
       OBus_method.call_with_context
         Net_connman_Manager.m_GetTechnologies proxy () in
     let to_technology (path, properties) : Technology.t option =
-      CCOpt.(pure
+      CCOption.(pure
                (fun name type' powered connected : Technology.t ->
                   { _proxy = OBus_proxy.make (OBus_context.sender context) path
                   ; name

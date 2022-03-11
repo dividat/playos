@@ -1,4 +1,4 @@
-#!@python36@/bin/python
+#!@python39@/bin/python
 
 import argparse
 import hashlib

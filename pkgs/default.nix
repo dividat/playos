@@ -4,15 +4,12 @@ let
 
   nixpkgs = import ./patch-nixpkgs.nix {
     src = builtins.fetchGit {
-      name = "nixos-21.05-2021-08-02";
+      name = "nixos-21.11-2021-03-07";
       url = "https://github.com/nixos/nixpkgs";
-      ref = "refs/heads/nixos-21.05";
-      rev = "d4590d21006387dcb190c516724cb1e41c0f8fdf";
+      ref = "refs/heads/nixos-21.11";
+      rev = "9b1c7ba323732ddc85a51850a7f10ecc5269b8e9";
     };
-    patches = [
-      # Fix merged in master 2021/08/12: https://github.com/NixOS/nixpkgs/pull/127595
-      ./patches/nixos-wireless-use-udev-to-wait-for-interfaces.patch
-    ];
+    patches = [];
   };
 
   overlay =
