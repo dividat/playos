@@ -1,10 +1,10 @@
 # Test machinery
-{importFromNixos}:
-{config, lib, pkgs, ...}:
+{lib, pkgs, ...}:
+
 {
   imports = [
-    (importFromNixos "modules/profiles/qemu-guest.nix")
-    (importFromNixos "modules/testing/test-instrumentation.nix")
+    (pkgs.importFromNixos "modules/profiles/qemu-guest.nix")
+    (pkgs.importFromNixos "modules/testing/test-instrumentation.nix")
   ];
 
   config = {
