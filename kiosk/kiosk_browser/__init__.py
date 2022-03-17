@@ -6,15 +6,16 @@ from PyQt5.QtWidgets import QApplication
 
 from kiosk_browser import main_widget
 
-def start(primary_url, secondary_url, toggle_sequence, fullscreen = True):
+def start(kiosk_url, parameters_url, toggle_parameters_key, fullscreen = True):
 
     logging.basicConfig(level=logging.INFO)
 
     app = QApplication(sys.argv)
 
     mainWidget = main_widget.MainWidget(
-        urls = [parseUrl(primary_url), parseUrl(secondary_url)],
-        toggle_sequence = QKeySequence(toggle_sequence)
+        kiosk_url = parseUrl(kiosk_url),
+        parameters_url = parseUrl(parameters_url),
+        toggle_parameters_key = QKeySequence(toggle_parameters_key)
     )
 
     mainWidget.setContextMenuPolicy(Qt.NoContextMenu)
