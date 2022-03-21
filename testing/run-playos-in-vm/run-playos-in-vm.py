@@ -64,6 +64,7 @@ def run_vm(system, qemu_opts, kernel_arguments):
             '-initrd', initrd,
             '--virtfs', virtfs_opts,
             '-append', kernel_arguments,
+            '-vga', 'virtio', # Display screen as big as possible
             # Unused shell. This is used by the "backdoor" in <nixos/modules/test-instrumentation.nix>.
             # TODO: Set up a Unix Socket from Python and connect to shell
             '-chardev', 'socket,id=shell,path={}/not-working-shell,server,nowait'.format(backdoor_dir),
