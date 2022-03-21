@@ -1,4 +1,4 @@
-{ version, updateUrl, kioskUrl }:
+{ version, updateUrl, kioskUrl, activeVirtualTerminals ? [] }:
 
 let
 
@@ -50,5 +50,8 @@ let
 in
 
   import nixpkgs {
-    overlays = [ overlay ];
+    overlays = [
+      overlay
+      (import ./xorg { inherit activeVirtualTerminals; })
+    ];
   }
