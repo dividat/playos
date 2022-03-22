@@ -5,27 +5,48 @@ def widget(parent, title, url, additional_close_keys, on_dialog_close):
     """
 
     dialog = QtWidgets.QDialog(parent)
-    dialog.setFixedSize(parent.width() * 0.8, parent.height() * 0.8)
-    dialog.setStyleSheet("background-color: #285577;")
+    w = parent.width()
+    h = parent.height()
+    dialog.setGeometry(w * 0.1, h * 0.1, w * 0.8, h * 0.8)
 
-    on_close = lambda: close(parent, dialog, on_dialog_close)
-
-    layout = QtWidgets.QVBoxLayout(dialog)
-    layout.setContentsMargins(2, 0, 2, 2) # left, top, right, bottom
-    dialog.setLayout(layout)
-
-    layout.addWidget(title_line(dialog, title, on_close))
-
-    webview = QtWebEngineWidgets.QWebEngineView()
-    webview.page().setUrl(url)
-    layout.addWidget(webview)
+    overlay = show_overlay(parent)
+    on_close = lambda: close(parent, overlay, dialog, on_dialog_close)
+    show_webview_window(dialog, title, url, on_close)
 
     # Close with ESC and additional_close_keys
     QtWidgets.QShortcut('ESC', dialog).activated.connect(on_close)
     for key in additional_close_keys:
         QtWidgets.QShortcut(key, dialog).activated.connect(on_close)
 
+    overlay.show()
     return dialog
+
+def show_overlay(parent):
+    """ Show overlay on all the surface of the parent.
+    """
+
+    widget = QtWidgets.QWidget(parent)
+    widget.setGeometry(0, 0, parent.width(), parent.height())
+    widget.setStyleSheet("background-color: rgba(0, 0, 0, 0.4)")
+    return widget
+
+def show_webview_window(parent, title, url, on_close):
+    """ Show webview window with decorations.
+    """
+
+    widget = QtWidgets.QWidget(parent)
+    widget.setGeometry(0, 0, parent.width(), parent.height())
+    widget.setStyleSheet("background-color: #285577;")
+
+    layout = QtWidgets.QVBoxLayout(widget)
+    layout.setContentsMargins(2, 0, 2, 2) # left, top, right, bottom
+    widget.setLayout(layout)
+
+    layout.addWidget(title_line(widget, title, on_close))
+
+    webview = QtWebEngineWidgets.QWebEngineView()
+    webview.page().setUrl(url)
+    layout.addWidget(webview)
 
 def title_line(parent, title, on_close):
     """ Title and close button.
@@ -62,10 +83,11 @@ def title_line(parent, title, on_close):
 
     return line
 
-def close(parent, dialog, on_close):
+def close(parent, overlay, dialog, on_close):
     """ Close dialog and give back the focus to the parent.
     """
 
+    overlay.setParent(None)
     dialog.close()
     parent.activateWindow()
     on_close()
