@@ -1,7 +1,6 @@
-from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5 import QtWidgets, QtCore, QtGui, QtWebEngineWidgets
 
-def widget(parent, title, url, toggle_parameters_key, on_dialog_close):
+def widget(parent, title, url, additional_close_keys, on_dialog_close):
     """ Embed a web view in a dialog.
     """
 
@@ -17,13 +16,14 @@ def widget(parent, title, url, toggle_parameters_key, on_dialog_close):
 
     layout.addWidget(title_line(dialog, title, on_close))
 
-    webview = QWebEngineView()
+    webview = QtWebEngineWidgets.QWebEngineView()
     webview.page().setUrl(url)
     layout.addWidget(webview)
 
-    # Close with: toggle key, escape
-    QtWidgets.QShortcut(toggle_parameters_key, dialog).activated.connect(on_close)
+    # Close with ESC and additional_close_keys
     QtWidgets.QShortcut('ESC', dialog).activated.connect(on_close)
+    for key in additional_close_keys:
+        QtWidgets.QShortcut(key, dialog).activated.connect(on_close)
 
     return dialog
 
