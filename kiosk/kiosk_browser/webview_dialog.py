@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
-def widget(parent, title, url, toggle_parameters_key):
+def widget(parent, title, url, toggle_parameters_key, on_dialog_close):
     """ Embed a web view in a dialog.
     """
 
@@ -9,7 +9,7 @@ def widget(parent, title, url, toggle_parameters_key):
     dialog.setFixedSize(parent.width() * 0.8, parent.height() * 0.8)
     dialog.setStyleSheet("background-color: #285577;")
 
-    on_close = lambda: close(parent, dialog)
+    on_close = lambda: close(parent, dialog, on_dialog_close)
 
     layout = QtWidgets.QVBoxLayout(dialog)
     layout.setContentsMargins(2, 0, 2, 2) # left, top, right, bottom
@@ -62,9 +62,10 @@ def title_line(parent, title, on_close):
 
     return line
 
-def close(parent, dialog):
-    """ Close dialog and give focus back to the parent.
+def close(parent, dialog, on_close):
+    """ Close dialog and give back the focus to the parent.
     """
 
     dialog.close()
     parent.activateWindow()
+    on_close()

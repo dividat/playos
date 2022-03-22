@@ -48,7 +48,13 @@ class MainWidget(QWidget):
     # Private
 
     def _show_parameters(self):
-        webview_dialog.widget(self, "Parameters", self._parameters_url, self._toggle_parameters_key).exec_()
+        webview_dialog.widget(
+                self, 
+                "Parameters", 
+                self._parameters_url, 
+                self._toggle_parameters_key,
+                on_dialog_close = lambda: self._browser_widget.reload()
+            ).exec_()
 
     def _toggle_captive_portal(self):
         if self._is_captive_portal_visible:
