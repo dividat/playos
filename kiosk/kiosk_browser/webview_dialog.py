@@ -1,19 +1,26 @@
 from PyQt5 import QtWidgets, QtCore, QtGui, QtWebEngineWidgets
 
+# Dialog width and height ratio compared to the parent’s size.
+dialog_ratio = 0.8
+
+# Window border thickness
+window_border = 2
+
 def widget(parent, title, url, additional_close_keys, on_dialog_close):
     """ Embed a web view in a dialog.
+
+        Close with ESC, additional_close_keys, or clicking on the cross.
     """
 
     dialog = QtWidgets.QDialog(parent)
     w = parent.width()
     h = parent.height()
-    dialog.setGeometry(w * 0.1, h * 0.1, w * 0.8, h * 0.8)
+    dialog.setGeometry(w * (1 - dialog_ratio) / 2, h * (1 - dialog_ratio) / 2, w * dialog_ratio, h * dialog_ratio)
 
     overlay = show_overlay(parent)
     on_close = lambda: close(parent, overlay, dialog, on_dialog_close)
     show_webview_window(dialog, title, url, on_close)
 
-    # Close with ESC and additional_close_keys
     QtWidgets.QShortcut('ESC', dialog).activated.connect(on_close)
     for key in additional_close_keys:
         QtWidgets.QShortcut(key, dialog).activated.connect(on_close)
@@ -39,7 +46,7 @@ def show_webview_window(parent, title, url, on_close):
     widget.setStyleSheet("background-color: #285577;")
 
     layout = QtWidgets.QVBoxLayout(widget)
-    layout.setContentsMargins(2, 0, 2, 2) # left, top, right, bottom
+    layout.setContentsMargins(window_border, 0, window_border, window_border) # left, top, right, bottom
     widget.setLayout(layout)
 
     layout.addWidget(title_line(widget, title, on_close))
