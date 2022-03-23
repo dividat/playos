@@ -90,12 +90,14 @@
     wantedBy = [ "multi-user.target" ];
   };
 
-  # Enable audio
-  hardware.pulseaudio.enable = true;
+  # Audio
+  hardware.pulseaudio = {
+    enable = true;
 
-  # Run PulseAudio as System-Wide daemon. See [1] for why this is in general a bad idea, but ok for our case.
-  # [1] https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/WhatIsWrongWithSystemWide/
-  hardware.pulseaudio.systemWide = true;
+    # Run PulseAudio as System-Wide daemon. See [1] for why this is in general a bad idea, but ok for our case.
+    # [1] https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/WhatIsWrongWithSystemWide/
+    systemWide = true;
+  };
 
   # Enable avahi for Senso discovery
   services.avahi.enable = true;
