@@ -92,11 +92,7 @@
   # [1] https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/WhatIsWrongWithSystemWide/
   hardware.pulseaudio.systemWide = true;
 
-  # Install a command line mixer
-  # TODO: remove when controlling audio works trough controller
   environment.systemPackages = with pkgs; [
-    pamix
-    pamixer
     breeze-contrast-cursor-theme
   ];
 
