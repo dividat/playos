@@ -20,15 +20,13 @@
   };
 
   # Kiosk session
-  services.xserver = {
+  services.xserver = let sessionName = "kiosk-browser"; in {
     enable = true;
-
-    displayManager.defaultSession = "kiosk-browser";
 
     desktopManager = {
       xterm.enable = false;
       session = [
-        { name = "kiosk-browser";
+        { name = sessionName;
           start = ''
             # Disable screen-saver control (screen blanking)
             xset s off
@@ -68,6 +66,8 @@
         enable = true;
         user = "play";
       };
+
+      defaultSession = sessionName;
 
       sessionCommands = ''
         ${pkgs.xorg.xrdb}/bin/xrdb -merge <<EOF
