@@ -16,7 +16,7 @@ self: super: {
 
   xorg =
     let
-      vtChecks =
+      isActiveVTCondition =
         super.lib.concatMapStringsSep " || " (vtno: "vtno == ${builtins.toString vtno}") activeVirtualTerminals;
       # The patch needs to be created against https://gitlab.freedesktop.org/xorg/xserver/ checked out
       # to the version Nixpkgs references. This source file has changed at a very low frequency
@@ -31,7 +31,7 @@ self: super: {
                      int vtno = *((int *) arg);
          
         -            if (vtno != xf86Info.vtno) {
-        +            if (vtno != xf86Info.vtno && ${vtChecks}) {
+        +            if (vtno != xf86Info.vtno && (${isActiveVTCondition})) {
                          if (!xf86VTActivate(vtno)) {
                              ErrorF("Failed to switch from vt%02d to vt%02d: %s\n",
                                     xf86Info.vtno, vtno, strerror(errno));
