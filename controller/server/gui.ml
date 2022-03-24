@@ -421,12 +421,19 @@ module StatusGui = struct
     app
     |> get "/status" (fun req ->
         let%lwt rauc =
-          catch
-            (fun () -> Rauc.get_status rauc
-              >|= Rauc.sexp_of_status
-              >|= Sexplib.Sexp.to_string_hum)
-            (fun exn -> Printexc.to_string exn
-                        |> return)
+          match update_s |> Lwt_react.S.value with
+          (* RAUC status is not meaningful while installing
+             https://github.com/rauc/rauc/issues/416
+          *)
+          | Update.Installing _ ->
+            Lwt.return "Installing to inactive slot"
+          | _ ->
+            catch
+              (fun () -> Rauc.get_status rauc
+                >|= Rauc.sexp_of_status
+                >|= Sexplib.Sexp.to_string_hum)
+              (fun exn -> Printexc.to_string exn
+                          |> return)
         in
         Lwt.return (page (Status_page.html
           { health = health_s
