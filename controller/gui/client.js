@@ -62,6 +62,49 @@ customElements.define(
   { extends: 'input' }
 )
 
+/* Form web component preventing more than one submission.
+ *
+ * Disable submit input inside the form after the first submission.
+ */
+customElements.define(
+  'disable-after-submit',
+  class extends HTMLFormElement {
+    constructor() {
+      super()
+
+      const form = this
+      const button = form.querySelector('input[type=submit]')
+
+      const buttonParent = installParent(button, document.createElement('span'))
+      buttonParent.style = `
+        position: relative;
+        height: fit-content;
+      `
+
+      const spinnerParent = document.createElement('div')
+      spinnerParent.style = `
+        display: flex;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      `
+
+      const spinner = document.createElement('span')
+      spinner.className = 'd-Spinner'
+      spinnerParent.appendChild(spinner)
+
+      form.addEventListener('submit', function() {
+        button.disabled = true
+        button.style.color = 'transparent'
+        button.className += ' d-Button--Disabled'
+        buttonParent.appendChild(spinnerParent)
+      })
+    }
+  },
+  { extends: 'form' }
+)
+
 /* Place given node under a new parent node.
  *
  * Useful to extend nodes that can not have childreen in web components, for
