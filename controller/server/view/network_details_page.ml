@@ -38,6 +38,7 @@ let not_connected_form service =
       ~a:[ a_action ("/network/" ^ service.id ^ "/connect")
       ; a_method `Post
       ; a_class [ "d-Network__Form" ]
+      ; Unsafe.string_attrib "is" "disable-after-submit"
       ]
       [ div
           ~a:[ a_class [ "d-Network__Label" ] ]
