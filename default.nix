@@ -21,7 +21,10 @@
 let
   version = "2021.9.0";
 
-  pkgs = import ./pkgs { inherit version updateUrl kioskUrl; };
+  # List the virtual terminals that can be switched to from the Xserver
+  activeVirtualTerminals = [ 7 8 ];
+
+  pkgs = import ./pkgs { inherit version updateUrl kioskUrl activeVirtualTerminals; };
 
   # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
   components = with pkgs; lib.makeScope newScope (self: with self; {
