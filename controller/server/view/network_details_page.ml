@@ -76,6 +76,7 @@ let disable_proxy_form service =
   form
       ~a:[ a_action ("/network/" ^ service.id ^ "/proxy/remove")
       ; a_method `Post
+      ; Unsafe.string_attrib "is" "disable-after-submit"
       ]
       [ input
           ~a:[ a_input_type `Submit
@@ -130,6 +131,7 @@ let static_ip_form service =
     ; form ~a:[ a_action ("/network/" ^ service.id ^ "/static-ip/update")
               ; a_id "static-ip-form"
               ; a_method `Post
+              ; Unsafe.string_attrib "is" "disable-after-submit"
               ]
         [ div ( ip_input
                   ~id:"static-ip-address"
@@ -173,6 +175,7 @@ let static_ip_form service =
               form ~a:[ a_action ( "/network/" ^ service.id ^ "/static-ip/remove" )
                       ; a_method `Post
                       ; a_style "display: inline; margin-left: 0.5rem"
+                      ; Unsafe.string_attrib "is" "disable-after-submit"
                       ]
                 [ input ~a:[ a_value "Remove"
                            ; a_input_type `Submit
@@ -191,6 +194,7 @@ let connected_form service =
         ~a:[ a_action ("/network/" ^ service.id ^ "/remove")
         ; a_method `Post
         ; a_class [ "d-Network__Form" ]
+        ; Unsafe.string_attrib "is" "disable-after-submit"
         ]
         [ input
             ~a:[ a_input_type `Submit
@@ -211,6 +215,7 @@ let connected_form service =
                     ~a:[ a_action ("/network/" ^ service.id ^ "/proxy/update")
                     ; a_method `Post
                     ; a_class [ "d-Network__ProxyUpdate" ]
+                    ; Unsafe.string_attrib "is" "disable-after-submit"
                     ]
                     [ proxy_input ?proxy:service.proxy service.id
                     ; input
