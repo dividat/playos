@@ -1,4 +1,4 @@
-/* Password input web component with a SHOW/HIDE toggle button
+/* Password input web component with a SHOW/HIDE toggle button.
  */
 customElements.define(
   'show-password',
@@ -6,10 +6,13 @@ customElements.define(
     constructor() {
       super()
 
-      const parentNode = this.parentNode
       const input = this
-      const root = document.createElement('span')
+
+      const root = installParent(input, document.createElement('span'))
+      root.style = 'position: relative'
+
       const button = document.createElement('input')
+      root.appendChild(button)
 
       let isPasswordShown = false
       function updatePasswordVisibility(b) {
@@ -23,15 +26,8 @@ customElements.define(
         }
       }
 
-      // Move the input (current root) under the new artificial root, and also
-      // append the button
-      parentNode.replaceChild(root, input)
-      root.appendChild(input)
-      root.appendChild(button)
-      root.style = 'position: relative'
-
       input.type = 'password'
-      input.style = 'padding-right: 3.5rem'; // Space for the button
+      input.style = 'padding-right: 3.5rem' // Space for the button
       input.oninput = function (e) {
         if (e.target.value.length > 0) {
           button.style.visibility = 'visible'
@@ -65,3 +61,14 @@ customElements.define(
   },
   { extends: 'input' }
 )
+
+/* Place given node under a new parent node.
+ *
+ * Useful to extend nodes that can not have childreen in web components, for
+ * ex. inputs.
+ */
+function installParent(node, newParent) {
+    node.parentNode.replaceChild(newParent, node)
+    newParent.appendChild(node)
+    return newParent
+}
