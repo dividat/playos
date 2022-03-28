@@ -86,12 +86,6 @@ struct
 
   type t = input OBus_object.t
 
-  let report_error input service msg =
-    let%lwt () = Logs_lwt.err ~src:log_src
-        (fun m -> m "error reported to agent: %s" msg)
-    in
-    return_unit
-
   let request_input input service (fields: (string * OBus_value.V.single) list) =
     let%lwt () = Logs_lwt.debug ~src:log_src
         (fun m -> m "input requested from agent for service %s"
@@ -125,17 +119,14 @@ struct
     OBus_error.make "net.connman.Agent.Error.Canceled" "Can not open browser."
     |> Lwt.fail
 
-  let cancel input =
-    return_unit
-
-  let release input =
-    return_unit
-
-  let interface =
+  let interface on_error =
     Connman_interfaces.Net_connman_Agent.make {
       m_ReportError = (
         fun obj (service, msg) ->
-          report_error (OBus_object.get obj) service msg
+          let%lwt () = Logs_lwt.err ~src:log_src
+              (fun m -> m "error reported to agent: %s" msg)
+          in
+          on_error msg
       );
       m_RequestInput = (
         fun obj (x1, x2) ->
@@ -145,17 +136,11 @@ struct
         fun obj (x1, x2) ->
           request_browser (OBus_object.get obj) x1 x2
       );
-      m_Cancel = (
-        fun obj () ->
-          cancel (OBus_object.get obj)
-      );
-      m_Release = (
-        fun obj () ->
-          release (OBus_object.get obj)
-      );
+      m_Cancel = (fun obj () -> return_unit);
+      m_Release = (fun obj () -> return_unit);
     }
 
-  let create ~(input:input) =
+  let create ~(input:input) on_error =
     let%lwt system_bus = OBus_bus.system () in
     let path = [ "net"; "connman"; "agent"
                ; Random.int 9999 |> string_of_int ]
@@ -163,7 +148,7 @@ struct
     let%lwt () = Logs_lwt.debug ~src:log_src
         (fun m -> m "creating connman agent at %s" (String.concat "/" path))
     in
-    let obj = OBus_object.make ~interfaces:[interface] path in
+    let obj = OBus_object.make ~interfaces:[interface on_error] path in
     let () = OBus_object.attach obj input in
     let () = OBus_object.export system_bus obj in
     return (path, obj)
@@ -408,16 +393,28 @@ struct
         (fun m -> m "connect to service %s" service.id)
     in
 
+    (* Store agent error in a local mutable variable *)
+    let agent_reported_error = ref None in
+    let on_agent_error msg = Lwt.return (agent_reported_error := Some msg) in
+
     (* Create and register an agent that will pass input to ConnMan *)
-    let%lwt agent_path, agent = Agent.create input in
+    let%lwt agent_path, agent = Agent.create input on_agent_error in
     let%lwt () = register_agent service._manager agent_path in
 
-    begin
-      (* Connect to service *)
-      OBus_method.call
-        Connman_interfaces.Net_connman_Service.m_Connect
-        service._proxy ()
-    end
+    (Lwt.catch 
+        (* Connect to service *)
+        (fun () ->
+          OBus_method.call
+            Connman_interfaces.Net_connman_Service.m_Connect
+            service._proxy ())
+        (* Give priority to error reported from agent, which is more informative *)
+        (function
+          | exn -> 
+              match !agent_reported_error with
+              | Some "invalid-key" -> Lwt.fail_with "Passphrase is not valid. Please check it and then try to connect again."
+              | Some msg -> Lwt.fail_with msg
+              | None -> Lwt.fail exn
+        ))
     [%lwt.finally
       (* Cleanup and destroy agent *)
       let%lwt () = unregister_agent service._manager agent_path in
