@@ -4,6 +4,7 @@
 
 - os: Update nixpkgs channel to 21.11
 - os: Disable virtual terminals that are not used by PlayOS
+- controller: Provide a more helpful error message when network connection is failing
 
 ## Fixed
 
