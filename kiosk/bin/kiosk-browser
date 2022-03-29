@@ -5,7 +5,7 @@ import os
 
 import kiosk_browser
 
-default_toggle_parameters_key = 'CTRL+SHIFT+F12'
+default_toggle_settings_key = 'CTRL+SHIFT+F12'
 
 parser = argparse.ArgumentParser(
     prog='kiosk-browser',
@@ -14,20 +14,20 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    '--toggle-parameters',
-    dest='toggle_parameters_key',
-    default=default_toggle_parameters_key,
+    '--toggle-settings',
+    dest='toggle_settings_key',
+    default=default_toggle_settings_key,
     help=
-    'Keyboard combination to toggle parameters. (Default: "%s")'
-    % default_toggle_parameters_key)
+    'Keyboard combination to toggle settings. (Default: "%s")'
+    % default_toggle_settings_key)
 
 parser.add_argument('kiosk_url', help='Kiosk URL')
-parser.add_argument('parameters_url', help='Parameters URL')
+parser.add_argument('settings_url', help='Settings URL')
 
 args = parser.parse_args()
 
 # try:
-kiosk_browser.start(args.kiosk_url, args.parameters_url, args.toggle_parameters_key)
+kiosk_browser.start(args.kiosk_url, args.settings_url, args.toggle_settings_key)
 
 # except InvalidUrl as error:
 #   parser.error(error)
