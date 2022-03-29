@@ -72,17 +72,23 @@ def title_line(parent, title, on_close):
     button = QtWidgets.QPushButton("❌")
     button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
     button.setStyleSheet("""
-        background-color: transparent;
-        border: 0;
-        color: white;
-        font-family: monospace;
-        font-size: 18px;
-        font-weight: bold;
+        QPushButton {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 0;
+            color: white;
+            font-family: monospace;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 4px 15px 5px;
+        }
+        QPushButton:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
     """)
     button.clicked.connect(on_close)
 
     layout = QtWidgets.QHBoxLayout()
-    layout.setContentsMargins(5, 5, 8, 0) # left, top, right, bottom
+    layout.setContentsMargins(5, 5, 5, 0) # left, top, right, bottom
     layout.addWidget(label)
     layout.addStretch(1)
     layout.addWidget(button)
