@@ -3,8 +3,9 @@ from PyQt5 import QtWidgets, QtCore, QtGui, QtWebEngineWidgets
 # Dialog width and height ratio compared to the parent’s size.
 dialog_ratio = 0.8
 
-# Window border thickness
+# Window border thickness and color
 window_border = 2
+window_color = '#222222'
 
 def widget(parent, title, url, additional_close_keys, on_dialog_close):
     """ Embed a web view in a dialog.
@@ -42,7 +43,7 @@ def show_webview_window(parent, title, url, on_close):
 
     widget = QtWidgets.QWidget(parent)
     widget.setGeometry(0, 0, parent.width(), parent.height())
-    widget.setStyleSheet("background-color: #285577;")
+    widget.setStyleSheet(f"background-color: {window_color};")
 
     layout = QtWidgets.QVBoxLayout(widget)
     layout.setContentsMargins(window_border, 0, window_border, window_border) # left, top, right, bottom
