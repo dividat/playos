@@ -21,8 +21,7 @@ def widget(parent, title, url, additional_close_keys, on_dialog_close):
     on_close = lambda: close(parent, overlay, dialog, on_dialog_close)
     show_webview_window(dialog, title, url, on_close)
 
-    QtWidgets.QShortcut('ESC', dialog).activated.connect(on_close)
-    for key in additional_close_keys:
+    for key in set(['ESC', *additional_close_keys]):
         QtWidgets.QShortcut(key, dialog).activated.connect(on_close)
 
     overlay.show()
