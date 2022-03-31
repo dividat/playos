@@ -1,5 +1,6 @@
 """Monitor proxy changes and automatically apply changes in Qt application"""
 
+import collections
 import dbus
 import logging
 import threading
@@ -8,6 +9,8 @@ from PyQt5.QtNetwork import QNetworkProxy
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 
+ProxyConfig = collections.namedtuple('ProxyConfig', ['hostname', 'port', 'username', 'password'])
+
 def parse_url(url):
     if url.startswith('http://'):
         parsed = urllib.parse.urlparse(url)
@@ -15,7 +18,12 @@ def parse_url(url):
         parsed = urllib.parse.urlparse(f'http://{url}')
 
     if parsed.hostname != None and parsed.port != None:
-        return parsed
+        return ProxyConfig(
+            parsed.hostname,
+            parsed.port,
+            (urllib.parse.unquote(parsed.username) if parsed.username != None else None),
+            (urllib.parse.unquote(parsed.password) if parsed.password != None else None)
+        )
     else:
         logging.warn(f"Hostname or port missing in proxy url")
         return None
