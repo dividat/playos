@@ -206,7 +206,7 @@ module NetworkGui = struct
             return false
         }
         (fun () ->
-            match%lwt Curl.request ?proxy:(Option.map (Service.Proxy.to_uri ~hide_password:false) proxy) (Uri.of_string "http://captive.dividat.com/") with
+            match%lwt Curl.request ?proxy:(Option.map Service.Proxy.to_uri proxy) (Uri.of_string "http://captive.dividat.com/") with
             | RequestSuccess (200, _) ->
               return true
             | RequestSuccess (status, _) ->
@@ -220,7 +220,7 @@ module NetworkGui = struct
     let%lwt interfaces = Network.Interface.get_all () in
 
     Lwt.return (page (Network_list_page.html
-      { proxy = proxy |> Option.map (Service.Proxy.to_string ~hide_password:true)
+      { proxy = proxy |> Option.map Service.Proxy.pp
       ; is_internet_connected
       ; services = all_services
       ; interfaces = interfaces
@@ -303,7 +303,7 @@ module NetworkGui = struct
       Lwt.return (success (Format.sprintf
         "Connected with %s and proxy '%s'."
         service.name
-        (Service.Proxy.to_string ~hide_password:true proxy)))
+        (Service.Proxy.pp proxy)))
 
   (** Update the proxy of a service *)
   let update_proxy ~(connman:Connman.Manager.t) req =
@@ -317,7 +317,7 @@ module NetworkGui = struct
       Lwt.return (success (Format.sprintf
         "Proxy of %s has been updated to '%s'."
         service.name
-        (Service.Proxy.to_string ~hide_password:true proxy)))
+        (Service.Proxy.pp proxy)))
 
   (** Remove the proxy of a service *)
   let remove_proxy ~(connman:Connman.Manager.t) req =

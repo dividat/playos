@@ -295,15 +295,13 @@ struct
       else
         None
 
-    let to_uri ~hide_password t =
+    let to_uri t =
       let escape_userinfo = Uri.pct_encode ~component:`Userinfo in
       let
         userinfo =
           Option.map
             (fun credentials ->
-              escape_userinfo credentials.user
-                ^ ":"
-                ^ if hide_password then "******" else escape_userinfo credentials.password
+              escape_userinfo credentials.user ^ ":" ^ escape_userinfo credentials.password
             )
             t.credentials
       in
@@ -313,8 +311,9 @@ struct
       |> Fun.flip Uri.with_port (Some t.port)
       |> Fun.flip Uri.with_userinfo userinfo
 
-    let to_string ~hide_password t =
-      to_uri ~hide_password:hide_password t
+    let pp t =
+      to_uri t
+      |> Fun.flip Uri.with_password None
       |> Uri.to_string
 
   end
@@ -420,7 +419,7 @@ struct
       OBus_value.C.make_single
         (OBus_value.C.(dict string variant))
         [ ("Method", OBus_value.C.(make_single basic_string) "manual")
-        ; ("Servers", OBus_value.C.(make_single (array basic_string)) [Proxy.to_string ~hide_password:false proxy])
+        ; ("Servers", OBus_value.C.(make_single (array basic_string)) [Proxy.to_uri proxy |> Uri.to_string])
         ]
     in
     set_property service "Proxy.Configuration" dict

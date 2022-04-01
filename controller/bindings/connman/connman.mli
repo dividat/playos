@@ -126,13 +126,11 @@ module Service : sig
     val make : ?user:string -> ?password:string -> string -> int -> t
     (** Make a [t] from mandatory and optional components.  *)
 
-    val to_uri : hide_password:bool -> t -> Uri.t
+    val to_uri : t -> Uri.t
+    (** [to_uri t] returns a URI from [t], including escaped credentials. *)
 
-    val to_string : hide_password:bool -> t -> string
-    (** [to_string t] returns a string from [t].
-
-        if [hide_password] is true, the password is replaced by a fixed number of
-        stars in the output.*)
+    val pp : t -> string
+    (** [to_string t] returns a URI string from [t], omitting the password. *)
 
   end
 

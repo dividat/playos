@@ -111,7 +111,7 @@ let rec run ~connman ~update_url ~rauc ~set_state =
     set_state state; run ~connman ~update_url ~rauc ~set_state state
   in
   let get_proxy_uri manager = 
-      Connman.Manager.get_default_proxy manager >|= Option.map (Connman.Service.Proxy.to_uri ~hide_password:false)
+      Connman.Manager.get_default_proxy manager >|= Option.map Connman.Service.Proxy.to_uri
   in
   function
   | GettingVersionInfo ->
