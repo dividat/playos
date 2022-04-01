@@ -9,7 +9,7 @@
    page definition signal_strength)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium tyxml rauc zerotier connman locale network timedate systemd
-  label_printer semver2 proxy fieldslib)
+  label_printer semver2 fieldslib)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 
 (library
@@ -20,7 +20,6 @@
 (library
  (name network)
  (modules network)
- (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman systemd curl
-  proxy)
+ (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman systemd curl)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 

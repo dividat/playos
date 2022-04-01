@@ -185,16 +185,11 @@ module NetworkGui = struct
   open Connman
   open Network
 
-  let blur_service_proxy_password s =
-    let open Service in
-    let blur p = Proxy.validate p |> Option.map (Proxy.to_string ~hide_password:true) in
-    { s with proxy = s.proxy |> Base.Fn.flip Option.bind blur }
-
   let overview ~(connman:Manager.t) req =
 
     let%lwt all_services = Manager.get_services connman in
 
-    let proxy = Proxy.from_default_service all_services in
+    let%lwt proxy = Manager.get_default_proxy connman in
 
     let check_timeout =
       Option.bind (Uri.get_query_param (Request.uri req) "timeout") Float.of_string_opt
@@ -211,7 +206,7 @@ module NetworkGui = struct
             return false
         }
         (fun () ->
-            match%lwt Curl.request ?proxy (Uri.of_string "http://captive.dividat.com/") with
+            match%lwt Curl.request ?proxy:(Option.map (Service.Proxy.to_uri ~hide_password:false) proxy) (Uri.of_string "http://captive.dividat.com/") with
             | RequestSuccess (200, _) ->
               return true
             | RequestSuccess (status, _) ->
@@ -225,11 +220,9 @@ module NetworkGui = struct
     let%lwt interfaces = Network.Interface.get_all () in
 
     Lwt.return (page (Network_list_page.html
-      { proxy = proxy
-          |> Option.map (Proxy.to_string ~hide_password:true)
+      { proxy = proxy |> Option.map (Service.Proxy.to_string ~hide_password:true)
       ; is_internet_connected
       ; services = all_services
-          |> List.map blur_service_proxy_password
       ; interfaces = interfaces
           |> [%sexp_of: Network.Interface.t list]
           |> Sexplib.Sexp.to_string_hum
@@ -244,7 +237,7 @@ module NetworkGui = struct
 
   let details ~connman req =
     let service_id = param req "id" in
-    let%lwt service = with_service connman service_id >|= blur_service_proxy_password in
+    let%lwt service = with_service connman service_id in
     Lwt.return (page (Network_details_page.html service))
 
   (** Validate a proxy, fail if the proxy is given but invalid *)
@@ -276,9 +269,9 @@ module NetworkGui = struct
     let non_empty s = if s == "" then None else Some s in
     match non_empty host_str, (try Some (int_of_string port_str) with _ -> None), non_empty user_str, non_empty password_str with
     | Some host, Some port, Some user, Some password ->
-      return (Some (Proxy.make ~user:user ~password:password host port))
+      return (Some (Service.Proxy.make ~user:user ~password:password host port))
     | Some host, Some port, _, _ ->
-      return (Some (Proxy.make host port))
+      return (Some (Service.Proxy.make host port))
     | _ ->
       return None
 
@@ -306,11 +299,11 @@ module NetworkGui = struct
       let%lwt () = Connman.Service.set_direct_proxy service in
       Lwt.return (success (Format.sprintf "Connected with %s." service.name))
     | Some proxy ->
-      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
+      let%lwt () = Connman.Service.set_manual_proxy service proxy in
       Lwt.return (success (Format.sprintf
         "Connected with %s and proxy '%s'."
         service.name
-        (Proxy.to_string ~hide_password:true proxy)))
+        (Service.Proxy.to_string ~hide_password:true proxy)))
 
   (** Update the proxy of a service *)
   let update_proxy ~(connman:Connman.Manager.t) req =
@@ -320,11 +313,11 @@ module NetworkGui = struct
     | None ->
       fail_with "Proxy address may not be empty. Use the 'Disable proxy' button instead."
     | Some proxy ->
-      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
+      let%lwt () = Connman.Service.set_manual_proxy service proxy in
       Lwt.return (success (Format.sprintf
         "Proxy of %s has been updated to '%s'."
         service.name
-        (Proxy.to_string ~hide_password:true proxy)))
+        (Service.Proxy.to_string ~hide_password:true proxy)))
 
   (** Remove the proxy of a service *)
   let remove_proxy ~(connman:Connman.Manager.t) req =
