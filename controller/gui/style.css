@@ -105,6 +105,20 @@
   padding-bottom: 0.5rem;
   padding-top: 0.5rem;
   border-top: 1px solid var(--form-border-color);
+  position: relative;
+}
+
+.d-NetworkList__Network--Connected:before {
+  content: "";
+  display: block;
+  border-radius: 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: black;
+
+  position: absolute;
+  left: 0.5rem;
+  top: calc(50% - 0.25rem);
 }
 
 .d-NetworkList__Network:hover {

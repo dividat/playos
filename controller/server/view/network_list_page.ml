@@ -1,15 +1,20 @@
 open Connman.Service
 open Tyxml.Html
 
-let service { id; name; strength; ipv4 } =
+let service_item ({ id; name; strength; ipv4 } as service) =
   let strength =
     match strength with
     | Some s -> [ Signal_strength.html s ]
     | None -> []
   in
+  let
+    classes =
+      [ "d-NetworkList__Network" ]
+        @ if Connman.Service.is_connected service then [ "d-NetworkList__Network--Connected" ] else []
+  in
   li
     [ a
-        ~a:[ a_class [ "d-NetworkList__Network" ]
+        ~a:[ a_class classes
         ; a_href ("/network/" ^ id)
         ]
         [ div [ txt name ]
@@ -77,7 +82,7 @@ let html { proxy; is_internet_connected; services; interfaces } =
             else
               ul
                 ~a:[ a_class [ "d-NetworkList" ]; a_role [ "list" ] ]
-                (List.map service services)
+                (List.map service_item services)
           ]
 
       ; section
