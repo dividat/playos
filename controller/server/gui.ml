@@ -318,10 +318,6 @@ module NetworkGui = struct
     in
     let%lwt service = with_service ~connman (param req "id") in
 
-    (* Clear settings that might have been configured previously. *)
-    let%lwt () = Connman.Service.set_nameservers service [] in
-    let%lwt () = Connman.Service.set_dhcp_ipv4 service in
-
     let%lwt proxy = with_empty_or_valid_proxy form_data in
     let%lwt () = Connman.Service.connect ~input:passphrase service in
     match proxy with
@@ -355,6 +351,12 @@ module NetworkGui = struct
   (** Remove a service **)
   let remove ~(connman:Connman.Manager.t) req =
     let%lwt service = with_service ~connman (param req "id") in
+
+    (* Clear settings. *)
+    let%lwt () = Connman.Service.set_direct_proxy service in
+    let%lwt () = Connman.Service.set_nameservers service [] in
+    let%lwt () = Connman.Service.set_dhcp_ipv4 service in
+
     let%lwt () = Connman.Service.remove service in
     Lwt.return (success (Format.sprintf "Removed service %s." service.name))
 
