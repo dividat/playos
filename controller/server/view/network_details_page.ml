@@ -153,7 +153,7 @@ let static_ip_form service =
                 @ [ p ~a:[a_class ["d-Note"]][
                     txt  "To set multiple nameservers, use a comma separated list of addresses."
                   ; br ()
-                  ; txt "eg. 1.1.1.1, 8.8.8.8"
+                  ; txt "eg. 1.1.1.1, 9.9.9.9"
                   ]
                   ]
               )
