@@ -271,6 +271,7 @@ struct
       ; port = port
       ; credentials =
         (match user, password with
+        | Some "", _ -> None
         | Some u, Some p -> Some { user = u; password = p }
         | _ -> None)
       }
