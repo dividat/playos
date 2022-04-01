@@ -53,11 +53,7 @@ let proxy_form proxy =
        ~a:[ a_input_type `Password
        ; a_class [ "d-Input"; "d-Network__Input" ]
        ; a_name "proxy_password"
-       ; a_value
-           (match proxy with 
-           | Some { credentials = Some _ } -> "*****"
-           | _ -> ""
-           )
+       ; a_value ""
        ; Unsafe.string_attrib "is" "show-password"
        ]
        ()

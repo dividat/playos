@@ -241,40 +241,49 @@ module NetworkGui = struct
     Lwt.return (page (Network_details_page.html service))
 
   (** Validate a proxy, fail if the proxy is given but invalid *)
-  let with_empty_or_valid_proxy form_data =
+  let make_proxy current_proxy_opt form_data =
+    let open Service.Proxy in
+    let non_empty s = if s = "" then None else Some s in
+    let opt_int_of_string s = try Some (int_of_string s) with _ -> None in
+
     match form_data |> List.assoc_opt "proxy_enabled" with
     | None ->
         return None
     | Some _ ->
-      let host_str =
-        form_data
-        |> List.assoc "proxy_host"
-        |> List.hd
-        |> String.trim
+      let host_input =
+        form_data |> List.assoc "proxy_host" |> List.hd |> non_empty
       in
-      let port_str =
-        form_data
-        |> List.assoc "proxy_port"
-        |> List.hd
-        |> String.trim
+      let port_input =
+        form_data |> List.assoc "proxy_port" |> List.hd |> opt_int_of_string
       in
-      let user_str =
-        form_data
-        |> List.assoc "proxy_user"
-        |> List.hd
-        |> String.trim
+      let user_input =
+        form_data |> List.assoc "proxy_user" |> List.hd |> non_empty
       in
-      let password_str =
-        form_data
-        |> List.assoc "proxy_password"
-        |> List.hd
-        |> String.trim
+      let password_input =
+        form_data |> List.assoc "proxy_password" |> List.hd |> non_empty
       in
-      let non_empty s = if s == "" then None else Some s in
-      match non_empty host_str, (try Some (int_of_string port_str) with _ -> None), non_empty user_str, non_empty password_str with
+      match host_input, port_input, user_input, password_input with
+      (* Complete configuration was submitted *)
       | Some host, Some port, Some user, Some password ->
         return (Some (Service.Proxy.make ~user:user ~password:password host port))
-      | Some host, Some port, _, _ ->
+      (* Configuration was submitted without password, check whether it is
+         safe to refill from stored value *)
+      | Some host, Some port, Some user, None ->
+        (match current_proxy_opt with
+          | Some ({ credentials = Some { password } } as current_proxy) ->
+              let restored_proxy = Service.Proxy.make ~user:user ~password:password host port in
+              if current_proxy = restored_proxy then
+                (* Proxy configuration has not been touched *)
+                return (Some current_proxy)
+              else
+                (* Proxy configuration has been touched, it's unsafe to restore password *)
+                return (Some (Service.Proxy.make ~user:user ~password:"" host port))
+          | _ ->
+              (* No existing proxy credentials, use empty password *)
+              return (Some (Service.Proxy.make ~user:user ~password:"" host port))
+        )
+      (* Configuration without credentials was submitted *)
+      | Some host, Some port, None, _ ->
         return (Some (Service.Proxy.make host port))
       | _ ->
         return None
@@ -318,7 +327,7 @@ module NetworkGui = struct
     in
     let%lwt service = with_service ~connman (param req "id") in
 
-    let%lwt proxy = with_empty_or_valid_proxy form_data in
+    let%lwt proxy = make_proxy None form_data in
     let%lwt () = Connman.Service.connect ~input:passphrase service in
     match proxy with
     | None ->
@@ -337,7 +346,8 @@ module NetworkGui = struct
     let%lwt form_data = urlencoded_pairs_of_body req in
     let%lwt service = with_service ~connman (param req "id") in
     let%lwt () = update_static_ip ~connman service form_data in
-    match%lwt with_empty_or_valid_proxy form_data with
+    let%lwt current_proxy = Manager.get_default_proxy connman in
+    match%lwt make_proxy current_proxy form_data with
     | None ->
       let%lwt () = Connman.Service.set_direct_proxy service in
       Lwt.return (success (Format.sprintf "Proxy of %s has been disabled." service.name))
