@@ -25,7 +25,10 @@ class WebviewDialog(QtWidgets.QDialog):
 
         # Close with shortcuts
         for key in set(['ESC', *additional_close_keys]):
-            QtWidgets.QShortcut(key, self).activated.connect(self._close)
+            QtWidgets.QShortcut(key, self).activated.connect(self.close)
+
+        # Finish after close
+        self.finished.connect(self._finish)
 
     def show(self):
         """ Show dialog on top of the current window.
@@ -89,7 +92,7 @@ class WebviewDialog(QtWidgets.QDialog):
                 background-color: rgba(255, 255, 255, 0.3);
             }
         """)
-        button.clicked.connect(self._close)
+        button.clicked.connect(self.close)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 0) # left, top, right, bottom
@@ -100,13 +103,10 @@ class WebviewDialog(QtWidgets.QDialog):
 
         return line
 
-    def _close(self):
-        """ Close dialog and give back the focus to the parent.
+    def _finish(self):
+        """ Cleanup webview and give back focus to the parent
         """
 
-        # Clean up webview (prevent seeing page scroll or change when re-open)
         self._webview.setHtml("") 
-
-        self.close()
         self._parent.activateWindow()
         self._on_close()
