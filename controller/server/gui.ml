@@ -249,17 +249,38 @@ module NetworkGui = struct
 
   (** Validate a proxy, fail if the proxy is given but invalid *)
   let with_empty_or_valid_proxy form_data =
-    let proxy_str =
+    let host_str =
       form_data
-      |> List.assoc "proxy"
+      |> List.assoc "proxy_host"
       |> List.hd
+      |> String.trim
     in
-    if String.trim proxy_str = "" then
+    let port_str =
+      form_data
+      |> List.assoc "proxy_port"
+      |> List.hd
+      |> String.trim
+    in
+    let user_str =
+      form_data
+      |> List.assoc "proxy_user"
+      |> List.hd
+      |> String.trim
+    in
+    let password_str =
+      form_data
+      |> List.assoc "proxy_password"
+      |> List.hd
+      |> String.trim
+    in
+    let non_empty s = if s == "" then None else Some s in
+    match non_empty host_str, (try Some (int_of_string port_str) with _ -> None), non_empty user_str, non_empty password_str with
+    | Some host, Some port, Some user, Some password ->
+      return (Some (Proxy.make ~user:user ~password:password host port))
+    | Some host, Some port, _, _ ->
+      return (Some (Proxy.make host port))
+    | _ ->
       return None
-    else
-      match Proxy.validate proxy_str with
-      | Some proxy -> return (Some proxy)
-      | None -> fail_with (Format.sprintf "'%s' is not a valid proxy. It should be in the form 'http://host:port' or 'http://user:password@host:port'." proxy_str)
 
   (** Connect to a service *)
   let connect ~(connman:Connman.Manager.t) req =

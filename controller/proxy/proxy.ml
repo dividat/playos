@@ -11,6 +11,15 @@ type t =
   ; port: int
   }
 
+let make ?user ?password host port =
+  { host = host
+  ; port = port
+  ; credentials =
+    (match user, password with
+    | Some u, Some p -> Some { user = u; password = p }
+    | _ -> None)
+  }
+
 let validate str =
   let uri = Uri.of_string str in
   if Uri.path uri = ""

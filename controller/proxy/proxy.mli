@@ -25,6 +25,9 @@ val validate : string -> t option
       - http://127.0.0.1:1234.
       - http://user:password@host.com:8888.*)
 
+val make : ?user:string -> ?password:string -> string -> int -> t
+(** Make a [t] from mandatory and optional components.  *)
+
 val to_string : hide_password:bool -> t -> string
 (** [to_string t] returns a string from [t].
 

@@ -1,3 +1,4 @@
+open Proxy
 open Connman.Service
 open Tyxml.Html
 
@@ -9,27 +10,66 @@ let proxy_label service_id =
     ~a:[ a_class [ "d-Network__Label" ] ]
     [ label
         ~a:[ a_label_for (proxy_id service_id) ]
-        [ txt "URL" ]
+        [ txt "HTTP Proxy" ]
     ]
 
 let proxy_input ?proxy service_id =
-  input
-    ~a:[ a_input_type `Text
-    ; a_id (proxy_id service_id)
-    ; a_class [ "d-Input"; "d-Network__Input" ]
-    ; a_name "proxy"
-    ; a_value (Option.value ~default:"" proxy)
-    ]
-    ()
+    let configured_proxy = Option.bind proxy Proxy.validate in
+    fieldset
+      [ p
+        [ input
+          ~a:[ a_input_type `Text
+          ; a_class [ "d-Input"; "d-Network__Input" ]
+          ; a_name "proxy_host"
+          ; a_value
+              (match configured_proxy with 
+              | Some { host } -> host
+              | _ -> ""
+              )
+          ]
+          ()
+        ; txt ":"
+        ; input
+          ~a:[ a_input_type `Text
+          ; a_class [ "d-Input"; "d-Network__Input" ]
+          ; a_name "proxy_port"
+          ; a_size 5
+          ; a_value
+              (match configured_proxy with 
+              | Some { port } -> string_of_int port
+              | _ -> ""
+              )
+          ]
+          ()
+        ]
+      ; input
+        ~a:[ a_input_type `Text
+        ; a_class [ "d-Input"; "d-Network__Input" ]
+        ; a_name "proxy_user"
+        ; a_value
+            (match configured_proxy with 
+            | Some { credentials = Some { user } } -> user
+            | _ -> ""
+            )
+        ]
+        ()
+      ; input
+        ~a:[ a_input_type `Text
+        ; a_class [ "d-Input"; "d-Network__Input" ]
+        ; a_name "proxy_password"
+        ; a_value
+            (match configured_proxy with 
+            | Some { credentials = Some _ } -> "*****"
+            | _ -> ""
+            )
+        ]
+        ()
+      ]
 
 let proxy_form_note =
   p
     ~a:[ a_class [ "d-Note" ] ]
-    [ txt "URL in the form "
-    ; em ~a:[ a_class [ "d-Code" ] ] [ txt "http://host:port" ]
-    ; txt " or "
-    ; em ~a:[ a_class [ "d-Code" ] ] [ txt "http://user:password@host:port" ]
-    ; txt "."
+    [ txt "Username and password may be left empty."
     ]
 
 let not_connected_form service =
