@@ -1,3 +1,5 @@
+open Fun
+
 type credentials =
   { user: string
   ; password: string
@@ -20,7 +22,7 @@ let validate str =
       Some
         { credentials =
           (match Uri.user uri, Uri.password uri with
-          | Some user, Some password -> Some { user; password }
+          | Some user, Some password -> Some { user = Uri.pct_decode user; password = Uri.pct_decode password }
           | _ -> None)
         ; host
         ; port
@@ -30,21 +32,23 @@ let validate str =
     None
 
 let to_string ~hide_password t =
-  [ "http://"
-  ; (match t.credentials with
-    | Some credentials ->
-        [ credentials.user
-        ; ":"
-        ; if hide_password then "******" else credentials.password
-        ; "@"
-        ]
-        |> String.concat ""
-    | None -> "")
-  ; t.host
-  ; ":"
-  ; string_of_int t.port
-  ]
-  |> String.concat ""
+  let escape_userinfo = Uri.pct_encode ~component:`Userinfo in
+  let
+    userinfo =
+      Option.map
+        (fun credentials ->
+          escape_userinfo credentials.user
+            ^ ":"
+            ^ if hide_password then "******" else escape_userinfo credentials.password
+        )
+        t.credentials
+  in
+  Uri.empty
+  |> flip Uri.with_scheme (Some "http")
+  |> flip Uri.with_host (Some t.host)
+  |> flip Uri.with_port (Some t.port)
+  |> flip Uri.with_userinfo userinfo
+  |> Uri.to_string
 
 (* Extract the proxy from the default route.
  *
