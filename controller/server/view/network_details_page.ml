@@ -249,15 +249,16 @@ let html service =
               ; if is_disconnectable then disconnect_button else txt ""
               ]
           ]
-      ; div
-          ~a:[ a_class [ "d-Network__Properties" ] ]
-          [ pre
-              ~a:[ a_class [ "d-Preformatted" ] ]
-              [ txt properties ]
-          ]
-      ; if Connman.Service.is_connected service then
+      ; if is_service_connected then
           connected_form service
         else
           not_connected_form service
+      ; div
+          ~a:[ a_class [ "d-Network__Properties" ] ]
+          [ h2 ~a:[ a_class [ "d-Subtitle" ] ] [ txt "Service Details" ]
+          ; pre
+              ~a:[ a_class [ "d-Preformatted" ] ]
+              [ txt properties ]
+          ]
       ]
   )
