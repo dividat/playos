@@ -21,7 +21,7 @@ class MainWidget(QtWidgets.QWidget):
                 "System Settings", 
                 self._settings_url, 
                 additional_close_keys = [self._toggle_settings_key],
-                on_close = lambda: self._browser_widget.reload())
+                on_close = self._show_browser_widget)
 
         self._layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.BottomToTop)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -60,6 +60,7 @@ class MainWidget(QtWidgets.QWidget):
     def _show_settings(self):
         """ Show System Settings dialog.
         """
+        self._hide_browser_widget()
         self._settings_dialog.show()
 
     def _show_captive_portal(self):
@@ -67,8 +68,19 @@ class MainWidget(QtWidgets.QWidget):
         """
         self._is_captive_portal_dialog_open = True
         self._captive_portal_message.setParent(None)
+        self._hide_browser_widget()
         self._captive_portal_dialog.show()
 
     def _on_captive_portal_dialog_close(self):
         self._is_captive_portal_dialog_open = False
-        self._browser_widget.reload()
+        self._show_browser_widget()
+
+    def _hide_browser_widget(self):
+        """ Set overlay in place of the browser kiosk URL.
+        """
+        self._browser_widget.setHtml("<style>body { background-color: #999; }</style>")
+
+    def _show_browser_widget(self):
+        """ Show kiosk browser loading URL.
+        """
+        self._browser_widget.setUrl(self._kiosk_url)
