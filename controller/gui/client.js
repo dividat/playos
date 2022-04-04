@@ -97,7 +97,6 @@ customElements.define(
       form.addEventListener('submit', function() {
         button.disabled = true
         button.style.color = 'transparent'
-        button.className += ' d-Button--Disabled'
         buttonParent.appendChild(spinnerParent)
       })
     }
