@@ -12,13 +12,12 @@ window_color = '#222222'
 
 class WebviewDialog(QtWidgets.QDialog):
 
-    def __init__(self, parent, title, url, additional_close_keys, on_close):
+    def __init__(self, parent, title, additional_close_keys, on_close):
 
         QtWidgets.QDialog.__init__(self, parent)
 
         self._parent = parent
         self._title = title
-        self._url = url
         self._on_close = on_close
         self._webview = QtWebEngineWidgets.QWebEngineView(self)
         self._layout = QtWidgets.QVBoxLayout()
@@ -30,7 +29,7 @@ class WebviewDialog(QtWidgets.QDialog):
         # Finish after close
         self.finished.connect(self._finish)
 
-    def show(self):
+    def show(self, url):
         """ Show dialog on top of the current window.
         """
 
@@ -40,7 +39,7 @@ class WebviewDialog(QtWidgets.QDialog):
         self.setGeometry(w * (1 - dialog_ratio) / 2, h * (1 - dialog_ratio) / 2, w * dialog_ratio, h * dialog_ratio)
 
         # Reload the webview (prevent keeping previous scroll position)
-        self._webview.setUrl(self._url)
+        self._webview.setUrl(url)
 
         self._show_window()
         self.exec_()

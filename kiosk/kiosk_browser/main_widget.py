@@ -19,7 +19,6 @@ class MainWidget(QtWidgets.QWidget):
         self._settings_dialog = webview_dialog.WebviewDialog(
                 self, 
                 "System Settings", 
-                self._settings_url, 
                 additional_close_keys = [self._toggle_settings_key],
                 on_close = self._show_browser_widget)
 
@@ -39,7 +38,6 @@ class MainWidget(QtWidgets.QWidget):
         self._captive_portal_dialog = webview_dialog.WebviewDialog(
                 self, 
                 "Network Login", 
-                self._captive_portal_url,
                 additional_close_keys = [],
                 on_close = self._on_captive_portal_dialog_close)
 
@@ -61,7 +59,7 @@ class MainWidget(QtWidgets.QWidget):
         """ Show System Settings dialog.
         """
         self._hide_browser_widget()
-        self._settings_dialog.show()
+        self._settings_dialog.show(self._settings_url)
 
     def _show_captive_portal(self):
         """ Show Network Login to captive portal.
@@ -69,7 +67,7 @@ class MainWidget(QtWidgets.QWidget):
         self._is_captive_portal_dialog_open = True
         self._captive_portal_message.setParent(None)
         self._hide_browser_widget()
-        self._captive_portal_dialog.show()
+        self._captive_portal_dialog.show(self._captive_portal_url)
 
     def _on_captive_portal_dialog_close(self):
         self._is_captive_portal_dialog_open = False
