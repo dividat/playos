@@ -154,7 +154,6 @@ def _main(opts):
                 DEPLOY_URL + "latest",
                 "--acl",
                 "public-read",
-                # TODO: increase this once out of testing to increase CDN cache hits
                 "--cache-control",
                 "max-age=0"
             ],
