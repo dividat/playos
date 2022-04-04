@@ -1,106 +1,112 @@
+""" Embed a web view inside a dialog.
+
+Close with ESC, additional_close_keys, or clicking on the cross.
+"""
+
 from PyQt5 import QtWidgets, QtCore, QtGui, QtWebEngineWidgets
 
-# Dialog width and height ratio compared to the parent’s size.
+# Config
 dialog_ratio = 0.8
-
-# Window border thickness and color
 window_border = 2
 window_color = '#222222'
 
-def widget(parent, title, url, additional_close_keys, on_dialog_close):
-    """ Embed a web view in a dialog.
+class WebviewDialog(QtWidgets.QDialog):
 
-        Close with ESC, additional_close_keys, or clicking on the cross.
-    """
+    def __init__(self, parent, title, url, additional_close_keys, on_close):
 
-    dialog = QtWidgets.QDialog(parent)
-    w = parent.width()
-    h = parent.height()
-    dialog.setGeometry(w * (1 - dialog_ratio) / 2, h * (1 - dialog_ratio) / 2, w * dialog_ratio, h * dialog_ratio)
+        QtWidgets.QDialog.__init__(self, parent)
 
-    overlay = show_overlay(parent)
-    on_close = lambda: close(parent, overlay, dialog, on_dialog_close)
-    show_webview_window(dialog, title, url, on_close)
+        self._parent = parent
+        self._title = title
+        self._url = url
+        self._on_close = on_close
+        self._webview = QtWebEngineWidgets.QWebEngineView(self)
+        self._layout = QtWidgets.QVBoxLayout()
 
-    for key in set(['ESC', *additional_close_keys]):
-        QtWidgets.QShortcut(key, dialog).activated.connect(on_close)
+        # Close with shortcuts
+        for key in set(['ESC', *additional_close_keys]):
+            QtWidgets.QShortcut(key, self).activated.connect(self._close)
 
-    overlay.show()
-    return dialog
+    def show(self):
+        """ Show dialog on top of the current window.
+        """
 
-def show_overlay(parent):
-    """ Show overlay on all the surface of the parent.
-    """
+        # Set dialog size
+        w = self._parent.width()
+        h = self._parent.height()
+        self.setGeometry(w * (1 - dialog_ratio) / 2, h * (1 - dialog_ratio) / 2, w * dialog_ratio, h * dialog_ratio)
 
-    widget = QtWidgets.QWidget(parent)
-    widget.setGeometry(0, 0, parent.width(), parent.height())
-    widget.setStyleSheet("background-color: rgba(0, 0, 0, 0.4)")
-    return widget
+        # Reload the webview (prevent keeping previous scroll position)
+        self._webview.setUrl(self._url)
 
-def show_webview_window(parent, title, url, on_close):
-    """ Show webview window with decorations.
-    """
+        self._show_window()
+        self.exec_()
 
-    widget = QtWidgets.QWidget(parent)
-    widget.setGeometry(0, 0, parent.width(), parent.height())
-    widget.setStyleSheet(f"background-color: {window_color};")
+    # Private
 
-    layout = QtWidgets.QVBoxLayout(widget)
-    layout.setContentsMargins(window_border, 0, window_border, window_border) # left, top, right, bottom
-    widget.setLayout(layout)
+    def _show_window(self):
+        """ Show decorated window containing the webview.
+        """
 
-    layout.addWidget(title_line(widget, title, on_close))
+        window = QtWidgets.QWidget(self)
+        window.setGeometry(0, 0, self.width(), self.height())
+        window.setStyleSheet(f"background-color: {window_color};")
 
-    webview = QtWebEngineWidgets.QWebEngineView(parent)
-    webview.page().setUrl(url)
-    layout.addWidget(webview)
+        layout = QtWidgets.QVBoxLayout(window)
+        layout.setContentsMargins(window_border, 0, window_border, window_border) # left, top, right, bottom
+        window.setLayout(layout)
 
-def title_line(parent, title, on_close):
-    """ Title and close button.
-    """
+        layout.addWidget(self._title_line())
+        layout.addWidget(self._webview)
 
-    line = QtWidgets.QWidget()
-    line.setFixedHeight(30)
+    def _title_line(self):
+        """ Title and close button.
+        """
 
-    label = QtWidgets.QLabel(title)
-    label.setStyleSheet("""
-        color: white;
-        font-family: monospace;
-        font-size: 16px;
-    """);
+        line = QtWidgets.QWidget(self)
+        line.setFixedHeight(30)
 
-    button = QtWidgets.QPushButton("❌")
-    button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-    button.setStyleSheet("""
-        QPushButton {
-            background-color: rgba(255, 255, 255, 0.2);
-            border: 0;
+        label = QtWidgets.QLabel(self._title, self)
+        label.setStyleSheet("""
             color: white;
             font-family: monospace;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 4px 15px 5px;
-        }
-        QPushButton:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-        }
-    """)
-    button.clicked.connect(on_close)
+            font-size: 16px;
+        """);
 
-    layout = QtWidgets.QHBoxLayout()
-    layout.setContentsMargins(5, 5, 5, 0) # left, top, right, bottom
-    layout.addWidget(label)
-    layout.addStretch(1)
-    layout.addWidget(button)
-    line.setLayout(layout)
+        button = QtWidgets.QPushButton("❌", self)
+        button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        button.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(255, 255, 255, 0.2);
+                border: 0;
+                color: white;
+                font-family: monospace;
+                font-size: 18px;
+                font-weight: bold;
+                padding: 4px 15px 5px;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.3);
+            }
+        """)
+        button.clicked.connect(self._close)
 
-    return line
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(5, 5, 5, 0) # left, top, right, bottom
+        layout.addWidget(label)
+        layout.addStretch(1)
+        layout.addWidget(button)
+        line.setLayout(layout)
 
-def close(parent, overlay, dialog, on_close):
-    """ Close dialog and give back the focus to the parent.
-    """
+        return line
 
-    overlay.setParent(None)
-    dialog.close()
-    parent.activateWindow()
-    on_close()
+    def _close(self):
+        """ Close dialog and give back the focus to the parent.
+        """
+
+        # Clean up webview (prevent seeing page scroll or change when re-open)
+        self._webview.setHtml("") 
+
+        self.close()
+        self._parent.activateWindow()
+        self._on_close()

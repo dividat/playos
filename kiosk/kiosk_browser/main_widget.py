@@ -1,8 +1,6 @@
 from PyQt5 import QtWidgets, QtCore
 
-from kiosk_browser import browser_widget, captive_portal
-from kiosk_browser import proxy as proxy_module
-from kiosk_browser import webview_dialog
+from kiosk_browser import browser_widget, webview_dialog, captive_portal, proxy as proxy_module
 
 class MainWidget(QtWidgets.QWidget):
 
@@ -17,6 +15,14 @@ class MainWidget(QtWidgets.QWidget):
         self._toggle_settings_key = toggle_settings_key
         self._browser_widget = browser_widget.BrowserWidget(self._kiosk_url, proxy.get_current)
 
+        # Settings dialog
+        self._settings_dialog = webview_dialog.WebviewDialog(
+                self, 
+                "System Settings", 
+                self._settings_url, 
+                additional_close_keys = [self._toggle_settings_key],
+                on_close = lambda: self._browser_widget.reload())
+
         self._layout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.BottomToTop)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
@@ -29,6 +35,14 @@ class MainWidget(QtWidgets.QWidget):
         self._captive_portal = captive_portal.CaptivePortal(proxy.get_current, self._show_captive_portal_message)
         self._captive_portal.start_monitoring_daemon()
 
+        # Captive portal dialog
+        self._captive_portal_dialog = webview_dialog.WebviewDialog(
+                self, 
+                "Network Login", 
+                self._captive_portal_url,
+                additional_close_keys = [],
+                on_close = self._on_captive_portal_dialog_close)
+
         QtWidgets.QShortcut(toggle_settings_key, self).activated.connect(self._show_settings)
 
         self.setLayout(self._layout)
@@ -37,29 +51,23 @@ class MainWidget(QtWidgets.QWidget):
     # Private
 
     def _show_captive_portal_message(self, url):
+        """ Invite to open dialog to connect to captive portal.
+        """
         self._captive_portal_url = QtCore.QUrl(url)
         if self._captive_portal_message.parentWidget() == None and not self._is_captive_portal_dialog_open:
             self._layout.addWidget(self._captive_portal_message)
 
     def _show_settings(self):
-        webview_dialog.widget(
-                self, 
-                "System Settings", 
-                self._settings_url, 
-                additional_close_keys = [self._toggle_settings_key],
-                on_dialog_close = lambda: self._browser_widget.reload()
-            ).exec_()
+        """ Show System Settings dialog.
+        """
+        self._settings_dialog.show()
 
     def _show_captive_portal(self):
+        """ Show Network Login to captive portal.
+        """
         self._is_captive_portal_dialog_open = True
         self._captive_portal_message.setParent(None)
-        webview_dialog.widget(
-                self, 
-                "Network Login", 
-                self._captive_portal_url,
-                additional_close_keys = [],
-                on_dialog_close = self._on_captive_portal_dialog_close
-            ).exec_()
+        self._captive_portal_dialog.show()
 
     def _on_captive_portal_dialog_close(self):
         self._is_captive_portal_dialog_open = False
