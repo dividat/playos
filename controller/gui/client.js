@@ -107,7 +107,7 @@ customElements.define(
 
 /* Place given node under a new parent node.
  *
- * Useful to extend nodes that can not have childreen in web components, for
+ * Useful to extend nodes that can not have children in web components, for
  * ex. inputs.
  */
 function installParent(node, newParent) {
