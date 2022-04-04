@@ -184,19 +184,6 @@ let toggle_group ~is_enabled ~legend_text ~toggle_field contents =
 let connected_form service =
   div
     [ form
-        ~a:[ a_action ("/network/" ^ service.id ^ "/remove")
-        ; a_method `Post
-        ; a_class [ "d-Network__Form" ]
-        ; Unsafe.string_attrib "is" "disable-after-submit"
-        ]
-        [ input
-            ~a:[ a_input_type `Submit
-            ; a_class [ "d-Button" ]
-            ; a_value "Remove"
-            ]
-            ()
-        ]
-    ; form
         ~a:[ a_action ("/network/" ^ service.id ^ "/update")
         ; a_method `Post
         ; a_class [ "d-Network__Form" ]
@@ -216,6 +203,8 @@ let connected_form service =
     ]
 
 let html service =
+  let is_service_connected = Connman.Service.is_connected service in
+  let is_disconnectable = is_service_connected && service.type' = Connman.Technology.Wifi in
   let strength =
     match service.strength with
     | Some s ->
@@ -228,6 +217,21 @@ let html service =
   let properties = service
     |> sexp_of_t
     |> Sexplib.Sexp.to_string_hum
+  in
+  let disconnect_button =
+    form
+      ~a:[ a_action ("/network/" ^ service.id ^ "/remove")
+      ; a_method `Post
+      ; a_class [ "d-Network__Forget" ]
+      ; Unsafe.string_attrib "is" "disable-after-submit"
+      ]
+      [ input
+          ~a:[ a_input_type `Submit
+          ; a_class [ "d-Button" ]
+          ; a_value "Forget"
+          ]
+          ()
+      ]
   in
   Page.html ~current_page:Page.Network (
     div
@@ -242,6 +246,7 @@ let html service =
               ~a:[ a_class [ "d-Network__Title" ] ]
               [ h1 [ txt service.name ]
               ; strength
+              ; if is_disconnectable then disconnect_button else txt ""
               ]
           ]
       ; div

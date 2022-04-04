@@ -166,6 +166,8 @@
 
 .d-Network__Title {
     display: flex;
+    flex-direction: row;
+    align-items: center;
     line-height: 1;
     align-items: center;
 }
@@ -193,8 +195,8 @@
     margin-bottom: 1rem;
 }
 
-.d-Network__AdvancedSettingsTitle {
-    margin-top: 1rem;
+.d-Network__Forget {
+    margin-left: auto;
 }
 
 /* Toggle Group */
