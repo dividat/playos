@@ -1,21 +1,12 @@
 open Connman.Service
 open Tyxml.Html
 
-let proxy_id service_id =
-  "proxy-" ^ service_id
 
-let proxy_label service_id =
-  div
-    ~a:[ a_class [ "d-Network__Label" ] ]
-    [ label
-        ~a:[ a_label_for (proxy_id service_id) ]
-        [ txt "HTTP Proxy" ]
-    ]
-
-let proxy_input ?proxy service_id =
+let proxy_form proxy =
   let open Proxy in
-  fieldset
-    [ p
+  div
+    [ div ~a:[ a_class [ "d-Network__Label" ] ] [ txt "Server" ]
+    ; div
        [ input
          ~a:[ a_input_type `Text
          ; a_class [ "d-Input"; "d-Network__Input" ]
@@ -25,12 +16,13 @@ let proxy_input ?proxy service_id =
              | Some { host } -> host
              | _ -> ""
              )
+         ; a_placeholder "Host"
          ]
          ()
        ; txt ":"
        ; input
          ~a:[ a_input_type `Text
-         ; a_class [ "d-Input"; "d-Network__Input" ]
+         ; a_class [ "d-Input" ]
          ; a_name "proxy_port"
          ; a_size 5
          ; a_value
@@ -38,10 +30,12 @@ let proxy_input ?proxy service_id =
              | Some { port } -> string_of_int port
              | _ -> ""
              )
+         ; a_placeholder "Port"
          ]
          ()
        ]
-     ; input
+    ; div ~a:[ a_class [ "d-Network__Label" ] ] [ label ~a:[ a_label_for "proxy_user" ] [ txt "Username (optional)" ] ]
+    ; input
        ~a:[ a_input_type `Text
        ; a_class [ "d-Input"; "d-Network__Input" ]
        ; a_name "proxy_user"
@@ -52,8 +46,9 @@ let proxy_input ?proxy service_id =
            )
        ]
        ()
+    ; div ~a:[ a_class [ "d-Network__Label" ] ] [ label ~a:[ a_label_for "proxy_password" ] [ txt "Password (optional)" ] ]
      ; input
-       ~a:[ a_input_type `Text
+       ~a:[ a_input_type `Password
        ; a_class [ "d-Input"; "d-Network__Input" ]
        ; a_name "proxy_password"
        ; a_value
@@ -61,15 +56,10 @@ let proxy_input ?proxy service_id =
            | Some { credentials = Some _ } -> "*****"
            | _ -> ""
            )
+       ; Unsafe.string_attrib "is" "show-password"
        ]
        ()
      ]
-
-let proxy_form_note =
-  p
-    ~a:[ a_class [ "d-Note" ] ]
-    [ txt "Username and password may be left empty."
-    ]
 
 let not_connected_form service =
   let passphrase_id = "passphrase-" ^ service.id in
@@ -98,29 +88,13 @@ let not_connected_form service =
           (summary [ txt "Proxy Settings" ])
           [ div
               ~a:[ a_class [ "d-Network__AdvancedSettingsTitle" ] ]
-              [ proxy_label service.id
-              ; proxy_input service.id
-              ; proxy_form_note
+              [ proxy_form None
               ]
           ]
       ; input
           ~a:[ a_input_type `Submit
           ; a_class [ "d-Button" ]
           ; a_value "Connect"
-          ]
-          ()
-      ]
-
-let disable_proxy_form service =
-  form
-      ~a:[ a_action ("/network/" ^ service.id ^ "/proxy/remove")
-      ; a_method `Post
-      ; Unsafe.string_attrib "is" "disable-after-submit"
-      ]
-      [ input
-          ~a:[ a_input_type `Submit
-          ; a_class [ "d-Button" ]
-          ; a_value "Disable proxy"
           ]
           ()
       ]
@@ -134,27 +108,24 @@ let ip_address_regex_pattern =
 let multi_ip_address_regex_pattern =
   {|(((((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|\b)){4}))(,( +)?)?)+|}
 
+let is_static service =
+  service.ipv4
+  |> Option.map(fun (ipv4: IPv4.t) -> ipv4.method' = "manual")
+  |> Option.value ~default:false
 
 let static_ip_form service =
-  let is_static =
-    service.ipv4
-    |> Option.map(fun (ipv4: IPv4.t) -> ipv4.method' = "manual")
-    |> Option.value ~default:false
-  in
-  let ip_input ~id ~labelTxt ~name ~value ~pattern =
-    [
-      div ~a:[ a_class [ "d-Network__Label" ] ] [ label ~a:[ a_label_for id ] [ txt labelTxt ] ]
+  let ip_input ~id ~labelTxt ~value ~pattern =
+    [ div ~a:[ a_class [ "d-Network__Label" ] ] [ label ~a:[ a_label_for id ] [ txt labelTxt ] ]
     ; input ~a:[ a_id id
                ; a_value value
                ; a_class [ "d-Input"; "d-Network__Input" ]
-               ; a_name name
-               ; a_required ()
+               ; a_name id
                ; a_pattern pattern
                ]()
     ]
   in
   let ipv4_value f =
-    if is_static then
+    if is_static service then
       service.ipv4 |> Option.map (fun (ipv4:IPv4.t) -> f ipv4) |> Option.value ~default:""
     else
       ""
@@ -167,34 +138,25 @@ let static_ip_form service =
         ; br ()
         ; txt "where n is a number in the range of 0-255."
         ]
-    ; form ~a:[ a_action ("/network/" ^ service.id ^ "/static-ip/update")
-              ; a_id "static-ip-form"
-              ; a_method `Post
-              ; Unsafe.string_attrib "is" "disable-after-submit"
-              ]
-        [ div ( ip_input
-                  ~id:"static-ip-address"
+    ; div ( ip_input
+                  ~id:"static_ip_address"
                   ~labelTxt:"Address"
-                  ~name:"address"
                   ~value:(ipv4_value(fun ipv4 -> ipv4.address))
                   ~pattern:ip_address_regex_pattern
                 @ ip_input
-                  ~id:"static-ip-netmask"
+                  ~id:"static_ip_netmask"
                   ~labelTxt:"Netmask"
-                  ~name:"netmask"
                   ~value:(ipv4_value(fun ipv4 -> ipv4.netmask))
                   ~pattern:ip_address_regex_pattern
                 @ ip_input
-                  ~id:"static-ip-gateway"
+                  ~id:"static_ip_gateway"
                   ~labelTxt:"Gateway"
-                  ~name:"gateway"
                   ~value:(ipv4_value(fun ipv4 -> ipv4.gateway |> Option.value ~default:""))
                   ~pattern:ip_address_regex_pattern
                 @ ip_input
-                  ~id:"static-ip-nameservers"
+                  ~id:"static_ip_nameservers"
                   ~labelTxt:"Nameservers"
-                  ~name:"nameservers"
-                  ~value:(if is_static then String.concat ", " service.nameservers else "")
+                  ~value:(if is_static service then String.concat ", " service.nameservers else "")
                   ~pattern:multi_ip_address_regex_pattern
                 @ [ p ~a:[a_class ["d-Note"]][
                     txt  "To set multiple nameservers, use a comma separated list of addresses."
@@ -204,28 +166,28 @@ let static_ip_form service =
                   ]
               )
         ]
-    ; div
-        [ input ~a:[ a_value "Update"
-                     ; a_form "static-ip-form"
-                     ; a_input_type `Submit
-                     ; a_class [ "d-Button" ]
-                     ]()
-          ; if is_static then
-              form ~a:[ a_action ( "/network/" ^ service.id ^ "/static-ip/remove" )
-                      ; a_method `Post
-                      ; a_style "display: inline; margin-left: 0.5rem"
-                      ; Unsafe.string_attrib "is" "disable-after-submit"
-                      ]
-                [ input ~a:[ a_value "Remove"
-                           ; a_input_type `Submit
-                           ; a_class [ "d-Button" ]
-                           ]()
-                ]
-            else
-              txt ""
-          ]
-    ]
 
+let checked_input cond attrs =
+  input ~a:(if cond then a_checked () :: attrs else attrs) ()
+
+let toggle_group ~is_enabled ~legend_text ~toggle_field contents =
+  fieldset
+    ~a:[ a_class ([ "d-Network__ToggleGroup" ] @ if is_enabled then [ "d-Network__ToggleGroup--Enabled" ] else []) ]
+    ~legend:(
+      legend
+        [ checked_input
+            is_enabled
+            [ a_input_type `Checkbox
+            ; a_name toggle_field
+            ; a_id toggle_field
+            ; a_onclick "this.closest('.d-Network__ToggleGroup').classList.toggle('d-Network__ToggleGroup--Enabled', this.checked)"
+            ]
+        ; label
+            ~a:[ a_label_for toggle_field ]
+            [ txt legend_text ]
+        ]
+    )
+    [ fieldset contents ]
 
 let connected_form service =
   div
@@ -242,39 +204,23 @@ let connected_form service =
             ]
             ()
         ]
-    ; details
-        ~a:[ a_class [ "d-Details" ] ]
-        (summary [ txt "Proxy Settings" ])
-        [ div
-            ~a:[ a_class [ "d-Network__Form" ] ]
-            [ proxy_label service.id
-            ; div
-                ~a:[ a_class [ "d-Network__ProxyForm" ] ]
-                [ form
-                    ~a:[ a_action ("/network/" ^ service.id ^ "/proxy/update")
-                    ; a_method `Post
-                    ; a_class [ "d-Network__ProxyUpdate" ]
-                    ; Unsafe.string_attrib "is" "disable-after-submit"
-                    ]
-                    [ proxy_input ?proxy:service.proxy service.id
-                    ; input
-                        ~a:[ a_input_type `Submit
-                        ; a_class [ "d-Button" ]
-                        ; a_value "Update"
-                        ]
-                        ()
-                    ]
-                ; (if Option.is_some service.proxy then
-                    disable_proxy_form service
-                  else
-                    txt "")
-                ]
-            ; proxy_form_note
-            ]
+    ; form
+        ~a:[ a_action ("/network/" ^ service.id ^ "/update")
+        ; a_method `Post
+        ; a_class [ "d-Network__Form" ]
+        ; Unsafe.string_attrib "is" "disable-after-submit"
         ]
-
-    ; details ~a:[ a_class [ "d-Details" ] ] (summary [ txt "Static IP" ])
-      [ static_ip_form service ]
+        [ toggle_group ~is_enabled:(Option.is_some service.proxy) ~legend_text:"HTTP Proxy" ~toggle_field:"proxy_enabled"
+            [ proxy_form service.proxy ]
+        ; toggle_group ~is_enabled:(is_static service) ~legend_text:"Static IP" ~toggle_field:"static_ip_enabled"
+            [ static_ip_form service ]
+        ; input
+            ~a:[ a_input_type `Submit
+            ; a_class [ "d-Button" ]
+            ; a_value "Update"
+            ]
+            ()
+        ]
     ]
 
 let html service =
