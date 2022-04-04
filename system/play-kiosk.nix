@@ -28,6 +28,31 @@
   services.xserver = let sessionName = "kiosk-browser"; in {
     enable = true;
 
+    # Limit resolution to full HD on UHD screens.
+    # This is to avoid performance issues with games
+    # and scaling issues of the controller UI.
+    extraConfig = ''
+      Section "Monitor"
+              Identifier      "HDMI-1"
+              Option "PreferredMode"  "1920x1080"
+      EndSection
+
+      Section "Monitor"
+              Identifier      "HDMI-2"
+              Option "PreferredMode"  "1920x1080"
+      EndSection
+
+      Section "Monitor"
+              Identifier      "DP-1"
+              Option "PreferredMode"  "1920x1080"
+      EndSection
+
+      Section "Monitor"
+              Identifier      "DP-2"
+              Option "PreferredMode"  "1920x1080"
+      EndSection
+    '';
+
     desktopManager = {
       xterm.enable = false;
       session = [
