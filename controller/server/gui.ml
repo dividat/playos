@@ -348,16 +348,15 @@ module NetworkGui = struct
     let%lwt service = with_service ~connman (param req "id") in
     let%lwt () = update_static_ip ~connman service form_data in
     let%lwt current_proxy = Manager.get_default_proxy connman in
-    match%lwt make_proxy current_proxy form_data with
-    | None ->
-      let%lwt () = Connman.Service.set_direct_proxy service in
-      Lwt.return (success (Format.sprintf "Proxy of %s has been disabled." service.name))
-    | Some proxy ->
-      let%lwt () = Connman.Service.set_manual_proxy service proxy in
-      Lwt.return (success (Format.sprintf
-        "Proxy of %s has been updated to '%s'."
-        service.name
-        (Service.Proxy.pp proxy)))
+    let%lwt () =
+      match%lwt make_proxy current_proxy form_data with
+      | None -> Connman.Service.set_direct_proxy service
+      | Some proxy -> Connman.Service.set_manual_proxy service proxy
+    in
+
+    (* Grant time for changes to take effect and return to overview *)
+    let%lwt () = Lwt_unix.sleep 0.5 in
+    redirect' (Uri.of_string "/network")
 
   (** Remove a service **)
   let remove ~(connman:Connman.Manager.t) req =
