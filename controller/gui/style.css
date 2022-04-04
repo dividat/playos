@@ -290,10 +290,13 @@
     color: black;
     background-color: var(--form-border-color);
     border: var(--form-input-border);
+}
+
+.d-Button:not([disabled]) {
     cursor: pointer;
 }
 
-.d-Button:hover {
+.d-Button:not([disabled]):hover {
     border-color: var(--form-border-color-hover);
 }
 
@@ -343,6 +346,22 @@
     background: #f1f1f1;
     border: 1px solid #e1e1e1;
     border-radius: 4px;
+}
+
+/* Loading */
+
+.d-Spinner {
+    border: 2px solid #eeeeee;
+    border-top: 2px solid #aeaeae;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Other */

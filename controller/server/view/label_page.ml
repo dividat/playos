@@ -22,6 +22,7 @@ let html { machine_id; mac_1; mac_2 } =
       ; form
           ~a:[ a_action "/label/print"
           ; a_method `Post
+          ; Unsafe.string_attrib "is" "disable-after-submit"
           ]
           [ Definition.list
               [ Definition.term [ txt "Label Printer URL" ]

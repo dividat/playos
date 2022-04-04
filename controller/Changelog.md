@@ -1,5 +1,9 @@
 # [UNRELEASED]
 
+## Added
+
+- controller: Show a loader in submit buttons when submitting forms
+
 ## Changed
 
 - os: Update nixpkgs channel to 21.11
@@ -10,6 +14,10 @@
 ## Fixed
 
 - controller: Suppress a confusing error message during regular system updates
+
+## Fixed
+
+- controller: Prevent “Already connected” errors when connecting to a network
 
 # [2021.9.0] - 2021-11-11
 
