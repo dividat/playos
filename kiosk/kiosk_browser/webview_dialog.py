@@ -51,7 +51,7 @@ def show_webview_window(parent, title, url, on_close):
 
     layout.addWidget(title_line(widget, title, on_close))
 
-    webview = QtWebEngineWidgets.QWebEngineView()
+    webview = QtWebEngineWidgets.QWebEngineView(parent)
     webview.page().setUrl(url)
     layout.addWidget(webview)
 
