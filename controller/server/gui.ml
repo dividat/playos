@@ -2,6 +2,7 @@ open Lwt
 open Sexplib.Std
 open Opium_kernel.Rock
 open Opium.App
+open Sys
 
 let log_src = Logs.Src.create "gui"
 
@@ -69,6 +70,8 @@ end
 
 (** Localization GUI *)
 module LocalizationGui = struct
+  let scaling_file = "/home/play/.limit-resolution"
+
   let overview req =
     let%lwt td_daemon = Timedate.daemon () in
     let%lwt current_timezone = Timedate.get_configured_timezone () in
@@ -129,6 +132,7 @@ module LocalizationGui = struct
       ; current_lang
       ; keymaps
       ; current_keymap
+      ; opt_in_scaling = Sys.file_exists scaling_file
       }))
 
   let set_timezone req =
@@ -171,12 +175,31 @@ module LocalizationGui = struct
     in
     "/localization" |> Uri.of_string |> redirect'
 
+  let set_scaling req =
+    let log_src = Logs.Src.create "scaling"
+    in
+    let%lwt form_data =
+      urlencoded_pairs_of_body req
+    in
+    let%lwt _ =
+      match form_data |> List.assoc_opt "scaling" with
+      | Some [ opt_in ] ->
+        if opt_in = "y" then
+          Util.write_to_file log_src scaling_file ""
+        else
+          Sys.remove scaling_file |> return
+      | _ ->
+        return ()
+    in
+    "/localization" |> Uri.of_string |> redirect'
+
   let build app =
     app
     |> get "/localization" overview
     |> post "/localization/timezone" set_timezone
     |> post "/localization/lang" set_lang
     |> post "/localization/keymap" set_keymap
+    |> post "/localization/scaling" set_scaling
 end
 
 (** Network configuration GUI *)
