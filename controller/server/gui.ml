@@ -328,25 +328,18 @@ module NetworkGui = struct
     in
     let%lwt service = with_service ~connman (param req "id") in
 
-    let%lwt proxy = make_proxy None form_data in
     let%lwt () = Connman.Service.connect ~input:passphrase service in
-    match proxy with
-    | None ->
-      (* Removing a proxy that would have been configured in the past *)
-      let%lwt () = Connman.Service.set_direct_proxy service in
-      Lwt.return (success (Format.sprintf "Connected with %s." service.name))
-    | Some proxy ->
-      let%lwt () = Connman.Service.set_manual_proxy service proxy in
-      Lwt.return (success (Format.sprintf
-        "Connected with %s and proxy '%s'."
-        service.name
-        (Service.Proxy.pp proxy)))
+    Lwt.return (success (Format.sprintf "Connected with %s." service.name))
 
   (** Update a service *)
   let update ~(connman:Connman.Manager.t) req =
     let%lwt form_data = urlencoded_pairs_of_body req in
     let%lwt service = with_service ~connman (param req "id") in
+
+    (* Static IP *)
     let%lwt () = update_static_ip ~connman service form_data in
+
+    (* Proxy *)
     let%lwt current_proxy = Manager.get_default_proxy connman in
     let%lwt () =
       match%lwt make_proxy current_proxy form_data with

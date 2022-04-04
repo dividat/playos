@@ -81,20 +81,14 @@ let not_connected_form service =
           ; Unsafe.string_attrib "is" "show-password"
           ]
           ()
-      ; details
-          ~a:[ a_class [ "d-Details" ] ]
-          (summary [ txt "Proxy Settings" ])
-          [ div
-              ~a:[ a_class [ "d-Network__AdvancedSettingsTitle" ] ]
-              [ proxy_form None
+      ; p
+          [ input
+              ~a:[ a_input_type `Submit
+              ; a_class [ "d-Button" ]
+              ; a_value "Connect"
               ]
+              ()
           ]
-      ; input
-          ~a:[ a_input_type `Submit
-          ; a_class [ "d-Button" ]
-          ; a_value "Connect"
-          ]
-          ()
       ]
 
 (* Regex pattern to validate IP addresses
