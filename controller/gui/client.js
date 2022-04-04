@@ -8,7 +8,7 @@ customElements.define(
 
       const input = this
 
-      const root = installParent(input, document.createElement('span'))
+      const root = wrap(input, document.createElement('span'))
       root.style = 'position: relative'
 
       const button = document.createElement('input')
@@ -75,7 +75,7 @@ customElements.define(
       const form = this
       const button = form.querySelector('input[type=submit]')
 
-      const buttonParent = installParent(button, document.createElement('span'))
+      const buttonParent = wrap(button, document.createElement('span'))
       buttonParent.style = `
         position: relative;
         height: fit-content;
@@ -109,7 +109,7 @@ customElements.define(
  * Useful to extend nodes that can not have children in web components, for
  * ex. inputs.
  */
-function installParent(node, newParent) {
+function wrap(node, newParent) {
     node.parentNode.replaceChild(newParent, node)
     newParent.appendChild(node)
     return newParent
