@@ -46,6 +46,11 @@
               setxkbmap $(cat /var/lib/gui-localization/keymap) || true
             fi
 
+            # force resolution
+            if [ -f /home/play/.limit-resolution ]; then
+               xrandr --size 1920x1080
+            fi
+
             # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-5/qtwebengine-debugging.html)
             export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
 

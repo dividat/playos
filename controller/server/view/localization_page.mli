@@ -5,6 +5,7 @@ type params =
   ; current_lang: string option
   ; keymaps: (string * string) list
   ; current_keymap: string option
+  ; opt_in_scaling : bool
   }
 
 val html :
