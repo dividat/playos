@@ -17,14 +17,16 @@ let proxy_form proxy =
              | _ -> ""
              )
          ; a_placeholder "Host"
+         ; a_pattern {|[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*|}
          ]
          ()
        ; txt ":"
        ; input
-         ~a:[ a_input_type `Text
+         ~a:[ a_input_type `Number
          ; a_class [ "d-Input" ]
          ; a_name "proxy_port"
          ; a_size 5
+         ; a_step (Some 1.0)
          ; a_value
              (match proxy with 
              | Some { port } -> string_of_int port
