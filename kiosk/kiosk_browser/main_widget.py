@@ -44,11 +44,11 @@ class MainWidget(QtWidgets.QWidget):
     def _show_settings(self):
         self._hide_browser_widget()
         webview_dialog.widget(
-                self, 
-                "System Settings", 
-                self._settings_url, 
+                parent = self, 
+                title = "System Settings", 
+                url = self._settings_url, 
                 additional_close_keys = [self._toggle_settings_key],
-                on_dialog_close = lambda: self._show_browser_widget()
+                on_close = lambda: self._show_browser_widget()
             ).exec_()
 
     def _show_captive_portal(self):
@@ -56,11 +56,11 @@ class MainWidget(QtWidgets.QWidget):
         self._is_captive_portal_dialog_open = True
         self._captive_portal_message.setParent(None)
         webview_dialog.widget(
-                self, 
-                "Network Login", 
-                self._captive_portal_url,
+                parent = self, 
+                title = "Network Login", 
+                url = self._captive_portal_url,
                 additional_close_keys = [],
-                on_dialog_close = self._on_captive_portal_dialog_close
+                on_close = self._on_captive_portal_dialog_close
             ).exec_()
 
     def _on_captive_portal_dialog_close(self):
@@ -68,7 +68,7 @@ class MainWidget(QtWidgets.QWidget):
         self._show_browser_widget()
 
     def _hide_browser_widget(self):
-        """ Show a blank page.
+        """ Hide browser widget by showing a blank page.
         """
         self._browser_widget.setHtml("")
 
