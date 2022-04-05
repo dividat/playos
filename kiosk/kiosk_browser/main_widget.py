@@ -42,15 +42,17 @@ class MainWidget(QtWidgets.QWidget):
             self._layout.addWidget(self._captive_portal_message)
 
     def _show_settings(self):
+        self._hide_browser_widget()
         webview_dialog.widget(
                 self, 
                 "System Settings", 
                 self._settings_url, 
                 additional_close_keys = [self._toggle_settings_key],
-                on_dialog_close = lambda: self._browser_widget.reload()
+                on_dialog_close = lambda: self._show_browser_widget()
             ).exec_()
 
     def _show_captive_portal(self):
+        self._hide_browser_widget()
         self._is_captive_portal_dialog_open = True
         self._captive_portal_message.setParent(None)
         webview_dialog.widget(
@@ -63,4 +65,14 @@ class MainWidget(QtWidgets.QWidget):
 
     def _on_captive_portal_dialog_close(self):
         self._is_captive_portal_dialog_open = False
-        self._browser_widget.reload()
+        self._show_browser_widget()
+
+    def _hide_browser_widget(self):
+        """ Show a blank page.
+        """
+        self._browser_widget.setHtml("")
+
+    def _show_browser_widget(self):
+        """ Show kiosk browser loading URL.
+        """
+        self._browser_widget.setUrl(self._kiosk_url)
