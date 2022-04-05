@@ -59,7 +59,7 @@ def title_line(parent, title, on_close):
     """ Title and close button.
     """
 
-    line = QtWidgets.QWidget()
+    line = QtWidgets.QWidget(parent)
     line.setFixedHeight(30)
 
     label = QtWidgets.QLabel(title)
@@ -69,7 +69,7 @@ def title_line(parent, title, on_close):
         font-size: 16px;
     """);
 
-    button = QtWidgets.QPushButton("❌")
+    button = QtWidgets.QPushButton("❌", parent)
     button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
     button.setStyleSheet("""
         QPushButton {
