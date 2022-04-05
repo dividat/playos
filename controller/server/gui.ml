@@ -285,8 +285,9 @@ module NetworkGui = struct
       (* Configuration without credentials was submitted *)
       | Some host, Some port, None, _ ->
         return (Some (Service.Proxy.make host port))
+      (* Incomplete server information *)
       | _ ->
-        return None
+        fail_with "A host and port are required to configure a proxy server"
 
   (** Set static IP configuration on a service *)
   let update_static_ip ~(connman: Connman.Manager.t) service form_data =
