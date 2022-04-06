@@ -74,10 +74,10 @@ class BrowserWidget(QtWidgets.QWidget):
         self._reload_timer.setSingleShot(True)
         self._reload_timer.timeout.connect(self._webview.reload)
 
-    def show_blank_page(self):
-        """ Hide browser widget by showing a blank page.
+    def show_overlay(self):
+        """ Hide browser widget by showing an overlay instead.
         """
-        self._webview.setHtml("")
+        self._webview.setHtml("<style>html { background-color: rgba(0, 0, 0, 0.4); }</style>")
 
     def reload(self):
         """ Show kiosk browser loading URL.

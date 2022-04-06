@@ -44,7 +44,7 @@ class MainWidget(QtWidgets.QWidget):
             self._layout.addWidget(self._captive_portal_message)
 
     def _show_settings(self):
-        self._browser_widget.show_blank_page()
+        self._browser_widget.show_overlay()
         webview_dialog.widget(
                 parent = self, 
                 title = "System Settings", 
@@ -54,7 +54,7 @@ class MainWidget(QtWidgets.QWidget):
             ).exec_()
 
     def _show_captive_portal(self):
-        self._browser_widget.show_blank_page()
+        self._browser_widget.show_overlay()
         self._is_captive_portal_dialog_open = True
         self._captive_portal_message.setParent(None)
         webview_dialog.widget(
