@@ -5,6 +5,9 @@ import re
 
 from kiosk_browser import system
 
+# Config
+reload_on_network_error_after = 5000 # ms
+
 """
 Webview loading status
 """
@@ -66,6 +69,11 @@ class BrowserWidget(QtWidgets.QWidget):
         self.reload_shortcut = QtWidgets.QShortcut('CTRL+R', self)
         self.reload_shortcut.activated.connect(self.reload)
 
+        # Prepare reload timer
+        self._reload_timer = QtCore.QTimer(self)
+        self._reload_timer.setSingleShot(True)
+        self._reload_timer.timeout.connect(self._webview.reload)
+
     def show_blank_page(self):
         """ Hide browser widget by showing a blank page.
         """
@@ -74,8 +82,13 @@ class BrowserWidget(QtWidgets.QWidget):
     def reload(self):
         """ Show kiosk browser loading URL.
         """
+
         self._webview.setUrl(self._url)
         self._view(Status.INITIAL_LOADING)
+
+        # Stop reload timer if it is on going
+        if self._reload_timer.isActive():
+            self._reload_timer.stop()
 
     # Private
 
@@ -84,7 +97,7 @@ class BrowserWidget(QtWidgets.QWidget):
             self._view(Status.LOADED)
         if not success:
             self._view(Status.NETWORK_ERROR)
-            QtCore.QTimer.singleShot(5000, self._webview.reload)
+            self._reload_timer.start(reload_on_network_error_after)
 
     def _proxy_auth(self, get_current_proxy, url, auth, proxyHost):
         proxy = get_current_proxy()
