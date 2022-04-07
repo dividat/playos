@@ -145,7 +145,7 @@
 /* Network */
 
 .d-Network__Refresh {
-    margin-bottom: 2rem;
+    margin: 0 1rem 0 auto;
 }
 
 .d-Network__InternetConnected {
@@ -159,6 +159,7 @@
 .d-Network__Title {
     display: flex;
     line-height: 1;
+    align-items: center;
 }
 
 .d-Network__SignalStrength {

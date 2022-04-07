@@ -41,16 +41,21 @@ type params =
 let html { proxy; is_internet_connected; services; interfaces } =
   Page.html ~current_page:Page.Network (
     div
-      [ h1 ~a:[ a_class [ "d-Title" ] ] [ txt "Network" ]
+      [ div ~a:[ a_class [ "d-Title" ] ]
+           [ div
+               ~a:[ a_class [ "d-Network__Title" ] ]
+               [ h1 [ txt "Network" ]
+               ; div
+                   ~a:[ a_class [ "d-Network__Refresh" ] ]
+                   [ a
+                       ~a:[ a_href "/network?timeout=3"
+                       ; a_class [ "d-Button" ]
+                       ]
+                       [ txt "Refresh" ]
+                   ]
+               ]
+           ]
 
-      ; div
-          ~a:[ a_class [ "d-Network__Refresh" ] ]
-          [ a
-              ~a:[ a_href "/network?timeout=3"
-              ; a_class [ "d-Button" ]
-              ]
-              [ txt "Refresh" ]
-          ]
 
       ; Definition.list (
           (match proxy with
