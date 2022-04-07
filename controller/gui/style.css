@@ -152,10 +152,6 @@
 
 /* Network */
 
-.d-Network__Refresh {
-    margin: 0 1rem 0 auto;
-}
-
 .d-Network__InternetConnected {
     color: green;
 }
@@ -169,7 +165,10 @@
     flex-direction: row;
     align-items: center;
     line-height: 1;
-    align-items: center;
+}
+
+.d-Network__TitleAction {
+    margin: 0 1rem 0 auto;
 }
 
 .d-Network__SignalStrength {
@@ -193,10 +192,6 @@
 .d-Network__Input {
     width: 400px;
     margin-bottom: 1rem;
-}
-
-.d-Network__Forget {
-    margin-left: auto;
 }
 
 /* Toggle Group */

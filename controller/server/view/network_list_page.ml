@@ -49,7 +49,7 @@ let html { proxy; is_internet_connected; services; interfaces } =
                ~a:[ a_class [ "d-Network__Title" ] ]
                [ h1 [ txt "Network" ]
                ; div
-                   ~a:[ a_class [ "d-Network__Refresh" ] ]
+                   ~a:[ a_class [ "d-Network__TitleAction" ] ]
                    [ a
                        ~a:[ a_href "/network?timeout=3"
                        ; a_class [ "d-Button" ]

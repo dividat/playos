@@ -222,7 +222,7 @@ let html service =
     form
       ~a:[ a_action ("/network/" ^ service.id ^ "/remove")
       ; a_method `Post
-      ; a_class [ "d-Network__Forget" ]
+      ; a_class [ "d-Network__TitleAction" ]
       ; Unsafe.string_attrib "is" "disable-after-submit"
       ]
       [ input
