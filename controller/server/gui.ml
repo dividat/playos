@@ -222,18 +222,13 @@ module NetworkGui = struct
               return false)
     in
 
-    (* If not connected show all services, otherwise show services that are connected *)
-    let showed_services =
-      all_services
-        |> List.filter (fun s -> not is_internet_connected || Service.is_connected s)
-    in
     let%lwt interfaces = Network.Interface.get_all () in
 
     Lwt.return (page (Network_list_page.html
       { proxy = proxy
           |> Option.map (Proxy.to_string ~hide_password:true)
       ; is_internet_connected
-      ; services = showed_services
+      ; services = all_services
           |> List.map blur_service_proxy_password
       ; interfaces = interfaces
           |> [%sexp_of: Network.Interface.t list]

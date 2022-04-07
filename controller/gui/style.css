@@ -92,6 +92,14 @@
   margin-bottom: 1rem;
 }
 
+.d-NetworkList > li {
+  border-top: 1px solid var(--form-border-color);
+}
+
+.d-NetworkList > li:last-child {
+  border-bottom: 1px solid var(--form-border-color);
+}
+
 .d-NetworkList__Network {
   text-decoration: none;
   color: black;

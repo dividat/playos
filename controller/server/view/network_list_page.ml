@@ -39,6 +39,9 @@ type params =
   }
 
 let html { proxy; is_internet_connected; services; interfaces } =
+  let connected_services, available_services =
+    List.partition Connman.Service.is_connected services
+  in
   Page.html ~current_page:Page.Network (
     div
       [ div ~a:[ a_class [ "d-Title" ] ]
@@ -56,6 +59,11 @@ let html { proxy; is_internet_connected; services; interfaces } =
                ]
            ]
 
+      ; section
+          [ ul
+              ~a:[ a_class [ "d-NetworkList" ]; a_role [ "list" ] ]
+              (List.map service_item connected_services)
+          ]
 
       ; Definition.list (
           (match proxy with
@@ -81,13 +89,13 @@ let html { proxy; is_internet_connected; services; interfaces } =
         )
 
       ; section
-          [ h2 ~a:[ a_class [ "d-Subtitle" ] ] [ txt "Services" ]
-          ; if List.length services = 0 then
-              txt "No services available"
+          [ h2 ~a:[ a_class [ "d-Subtitle" ] ] [ txt "Available Networks" ]
+          ; if List.length available_services = 0 then
+              txt "No networks available"
             else
               ul
                 ~a:[ a_class [ "d-NetworkList" ]; a_role [ "list" ] ]
-                (List.map service_item services)
+                (List.map service_item available_services)
           ]
 
       ; section
