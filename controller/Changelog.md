@@ -9,6 +9,7 @@
 - os: Update nixpkgs channel to 21.11
 - os: Disable virtual terminals that are not used by PlayOS
 - controller: Provide a more helpful error message when network connection is failing
+- controller: Mark connected network services in service list
 - kiosk: Open System Settings (Ctrl+Shift+F12) and Network Login (behind captive portal) in a dialog
 
 ## Fixed
