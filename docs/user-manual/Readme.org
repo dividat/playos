@@ -104,26 +104,19 @@ Items:
 
 The network screen shows the state of Internet connectivity.
 
-If the system is connected to the Internet, the connected service (e.g. wireless network) is displayed:
+If system is connected to Internet, the connected service (e.g. wireless network) is displayed:
 
 #+CAPTION: Internet connected
 #+NAME: fig:controller-network
 #+attr_html: :width 800px
 [[../screenshots/controller-network.png]]
 
-If the system is not connected to the Internet a list of available services is displayed:
+If system is not connected to Internet a list of available services is displayed:
 
 #+CAPTION: Internet not connected
 #+NAME: fig:controller-network-not-connected
 #+attr_html: :width 800px
 [[../screenshots/controller-network-not-connected.png]]
-
-Network services that the system is connected to will additionally be marked in the list, whether or not they provide Internet access:
-
-#+CAPTION: Connected network services are marked in list
-#+NAME: fig:controller-network-service-marking
-#+attr_html: :width 800px
-[[../screenshots/controller-network-service-marking.png]]
 
 A service may be selected for configuration by clicking on it. This is where passwords for wireless networks, proxy servers and static IP addresses may be configured:
 
