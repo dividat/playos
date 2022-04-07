@@ -206,7 +206,7 @@ module NetworkGui = struct
             return false
         }
         (fun () ->
-            match%lwt Curl.request ?proxy:(Option.map Service.Proxy.to_uri proxy) (Uri.of_string "http://captive.dividat.com/") with
+            match%lwt Curl.request ?proxy:(Option.map (Service.Proxy.to_uri ~include_password:true) proxy) (Uri.of_string "http://captive.dividat.com/") with
             | RequestSuccess (200, _) ->
               return true
             | RequestSuccess (status, _) ->
