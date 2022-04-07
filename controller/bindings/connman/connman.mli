@@ -199,8 +199,7 @@ module Manager : sig
       This uses the ConnMan ServiceChanged Signal but returns complete services instead of only changes.*)
   val get_services_signal : t -> Service.t list Lwt_react.S.t Lwt.t
 
-  (** [from_default_service sevrices] returns the [proxy] of the ready or
-    connected service in [services].*)
+  (** Returns the proxy of the default service, if it has one configured *)
   val get_default_proxy : t -> Service.Proxy.t option Lwt.t
 
 end
