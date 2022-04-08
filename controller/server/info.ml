@@ -29,7 +29,7 @@ let rec grouped n s =
   let l = String.length s in
   if n <= 0 then
     invalid_arg "Group size must be above 0"
-  else if l == 0 then
+  else if l = 0 then
     []
   else if l <= n then
     [s]

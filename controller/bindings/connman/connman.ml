@@ -571,7 +571,7 @@ struct
   let get_default_proxy manager =
     let open Service in
     let%lwt services = get_services manager in
-    List.find_opt (fun s -> s.state = Online || s.state == Ready) services
+    List.find_opt (fun s -> s.state = Online || s.state = Ready) services
     |> Fun.flip Option.bind (fun s -> s.proxy)
     |> return
 
