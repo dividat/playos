@@ -206,7 +206,7 @@ module NetworkGui = struct
             return false
         }
         (fun () ->
-            match%lwt Curl.request ?proxy:(Option.map (Service.Proxy.to_uri ~include_password:true) proxy) (Uri.of_string "http://captive.dividat.com/") with
+            match%lwt Curl.request ?proxy:(Option.map (Service.Proxy.to_uri ~include_userinfo:true) proxy) (Uri.of_string "http://captive.dividat.com/") with
             | RequestSuccess (200, _) ->
               return true
             | RequestSuccess (status, _) ->
@@ -219,8 +219,17 @@ module NetworkGui = struct
 
     let%lwt interfaces = Network.Interface.get_all () in
 
+    let pp_proxy p =
+      let uri = p |> Service.Proxy.to_uri ~include_userinfo:false |> Uri.to_string in
+      match p.credentials with
+      | Some({ user; password }) -> 
+          let password_indication = if password = "" then "" else ", password: *****" in
+          uri ^ " (user: " ^ user ^ password_indication ^ ")"
+      | None -> uri
+    in
+
     Lwt.return (page (Network_list_page.html
-      { proxy = proxy |> Option.map Service.Proxy.pp
+      { proxy = proxy |> Option.map pp_proxy
       ; is_internet_connected
       ; services = all_services
       ; interfaces = interfaces
