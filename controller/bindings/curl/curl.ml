@@ -83,7 +83,7 @@ let request ?proxy ?(headers = []) ?data ?(options = []) url =
       ; (match proxy with
         | Some p ->
             [| "--proxy"
-            ;  Proxy.to_string ~hide_password:false p
+            ;  Uri.to_string p
             ;  "--proxy-anyauth"
             |]
         | None -> [| |])

@@ -251,6 +251,76 @@ struct
       |> CCResult.to_opt
   end
 
+  module Proxy =
+  struct
+    type credentials =
+      { user: string
+      ; password: (string [@sexp.opaque])
+      }
+      [@@deriving sexp]
+
+    type t =
+    { host: string
+    ; port: int
+    ; credentials: credentials option
+    }
+    [@@deriving sexp]
+
+    let make ?user ?password host port =
+      { host = host
+      ; port = port
+      ; credentials =
+        (match user, password with
+        | Some "", _ -> None
+        | Some u, Some p -> Some { user = u; password = p }
+        | _ -> None)
+      }
+
+    let validate str =
+      let uri = Uri.of_string str in
+      if Uri.path uri = ""
+        && Uri.query uri = []
+        && Uri.fragment uri = None
+      then
+        match Uri.scheme uri, Uri.host uri, Uri.port uri with
+        | Some "http", Some host, Some port ->
+          Some
+            { credentials =
+              (match Uri.user uri, Uri.password uri with
+              | Some user, Some password -> Some { user = Uri.pct_decode user; password = Uri.pct_decode password }
+              | _ -> None)
+            ; host
+            ; port
+            }
+        | _ -> None
+      else
+        None
+
+    let to_uri ~include_password t =
+      let escape_userinfo = Uri.pct_encode ~component:`Userinfo in
+      let
+        userinfo =
+          Option.map
+            (fun credentials ->
+              if include_password then
+                escape_userinfo credentials.user ^ ":" ^ escape_userinfo credentials.password
+              else
+                escape_userinfo credentials.user
+            )
+            t.credentials
+      in
+      Uri.empty
+      |> Fun.flip Uri.with_scheme (Some "http")
+      |> Fun.flip Uri.with_host (Some t.host)
+      |> Fun.flip Uri.with_port (Some t.port)
+      |> Fun.flip Uri.with_userinfo userinfo
+
+    let pp t =
+      to_uri ~include_password:false t
+      |> Uri.to_string
+
+  end
+
   type t = {
     _proxy : (OBus_proxy.t [@sexp.opaque])
   ; _manager : (OBus_proxy.t [@sexp.opaque])
@@ -264,7 +334,7 @@ struct
   ; ipv4 : IPv4.t option
   ; ipv6 : IPv6.t option
   ; ethernet : Ethernet.t
-  ; proxy : string option
+  ; proxy : Proxy.t option
   ; nameservers : string list
   }
   [@@deriving sexp]
@@ -295,12 +365,11 @@ struct
          let properties = v |> cast_single (dict string variant) in
          let proxy_method = properties |> List.assoc "Method" |> cast_single basic_string in
          if proxy_method = "manual" then
-           Some (
-             properties
-             |> List.assoc "Servers"
-             |> cast_single (array basic_string)
-             |> List.hd
-           )
+           properties
+           |> List.assoc "Servers"
+           |> cast_single (array basic_string)
+           |> List.hd
+           |> Proxy.validate
          else
            None
       with
@@ -348,12 +417,12 @@ struct
     in
     set_property service "Proxy.Configuration" dict
 
-  let set_manual_proxy service url =
+  let set_manual_proxy service proxy =
     let dict =
       OBus_value.C.make_single
         (OBus_value.C.(dict string variant))
         [ ("Method", OBus_value.C.(make_single basic_string) "manual")
-        ; ("Servers", OBus_value.C.(make_single (array basic_string)) [url])
+        ; ("Servers", OBus_value.C.(make_single (array basic_string)) [Proxy.to_uri ~include_password:true proxy |> Uri.to_string])
         ]
     in
     set_property service "Proxy.Configuration" dict
@@ -493,6 +562,17 @@ struct
       >|= Lwt_react.E.map_s (fun () -> get_services manager)
     in
     Lwt_react.S.accum (service_changes |> Lwt_react.E.map (fun x _ -> x)) initial_services
+    |> return
+
+  (* Extract the proxy from the default route.
+   *
+   * The service with the default route will always be sorted at the top of the
+   * list. (From connman doc/overview-api.txt *)
+  let get_default_proxy manager =
+    let open Service in
+    let%lwt services = get_services manager in
+    List.find_opt (fun s -> s.state = Online || s.state = Ready) services
+    |> Fun.flip Option.bind (fun s -> s.proxy)
     |> return
 
 end

@@ -95,6 +95,45 @@ module Service : sig
     [@@deriving sexp]
   end
 
+  module Proxy : sig
+    type credentials =
+      { user: string
+      ; password: (string [@sexp.opaque])
+      }
+      [@@deriving sexp]
+
+    type t =
+    { host: string
+    ; port: int
+    ; credentials: credentials option
+    }
+    [@@deriving sexp]
+
+    val validate : string -> t option
+    (** [validate str] returns [t] if [str] is valid.
+    
+        Valid proxies:
+    
+          - Use the http scheme,
+          - have a host and a port,
+          - may have credentials.
+
+        Example of valid proxies:
+
+          - http://127.0.0.1:1234.
+          - http://user:password@host.com:8888.*)
+
+    val make : ?user:string -> ?password:string -> string -> int -> t
+    (** Make a [t] from mandatory and optional components.  *)
+
+    val to_uri : include_password:bool -> t -> Uri.t
+    (** [to_uri ~include_password:bool t] returns a URI from [t], including escaped credentials. *)
+
+    val pp : t -> string
+    (** [to_string t] returns a URI string from [t], omitting the password. *)
+
+  end
+
   (** ConnMan Service
 
       Note that not all properties are encoded.
@@ -112,7 +151,7 @@ module Service : sig
   ; ipv4 : IPv4.t option
   ; ipv6 : IPv6.t option
   ; ethernet : Ethernet.t
-  ; proxy : string option
+  ; proxy : Proxy.t option
   ; nameservers : string list
   }
   [@@deriving sexp]
@@ -122,7 +161,7 @@ module Service : sig
 
   val set_direct_proxy : t -> unit Lwt.t
 
-  val set_manual_proxy : t -> string -> unit Lwt.t
+  val set_manual_proxy : t -> Proxy.t -> unit Lwt.t
 
   val set_manual_ipv4 : t -> address:string -> netmask:string -> gateway:string -> unit Lwt.t
 
@@ -159,5 +198,8 @@ module Manager : sig
 
       This uses the ConnMan ServiceChanged Signal but returns complete services instead of only changes.*)
   val get_services_signal : t -> Service.t list Lwt_react.S.t Lwt.t
+
+  (** Returns the proxy of the default service, if it has one configured *)
+  val get_default_proxy : t -> Service.Proxy.t option Lwt.t
 
 end

@@ -185,16 +185,11 @@ module NetworkGui = struct
   open Connman
   open Network
 
-  let blur_service_proxy_password s =
-    let open Service in
-    let blur p = Proxy.validate p |> Option.map (Proxy.to_string ~hide_password:true) in
-    { s with proxy = s.proxy |> Base.Fn.flip Option.bind blur }
-
   let overview ~(connman:Manager.t) req =
 
     let%lwt all_services = Manager.get_services connman in
 
-    let proxy = Proxy.from_default_service all_services in
+    let%lwt proxy = Manager.get_default_proxy connman in
 
     let check_timeout =
       Option.bind (Uri.get_query_param (Request.uri req) "timeout") Float.of_string_opt
@@ -211,7 +206,7 @@ module NetworkGui = struct
             return false
         }
         (fun () ->
-            match%lwt Curl.request ?proxy (Uri.of_string "http://captive.dividat.com/") with
+            match%lwt Curl.request ?proxy:(Option.map (Service.Proxy.to_uri ~include_password:true) proxy) (Uri.of_string "http://captive.dividat.com/") with
             | RequestSuccess (200, _) ->
               return true
             | RequestSuccess (status, _) ->
@@ -225,11 +220,9 @@ module NetworkGui = struct
     let%lwt interfaces = Network.Interface.get_all () in
 
     Lwt.return (page (Network_list_page.html
-      { proxy = proxy
-          |> Option.map (Proxy.to_string ~hide_password:true)
+      { proxy = proxy |> Option.map Service.Proxy.pp
       ; is_internet_connected
       ; services = all_services
-          |> List.map blur_service_proxy_password
       ; interfaces = interfaces
           |> [%sexp_of: Network.Interface.t list]
           |> Sexplib.Sexp.to_string_hum
@@ -244,22 +237,84 @@ module NetworkGui = struct
 
   let details ~connman req =
     let service_id = param req "id" in
-    let%lwt service = with_service connman service_id >|= blur_service_proxy_password in
+    let%lwt service = with_service connman service_id in
     Lwt.return (page (Network_details_page.html service))
 
   (** Validate a proxy, fail if the proxy is given but invalid *)
-  let with_empty_or_valid_proxy form_data =
-    let proxy_str =
-      form_data
-      |> List.assoc "proxy"
-      |> List.hd
-    in
-    if String.trim proxy_str = "" then
-      return None
-    else
-      match Proxy.validate proxy_str with
-      | Some proxy -> return (Some proxy)
-      | None -> fail_with (Format.sprintf "'%s' is not a valid proxy. It should be in the form 'http://host:port' or 'http://user:password@host:port'." proxy_str)
+  let make_proxy current_proxy_opt form_data =
+    let open Service.Proxy in
+    let non_empty s = if s = "" then None else Some s in
+    let opt_int_of_string s = try Some (int_of_string s) with _ -> None in
+
+    match form_data |> List.assoc_opt "proxy_enabled" with
+    | None ->
+        return None
+    | Some _ ->
+      let host_input =
+        form_data |> List.assoc "proxy_host" |> List.hd |> non_empty
+      in
+      let port_input =
+        form_data |> List.assoc "proxy_port" |> List.hd |> opt_int_of_string
+      in
+      let user_input =
+        form_data |> List.assoc "proxy_user" |> List.hd |> non_empty
+      in
+      let password_input =
+        form_data |> List.assoc "proxy_password" |> List.hd |> non_empty
+      in
+      match host_input, port_input, user_input, password_input with
+      (* Complete configuration was submitted *)
+      | Some host, Some port, Some user, Some password ->
+        return (Some (Service.Proxy.make ~user:user ~password:password host port))
+      (* Configuration was submitted without password, check whether it is
+         safe to refill from stored value *)
+      | Some host, Some port, Some user, None ->
+        (match current_proxy_opt with
+          | Some ({ credentials = Some { password } } as current_proxy) ->
+              let restored_proxy = Service.Proxy.make ~user:user ~password:password host port in
+              if current_proxy = restored_proxy then
+                (* Proxy configuration has not been touched *)
+                return (Some current_proxy)
+              else
+                (* Proxy configuration has been touched, it's unsafe to restore password *)
+                return (Some (Service.Proxy.make ~user:user ~password:"" host port))
+          | _ ->
+              (* No existing proxy credentials, use empty password *)
+              return (Some (Service.Proxy.make ~user:user ~password:"" host port))
+        )
+      (* Configuration without credentials was submitted *)
+      | Some host, Some port, None, _ ->
+        return (Some (Service.Proxy.make host port))
+      (* Incomplete server information *)
+      | _ ->
+        fail_with "A host and port are required to configure a proxy server"
+
+  (** Set static IP configuration on a service *)
+  let update_static_ip ~(connman: Connman.Manager.t) service form_data =
+        let get_prop s =
+          form_data
+          |> List.assoc s
+          |> List.hd
+        in
+    match form_data |> List.assoc_opt "static_ip_enabled" with
+    | None ->
+        let open Cohttp in
+        let open Cohttp_lwt_unix in
+        let%lwt () = Logs_lwt.err ~src:log_src
+          (fun m -> m "disabling static ip %s" (get_prop "static_ip_address"))
+        in
+        let%lwt () = Connman.Service.set_dhcp_ipv4 service in
+        let%lwt () = Connman.Service.set_nameservers service [] in
+        return ()
+    | Some _ ->
+        let address = get_prop "static_ip_address" in
+        let netmask = get_prop "static_ip_netmask" in
+        let gateway = get_prop "static_ip_gateway" in
+        let nameservers = get_prop "static_ip_nameservers" |> String.split_on_char ',' |> List.map (String.trim) in
+        let%lwt () = Connman.Service.set_manual_ipv4 service ~address ~netmask ~gateway in
+        let%lwt () = Connman.Service.set_nameservers service nameservers in
+        return ()
+
 
   (** Connect to a service *)
   let connect ~(connman:Connman.Manager.t) req =
@@ -273,85 +328,48 @@ module NetworkGui = struct
     in
     let%lwt service = with_service ~connman (param req "id") in
 
-    (* Clear settings that might have been configured previously. *)
-    let%lwt () = Connman.Service.set_nameservers service [] in
-    let%lwt () = Connman.Service.set_dhcp_ipv4 service in
-
-    let%lwt proxy = with_empty_or_valid_proxy form_data in
     let%lwt () = Connman.Service.connect ~input:passphrase service in
-    match proxy with
-    | None ->
-      (* Removing a proxy that would have been configured in the past *)
-      let%lwt () = Connman.Service.set_direct_proxy service in
-      Lwt.return (success (Format.sprintf "Connected with %s." service.name))
-    | Some proxy ->
-      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
-      Lwt.return (success (Format.sprintf
-        "Connected with %s and proxy '%s'."
-        service.name
-        (Proxy.to_string ~hide_password:true proxy)))
+    Lwt.return (success (Format.sprintf "Connected with %s." service.name))
 
-  (** Update the proxy of a service *)
-  let update_proxy ~(connman:Connman.Manager.t) req =
+  (** Update a service *)
+  let update ~(connman:Connman.Manager.t) req =
     let%lwt form_data = urlencoded_pairs_of_body req in
     let%lwt service = with_service ~connman (param req "id") in
-    match%lwt with_empty_or_valid_proxy form_data with
-    | None ->
-      fail_with "Proxy address may not be empty. Use the 'Disable proxy' button instead."
-    | Some proxy ->
-      let%lwt () = Connman.Service.set_manual_proxy service (Proxy.to_string ~hide_password:false proxy) in
-      Lwt.return (success (Format.sprintf
-        "Proxy of %s has been updated to '%s'."
-        service.name
-        (Proxy.to_string ~hide_password:true proxy)))
 
-  (** Remove the proxy of a service *)
-  let remove_proxy ~(connman:Connman.Manager.t) req =
-    let%lwt service = with_service ~connman (param req "id") in
-    let%lwt () = Connman.Service.set_direct_proxy service in
-    Lwt.return (success (Format.sprintf "Proxy of %s has been disabled." service.name))
+    (* Static IP *)
+    let%lwt () = update_static_ip ~connman service form_data in
 
-  (** Set static IP configuration on a service *)
-  let update_static_ip ~(connman: Connman.Manager.t) req =
-    let%lwt form_data = urlencoded_pairs_of_body req in
-    let%lwt service = with_service ~connman (param req "id") in
-    let get_prop s =
-      form_data
-      |> List.assoc s
-      |> List.hd
+    (* Proxy *)
+    let%lwt current_proxy = Manager.get_default_proxy connman in
+    let%lwt () =
+      match%lwt make_proxy current_proxy form_data with
+      | None -> Connman.Service.set_direct_proxy service
+      | Some proxy -> Connman.Service.set_manual_proxy service proxy
     in
-    let address = get_prop "address" in
-    let netmask = get_prop "netmask" in
-    let gateway = get_prop "gateway" in
-    let nameservers = get_prop "nameservers" |> String.split_on_char ',' |> List.map (String.trim) in
-    let%lwt () = Connman.Service.set_manual_ipv4 service ~address ~netmask ~gateway in
-    let%lwt () = Connman.Service.set_nameservers service nameservers in
-    Lwt.return (success (Format.sprintf "Configured static IP for %s." service.name))
 
-  (** Remove static IP configuration from a service *)
-  let remove_static_ip ~(connman: Connman.Manager.t) req =
-    let%lwt form_data = urlencoded_pairs_of_body req in
-    let%lwt service = with_service ~connman (param req "id") in
-    let%lwt () = Connman.Service.set_dhcp_ipv4 service in
-    let%lwt () = Connman.Service.set_nameservers service [] in
-    Lwt.return (success (Format.sprintf "Removed static IP configuration of %s." service.name))
+    (* Grant time for changes to take effect and return to overview *)
+    let%lwt () = Lwt_unix.sleep 0.5 in
+    redirect' (Uri.of_string "/network")
 
   (** Remove a service **)
   let remove ~(connman:Connman.Manager.t) req =
     let%lwt service = with_service ~connman (param req "id") in
+
+    (* Clear settings. *)
+    let%lwt () = Connman.Service.set_direct_proxy service in
+    let%lwt () = Connman.Service.set_nameservers service [] in
+    let%lwt () = Connman.Service.set_dhcp_ipv4 service in
+
     let%lwt () = Connman.Service.remove service in
-    Lwt.return (success (Format.sprintf "Removed service %s." service.name))
+    Lwt.return (success (Format.sprintf "Forgot network %s." service.name))
 
   let build ~(connman:Connman.Manager.t) app =
     app
     |> get "/network" (overview ~connman)
     |> get "/network/:id" (details ~connman)
     |> post "/network/:id/connect" (connect ~connman)
-    |> post "/network/:id/proxy/update" (update_proxy ~connman)
-    |> post "/network/:id/proxy/remove" (remove_proxy ~connman)
+    |> post "/network/:id/update" (update ~connman)
     |> post "/network/:id/remove" (remove ~connman)
-    |> post "/network/:id/static-ip/update" (update_static_ip ~connman)
-    |> post "/network/:id/static-ip/remove" (remove_static_ip ~connman)
 end
 
 

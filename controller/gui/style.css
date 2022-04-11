@@ -152,10 +152,6 @@
 
 /* Network */
 
-.d-Network__Refresh {
-    margin: 0 1rem 0 auto;
-}
-
 .d-Network__InternetConnected {
     color: green;
 }
@@ -166,8 +162,13 @@
 
 .d-Network__Title {
     display: flex;
-    line-height: 1;
+    flex-direction: row;
     align-items: center;
+    line-height: 1;
+}
+
+.d-Network__TitleAction {
+    margin: 0 1rem 0 auto;
 }
 
 .d-Network__SignalStrength {
@@ -177,7 +178,7 @@
 }
 
 .d-Network__Properties {
-    margin-bottom: 2rem;
+    margin: 2rem 0 0;
 }
 
 .d-Network__Form {
@@ -188,25 +189,26 @@
     padding-bottom: 0.5rem;
 }
 
-.d-Network__ProxyForm {
-    display: flex;
-}
-
-.d-Network__ProxyUpdate {
-    display: flex;
-    margin-right: 1rem;
-}
-
 .d-Network__Input {
     width: 400px;
     margin-bottom: 1rem;
-    margin-right: 1rem;
 }
 
-.d-Network__AdvancedSettingsTitle {
-    margin-top: 1rem;
+/* Toggle Group */
+
+.d-Network__ToggleGroup {
+    margin-bottom: 1rem;
 }
 
+.d-Network__ToggleGroup > fieldset {
+    display: none;
+    border: none;
+    padding: 0;
+}
+
+.d-Network__ToggleGroup--Enabled > fieldset {
+    display: block;
+}
 
 /* Switch */
 
