@@ -258,25 +258,9 @@ module NetworkGui = struct
         form_data |> List.assoc "proxy_password" |> List.hd |> non_empty
       in
       match host_input, port_input, user_input, password_input with
-      (* Complete configuration was submitted *)
-      | Some host, Some port, Some user, Some password ->
-        return (Some (Service.Proxy.make ~user:user ~password:password host port))
-      (* Configuration was submitted without password, check whether it is
-         safe to refill from stored value *)
-      | Some host, Some port, Some user, None ->
-        (match current_proxy_opt with
-          | Some ({ credentials = Some { password } } as current_proxy) ->
-              let restored_proxy = Service.Proxy.make ~user:user ~password:password host port in
-              if current_proxy = restored_proxy then
-                (* Proxy configuration has not been touched *)
-                return (Some current_proxy)
-              else
-                (* Proxy configuration has been touched, it's unsafe to restore password *)
-                return (Some (Service.Proxy.make ~user:user ~password:"" host port))
-          | _ ->
-              (* No existing proxy credentials, use empty password *)
-              return (Some (Service.Proxy.make ~user:user ~password:"" host port))
-        )
+      (* Configuration with credentials was submitted *)
+      | Some host, Some port, Some user, password ->
+        return (Some (Service.Proxy.make ~user:user ~password:(Option.value ~default:"" password) host port))
       (* Configuration without credentials was submitted *)
       | Some host, Some port, None, _ ->
         return (Some (Service.Proxy.make host port))
