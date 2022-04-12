@@ -169,7 +169,8 @@ let toggle_group ~is_enabled ~legend_text ~toggle_field contents =
       legend
         [ checked_input
             is_enabled
-            [ a_input_type `Checkbox
+            [ a_class [ "d-Checkbox" ]
+            ; a_input_type `Checkbox
             ; a_name toggle_field
             ; a_id toggle_field
             ; a_onclick "this.closest('.d-Network__ToggleGroup').classList.toggle('d-Network__ToggleGroup--Enabled', this.checked)"

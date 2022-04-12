@@ -328,6 +328,10 @@
     border-color: var(--form-border-color-hover);
 }
 
+.d-Checkbox {
+    margin-right: 0.5rem;
+}
+
 /* Definitions */
 
 .d-Definitions__Term {
