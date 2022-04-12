@@ -126,11 +126,8 @@ module Service : sig
     val make : ?user:string -> ?password:string -> string -> int -> t
     (** Make a [t] from mandatory and optional components.  *)
 
-    val to_uri : include_password:bool -> t -> Uri.t
-    (** [to_uri ~include_password:bool t] returns a URI from [t], including escaped credentials. *)
-
-    val pp : t -> string
-    (** [to_string t] returns a URI string from [t], omitting the password. *)
+    val to_uri : include_userinfo:bool -> t -> Uri.t
+    (** [to_uri ~include_userinfo:bool t] returns a URI from [t], including escaped credentials. *)
 
   end
 
