@@ -48,16 +48,27 @@ let proxy_form proxy =
            )
        ]
        ()
-    ; div ~a:[ a_class [ "d-Network__Label" ] ] [ label ~a:[ a_label_for "proxy_password" ] [ txt "Password (optional)" ] ]
-     ; input
-       ~a:[ a_input_type `Password
-       ; a_class [ "d-Input"; "d-Network__Input" ]
-       ; a_name "proxy_password"
-       ; a_value ""
-       ; Unsafe.string_attrib "is" "show-password"
-       ]
-       ()
-     ]
+    ; div
+        ~a:(match proxy with
+            | Some { credentials = Some { password } } ->
+                if password <> "" then
+                    [ Unsafe.string_attrib "is" "keep-previous-password" ]
+                else
+                    []
+            | _ -> [])
+        [ div 
+            ~a:[ a_class [ "d-Network__Label" ] ] 
+            [ label ~a:[ a_label_for "proxy_password" ] [ txt "Password (optional)" ] ]
+        ; input
+            ~a:[ a_input_type `Password
+            ; a_class [ "d-Input"; "d-Network__Input" ]
+            ; a_name "proxy_password"
+            ; a_value ""
+            ; Unsafe.string_attrib "is" "show-password"
+            ]
+            ()
+        ]
+    ]
 
 let not_connected_form service =
   let passphrase_id = "passphrase-" ^ service.id in
