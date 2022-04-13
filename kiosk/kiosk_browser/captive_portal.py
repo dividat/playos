@@ -88,4 +88,6 @@ def open_message(on_open):
 
     widget = QtWidgets.QWidget()
     widget.setLayout(layout)
+    widget.setStyleSheet("background-color: #e0e0e0;")
+
     return widget

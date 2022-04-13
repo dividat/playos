@@ -9,6 +9,9 @@ class MainWidget(QtWidgets.QWidget):
     def __init__(self, kiosk_url, settings_url, toggle_settings_key):
         super(MainWidget, self).__init__()
 
+        # White background color (default is gray)
+        self.setStyleSheet("background-color: white;")
+
         proxy = proxy_module.Proxy()
         proxy.start_monitoring_daemon()
 
