@@ -27,7 +27,7 @@
 .d-Content {
     grid-area: content;
     place-self: center;
-    font-size: 2em;
+    font-size: 1.5rem;
     width: 90%;
     height: 90%;
     overflow: auto;
@@ -185,13 +185,8 @@
     margin: 1rem 0;
 }
 
-.d-Network__Label {
-    padding-bottom: 0.5rem;
-}
-
 .d-Network__Input {
     width: 400px;
-    margin-bottom: 1rem;
 }
 
 /* Toggle Group */
@@ -277,11 +272,21 @@
 /* Form */
 
 :root {
+    --form-label-font-size: 1.3rem;
     --form-component-height: 2.5rem;
-    --form-component-font-size: 70%;
+    --form-component-font-size: 1.2rem;
     --form-border-color: #DDDDDD;
     --form-border-color-hover: #888888;
     --form-input-border: 0.15rem solid var(--form-border-color);
+}
+
+.d-Label {
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.4rem;
+    font-size: var(--form-label-font-size);
+    width: fit-content;
+    margin-bottom: 1rem;
 }
 
 .d-Input {
@@ -330,6 +335,10 @@
 
 .d-Checkbox {
     margin-right: 0.5rem;
+}
+
+.d-CheckboxLabel {
+    font-size: var(--form-component-font-size);
 }
 
 /* Definitions */
