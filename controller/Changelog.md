@@ -11,6 +11,7 @@
 - controller: Split proxy configuration form into multiple inputs for greater ease of use
 - controller: Provide a more helpful error message when network connection is failing
 - controller: Mark connected network services in service list
+- controller: Improve robustness of connectivity check in Network Settings
 - kiosk: Open System Settings (Ctrl+Shift+F12) and Network Login (behind captive portal) in a dialog
 
 ## Fixed
