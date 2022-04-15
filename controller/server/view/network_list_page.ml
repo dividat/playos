@@ -33,12 +33,11 @@ let service_item ({ id; name; strength; ipv4 } as service) =
 
 type params =
   { proxy: string option
-  ; is_internet_connected: bool
   ; services: Connman.Service.t list
   ; interfaces: string
   }
 
-let html { proxy; is_internet_connected; services; interfaces } =
+let html { proxy; services; interfaces } =
   let connected_services, available_services =
     List.partition Connman.Service.is_connected services
   in
@@ -75,15 +74,12 @@ let html { proxy; is_internet_connected; services; interfaces } =
               []
           ) @
           [ Definition.term [ txt "Internet" ]
-          ; Definition.description
-              [ if is_internet_connected then
-                  span
-                    ~a:[ a_class [ "d-Switch--On" ] ]
-                    [ txt "Connected" ]
-                else
-                  span
-                    ~a:[ a_class [ "d-Switch--Off" ] ]
-                    [ txt "Not connected" ]
+          ; Definition.description 
+              [ div 
+                  ~a:[ a_class [ "d-Spinner" ]
+                  ; Unsafe.string_attrib "is" "internet-status" 
+                  ]
+                  [] 
               ]
           ]
         )
