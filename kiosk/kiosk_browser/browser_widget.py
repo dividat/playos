@@ -1,4 +1,4 @@
-from PyQt5 import QtCore, QtWidgets, QtWebEngineWidgets
+from PyQt5 import QtCore, QtWidgets, QtWebEngineWidgets, QtGui
 from enum import Enum, auto
 import logging
 import re
@@ -141,12 +141,32 @@ def loading_page(parent):
     """ Show a loader in the middle of a blank page.
     """
 
-    widget = QtWidgets.QLabel("Loading…", parent)
-    return widget
+    movie = QtGui.QMovie("images/spinner.gif")
+    movie.start()
+
+    label = QtWidgets.QLabel(parent)
+    label.setMovie(movie)
+
+    return hcenter(label, parent)
 
 def network_error_page(parent):
     """ Show network error message.
     """
 
     widget = QtWidgets.QLabel("Network error, sorry…", parent)
+
+    return widget
+
+def hcenter(child, parent):
+    """ Center widget horizontally inside another widget.
+    """
+
+    layout = QtWidgets.QHBoxLayout()
+    layout.addStretch(1)
+    layout.addWidget(child)
+    layout.addStretch(1)
+
+    widget = QtWidgets.QWidget(parent)
+    widget.setLayout(layout)
+
     return widget
