@@ -485,7 +485,7 @@ module RemoteManagementGui = struct
           ; on_timeout = fun () ->
               let msg = "Timeout starting remote management service." in
               let%lwt () = Logs_lwt.err (fun m -> m "%s" msg) in
-              Lwt.return (success msg)
+              fail_with msg
           }
           wait_until_zerotier_is_on)
 
