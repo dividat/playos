@@ -16,11 +16,8 @@
 ## Fixed
 
 - controller: Suppress a confusing error message during regular system updates
-- kiosk: Fix use of proxy credentials containing special characters
-
-## Fixed
-
 - controller: Prevent “Already connected” errors when connecting to a network
+- kiosk: Fix use of proxy credentials containing special characters
 
 # [2021.9.0] - 2021-11-11
 
