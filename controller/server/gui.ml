@@ -324,7 +324,7 @@ module NetworkGui = struct
     let%lwt service = with_service ~connman (param req "id") in
 
     let%lwt () = Connman.Service.connect ~input:passphrase service in
-    Lwt.return (success (Format.sprintf "Connected with %s." service.name))
+    redirect' (Uri.of_string "/network")
 
   (** Update a service *)
   let update ~(connman:Connman.Manager.t) req =
@@ -356,7 +356,7 @@ module NetworkGui = struct
     let%lwt () = Connman.Service.set_dhcp_ipv4 service in
 
     let%lwt () = Connman.Service.remove service in
-    Lwt.return (success (Format.sprintf "Forgot network %s." service.name))
+    redirect' (Uri.of_string "/network")
 
   let build ~(connman:Connman.Manager.t) app =
     app
