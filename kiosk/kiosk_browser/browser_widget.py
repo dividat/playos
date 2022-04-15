@@ -1,4 +1,4 @@
-from PyQt5 import QtCore, QtWidgets, QtWebEngineWidgets, QtGui
+from PyQt5 import QtCore, QtWidgets, QtWebEngineWidgets, QtGui, QtSvg
 from enum import Enum, auto
 import logging
 import re
@@ -150,12 +150,46 @@ def loading_page(parent):
     return hcenter(label, parent)
 
 def network_error_page(parent):
-    """ Show network error message.
+    """ Show network error page.
     """
 
-    widget = QtWidgets.QLabel("Network error, sorry…", parent)
+    icon = QtWidgets.QLabel(parent)
+    icon.setPixmap(QtGui.QPixmap("images/no-internet-icon.png")) # https://flaticons.net
+
+    title = QtWidgets.QLabel("No Internet Connection", parent)
+    title.setStyleSheet("""
+        font-size: 45px;
+        font-weight: bold;
+    """)
+
+    paragraph_1 = paragraph("Please ensure the Internet connection to this device is active.", parent)
+    paragraph_2 = paragraph("If the problem persists, contact Senso Service.", parent)
+
+    logo = QtSvg.QSvgWidget("images/dividat-logo.svg", parent)
+    logo.renderer().setAspectRatioMode(QtCore.Qt.KeepAspectRatio)
+    logo.setFixedHeight(30)
+
+    layout = QtWidgets.QVBoxLayout()
+    layout.addStretch(1)
+    layout.addWidget(hcenter(icon, parent))
+    layout.addSpacing(30)
+    layout.addWidget(hcenter(title, parent))
+    layout.addSpacing(20)
+    layout.addWidget(hcenter(paragraph_1, parent))
+    layout.addWidget(hcenter(paragraph_2, parent))
+    layout.addStretch(1)
+    layout.addWidget(hcenter(logo, parent))
+    layout.addSpacing(20)
+
+    widget = QtWidgets.QWidget()
+    widget.setLayout(layout)
 
     return widget
+
+def paragraph(text, parent):
+    label = QtWidgets.QLabel(text, parent)
+    label.setStyleSheet("font-size: 20px;")
+    return label
 
 def hcenter(child, parent):
     """ Center widget horizontally inside another widget.
