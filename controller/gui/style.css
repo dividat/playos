@@ -210,17 +210,6 @@
     display: block;
 }
 
-/* Switch */
-
-.d-Switch--On {
-    color: green;
-}
-
-.d-Switch--Off {
-    color: red;
-}
-
-
 /* Side note */
 
 .d-Note {

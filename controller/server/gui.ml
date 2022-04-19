@@ -191,32 +191,6 @@ module NetworkGui = struct
 
     let%lwt proxy = Manager.get_default_proxy connman in
 
-    let check_timeout =
-      Option.bind (Uri.get_query_param (Request.uri req) "timeout") Float.of_string_opt
-        |> Option.map (min 5.0)
-        |> Option.map (max 0.0)
-        |> Option.value ~default:0.2
-    in
-
-    let%lwt is_internet_connected =
-      with_timeout
-        { duration = check_timeout
-        ; on_timeout = fun () ->
-            let%lwt () = Logs_lwt.err (fun m -> m "Timeout reaching captive portal (%f s)" check_timeout) in
-            return false
-        }
-        (fun () ->
-            match%lwt Curl.request ?proxy:(Option.map (Service.Proxy.to_uri ~include_userinfo:true) proxy) (Uri.of_string "http://captive.dividat.com/") with
-            | RequestSuccess (200, _) ->
-              return true
-            | RequestSuccess (status, _) ->
-              let%lwt () = Logs_lwt.err (fun m -> m "Non-OK status code reaching captive portal: %d" status) in
-              return false
-            | RequestFailure err ->
-              let%lwt () = Logs_lwt.err (fun m -> m "Error reaching captive portal: %s" (Curl.pretty_print_error err)) in
-              return false)
-    in
-
     let%lwt interfaces = Network.Interface.get_all () in
 
     let pp_proxy p =
@@ -230,12 +204,24 @@ module NetworkGui = struct
 
     Lwt.return (page (Network_list_page.html
       { proxy = proxy |> Option.map pp_proxy
-      ; is_internet_connected
       ; services = all_services
       ; interfaces = interfaces
           |> [%sexp_of: Network.Interface.t list]
           |> Sexplib.Sexp.to_string_hum
       }))
+
+  (** Internet status **)
+  let internet_status ~connman _ = 
+    let%lwt proxy = Manager.get_default_proxy connman in
+    match%lwt Curl.request ?proxy:(Option.map (Service.Proxy.to_uri ~include_userinfo:true) proxy) (Uri.of_string "http://captive.dividat.com/") with
+    | RequestSuccess (code, response) ->
+      `String response
+        |> respond ?code:(Some (Cohttp.Code.(`Code code)))
+        |> Lwt.return
+    | RequestFailure err ->
+      `String (Format.sprintf "Error reaching captive portal: %s" (Curl.pretty_print_error err))
+        |> respond ?code:(Some Cohttp.Code.(`Service_unavailable))
+        |> Lwt.return
 
   (** Helper to find a service by id *)
   let with_service ~connman id =
@@ -338,7 +324,7 @@ module NetworkGui = struct
     let%lwt service = with_service ~connman (param req "id") in
 
     let%lwt () = Connman.Service.connect ~input:passphrase service in
-    Lwt.return (success (Format.sprintf "Connected with %s." service.name))
+    redirect' (Uri.of_string "/network")
 
   (** Update a service *)
   let update ~(connman:Connman.Manager.t) req =
@@ -370,7 +356,7 @@ module NetworkGui = struct
     let%lwt () = Connman.Service.set_dhcp_ipv4 service in
 
     let%lwt () = Connman.Service.remove service in
-    Lwt.return (success (Format.sprintf "Forgot network %s." service.name))
+    redirect' (Uri.of_string "/network")
 
   let build ~(connman:Connman.Manager.t) app =
     app
@@ -379,6 +365,7 @@ module NetworkGui = struct
     |> post "/network/:id/connect" (connect ~connman)
     |> post "/network/:id/update" (update ~connman)
     |> post "/network/:id/remove" (remove ~connman)
+    |> get "/internet/status" (internet_status ~connman)
 end
 
 
@@ -498,7 +485,7 @@ module RemoteManagementGui = struct
           ; on_timeout = fun () ->
               let msg = "Timeout starting remote management service." in
               let%lwt () = Logs_lwt.err (fun m -> m "%s" msg) in
-              Lwt.return (success msg)
+              fail_with msg
           }
           wait_until_zerotier_is_on)
 

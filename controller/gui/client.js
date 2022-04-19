@@ -104,6 +104,36 @@ customElements.define(
   { extends: 'form' }
 )
 
+/* Internet status web component.
+ *
+ * Ask HTTP server for current internet status, then show status.
+ */
+customElements.define(
+  'internet-status',
+  class extends HTMLDivElement {
+    constructor() {
+      super()
+
+      const div = this
+
+      const xhr = new XMLHttpRequest()
+      xhr.onload = function() {
+        div.className = '' // Remove loader
+        if (xhr.status >= 200 && xhr.status < 300) {
+          div.innerText = 'Connected'
+          div.style.color = 'green'
+        } else {
+          div.innerText = 'Not Connected'
+          div.style.color = 'red'
+        }
+      }
+      xhr.open( 'GET', '/internet/status')
+      xhr.send()
+    }
+  },
+  { extends: 'div' }
+)
+
 /* Place given node under a new parent node.
  *
  * Useful to extend nodes that can not have children in web components, for
