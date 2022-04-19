@@ -12,6 +12,8 @@
 - controller: Provide a more helpful error message when network connection is failing
 - controller: Mark connected network services in service list
 - controller: Improve robustness of connectivity check in Network Settings
+- kiosk: Show a loader when connecting to Play
+- kiosk: Show an informative error page when connecting to Play has failed
 - kiosk: Open System Settings (Ctrl+Shift+F12) and Network Login (behind captive portal) in a dialog
 
 ## Fixed

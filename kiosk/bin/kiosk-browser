@@ -26,10 +26,7 @@ parser.add_argument('settings_url', help='Settings URL')
 
 args = parser.parse_args()
 
-# try:
-kiosk_browser.start(args.kiosk_url, args.settings_url, args.toggle_settings_key)
+# Go to root directory of the kiosk to give relative access to assets
+os.chdir(f'{os.path.dirname(__file__)}/..')
 
-# except InvalidUrl as error:
-#   parser.error(error)
-# except NoUrl as error:
-#   parser.error(error)
+kiosk_browser.start(args.kiosk_url, args.settings_url, args.toggle_settings_key)

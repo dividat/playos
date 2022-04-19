@@ -7,9 +7,7 @@ python3Packages.buildPythonApplication rec {
   pname = "playos_kiosk_browser";
   version = "0.1.0";
 
-  src = builtins.filterSource
-    (path: type: type != "directory" || baseNameOf path != "venv")
-    ./.;
+  src = ./.;
 
   postPatch = ''
     substituteInPlace kiosk_browser/system.py \
@@ -27,6 +25,10 @@ python3Packages.buildPythonApplication rec {
     dbus-python
     pygobject3
   ];
+
+  postInstall = ''
+    cp -r images/ $out/images
+  '';
 
   dontWrapQtApps = true;
   makeWrapperArgs = [ "\${qtWrapperArgs[@]}" ];

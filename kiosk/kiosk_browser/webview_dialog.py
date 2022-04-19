@@ -18,26 +18,15 @@ def widget(parent, title, url, additional_close_keys, on_close):
     h = parent.height()
     dialog.setGeometry(w * (1 - dialog_ratio) / 2, h * (1 - dialog_ratio) / 2, w * dialog_ratio, h * dialog_ratio)
 
-    overlay = get_overlay(parent)
-    overlay.show()
     show_webview_window(dialog, title, url)
 
     for key in set(['ESC', *additional_close_keys]):
         QtWidgets.QShortcut(key, dialog).activated.connect(dialog.close)
 
     # Finish after close
-    dialog.finished.connect(lambda: finish(parent, overlay, dialog, on_close))
+    dialog.finished.connect(lambda: finish(parent, dialog, on_close))
 
     return dialog
-
-def get_overlay(parent):
-    """ Show overlay on all the surface of the parent.
-    """
-
-    widget = QtWidgets.QWidget(parent)
-    widget.setGeometry(0, 0, parent.width(), parent.height())
-    widget.setStyleSheet("background-color: rgba(0, 0, 0, 0.4)")
-    return widget
 
 def show_webview_window(dialog, title, url):
     """ Show webview window with decorations.
@@ -98,10 +87,9 @@ def title_line(dialog, title):
 
     return line
 
-def finish(parent, overlay, dialog, on_close):
-    """ Remove overlay and give back the focus to the parent.
+def finish(parent, dialog, on_close):
+    """ Give back the focus to the parent.
     """
 
-    overlay.setParent(None)
     parent.activateWindow()
     on_close()
