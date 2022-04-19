@@ -4,6 +4,8 @@ type page =
   | Info
   | Network
   | Localization
+  | SystemStatus
+  | Changelog
   | Shutdown
 
 let menu_link page =
@@ -11,20 +13,26 @@ let menu_link page =
   | Info -> "/info"
   | Network -> "/network"
   | Localization -> "/localization"
+  | SystemStatus -> "/status"
+  | Changelog -> "/changelog"
   | Shutdown -> "/shutdown"
 
 let menu_icon page =
   match page with
-  | Info -> "/static/info.svg"
-  | Network -> "/static/wifi.svg"
-  | Localization -> "/static/world.svg"
-  | Shutdown -> "/static/power.svg"
+  | Info -> Icon.info
+  | Network -> Icon.wifi
+  | Localization -> Icon.world
+  | SystemStatus -> Icon.screen
+  | Changelog -> Icon.document
+  | Shutdown -> Icon.power
 
-let menu_alt page =
+let menu_label page =
   match page with
   | Info -> "Information"
   | Network -> "Network"
   | Localization -> "Localization"
+  | SystemStatus -> "System Status"
+  | Changelog -> "Changelog"
   | Shutdown -> "Shutdown"
 
 let menu_item current_page page =
@@ -32,16 +40,12 @@ let menu_item current_page page =
     "d-Menu__Item" ::
       (if current_page = Some page then [ "d-Menu__Item--Active" ] else [])
   in
-  div
-    ~a:[ a_class class_ ]
-    [ a
-        ~a:[ a_href (menu_link page) ]
-        [ img
-            ~src:(menu_icon page)
-            ~alt:(menu_alt page)
-            ~a:[ a_class [ "d-Menu__ItemIcon" ] ]
-            ()
-        ]
+  a
+    ~a:[ a_href (menu_link page) 
+    ; a_class class_ 
+    ]
+    [ menu_icon page
+    ; txt (menu_label page)
     ]
 
 let html ?current_page content =
@@ -55,28 +59,19 @@ let html ?current_page content =
         ]
     )
     (body
-      ~a:[ a_class [ "d-Container" ] ]
-      [ header ~a:[ a_class [ "d-Header" ] ] []
-      ; nav
-          ~a:[ a_class [ "d-Menu" ] ]
-          ([ Info; Network; Localization; Shutdown ]
-              |> List.map (menu_item current_page))
-      ; main
-          ~a:[ a_class [ "d-Content" ] ]
-          [ content ]
-      ; footer
-          ~a:[ a_class [ "d-Footer" ] ]
-          [ a
-              ~a:[ a_href "/changelog"
-              ; a_class [ "d-Footer__Link" ]
-              ]
-              [ txt "changelog" ]
-          ; a
-              ~a:[ a_href "/status"
-              ; a_class [ "d-Footer__Link" ]
-              ]
-              [ txt "system status" ]
+      ~a:[ a_class [ "d-Layout" ] ]
+      [ aside
+          ~a:[ a_class [ "d-Layout__Aside" ] ]
+          [ nav
+              ([ Info; Network; Localization; SystemStatus; Changelog ]
+                |> List.map (menu_item current_page))
+          ; div
+              ~a: [ a_class [ "d-Layout__Shutdown" ] ]
+              [ menu_item current_page Shutdown ]
           ]
+      ; main
+          ~a:[ a_class [ "d-Layout__Content" ] ]
+          [ content ]
       ; script ~a:[ a_src "/static/client.js" ] (txt "")
       ]
     )

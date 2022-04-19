@@ -2,6 +2,8 @@ type page =
   | Info
   | Network
   | Localization
+  | SystemStatus
+  | Changelog
   | Shutdown
 
 val html :

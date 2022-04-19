@@ -1,77 +1,97 @@
-/* Template */
-
+/* Constants */
 :root {
+
+    /* Colors */
     --color-hint: #404040;
+    --color-background: #f5f5f5;
+    --color-border: #e0e0e0;
+    --color-menu-active: #d00000;
+    --color-menu-hover: #fefefe;
+
+    /* Spacing */
+    --spacing-mouse: 0.25rem;
+    --spacing-cat: 0.5rem;
+    --spacing-dog: 1rem;
+    --spacing-horse: 2rem;
+    --spacing-elephant: 4rem;
+    --spacing-whale: 8rem;
+    --spacing-godzilla: 16rem;
+
+    /* Font size */
+    --font-size-cat: 0.75rem;
+    --font-size-dog: 1rem;
+    --font-size-lion: 1.25rem;
+    --font-size-bear: 1.5rem;
+    --font-size-cow: 1.75rem;
+    --font-size-horse: 2rem;
+    --font-size-camel: 2.625rem;
+    --font-size-rhino: 3.375rem;
+    --font-size-elephant: 4.25rem;
+    --font-size-mammoth: 5.25rem;
 }
 
-.d-Container {
-    font-family: monospace;
-    padding: 5vh 5vw 5vh 5vw;
+/* Layout */
 
-    display: grid;
-
-    grid-template-columns: 1fr minmax(0, 10fr);
-    grid-template-rows: 1fr minmax(0, 13fr) 1fr;
-    grid-template-areas:
-        "header header"
-        "menu content"
-        "footer footer";
-
-    height: 90vh;
+html {
+    height: 100%;
 }
 
-.d-Header {
-    grid-area: header;
+.d-Layout {
+    display: flex;
+    height: 100%;
+    font-size: 16px;
 }
 
-.d-Content {
-    grid-area: content;
-    place-self: center;
-    font-size: 1.5rem;
-    width: 90%;
-    height: 90%;
+.d-Layout__Aside {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: var(--color-background);
+    border-right: 1px solid var(--color-border);
+    font-size: var(--font-size-lion);
+}
+
+.d-Layout__Shutdown {
+    border-top: 1px solid var(--color-border);
+}
+
+.d-Layout__Content {
+    width: 100%;
+    height: 100%;
     overflow: auto;
-    margin: 10px;
-}
-
-.d-Footer {
-    grid-area: footer;
-    text-align: right;
-    margin: 20px;
-}
-
-.d-Footer__Link:not(:last-child) {
-    margin-right: 1rem;
+    padding: var(--spacing-horse);
 }
 
 /* Menu */
 
-.d-Menu {
-    grid-area: menu;
-
-    display: grid;
-    grid-template-columns: 1fr;
-    align-content: start;
-    align-items: center;
-    justify-items: stretch;
-    grid-row-gap: 20px;
-}
-
 .d-Menu__Item {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-cat) var(--spacing-dog);
+    gap: var(--spacing-cat);
+    border-bottom: 1px solid var(--color-border);
+    text-decoration: none;
+    color: black;
+    white-space: nowrap;
+}
+
+.d-Menu__Item--Active {
+    position: relative;
+}
+
+.d-Menu__Item--Active::after {
     display: block;
-    margin: 10px;
+    content: "";
+    width: var(--spacing-mouse);
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: var(--color-menu-active);
 }
 
-.d-Menu__ItemIcon {
-    width: 100%;
-}
-
-.d-Menu__ItemIcon:hover {
-    filter: invert(70%);
-}
-
-.d-Menu__Item--Active .d-Menu__ItemIcon {
-    filter: invert(70%) sepia(70%) saturate(100%);
+.d-Menu__Item:hover {
+    background-color: var(--color-menu-hover);
 }
 
 /* Info */
@@ -81,7 +101,7 @@
 }
 
 .d-Info__RemoteManagementAddress {
-    margin-right: 1rem;
+    margin-right: var(--spacing-dog);
 }
 
 /* Network list */

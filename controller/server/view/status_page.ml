@@ -13,7 +13,7 @@ type params =
   }
 
 let html { health; update; rauc } =
-  Page.html (
+  Page.html ~current_page:Page.SystemStatus (
     div
       [ h1
           ~a:[ a_class [ "d-Title" ] ]
