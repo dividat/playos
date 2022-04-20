@@ -235,7 +235,7 @@ let html service =
     | Some s ->
         div
             ~a:[ a_class [ "d-Network__SignalStrength" ] ]
-            [ Signal_strength.html s ]
+            [ Icon.wifi ~strength:s () ]
     | None ->
         div []
   in

@@ -4,7 +4,7 @@ open Tyxml.Html
 let service_item ({ id; name; strength; ipv4 } as service) =
   let strength =
     match strength with
-    | Some s -> [ Signal_strength.html s ]
+    | Some s -> [ Icon.wifi ~strength:s () ]
     | None -> []
   in
   let

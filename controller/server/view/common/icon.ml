@@ -2,9 +2,9 @@ open Tyxml.Svg
 
 (* Helpers *) 
 
-let svg content =
+let svg ?a content =
   Tyxml.Html.svg 
-    ~a:[ a_viewBox (0., 0., 24., 24.) 
+    ~a:([ a_viewBox (0., 0., 24., 24.) 
     ; a_width (24., None)
     ; a_height (24., None)
     ; a_fill `None
@@ -12,7 +12,7 @@ let svg content =
     ; a_stroke_width (2., None)
     ; a_stroke_linecap `Round
     ; a_stroke_linejoin `Round
-    ]
+    ] @ (Option.value ~default:[] a))
     content
 
 let line (x1, y1) (x2, y2) =
@@ -51,11 +51,19 @@ let info =
     ; line (12., 8.) (12., 8.)
     ]
 
-let wifi =
-  svg
-    [ path ~a:[ a_d "M5 12.55a11 11 0 0 1 14.08 0" ] []
-    ; path ~a:[ a_d "M1.42 9a16 16 0 0 1 21.16 0" ] []
-    ; path ~a:[ a_d "M8.53 16.11a6 6 0 0 1 6.95 0" ] []
+let wifi ?strength () =
+  let strength = Option.value ~default:100 strength in
+  let modifier =
+    if strength < 25 then "None"
+    else if strength < 50 then "Weak"
+    else if strength < 75 then "Medium"
+    else "Strong"
+  in
+  svg 
+    ~a:[ a_class [ "d-WifiSignal--" ^ modifier ] ]
+    [ path ~a:[ a_class [ "d-WifiSignal__Wave--Outer" ] ; a_d "M1.42 9a16 16 0 0 1 21.16 0" ] []
+    ; path ~a:[ a_class [ "d-WifiSignal__Wave--Middle" ] ; a_d "M5 12.55a11 11 0 0 1 14.08 0" ] []
+    ; path ~a:[ a_class [ "d-WifiSignal__Wave--Inner" ] ; a_d "M8.53 16.11a6 6 0 0 1 6.95 0" ] []
     ; line (12., 20.) (12., 20.)
     ]
 
