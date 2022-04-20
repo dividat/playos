@@ -337,8 +337,6 @@ module NetworkGui = struct
       | Some proxy -> Connman.Service.set_manual_proxy service proxy
     in
 
-    (* Grant time for changes to take effect and return to overview *)
-    let%lwt () = Lwt_unix.sleep 0.5 in
     redirect' (Uri.of_string "/network")
 
   (** Remove a service **)
