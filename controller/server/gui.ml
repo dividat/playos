@@ -257,29 +257,28 @@ module NetworkGui = struct
       let password_input =
         form_data |> List.assoc "proxy_password" |> List.hd |> non_empty
       in
-      match host_input, port_input, user_input, password_input with
-      (* Complete configuration was submitted *)
-      | Some host, Some port, Some user, Some password ->
-        return (Some (Service.Proxy.make ~user:user ~password:password host port))
-      (* Configuration was submitted without password, check whether it is
-         safe to refill from stored value *)
-      | Some host, Some port, Some user, None ->
-        (match current_proxy_opt with
-          | Some ({ credentials = Some { password } } as current_proxy) ->
-              let restored_proxy = Service.Proxy.make ~user:user ~password:password host port in
-              if current_proxy = restored_proxy then
-                (* Proxy configuration has not been touched *)
-                return (Some current_proxy)
-              else
-                (* Proxy configuration has been touched, it's unsafe to restore password *)
-                return (Some (Service.Proxy.make ~user:user ~password:"" host port))
-          | _ ->
-              (* No existing proxy credentials, use empty password *)
-              return (Some (Service.Proxy.make ~user:user ~password:"" host port))
-        )
+      let keep_password = 
+        form_data |> List.assoc_opt "keep_password" |> Option.is_some
+      in
+      let password = 
+        match (keep_password, current_proxy_opt) with
+        | (true, Some ({ credentials = Some { password } })) -> Ok (Some password)
+        | (true, _) -> Error "Failure to retrieve proxy password. Please re-submit the form."
+        | _ -> Ok password_input
+      in
+      match host_input, port_input, user_input, password with
       (* Configuration without credentials was submitted *)
-      | Some host, Some port, None, _ ->
+      | Some host, Some port, None, Ok None ->
         return (Some (Service.Proxy.make host port))
+      (* Configuration with credentials was submitted *)
+      | Some host, Some port, Some user, Ok password ->
+        return (Some (Service.Proxy.make ~user:user ~password:(Option.value ~default:"" password) host port))
+      (* Configuration without user but with password was submitted *)
+      | _, _, None, Ok (Some _) ->
+        fail_with "A user is required if a password is provided"
+      (* Password retrieval error *)
+      | _, _, _, Error msg ->
+        fail_with msg
       (* Incomplete server information *)
       | _ ->
         fail_with "A host and port are required to configure a proxy server"
@@ -342,8 +341,6 @@ module NetworkGui = struct
       | Some proxy -> Connman.Service.set_manual_proxy service proxy
     in
 
-    (* Grant time for changes to take effect and return to overview *)
-    let%lwt () = Lwt_unix.sleep 0.5 in
     redirect' (Uri.of_string "/network")
 
   (** Remove a service **)

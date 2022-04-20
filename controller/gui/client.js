@@ -134,6 +134,42 @@ customElements.define(
   { extends: 'div' }
 )
 
+/* Keep previous password web component.
+ *
+ * Propose to keep the previously defined password instead of re-defining a new one.
+ */
+customElements.define(
+  'keep-previous-password',
+  class extends HTMLDivElement {
+    constructor() {
+      super()
+
+      const passwordInput = this
+      const root = wrap(passwordInput, document.createElement('div'))
+
+      // Prepend checkbox to enable or disable keeping previous password
+      const input = document.createElement('input')
+      input.name = 'keep_password'
+      input.type = 'checkbox'
+      input.className = 'd-Checkbox'
+      input.checked = true
+      const label = document.createElement('label')
+      label.appendChild(input)
+      label.appendChild(document.createTextNode('Keep previously defined password'))
+      root.prepend(label)
+
+      // Hide password input
+      passwordInput.style = 'display: none'
+
+      // Toggle password input display on click
+      input.addEventListener('click', function() {
+        passwordInput.style.display = passwordInput.style.display === 'block' ? 'none' : 'block'
+      })
+    }
+  },
+  { extends: 'div' }
+)
+
 /* Place given node under a new parent node.
  *
  * Useful to extend nodes that can not have children in web components, for
