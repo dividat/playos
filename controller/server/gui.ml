@@ -262,19 +262,23 @@ module NetworkGui = struct
       in
       let password = 
         match (keep_password, current_proxy_opt) with
-        | (true, Some ({ credentials = Some { password } })) -> Some password
-        | _ -> password_input
+        | (true, Some ({ credentials = Some { password } })) -> Ok (Some password)
+        | (true, _) -> Error "Failure to retrieve proxy password. Please re-submit the form."
+        | _ -> Ok password_input
       in
       match host_input, port_input, user_input, password with
       (* Configuration without credentials was submitted *)
-      | Some host, Some port, None, None ->
+      | Some host, Some port, None, Ok None ->
         return (Some (Service.Proxy.make host port))
       (* Configuration with credentials was submitted *)
-      | Some host, Some port, Some user, password ->
+      | Some host, Some port, Some user, Ok password ->
         return (Some (Service.Proxy.make ~user:user ~password:(Option.value ~default:"" password) host port))
       (* Configuration without user but with password was submitted *)
-      | _, _, None, Some _ ->
+      | _, _, None, Ok (Some _) ->
         fail_with "A user is required if a password is provided"
+      (* Password retrieval error *)
+      | _, _, _, Error msg ->
+        fail_with msg
       (* Incomplete server information *)
       | _ ->
         fail_with "A host and port are required to configure a proxy server"
