@@ -1,10 +1,9 @@
 open Tyxml.Html
 
-let section title_str content =
-  section
-    [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt title_str ]
-    ; pre ~a: [ a_class [ "d-Preformatted" ] ]  [ txt content ]
-    ]
+let definition term description =
+  [ Definition.term [ txt term ]
+  ; Definition.description [ pre ~a: [ a_class [ "d-Preformatted" ] ]  [ txt description ] ]
+  ]
 
 type params =
   { health: string
@@ -24,8 +23,7 @@ let html { health; update; rauc } =
           ]
           [ txt "s" ]
       ])
-    (div
-      [ section "Health" health
-      ; section "Update State" update
-      ; section "RAUC" rauc
-      ])
+    (Definition.list
+      (definition "Health" health
+      @ definition "Update State" update
+      @ definition "RAUC" rauc))

@@ -411,8 +411,7 @@ html {
 /* Definitions */
 
 .d-Definitions__Term {
-    font-weight: bold;
-    font-size: var(--font-size-lion);
+    text-decoration: underline;
     margin-bottom: var(--spacing-mouse);
 }
 
@@ -428,7 +427,9 @@ html {
 }
 
 .d-Markdown h2 {
-    font-size: var(--font-size-lion);
+    text-decoration: underline;
+    font-weight: normal;
+    font-size: var(--font-size-dog);
     margin-bottom: var(--spacing-cat);
 }
 
