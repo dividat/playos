@@ -79,7 +79,7 @@ let html { proxy; services; interfaces } =
       ; section
           [ h2 ~a:[ a_class [ "d-Subtitle" ] ] [ txt "Available Networks" ]
           ; if List.length available_services = 0 then
-              txt "No networks available"
+              p ~a:[ a_class [ "d-Paragraph" ] ] [ txt "No networks available" ]
             else
               ul
                 ~a:[ a_class [ "d-NetworkList" ]; a_role [ "list" ] ]

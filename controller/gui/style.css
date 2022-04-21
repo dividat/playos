@@ -469,6 +469,10 @@ html {
     margin-bottom: 1rem;
 }
 
+.d-Paragraph {
+    margin-bottom: var(--spacing-dog);
+}
+
 .d-Preformatted {
     border-left: 0.5rem solid #E0CB52;
     padding: 0.5rem 1rem;
