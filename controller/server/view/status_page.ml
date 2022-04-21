@@ -2,7 +2,7 @@ open Tyxml.Html
 
 let section title_str content =
   section
-    [ h2 ~a:[ a_class [ "d-Subtitle" ] ] [ txt title_str ]
+    [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt title_str ]
     ; pre ~a: [ a_class [ "d-Preformatted" ] ]  [ txt content ]
     ]
 

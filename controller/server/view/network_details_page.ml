@@ -267,7 +267,7 @@ let html service =
           not_connected_form service
       ; div
           ~a:[ a_class [ "d-Network__Properties" ] ]
-          [ h2 ~a:[ a_class [ "d-Subtitle" ] ] [ txt "Service Details" ]
+          [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Service Details" ]
           ; pre
               ~a:[ a_class [ "d-Preformatted" ] ]
               [ txt properties ]
