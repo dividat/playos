@@ -2,10 +2,10 @@ open Connman.Service
 open Tyxml.Html
 
 let service_item ({ id; name; strength; ipv4 } as service) =
-  let strength =
+  let icon =
     match strength with
-    | Some s -> [ Icon.wifi ~strength:s () ]
-    | None -> []
+    | Some s -> Icon.wifi ~strength:s ()
+    | None -> Icon.ethernet
   in
   let
     classes =
@@ -24,9 +24,7 @@ let service_item ({ id; name; strength; ipv4 } as service) =
           | None ->
                 space ()
           )
-        ; div
-            ~a:[ a_class [ "d-NetworkList__SignalStrength" ] ]
-            strength
+        ; div ~a:[ a_class [ "d-NetworkList__Icon" ] ] [ icon ]
         ; div ~a:[ a_class [ "d-NetworkList__Chevron" ] ] [ txt "ᐳ" ]
         ]
     ]
@@ -45,7 +43,7 @@ let html { proxy; services; interfaces } =
     ~current_page:Page.Network 
     ~header:(
       Page.header_title 
-        ~icon:(Icon.wifi ()) 
+        ~icon:Icon.world
         ~right_action:(a ~a:[ a_href "/network" ; a_class [ "d-Button" ] ] [ txt "Refresh" ])
         [ txt "Network" ])
     (div

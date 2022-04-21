@@ -222,12 +222,12 @@ html {
   font-size: 1rem;
 }
 
-.d-NetworkList__SignalStrength {
+.d-NetworkList__Icon {
     width: 2rem;
     height: 2rem;
 }
 
-.d-NetworkList__SignalStrength > svg {
+.d-NetworkList__Icon > svg {
   width: 100%;
   height: 100%;
 }

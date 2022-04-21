@@ -20,8 +20,8 @@ let menu_link page =
 let menu_icon page =
   match page with
   | Info -> Icon.info
-  | Network -> Icon.wifi ()
-  | Localization -> Icon.world
+  | Network -> Icon.world
+  | Localization -> Icon.letter
   | SystemStatus -> Icon.screen
   | Changelog -> Icon.document
   | Shutdown -> Icon.power

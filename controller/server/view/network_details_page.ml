@@ -230,10 +230,8 @@ let html service =
   let is_disconnectable = is_service_connected && service.type' = Connman.Technology.Wifi in
   let icon =
     match service.strength with
-    | Some s ->
-        Icon.wifi ~strength:s ()
-    | None ->
-        Icon.wifi ()
+    | Some s -> Icon.wifi ~strength:s ()
+    | None -> Icon.ethernet
   in
   let properties = service
     |> sexp_of_t
