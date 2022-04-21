@@ -50,7 +50,7 @@ customElements.define(
         position: absolute;
         top: 50%;
         right: calc(${rightMargin}px + 0.5rem);
-        font-size: 50%;
+        font-size: 65%;
         transform: translateY(-50%);
         cursor: pointer;
       `
@@ -154,6 +154,7 @@ customElements.define(
       input.className = 'd-Checkbox'
       input.checked = true
       const label = document.createElement('label')
+      label.className = 'd-CheckboxLabel'
       label.appendChild(input)
       label.appendChild(document.createTextNode('Keep previously defined password'))
       root.prepend(label)
