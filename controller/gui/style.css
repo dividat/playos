@@ -4,9 +4,9 @@
     /* Colors */
     --color-hint: #404040;
     --color-background: #f5f5f5;
-    --color-background-hover: #fefefe;
+    --color-background-hover: #b1b4ce;
     --color-border: #e0e0e0;
-    --color-menu-active: #d00000;
+    --color-menu-active: #2439c9;
 
     /* Spacing */
     --spacing-mouse: 0.25rem;
@@ -98,7 +98,7 @@ html {
 .d-Menu__Item--Active::after {
     display: block;
     content: "";
-    width: var(--spacing-mouse);
+    width: var(--spacing-cat);
     height: 100%;
     position: absolute;
     top: 0;
@@ -106,7 +106,8 @@ html {
     background-color: var(--color-menu-active);
 }
 
-.d-Menu__Item:hover {
+.d-Menu__Item:hover, .d-Menu__Item:focus {
+    outline: none;
     background-color: var(--color-background-hover);
 }
 
@@ -137,7 +138,8 @@ html {
     margin-right: var(--spacing-dog);
 }
 
-.d-Header__BackLink:hover {
+.d-Header__BackLink:hover, .d-Header__BackLink:focus {
+    outline: none;
     background-color: var(--color-background-hover);
 }
 
@@ -207,7 +209,8 @@ html {
   top: calc(50% - 0.375rem);
 }
 
-.d-NetworkList__Network:hover {
+.d-NetworkList__Network:hover, .d-NetworkList__Network:focus {
+    outline: none;
     background: #E0CB52;
 }
 
@@ -384,7 +387,8 @@ html {
     cursor: pointer;
 }
 
-.d-Button:not([disabled]):hover {
+.d-Button:not([disabled]):hover, .d-Button:not([disabled]):focus {
+    outline: none;
     border-color: var(--form-border-color-hover);
 }
 
