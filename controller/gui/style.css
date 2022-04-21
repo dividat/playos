@@ -128,7 +128,6 @@ html {
     height: 50px;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-dog);
     text-decoration: none;
     border: 1px solid var(--color-border);
     background-color: var(--color-background);
@@ -288,7 +287,6 @@ html {
 /* Side note */
 
 .d-Note {
-    font-size: 80%;
     color: var(--color-hint);
     margin-bottom: 1rem;
 }
@@ -340,16 +338,13 @@ html {
 
 .d-Localization__Note {
     font-style: italic;
-    font-size: 80%;
     margin-top: 2rem;
 }
 
 /* Form */
 
 :root {
-    --form-label-font-size: 1.3rem;
     --form-component-height: 2.5rem;
-    --form-component-font-size: 1.2rem;
     --form-border-color: #DDDDDD;
     --form-border-color-hover: #888888;
     --form-input-border: 0.15rem solid var(--form-border-color);
@@ -359,13 +354,11 @@ html {
     display: flex;
     flex-direction: column;
     row-gap: 0.4rem;
-    font-size: var(--form-label-font-size);
     width: fit-content;
     margin-bottom: 1rem;
 }
 
 .d-Input {
-    font-size: var(--form-component-font-size);
     height: var(--form-component-height);
     padding: 0 0.5rem;
     border: var(--form-input-border);
@@ -379,7 +372,6 @@ html {
     display: inline-flex;
     align-items: center;
     height: var(--form-component-height);
-    font-size: var(--form-component-font-size);
     text-decoration: none;
     padding: 0 0.8rem;
     color: black;
@@ -396,7 +388,6 @@ html {
 }
 
 .d-Select {
-    font-size: var(--form-component-font-size);
     height: var(--form-component-height);
     padding: 0 0.5rem;
     background-color: white;
@@ -412,14 +403,12 @@ html {
     margin-right: 0.5rem;
 }
 
-.d-CheckboxLabel {
-    font-size: var(--form-component-font-size);
-}
-
 /* Definitions */
 
 .d-Definitions__Term {
     font-weight: bold;
+    font-size: var(--font-size-lion);
+    margin-bottom: var(--spacing-mouse);
 }
 
 .d-Definitions__Description {
@@ -428,24 +417,26 @@ html {
 
 /* Markdown */
 
-.d-Markdown {
-    font-size: 90%;
+.d-Markdown h1 {
+    font-size: var(--font-size-bear);
+    margin-bottom: var(--spacing-dog);
 }
 
-.d-Markdown h1 {
-    margin-bottom: 1rem;
+.d-Markdown h2 {
+    font-size: var(--font-size-lion);
+    margin-bottom: var(--spacing-cat);
 }
 
 .d-Markdown ul {
     list-style: square inside;
     padding-left: 0;
     font-weight: normal;
+    margin-bottom: var(--spacing-dog);
 }
 
 .d-Markdown code {
     background-color: gray;
     padding: .2rem .5rem;
-    font-size: 90%;
     background: #f1f1f1;
     border: 1px solid #e1e1e1;
     border-radius: 4px;
@@ -474,7 +465,6 @@ html {
 }
 
 .d-Preformatted {
-    font-size: 80%;
     border-left: 0.5rem solid #E0CB52;
     padding: 0.5rem 1rem;
     background-color: #FCFAEE;

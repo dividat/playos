@@ -160,7 +160,7 @@ customElements.define(
       root.prepend(label)
 
       // Hide password input
-      passwordInput.style = 'display: none'
+      passwordInput.style = 'display: none; margin-top: 1rem;'
 
       // Toggle password input display on click
       input.addEventListener('click', function() {
