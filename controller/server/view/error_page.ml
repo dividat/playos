@@ -6,13 +6,12 @@ type params =
   }
 
 let html { message; request } =
-  Page.html (
-    div
-      [ h1 ~a:[ a_class [ "d-Title" ] ] [ txt "ERROR" ]
-      ; pre ~a:[ a_class [ "d-Preformatted" ] ] [ txt message ]
+  Page.html 
+    ~header:(Page.header_title [ txt "Error" ])
+    (div
+      [ pre ~a:[ a_class [ "d-Preformatted" ] ] [ txt message ]
       ; details
           (summary [ txt "Request" ])
           [ pre ~a: [ a_class [ "d-Preformatted" ] ] [ txt request ]
           ]
-      ]
-  )
+      ])

@@ -48,7 +48,12 @@ let menu_item current_page page =
     ; txt (menu_label page)
     ]
 
-let html ?current_page content =
+let html ?current_page ?header content =
+  let header = 
+    match header with
+    | Some header -> [ Tyxml.Html.header ~a:[ a_class [ "d-Layout__Header" ] ] [ header ] ]
+    | None -> []
+  in
   html
     ~a:[ a_lang "en" ]
     (head
@@ -60,7 +65,7 @@ let html ?current_page content =
     )
     (body
       ~a:[ a_class [ "d-Layout" ] ]
-      [ aside
+      (( aside
           ~a:[ a_class [ "d-Layout__Aside" ] ]
           [ nav
               ([ Info; Network; Localization; SystemStatus; Changelog ]
@@ -68,10 +73,34 @@ let html ?current_page content =
           ; div
               ~a: [ a_class [ "d-Layout__Shutdown" ] ]
               [ menu_item current_page Shutdown ]
-          ]
-      ; main
-          ~a:[ a_class [ "d-Layout__Content" ] ]
-          [ content ]
+          ]) 
+      :: header 
+      @ [ main
+              ~a:[ a_class [ "d-Layout__Main" ] ]
+              [ content ]
       ; script ~a:[ a_src "/static/client.js" ] (txt "")
-      ]
+      ])
     )
+
+let header_title ?back_url ?icon ?right_action content =
+  let back_link =
+    match back_url with
+    | Some url -> [ a ~a:[ a_class [ "d-Header__BackLink" ] ; a_href url ] [ Icon.arrow_left ] ]
+    | None -> []
+  in
+  let icon =
+    match icon with
+    | Some icon -> [ span ~a: [ a_class [ "d-Header__Icon" ] ] [ icon ] ]
+    | None -> []
+  in
+  let right_action = 
+    match right_action with
+    | Some right_action -> [ right_action ]
+    | None -> []
+  in
+  div
+    ~a:[ a_class [ "d-Header__Line" ] ]
+    ((h1
+      ~a:[ a_class [ "d-Header__Title" ] ]
+      (back_link @ icon @ content))
+      :: right_action)

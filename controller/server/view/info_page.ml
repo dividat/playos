@@ -33,10 +33,11 @@ let remote_management address =
       ]
 
 let html server_info =
-  Page.html ~current_page:Page.Info (
-    div
-      [ h1 ~a:[ a_class [ "d-Title" ] ] [ txt "Information" ]
-      ; Definition.list
+  Page.html 
+    ~current_page:Page.Info 
+    ~header:(Page.header_title ~icon:Icon.info [ txt "Information" ])
+    (div
+      [ Definition.list
           [ Definition.term [ txt "Version" ]
           ; Definition.description [ txt server_info.version ]
 
@@ -55,5 +56,4 @@ let html server_info =
           ; Definition.term [ txt "Remote management" ]
           ; Definition.description (remote_management server_info.zerotier_address)
           ]
-      ]
-  )
+      ])

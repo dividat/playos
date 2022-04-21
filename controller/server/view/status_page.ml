@@ -13,19 +13,19 @@ type params =
   }
 
 let html { health; update; rauc } =
-  Page.html ~current_page:Page.SystemStatus (
-    div
-      [ h1
-          ~a:[ a_class [ "d-Title" ] ]
-          [ txt "System Statu"
-          ; a
-              ~a:[ a_class [ "d-HiddenLink" ]
-              ; a_href "/label"
-              ]
-              [ txt "s" ]
+  Page.html 
+    ~current_page:Page.SystemStatus 
+    ~header:(Page.header_title 
+      ~icon:Icon.screen 
+      [ txt "System Statu"
+      ; a
+          ~a:[ a_class [ "d-HiddenLink" ]
+          ; a_href "/label"
           ]
-      ; section "Health" health
+          [ txt "s" ]
+      ])
+    (div
+      [ section "Health" health
       ; section "Update State" update
       ; section "RAUC" rauc
-      ]
-  )
+      ])

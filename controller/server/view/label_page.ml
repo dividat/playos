@@ -4,11 +4,10 @@ open Tyxml.Html
 let default_label_printer_url = "http://192.168.0.5:3000/play-computer"
 
 let html { machine_id; mac_1; mac_2 } =
-  Page.html (
-    div
-      [ h1 ~a:[ a_class [ "d-Title" ] ] [ txt "Print Label" ]
-
-      ; Definition.list
+  Page.html 
+    ~header:(Page.header_title [ txt "Print Label" ])
+    (div
+      [ Definition.list
           [ Definition.term [ txt "Machine ID" ]
           ; Definition.description [ txt machine_id ]
 
@@ -56,5 +55,4 @@ let html { machine_id; mac_1; mac_2 } =
               ]
               ()
           ]
-      ]
-  )
+      ])

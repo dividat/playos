@@ -4,9 +4,9 @@
     /* Colors */
     --color-hint: #404040;
     --color-background: #f5f5f5;
+    --color-background-hover: #fefefe;
     --color-border: #e0e0e0;
     --color-menu-active: #d00000;
-    --color-menu-hover: #fefefe;
 
     /* Spacing */
     --spacing-mouse: 0.25rem;
@@ -37,12 +37,20 @@ html {
 }
 
 .d-Layout {
-    display: flex;
     height: 100%;
     font-size: 16px;
+
+
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        "aside header"
+        "aside main"
 }
 
 .d-Layout__Aside {
+    grid-area: aside;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -55,7 +63,14 @@ html {
     border-top: 1px solid var(--color-border);
 }
 
-.d-Layout__Content {
+.d-Layout__Header {
+    grid-area: header;
+    padding: var(--spacing-dog) var(--spacing-horse);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.d-Layout__Main {
+    grid-area: main;
     width: 100%;
     height: 100%;
     overflow: auto;
@@ -91,7 +106,49 @@ html {
 }
 
 .d-Menu__Item:hover {
-    background-color: var(--color-menu-hover);
+    background-color: var(--color-background-hover);
+}
+
+/* Header */
+
+.d-Header__Line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.d-Header__Title {
+    display: flex;
+    align-items: center;
+}
+
+.d-Header__BackLink {
+    display: flex;
+    width: 50px;
+    height: 50px;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-dog);
+    text-decoration: none;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background);
+    border-radius: 50%;
+    color: black;
+    margin-right: var(--spacing-dog);
+}
+
+.d-Header__BackLink:hover {
+    background-color: var(--color-background-hover);
+}
+
+.d-Header__Icon {
+    display: flex;
+    margin-right: var(--spacing-dog);
+}
+
+.d-Header__Icon > svg {
+    width: 45px;
+    height: 45px;
 }
 
 /* Info */
@@ -192,10 +249,6 @@ html {
     line-height: 1;
 }
 
-.d-Network__TitleAction {
-    margin: 0 1rem 0 auto;
-}
-
 .d-Network__SignalStrength {
     height: 3rem;
     width: 3rem;
@@ -210,10 +263,6 @@ html {
 
 .d-Network__Properties {
     margin: 2rem 0 0;
-}
-
-.d-Network__Form {
-    margin: 1rem 0;
 }
 
 .d-Network__Input {
@@ -420,10 +469,6 @@ html {
 
 /* Other */
 
-.d-Title {
-    margin-bottom: 1rem;
-}
-
 .d-Subtitle {
     margin-bottom: 1rem;
 }
@@ -449,20 +494,6 @@ html {
     border: 0.1rem solid #E1E1E1;
     border-radius: 0.4rem;
     padding: 0.2rem 0.5rem;
-}
-
-.d-BackLink {
-    color: blue;
-    font-size: 1rem;
-    text-decoration: none;
-}
-
-.d-BackLink:hover {
-    text-decoration: underline;
-}
-
-.d-BackLink:before {
-    content: "❮ ";
 }
 
 .d-Details {

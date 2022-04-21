@@ -81,7 +81,6 @@ let not_connected_form service =
   form
       ~a:[ a_action ("/network/" ^ service.id ^ "/connect")
       ; a_method `Post
-      ; a_class [ "d-Network__Form" ]
       ; Unsafe.string_attrib "is" "disable-after-submit"
       ]
       [ label
@@ -140,7 +139,7 @@ let static_ip_form service =
     else
       ""
   in
-  div ~a:[ a_class [ "d-Network__Form" ]]
+  div
     [ p ~a: [ a_class ["d-Note"]  ][
           txt "A valid IP address must be in the form of "
         ; code ~a:[ a_class [ "d-Code" ] ] [ txt "n.n.n.n" ]
@@ -205,7 +204,6 @@ let connected_form service =
     [ form
         ~a:[ a_action ("/network/" ^ service.id ^ "/update")
         ; a_method `Post
-        ; a_class [ "d-Network__Form" ]
         ; Unsafe.string_attrib "is" "disable-after-submit"
         ]
         [ toggle_group 
@@ -230,14 +228,12 @@ let connected_form service =
 let html service =
   let is_service_connected = Connman.Service.is_connected service in
   let is_disconnectable = is_service_connected && service.type' = Connman.Technology.Wifi in
-  let strength =
+  let icon =
     match service.strength with
     | Some s ->
-        div
-            ~a:[ a_class [ "d-Network__SignalStrength" ] ]
-            [ Icon.wifi ~strength:s () ]
+        Icon.wifi ~strength:s ()
     | None ->
-        div []
+        Icon.wifi ()
   in
   let properties = service
     |> sexp_of_t
@@ -258,23 +254,16 @@ let html service =
           ()
       ]
   in
-  Page.html ~current_page:Page.Network (
-    div
-      [ a ~a:[
-          a_class [ "d-BackLink" ]
-          ; a_href "/network"
-          ]
-          [ txt "Back to networks" ]
-      ; div
-          ~a:[ a_class [ "d-Title" ] ]
-          [ div
-              ~a:[ a_class [ "d-Network__Title" ] ]
-              [ h1 [ txt service.name ]
-              ; strength
-              ; if is_disconnectable then disconnect_button else txt ""
-              ]
-          ]
-      ; if is_service_connected then
+  Page.html 
+    ~current_page:Page.Network 
+    ~header:(
+      Page.header_title 
+        ~back_url:"/network" 
+        ?right_action:(if is_disconnectable then Some disconnect_button else None)
+        ~icon 
+        [ txt service.name ])
+    (div
+      [ if is_service_connected then
           connected_form service
         else
           not_connected_form service
@@ -285,5 +274,4 @@ let html service =
               ~a:[ a_class [ "d-Preformatted" ] ]
               [ txt properties ]
           ]
-      ]
-  )
+      ])
