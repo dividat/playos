@@ -15,6 +15,7 @@
 - kiosk: Show a loader when connecting to Play
 - kiosk: Show an informative error page when connecting to Play has failed
 - kiosk: Open System Settings (Ctrl+Shift+F12) and Network Login (behind captive portal) in a dialog
+- os: Limit resolution to 1080p on UHD screens
 
 ## Fixed
 
