@@ -132,7 +132,7 @@ A service that is connected may be removed (e.g. thus disconnecting from the wir
 #+attr_html: :width 800px
 [[../screenshots/controller-network-remove.png]]
 
-Ethernet connections are automatically configured using DHCP or link-local address autoconfiguration. Manual configuration is not possible.
+Ethernet connections are automatically configured using DHCP or link-local address autoconfiguration unless a static IP configuration is provided.
 
 *** Network interface addresses
 
