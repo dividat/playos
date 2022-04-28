@@ -262,7 +262,14 @@ module NetworkGui = struct
       in
       let password = 
         match (keep_password, current_proxy_opt) with
-        | (true, Some ({ credentials = Some { password } })) -> Ok (Some password)
+        | (true, Some ({ host; port; credentials = Some { user; password } })) ->
+          if host_input = Some host && port_input = Some port && user_input = Some user then
+            (* Proxy configuration wasn't touched, password may be preserved. *)
+            Ok (Some password)
+          else
+            (* Proxy configuration was touched, demand new password to avoid
+               disclosing to untrusted server. *)
+            Error "Password needs to be provided when changing proxy configuration."
         | (true, _) -> Error "Failure to retrieve proxy password. Please re-submit the form."
         | _ -> Ok password_input
       in
