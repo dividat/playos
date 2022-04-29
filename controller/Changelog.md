@@ -1,3 +1,29 @@
+# [2022.4.0-VALIDATION] - 2022-04-29
+
+## Added
+
+- controller: Show a loader in submit buttons when submitting forms
+
+## Changed
+
+- os: Update nixpkgs channel to 21.11
+- os: Disable virtual terminals that are not used by PlayOS
+- controller: Split proxy configuration form into multiple inputs for greater ease of use
+- controller: Provide a more helpful error message when network connection is failing
+- controller: Mark connected network services in service list
+- controller: Improve robustness of connectivity check in Network Settings
+- kiosk: Show a loader when connecting to Play
+- kiosk: Show an informative error page when connecting to Play has failed
+- kiosk: Open System Settings (Ctrl+Shift+F12) and Network Login (behind captive portal) in a dialog
+
+## Fixed
+
+- controller: Suppress a confusing error message during regular system updates
+- controller: Prevent “Already connected” errors when connecting to a network
+- kiosk: Fix use of proxy credentials containing special characters
+
+# [2021.9.0] - 2021-11-11
+
 # [2021.9.0-VALIDATION] - 2021-09-28
 
 ## Added

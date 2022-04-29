@@ -1,4 +1,4 @@
-#!@python36@/bin/python
+#!@python39@/bin/python
 
 import tempfile
 from contextlib import contextmanager
@@ -60,30 +60,20 @@ def run_vm(system, qemu_opts, kernel_arguments):
         print("Kernel arguments:\n\t{}".format(kernel_arguments))
         print("Backdoor activated. Access console with following command:\n\tsocat STDIO,raw,echo=0,escape=0x03 UNIX:{}/backdoor".format(backdoor_dir))
         _qemu([
-            '-kernel',
-            kernel,
-            '-initrd',
-            initrd,
-            '--virtfs',
-            virtfs_opts,
-            '-append',
-            kernel_arguments,
+            '-kernel', kernel,
+            '-initrd', initrd,
+            '--virtfs', virtfs_opts,
+            '-append', kernel_arguments,
+            '-vga', 'virtio', # Display screen as big as possible
             # Unused shell. This is used by the "backdoor" in <nixos/modules/test-instrumentation.nix>.
             # TODO: Set up a Unix Socket from Python and connect to shell
-            '-chardev',
-            'socket,id=shell,path={}/not-working-shell,server,nowait'.format(backdoor_dir),
-            '-device',
-            'virtio-serial',
-            '-device',
-            'virtconsole,chardev=shell',
+            '-chardev', 'socket,id=shell,path={}/not-working-shell,server,nowait'.format(backdoor_dir),
+            '-device', 'virtio-serial',
+            '-device', 'virtconsole,chardev=shell',
             # This is hvc1 and will show a login prompt
-            '-chardev',
-            'socket,id=backdoor,path={}/backdoor,server,nowait'.format(
-                backdoor_dir),
-            '-device',
-            'virtio-serial',
-            '-device',
-            'virtconsole,chardev=backdoor'
+            '-chardev', 'socket,id=backdoor,path={}/backdoor,server,nowait'.format(backdoor_dir),
+            '-device', 'virtio-serial',
+            '-device', 'virtconsole,chardev=backdoor'
         ] + qemu_opts)
 
 

@@ -27,7 +27,7 @@
 .d-Content {
     grid-area: content;
     place-self: center;
-    font-size: 2em;
+    font-size: 1.5rem;
     width: 90%;
     height: 90%;
     overflow: auto;
@@ -92,6 +92,14 @@
   margin-bottom: 1rem;
 }
 
+.d-NetworkList > li {
+  border-top: 1px solid var(--form-border-color);
+}
+
+.d-NetworkList > li:last-child {
+  border-bottom: 1px solid var(--form-border-color);
+}
+
 .d-NetworkList__Network {
   text-decoration: none;
   color: black;
@@ -104,7 +112,22 @@
   padding-left: 1.5rem;
   padding-bottom: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--form-border-color);
+  position: relative;
+}
+
+.d-NetworkList__Network--Connected:before {
+  content: "";
+  display: block;
+  width: 0.75rem;
+  height: 0.75rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24' stroke='black' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+
+  position: absolute;
+  left: 0.5rem;
+  top: calc(50% - 0.375rem);
 }
 
 .d-NetworkList__Network:hover {
@@ -129,10 +152,6 @@
 
 /* Network */
 
-.d-Network__Refresh {
-    margin-bottom: 2rem;
-}
-
 .d-Network__InternetConnected {
     color: green;
 }
@@ -143,7 +162,13 @@
 
 .d-Network__Title {
     display: flex;
+    flex-direction: row;
+    align-items: center;
     line-height: 1;
+}
+
+.d-Network__TitleAction {
+    margin: 0 1rem 0 auto;
 }
 
 .d-Network__SignalStrength {
@@ -153,47 +178,32 @@
 }
 
 .d-Network__Properties {
-    margin-bottom: 2rem;
+    margin: 2rem 0 0;
 }
 
 .d-Network__Form {
     margin: 1rem 0;
 }
 
-.d-Network__Label {
-    padding-bottom: 0.5rem;
-}
-
-.d-Network__ProxyForm {
-    display: flex;
-}
-
-.d-Network__ProxyUpdate {
-    display: flex;
-    margin-right: 1rem;
-}
-
 .d-Network__Input {
     width: 400px;
+}
+
+/* Toggle Group */
+
+.d-Network__ToggleGroup {
     margin-bottom: 1rem;
-    margin-right: 1rem;
 }
 
-.d-Network__AdvancedSettingsTitle {
-    margin-top: 1rem;
+.d-Network__ToggleGroup > fieldset {
+    display: none;
+    border: none;
+    padding: 0;
 }
 
-
-/* Switch */
-
-.d-Switch--On {
-    color: green;
+.d-Network__ToggleGroup--Enabled > fieldset {
+    display: block;
 }
-
-.d-Switch--Off {
-    color: red;
-}
-
 
 /* Side note */
 
@@ -262,11 +272,21 @@
 /* Form */
 
 :root {
+    --form-label-font-size: 1.3rem;
     --form-component-height: 2.5rem;
-    --form-component-font-size: 70%;
+    --form-component-font-size: 1.2rem;
     --form-border-color: #DDDDDD;
     --form-border-color-hover: #888888;
     --form-input-border: 0.15rem solid var(--form-border-color);
+}
+
+.d-Label {
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.4rem;
+    font-size: var(--form-label-font-size);
+    width: fit-content;
+    margin-bottom: 1rem;
 }
 
 .d-Input {
@@ -290,10 +310,13 @@
     color: black;
     background-color: var(--form-border-color);
     border: var(--form-input-border);
+}
+
+.d-Button:not([disabled]) {
     cursor: pointer;
 }
 
-.d-Button:hover {
+.d-Button:not([disabled]):hover {
     border-color: var(--form-border-color-hover);
 }
 
@@ -308,6 +331,14 @@
 
 .d-Select:hover {
     border-color: var(--form-border-color-hover);
+}
+
+.d-Checkbox {
+    margin-right: 0.5rem;
+}
+
+.d-CheckboxLabel {
+    font-size: var(--form-component-font-size);
 }
 
 /* Definitions */
@@ -343,6 +374,22 @@
     background: #f1f1f1;
     border: 1px solid #e1e1e1;
     border-radius: 4px;
+}
+
+/* Loading */
+
+.d-Spinner {
+    border: 2px solid #eeeeee;
+    border-top: 2px solid #aeaeae;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Other */

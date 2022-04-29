@@ -110,12 +110,13 @@ let rec run ~connman ~update_url ~rauc ~set_state =
   let set state =
     set_state state; run ~connman ~update_url ~rauc ~set_state state
   in
+  let get_proxy_uri manager = 
+      Connman.Manager.get_default_proxy manager >|= Option.map (Connman.Service.Proxy.to_uri ~include_userinfo:true)
+  in
   function
   | GettingVersionInfo ->
     (* get version information and decide what to do *)
-    let%lwt proxy =
-      Connman.Manager.get_services connman >|= Proxy.from_default_service
-  in
+    let%lwt proxy = get_proxy_uri connman in
     begin
       match%lwt get_version_info ~proxy update_url rauc with
       | Ok version_info ->
@@ -188,9 +189,7 @@ let rec run ~connman ~update_url ~rauc ~set_state =
 
   | Downloading {url; version} ->
     (* download latest version *)
-    let%lwt proxy =
-      Connman.Manager.get_services connman >|= Proxy.from_default_service
-    in
+    let%lwt proxy = get_proxy_uri connman in
     (match%lwt download ?proxy (Uri.of_string url) version |> Lwt_result.catch with
      | Ok bundle_path ->
        Installing bundle_path

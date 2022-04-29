@@ -19,16 +19,19 @@
     group = "users";
   };
 
-  # Kiosk session
-  services.xserver = {
-    enable = true;
+  # System-wide packages
+  environment.systemPackages = with pkgs; [
+    breeze-contrast-cursor-theme
+  ];
 
-    displayManager.defaultSession = "kiosk-browser";
+  # Kiosk session
+  services.xserver = let sessionName = "kiosk-browser"; in {
+    enable = true;
 
     desktopManager = {
       xterm.enable = false;
       session = [
-        { name = "kiosk-browser";
+        { name = sessionName;
           start = ''
             # Disable screen-saver control (screen blanking)
             xset s off
@@ -69,6 +72,8 @@
         user = "play";
       };
 
+      defaultSession = sessionName;
+
       sessionCommands = ''
         ${pkgs.xorg.xrdb}/bin/xrdb -merge <<EOF
           Xcursor.theme: ${pkgs.breeze-contrast-cursor-theme.themeName}
@@ -85,20 +90,14 @@
     wantedBy = [ "multi-user.target" ];
   };
 
-  # Enable audio
-  hardware.pulseaudio.enable = true;
+  # Audio
+  hardware.pulseaudio = {
+    enable = true;
 
-  # Run PulseAudio as System-Wide daemon. See [1] for why this is in general a bad idea, but ok for our case.
-  # [1] https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/WhatIsWrongWithSystemWide/
-  hardware.pulseaudio.systemWide = true;
-
-  # Install a command line mixer
-  # TODO: remove when controlling audio works trough controller
-  environment.systemPackages = with pkgs; [
-    pamix
-    pamixer
-    breeze-contrast-cursor-theme
-  ];
+    # Run PulseAudio as System-Wide daemon. See [1] for why this is in general a bad idea, but ok for our case.
+    # [1] https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/WhatIsWrongWithSystemWide/
+    systemWide = true;
+  };
 
   # Enable avahi for Senso discovery
   services.avahi.enable = true;

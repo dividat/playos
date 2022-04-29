@@ -12,6 +12,7 @@ let select_form params options =
     ~a:[ a_action params.action_url
     ; a_method `Post
     ; a_class [ "d-Localization__Form" ]
+    ; Unsafe.string_attrib "is" "disable-after-submit"
     ]
     [ label
         ~a:[ a_class [ "d-Localization__Legend" ] ]

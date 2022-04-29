@@ -6,8 +6,8 @@ with open("Readme.md", "r") as fh:
 setuptools.setup(
     name="kiosk_browser",
     version="0.1.0",
-    author="Fabian Hauser",
-    author_email="fabian.hauser@hsr.ch",
+    author="Dividat",
+    author_email="contact@dividat.ch",
     description="Kiosk Browser",
     long_description=long_description,
     long_description_content_type="text/markdown",

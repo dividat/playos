@@ -1,5 +1,5 @@
 (library
  (name curl)
  (modules curl)
- (libraries cohttp-lwt-unix proxy)
+ (libraries cohttp-lwt-unix uri base)
  (preprocess (pps lwt_ppx)))

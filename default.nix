@@ -19,9 +19,12 @@
 }:
 
 let
-  version = "2021.9.0-VALIDATION";
+  version = "2022.4.0-VALIDATION";
 
-  pkgs = import ./pkgs { inherit version updateUrl kioskUrl; };
+  # List the virtual terminals that can be switched to from the Xserver
+  activeVirtualTerminals = [ 7 8 ];
+
+  pkgs = import ./pkgs { inherit version updateUrl kioskUrl activeVirtualTerminals; };
 
   # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
   components = with pkgs; lib.makeScope newScope (self: with self; {
@@ -89,7 +92,7 @@ with pkgs; stdenv.mkDerivation {
 
   buildInputs = [
     rauc
-    (python36.withPackages(ps: with ps; [pyparted]))
+    (python39.withPackages(ps: with ps; [pyparted]))
     components.install-playos
   ];
 

@@ -25,8 +25,7 @@ in buildGoModule rec {
   nativeBuildInputs = with pkgs; [ pkgconfig pcsclite ];
   buildInputs = with pkgs; [ pcsclite ];
 
-  buildFlagsArray = [
-    "-ldflags="
+  ldflags = [
     "-X github.com/dividat/driver/src/dividat-driver/server.channel=${channel}"
     "-X github.com/dividat/driver/src/dividat-driver/server.version=${version}"
     "-X github.com/dividat/driver/src/dividat-driver/update.releaseUrl=${releaseUrl}"
