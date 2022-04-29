@@ -63,9 +63,16 @@ Installation takes around 5 to 10 minutes. After the installation completes succ
 
 The system will automatically boot and load Dividat Play.
 
-You may login using the provided credentials and start your training.
+If the application is not accessible due to a lack of Internet connection, an error message may be shown. In this case you may have to configure Internet access in the [[#network][Network]] settings.
 
-Connection to Dividat Senso will automatically be configured. To manually configure connection please refer to the Dividat Play manual.
+#+CAPTION: Message after boot signaling a lack of Internet
+#+NAME: fig:kiosk-no-internet
+#+attr_html: :width 400px
+[[../screenshots/kiosk-no-internet.png]]
+
+Once the application has been loaded you may log in using the provided credentials and start your training.
+
+Connection to an attached Dividat Senso will automatically be configured. To manually configure connection please refer to the Dividat Play manual.
 
 ** Shutting down
 
@@ -102,41 +109,51 @@ Items:
 
 ** Network
 
-The network screen shows the state of Internet connectivity.
+The network section can be used to view and configure Ethernet and WiFi network connections.
 
-If system is connected to Internet, the connected service (e.g. wireless network) is displayed:
+The page shows a list of available wireless networks. Information about the system's network interfaces and MAC addresses may be found at the bottom of the page.
 
-#+CAPTION: Internet connected
-#+NAME: fig:controller-network
-#+attr_html: :width 800px
-[[../screenshots/controller-network.png]]
-
-If system is not connected to Internet a list of available services is displayed:
-
-#+CAPTION: Internet not connected
+#+CAPTION: Network list while not connected
 #+NAME: fig:controller-network-not-connected
 #+attr_html: :width 800px
 [[../screenshots/controller-network-not-connected.png]]
 
-A service may be selected for configuration by clicking on it. This is where passwords for wireless networks, proxy servers and static IP addresses may be configured:
+Wired connections will be displayed if an active Ethernet cable is plugged in.
+
+#+CAPTION: An active wired connection is shown
+#+NAME: fig:controller-network-wired-connected
+#+attr_html: :width 800px
+[[../screenshots/controller-network-wired-connected.png]]
+
+Connected network services and the Internet connection status are displayed at the top of the page.
+
+#+CAPTION: Internet connected
+#+NAME: fig:controller-network-connected
+#+attr_html: :width 800px
+[[../screenshots/controller-network-connected.png]]
+
+To connect to a wireless network, select it from the list of available services and enter the password, if any:
 
 #+CAPTION: Connect with a service
 #+NAME: fig:controller-network-connect
 #+attr_html: :width 800px
 [[../screenshots/controller-network-connect.png]]
 
-A service that is connected may be removed (e.g. thus disconnecting from the wireless network) by expanding the service information and clicking the *Remove* button.
+A connected wireless or wired service may be selected for additional configuration. Optional proxy servers and static IP addresses may be configured:
 
-#+CAPTION: Remove a service
+#+CAPTION: Configuring a connected service
+#+NAME: fig:controller-network-proxy
+#+attr_html: :width 800px
+[[../screenshots/controller-network-proxy.png]]
+
+A wireless service that is connected may be forgotten (disconnecting and resetting configuration) by expanding the service information and clicking the *Forget* button.
+
+#+CAPTION: Forgetting a wireless network
 #+NAME: fig:controller-network-remove
 #+attr_html: :width 800px
 [[../screenshots/controller-network-remove.png]]
 
-Ethernet connections are automatically configured using DHCP or link-local address autoconfiguration. Manual configuration is not possible.
-
-*** Network interface addresses
-
-The MAC addresses of the computer's network interfaces are displayed at the bottom of the [[*Network][Network]] page.
+Ethernet connections are automatically configured using DHCP or link-local address autoconfiguration unless a static IP configuration is provided.
 
 ** Localization
 
