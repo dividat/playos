@@ -63,9 +63,16 @@ Installation takes around 5 to 10 minutes. After the installation completes succ
 
 The system will automatically boot and load Dividat Play.
 
-You may login using the provided credentials and start your training.
+If the application is not accessible due to a lack of Internet connection, an error message may be shown. In this case you may have to configure Internet access in the [[*Network][Network]] settings.
 
-Connection to Dividat Senso will automatically be configured. To manually configure connection please refer to the Dividat Play manual.
+#+CAPTION: Message after boot signaling a lack of Internet
+#+NAME: fig:kiosk-no-internet
+#+attr_html: :width 400px
+[[../screenshots/kiosk-no-internet.png]]
+
+Once the application has been loaded you may log in using the provided credentials and start your training.
+
+Connection to an attached Dividat Senso will automatically be configured. To manually configure connection please refer to the Dividat Play manual.
 
 ** Shutting down
 
