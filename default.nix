@@ -19,7 +19,7 @@
 }:
 
 let
-  version = "2021.9.0";
+  version = "2022.4.0-VALIDATION";
 
   # List the virtual terminals that can be switched to from the Xserver
   activeVirtualTerminals = [ 7 8 ];
