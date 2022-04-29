@@ -63,7 +63,7 @@ Installation takes around 5 to 10 minutes. After the installation completes succ
 
 The system will automatically boot and load Dividat Play.
 
-If the application is not accessible due to a lack of Internet connection, an error message may be shown. In this case you may have to configure Internet access in the [[*Network][Network]] settings.
+If the application is not accessible due to a lack of Internet connection, an error message may be shown. In this case you may have to configure Internet access in the [[#network][Network]] settings.
 
 #+CAPTION: Message after boot signaling a lack of Internet
 #+NAME: fig:kiosk-no-internet
