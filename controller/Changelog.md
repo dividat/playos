@@ -10,6 +10,7 @@
 
 - os: Update nixpkgs channel to 21.11
 - os: Disable virtual terminals that are not used by PlayOS
+- controller: Reorganize layout with an aside menu and a header bar
 - controller: Split proxy configuration form into multiple inputs for greater ease of use
 - controller: Provide a more helpful error message when network connection is failing
 - controller: Mark connected network services in service list

@@ -2,10 +2,10 @@ open Connman.Service
 open Tyxml.Html
 
 let service_item ({ id; name; strength; ipv4 } as service) =
-  let strength =
+  let icon =
     match strength with
-    | Some s -> [ Signal_strength.html s ]
-    | None -> []
+    | Some s -> Icon.wifi ~strength:s ()
+    | None -> Icon.ethernet
   in
   let
     classes =
@@ -24,9 +24,7 @@ let service_item ({ id; name; strength; ipv4 } as service) =
           | None ->
                 space ()
           )
-        ; div
-            ~a:[ a_class [ "d-NetworkList__SignalStrength" ] ]
-            strength
+        ; div ~a:[ a_class [ "d-NetworkList__Icon" ] ] [ icon ]
         ; div ~a:[ a_class [ "d-NetworkList__Chevron" ] ] [ txt "ᐳ" ]
         ]
     ]
@@ -41,28 +39,22 @@ let html { proxy; services; interfaces } =
   let connected_services, available_services =
     List.partition Connman.Service.is_connected services
   in
-  Page.html ~current_page:Page.Network (
-    div
-      [ div ~a:[ a_class [ "d-Title" ] ]
-           [ div
-               ~a:[ a_class [ "d-Network__Title" ] ]
-               [ h1 [ txt "Network" ]
-               ; div
-                   ~a:[ a_class [ "d-Network__TitleAction" ] ]
-                   [ a
-                       ~a:[ a_href "/network?timeout=3"
-                       ; a_class [ "d-Button" ]
-                       ]
-                       [ txt "Refresh" ]
-                   ]
-               ]
-           ]
-
-      ; section
-          [ ul
-              ~a:[ a_class [ "d-NetworkList" ]; a_role [ "list" ] ]
-              (List.map service_item connected_services)
-          ]
+  Page.html 
+    ~current_page:Page.Network 
+    ~header:(
+      Page.header_title 
+        ~icon:Icon.world
+        ~right_action:(a ~a:[ a_href "/network" ; a_class [ "d-Button" ] ] [ txt "Refresh" ])
+        [ txt "Network" ])
+    (div
+      [ if List.length connected_services = 0 then
+          txt ""
+        else
+          section
+            [ ul
+                ~a:[ a_class [ "d-NetworkList" ]; a_role [ "list" ] ]
+                (List.map service_item connected_services)
+            ]
 
       ; Definition.list (
           (match proxy with
@@ -85,9 +77,9 @@ let html { proxy; services; interfaces } =
         )
 
       ; section
-          [ h2 ~a:[ a_class [ "d-Subtitle" ] ] [ txt "Available Networks" ]
+          [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Available Networks" ]
           ; if List.length available_services = 0 then
-              txt "No networks available"
+              p ~a:[ a_class [ "d-Paragraph" ] ] [ txt "No networks available" ]
             else
               ul
                 ~a:[ a_class [ "d-NetworkList" ]; a_role [ "list" ] ]
@@ -95,8 +87,7 @@ let html { proxy; services; interfaces } =
           ]
 
       ; section
-          [ h2 ~a:[ a_class [ "d-Subtitle" ] ] [ txt "Network Interfaces" ]
+          [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Network Interfaces" ]
           ; pre ~a: [ a_class [ "d-Preformatted" ] ]  [ txt interfaces ]
           ]
-      ]
-  )
+      ])

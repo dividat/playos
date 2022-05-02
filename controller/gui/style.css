@@ -1,77 +1,156 @@
-/* Template */
-
+/* Constants */
 :root {
+
+    /* Colors */
     --color-hint: #404040;
+    --color-background: #f5f5f5;
+    --color-background-hover: #b1b4ce;
+    --color-border: #e0e0e0;
+    --color-menu-active: #2439c9;
+
+    /* Spacing */
+    --spacing-mouse: 0.25rem;
+    --spacing-cat: 0.5rem;
+    --spacing-dog: 1rem;
+    --spacing-horse: 2rem;
+    --spacing-elephant: 4rem;
+    --spacing-whale: 8rem;
+    --spacing-godzilla: 16rem;
+
+    /* Font size */
+    --font-size-cat: 0.75rem;
+    --font-size-dog: 1rem;
+    --font-size-lion: 1.25rem;
+    --font-size-bear: 1.5rem;
+    --font-size-cow: 1.75rem;
+    --font-size-horse: 2rem;
+    --font-size-camel: 2.625rem;
+    --font-size-rhino: 3.375rem;
+    --font-size-elephant: 4.25rem;
+    --font-size-mammoth: 5.25rem;
 }
 
-.d-Container {
-    font-family: monospace;
-    padding: 5vh 5vw 5vh 5vw;
+/* Layout */
+
+html {
+    height: 100%;
+    font-size: 16px;
+    font-family: sans-serif;
+}
+
+.d-Layout {
+    height: 100%;
+
 
     display: grid;
-
-    grid-template-columns: 1fr minmax(0, 10fr);
-    grid-template-rows: 1fr minmax(0, 13fr) 1fr;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto 1fr;
     grid-template-areas:
-        "header header"
-        "menu content"
-        "footer footer";
-
-    height: 90vh;
+        "aside header"
+        "aside main"
 }
 
-.d-Header {
+.d-Layout__Aside {
+    grid-area: aside;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: var(--color-background);
+    border-right: 1px solid var(--color-border);
+    font-size: var(--font-size-lion);
+}
+
+.d-Layout__Shutdown {
+    border-top: 1px solid var(--color-border);
+}
+
+.d-Layout__Header {
     grid-area: header;
+    padding: var(--spacing-dog) var(--spacing-horse);
+    border-bottom: 1px solid var(--color-border);
 }
 
-.d-Content {
-    grid-area: content;
-    place-self: center;
-    font-size: 1.5rem;
-    width: 90%;
-    height: 90%;
+.d-Layout__Main {
+    grid-area: main;
+    width: 100%;
+    height: 100%;
     overflow: auto;
-    margin: 10px;
-}
-
-.d-Footer {
-    grid-area: footer;
-    text-align: right;
-    margin: 20px;
-}
-
-.d-Footer__Link:not(:last-child) {
-    margin-right: 1rem;
+    padding: var(--spacing-horse);
 }
 
 /* Menu */
 
-.d-Menu {
-    grid-area: menu;
-
-    display: grid;
-    grid-template-columns: 1fr;
-    align-content: start;
-    align-items: center;
-    justify-items: stretch;
-    grid-row-gap: 20px;
-}
-
 .d-Menu__Item {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-cat) var(--spacing-dog);
+    gap: var(--spacing-cat);
+    border-bottom: 1px solid var(--color-border);
+    text-decoration: none;
+    color: black;
+    white-space: nowrap;
+}
+
+.d-Menu__Item--Active {
+    position: relative;
+}
+
+.d-Menu__Item--Active::after {
     display: block;
-    margin: 10px;
+    content: "";
+    width: var(--spacing-cat);
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: var(--color-menu-active);
 }
 
-.d-Menu__ItemIcon {
-    width: 100%;
+.d-Menu__Item:hover, .d-Menu__Item:focus {
+    outline: none;
+    background-color: var(--color-background-hover);
 }
 
-.d-Menu__ItemIcon:hover {
-    filter: invert(70%);
+/* Header */
+
+.d-Header__Line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-.d-Menu__Item--Active .d-Menu__ItemIcon {
-    filter: invert(70%) sepia(70%) saturate(100%);
+.d-Header__Title {
+    display: flex;
+    align-items: center;
+}
+
+.d-Header__BackLink {
+    display: flex;
+    width: 50px;
+    height: 50px;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background);
+    border-radius: 50%;
+    color: black;
+    margin-right: var(--spacing-dog);
+}
+
+.d-Header__BackLink:hover, .d-Header__BackLink:focus {
+    outline: none;
+    background-color: var(--color-background-hover);
+}
+
+.d-Header__Icon {
+    display: flex;
+    margin-right: var(--spacing-dog);
+}
+
+.d-Header__Icon > svg {
+    width: 45px;
+    height: 45px;
 }
 
 /* Info */
@@ -81,7 +160,7 @@
 }
 
 .d-Info__RemoteManagementAddress {
-    margin-right: 1rem;
+    margin-right: var(--spacing-dog);
 }
 
 /* Network list */
@@ -130,7 +209,8 @@
   top: calc(50% - 0.375rem);
 }
 
-.d-NetworkList__Network:hover {
+.d-NetworkList__Network:hover, .d-NetworkList__Network:focus {
+    outline: none;
     background: #E0CB52;
 }
 
@@ -145,9 +225,14 @@
   font-size: 1rem;
 }
 
-.d-NetworkList__SignalStrength {
+.d-NetworkList__Icon {
     width: 2rem;
     height: 2rem;
+}
+
+.d-NetworkList__Icon > svg {
+  width: 100%;
+  height: 100%;
 }
 
 /* Network */
@@ -167,22 +252,20 @@
     line-height: 1;
 }
 
-.d-Network__TitleAction {
-    margin: 0 1rem 0 auto;
-}
-
 .d-Network__SignalStrength {
     height: 3rem;
     width: 3rem;
     margin-left: 3rem;
 }
 
-.d-Network__Properties {
-    margin: 2rem 0 0;
+.d-Network__SignalStrength > svg {
+  width: 100%;
+  height: 100%;
 }
 
-.d-Network__Form {
-    margin: 1rem 0;
+
+.d-Network__Properties {
+    margin: 2rem 0 0;
 }
 
 .d-Network__Input {
@@ -208,18 +291,12 @@
 /* Side note */
 
 .d-Note {
-    font-size: 80%;
     color: var(--color-hint);
     margin-bottom: 1rem;
 }
 
 
 /* Wifi signal */
-
-.d-WifiSignal {
-    width: 100%;
-    height: 100%;
-}
 
 /* Medium signal */
 .d-WifiSignal--Medium .d-WifiSignal__Wave--Outer {
@@ -265,16 +342,13 @@
 
 .d-Localization__Note {
     font-style: italic;
-    font-size: 80%;
     margin-top: 2rem;
 }
 
 /* Form */
 
 :root {
-    --form-label-font-size: 1.3rem;
     --form-component-height: 2.5rem;
-    --form-component-font-size: 1.2rem;
     --form-border-color: #DDDDDD;
     --form-border-color-hover: #888888;
     --form-input-border: 0.15rem solid var(--form-border-color);
@@ -284,13 +358,11 @@
     display: flex;
     flex-direction: column;
     row-gap: 0.4rem;
-    font-size: var(--form-label-font-size);
     width: fit-content;
     margin-bottom: 1rem;
 }
 
 .d-Input {
-    font-size: var(--form-component-font-size);
     height: var(--form-component-height);
     padding: 0 0.5rem;
     border: var(--form-input-border);
@@ -304,7 +376,6 @@
     display: inline-flex;
     align-items: center;
     height: var(--form-component-height);
-    font-size: var(--form-component-font-size);
     text-decoration: none;
     padding: 0 0.8rem;
     color: black;
@@ -316,12 +387,12 @@
     cursor: pointer;
 }
 
-.d-Button:not([disabled]):hover {
+.d-Button:not([disabled]):hover, .d-Button:not([disabled]):focus {
+    outline: none;
     border-color: var(--form-border-color-hover);
 }
 
 .d-Select {
-    font-size: var(--form-component-font-size);
     height: var(--form-component-height);
     padding: 0 0.5rem;
     background-color: white;
@@ -337,14 +408,11 @@
     margin-right: 0.5rem;
 }
 
-.d-CheckboxLabel {
-    font-size: var(--form-component-font-size);
-}
-
 /* Definitions */
 
 .d-Definitions__Term {
-    font-weight: bold;
+    text-decoration: underline;
+    margin-bottom: var(--spacing-mouse);
 }
 
 .d-Definitions__Description {
@@ -353,24 +421,28 @@
 
 /* Markdown */
 
-.d-Markdown {
-    font-size: 90%;
+.d-Markdown h1 {
+    font-size: var(--font-size-bear);
+    margin-bottom: var(--spacing-dog);
 }
 
-.d-Markdown h1 {
-    margin-bottom: 1rem;
+.d-Markdown h2 {
+    text-decoration: underline;
+    font-weight: normal;
+    font-size: var(--font-size-dog);
+    margin-bottom: var(--spacing-cat);
 }
 
 .d-Markdown ul {
     list-style: square inside;
     padding-left: 0;
     font-weight: normal;
+    margin-bottom: var(--spacing-dog);
 }
 
 .d-Markdown code {
     background-color: gray;
     padding: .2rem .5rem;
-    font-size: 90%;
     background: #f1f1f1;
     border: 1px solid #e1e1e1;
     border-radius: 4px;
@@ -395,15 +467,14 @@
 /* Other */
 
 .d-Title {
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-dog);
 }
 
-.d-Subtitle {
-    margin-bottom: 1rem;
+.d-Paragraph {
+    margin-bottom: var(--spacing-dog);
 }
 
 .d-Preformatted {
-    font-size: 80%;
     border-left: 0.5rem solid #E0CB52;
     padding: 0.5rem 1rem;
     background-color: #FCFAEE;
@@ -423,20 +494,6 @@
     border: 0.1rem solid #E1E1E1;
     border-radius: 0.4rem;
     padding: 0.2rem 0.5rem;
-}
-
-.d-BackLink {
-    color: blue;
-    font-size: 1rem;
-    text-decoration: none;
-}
-
-.d-BackLink:hover {
-    text-decoration: underline;
-}
-
-.d-BackLink:before {
-    content: "❮ ";
 }
 
 .d-Details {
