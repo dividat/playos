@@ -237,33 +237,6 @@ html {
 
 /* Network */
 
-.d-Network__InternetConnected {
-    color: green;
-}
-
-.d-Network__InternetNotConnected {
-    color: red;
-}
-
-.d-Network__Title {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    line-height: 1;
-}
-
-.d-Network__SignalStrength {
-    height: 3rem;
-    width: 3rem;
-    margin-left: 3rem;
-}
-
-.d-Network__SignalStrength > svg {
-  width: 100%;
-  height: 100%;
-}
-
-
 .d-Network__Properties {
     margin: 2rem 0 0;
 }
