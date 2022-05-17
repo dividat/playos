@@ -30,7 +30,7 @@ let menu_label page =
   match page with
   | Info -> "Information"
   | Network -> "Network"
-  | Localization -> "Localization"
+  | Localization -> "Localization & Display"
   | SystemStatus -> "System Status"
   | Changelog -> "Changelog"
   | Shutdown -> "Shutdown"

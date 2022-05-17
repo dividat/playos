@@ -111,7 +111,7 @@ type params =
 let html params =
   Page.html 
     ~current_page:Page.Localization 
-    ~header:(Page.header_title ~icon:Icon.letter [ txt "Localization" ])
+    ~header:(Page.header_title ~icon:Icon.letter [ txt "Localization & Display" ])
     (div
       [ timezone_form params.timezone_groups params.current_timezone
       ; language_form params.langs params.current_lang
