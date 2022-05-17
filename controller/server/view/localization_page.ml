@@ -84,16 +84,19 @@ let keyboard_form keymaps current_keymap =
     }
     (List.map (select_option current_keymap) keymaps)
 
-let scaling_form opt_in_scaling =
-  select_form
-    { action_url = "/localization/scaling"
-    ; legend = "Resolution"
-    ; select_name = "scaling"
-    ; placeholder = None
-    }
-    [ select_option (if opt_in_scaling then Some "y" else None) ("y", "Force 1080p")
-      ; select_option (if not opt_in_scaling then Some "n" else None) ("n", "Do not scale")
-    ]
+let scaling_form current_scaling =
+  [ Screen_settings.Default; Screen_settings.Scaled; Screen_settings.Native ]
+    |> List.map (fun s ->
+                  select_option
+                     (Some (Screen_settings.string_of_scaling current_scaling))
+                     (Screen_settings.string_of_scaling s, Screen_settings.label_of_scaling s)
+                 )
+    |> select_form
+      { action_url = "/localization/scaling"
+      ; legend = "Display resolution"
+      ; select_name = "scaling"
+      ; placeholder = None
+      }
 
 type params =
   { timezone_groups: (string * ((string * string) list)) list
@@ -102,7 +105,7 @@ type params =
   ; current_lang: string option
   ; keymaps: (string * string) list
   ; current_keymap: string option
-  ; opt_in_scaling: bool
+  ; current_scaling: Screen_settings.scaling
   }
 
 let html params =
@@ -112,7 +115,7 @@ let html params =
       ; timezone_form params.timezone_groups params.current_timezone
       ; language_form params.langs params.current_lang
       ; keyboard_form params.keymaps params.current_keymap
-      ; scaling_form params.opt_in_scaling
+      ; scaling_form params.current_scaling
       ; aside
           ~a:[ a_class [ "d-Localization__Note" ] ]
           [ txt "Note that keyboard and language changes require a restart." ]

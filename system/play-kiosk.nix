@@ -47,7 +47,8 @@
             fi
 
             # force resolution
-            if [ -f /home/play/.limit-resolution ]; then
+            scaling_pref=/var/lib/gui-localization/screen-scaling
+            if [ -f "$scaling_pref" ] && [ $(cat "$scaling_pref") = "scaled" ]; then
                xrandr --size 1920x1080
             fi
 

@@ -125,6 +125,8 @@ module LocalizationGui = struct
       ; "es", "Spanish"
       ]
     in
+    let%lwt current_scaling = Screen_settings.get_scaling ()
+    in
     Lwt.return (page (Localization_page.html
       { timezone_groups
       ; current_timezone
@@ -132,7 +134,7 @@ module LocalizationGui = struct
       ; current_lang
       ; keymaps
       ; current_keymap
-      ; opt_in_scaling = Sys.file_exists scaling_file
+      ; current_scaling = current_scaling
       }))
 
   let set_timezone req =
@@ -176,18 +178,15 @@ module LocalizationGui = struct
     "/localization" |> Uri.of_string |> redirect'
 
   let set_scaling req =
-    let log_src = Logs.Src.create "scaling"
-    in
     let%lwt form_data =
       urlencoded_pairs_of_body req
     in
     let%lwt _ =
       match form_data |> List.assoc_opt "scaling" with
-      | Some [ opt_in ] ->
-        if opt_in = "y" then
-          Util.write_to_file log_src scaling_file ""
-        else
-          Sys.remove scaling_file |> return
+      | Some [ opt ] ->
+          (match Screen_settings.scaling_of_string opt with
+            | Some s -> Screen_settings.set_scaling s
+            | None -> fail_with (Format.sprintf "Unknown screen setting: %s" opt))
       | _ ->
         return ()
     in
