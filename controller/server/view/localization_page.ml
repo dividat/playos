@@ -111,7 +111,7 @@ type params =
 let html params =
   Page.html ~current_page:Page.Localization (
     div
-      [ h1 ~a:[ a_class [ "d-Title" ] ] [ txt "Localization" ]
+      [ h1 ~a:[ a_class [ "d-Title" ] ] [ txt "Localization & Display" ]
       ; timezone_form params.timezone_groups params.current_timezone
       ; language_form params.langs params.current_lang
       ; keyboard_form params.keymaps params.current_keymap
