@@ -118,6 +118,6 @@ let html params =
       ; scaling_form params.current_scaling
       ; aside
           ~a:[ a_class [ "d-Localization__Note" ] ]
-          [ txt "Note that keyboard and language changes require a restart." ]
+          [ txt "Note that changes to the keyboard, language and display settings require a restart." ]
       ]
   )
