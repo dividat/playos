@@ -155,14 +155,14 @@ A wireless service that is connected may be forgotten (disconnecting and resetti
 
 Ethernet connections are automatically configured using DHCP or link-local address autoconfiguration unless a static IP configuration is provided.
 
-** Localization
+** Localization & Display
 
-#+CAPTION: Localization
+#+CAPTION: Localization & Display
 #+NAME: fig:controller-localization
 #+attr_html: :width 800px
 [[../screenshots/controller-localization.png]]
 
-Setup timezone, language and keyboard layout of the system.
+Setup timezone, language, keyboard layout, and screen resolution preferences.
 
 ** Changelog
 
