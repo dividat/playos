@@ -9,10 +9,10 @@ type scaling =
      xsession script decides behaviour
   *)
   | Default
-  (* Config file with keyword: "scaled"
+  (* Config file with keyword: "full-hd"
      Explicitly opt-in to scaling to FullHD
   *)
-  | Scaled
+  | FullHD
   (* Config file with keyword: "native"
      Explicitly opt-out of scaling to FullHD
   *)
@@ -20,19 +20,19 @@ type scaling =
 
 let scaling_of_string = function
   | "default" -> Some Default
-  | "scaled" -> Some Scaled
+  | "full-hd" -> Some FullHD
   | "native" -> Some Native
   | _ -> None
 
 let string_of_scaling = function
   | Default -> "default"
-  | Scaled -> "scaled"
+  | FullHD -> "full-hd"
   | Native -> "native"
 
 (* Used for representing options in the UI, ie. in dropdown. *)
 let label_of_scaling = function
   | Default -> "Default"
-  | Scaled -> "Full HD"
+  | FullHD -> "Full HD"
   | Native -> "Native"
 
 let set_scaling scaling =

@@ -85,7 +85,7 @@ let keyboard_form keymaps current_keymap =
     (List.map (select_option current_keymap) keymaps)
 
 let scaling_form current_scaling =
-  [ Screen_settings.Default; Screen_settings.Scaled; Screen_settings.Native ]
+  [ Screen_settings.Default; Screen_settings.FullHD; Screen_settings.Native ]
     |> List.map (fun s ->
                   select_option
                      (Some (Screen_settings.string_of_scaling current_scaling))

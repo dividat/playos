@@ -48,7 +48,7 @@
 
             # force resolution
             scaling_pref=/var/lib/gui-localization/screen-scaling
-            if [ -f "$scaling_pref" ] && [ $(cat "$scaling_pref") = "scaled" ]; then
+            if [ -f "$scaling_pref" ] && [ $(cat "$scaling_pref") = "full-hd" ]; then
                xrandr --size 1920x1080
             fi
 

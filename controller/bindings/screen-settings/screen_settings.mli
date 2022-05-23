@@ -1,7 +1,7 @@
 
 type scaling =
   | Default
-  | Scaled
+  | FullHD
   | Native
 
 val string_of_scaling : scaling -> string
