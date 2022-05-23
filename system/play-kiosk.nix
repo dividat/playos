@@ -46,6 +46,12 @@
               setxkbmap $(cat /var/lib/gui-localization/keymap) || true
             fi
 
+            # force resolution
+            scaling_pref=/var/lib/gui-localization/screen-scaling
+            if [ -f "$scaling_pref" ] && [ $(cat "$scaling_pref") = "full-hd" ]; then
+               xrandr --size 1920x1080
+            fi
+
             # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-5/qtwebengine-debugging.html)
             export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
 
