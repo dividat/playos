@@ -70,8 +70,6 @@ end
 
 (** Localization GUI *)
 module LocalizationGui = struct
-  let scaling_file = "/home/play/.limit-resolution"
-
   let overview req =
     let%lwt td_daemon = Timedate.daemon () in
     let%lwt current_timezone = Timedate.get_configured_timezone () in
