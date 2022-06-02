@@ -2,6 +2,7 @@ open Lwt
 open Sexplib.Std
 open Opium_kernel.Rock
 open Opium.App
+open Sys
 
 let log_src = Logs.Src.create "gui"
 
@@ -122,6 +123,8 @@ module LocalizationGui = struct
       ; "es", "Spanish"
       ]
     in
+    let%lwt current_scaling = Screen_settings.get_scaling ()
+    in
     Lwt.return (page (Localization_page.html
       { timezone_groups
       ; current_timezone
@@ -129,6 +132,7 @@ module LocalizationGui = struct
       ; current_lang
       ; keymaps
       ; current_keymap
+      ; current_scaling = current_scaling
       }))
 
   let set_timezone req =
@@ -171,12 +175,28 @@ module LocalizationGui = struct
     in
     "/localization" |> Uri.of_string |> redirect'
 
+  let set_scaling req =
+    let%lwt form_data =
+      urlencoded_pairs_of_body req
+    in
+    let%lwt _ =
+      match form_data |> List.assoc_opt "scaling" with
+      | Some [ opt ] ->
+          (match Screen_settings.scaling_of_string opt with
+            | Some s -> Screen_settings.set_scaling s
+            | None -> fail_with (Format.sprintf "Unknown screen setting: %s" opt))
+      | _ ->
+        return ()
+    in
+    "/localization" |> Uri.of_string |> redirect'
+
   let build app =
     app
     |> get "/localization" overview
     |> post "/localization/timezone" set_timezone
     |> post "/localization/lang" set_lang
     |> post "/localization/keymap" set_keymap
+    |> post "/localization/scaling" set_scaling
 end
 
 (** Network configuration GUI *)

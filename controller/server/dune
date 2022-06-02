@@ -9,7 +9,7 @@
    page definition signal_strength)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium tyxml rauc zerotier connman locale network timedate systemd
-  label_printer semver2 fieldslib)
+  label_printer semver2 fieldslib screen_settings)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 
 (library
