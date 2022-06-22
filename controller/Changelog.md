@@ -1,5 +1,7 @@
 # [UNRELEASED]
 
+# [2022.4.0-VALIDATION.1] - 2022-06-22
+
 ## Added
 
 - controller: Add option to limit screen resolution to Full HD
