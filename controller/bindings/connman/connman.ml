@@ -86,12 +86,6 @@ struct
 
   type t = input OBus_object.t
 
-  let report_error input service msg =
-    let%lwt () = Logs_lwt.err ~src:log_src
-        (fun m -> m "error reported to agent: %s" msg)
-    in
-    return_unit
-
   let request_input input service (fields: (string * OBus_value.V.single) list) =
     let%lwt () = Logs_lwt.debug ~src:log_src
         (fun m -> m "input requested from agent for service %s"
@@ -125,17 +119,14 @@ struct
     OBus_error.make "net.connman.Agent.Error.Canceled" "Can not open browser."
     |> Lwt.fail
 
-  let cancel input =
-    return_unit
-
-  let release input =
-    return_unit
-
-  let interface =
+  let interface on_error =
     Connman_interfaces.Net_connman_Agent.make {
       m_ReportError = (
         fun obj (service, msg) ->
-          report_error (OBus_object.get obj) service msg
+          let%lwt () = Logs_lwt.err ~src:log_src
+              (fun m -> m "error reported to agent: %s" msg)
+          in
+          on_error msg
       );
       m_RequestInput = (
         fun obj (x1, x2) ->
@@ -145,17 +136,11 @@ struct
         fun obj (x1, x2) ->
           request_browser (OBus_object.get obj) x1 x2
       );
-      m_Cancel = (
-        fun obj () ->
-          cancel (OBus_object.get obj)
-      );
-      m_Release = (
-        fun obj () ->
-          release (OBus_object.get obj)
-      );
+      m_Cancel = (fun obj () -> return_unit);
+      m_Release = (fun obj () -> return_unit);
     }
 
-  let create ~(input:input) =
+  let create ~(input:input) on_error =
     let%lwt system_bus = OBus_bus.system () in
     let path = [ "net"; "connman"; "agent"
                ; Random.int 9999 |> string_of_int ]
@@ -163,7 +148,7 @@ struct
     let%lwt () = Logs_lwt.debug ~src:log_src
         (fun m -> m "creating connman agent at %s" (String.concat "/" path))
     in
-    let obj = OBus_object.make ~interfaces:[interface] path in
+    let obj = OBus_object.make ~interfaces:[interface on_error] path in
     let () = OBus_object.attach obj input in
     let () = OBus_object.export system_bus obj in
     return (path, obj)
@@ -266,6 +251,67 @@ struct
       |> CCResult.to_opt
   end
 
+  module Proxy =
+  struct
+    type credentials =
+      { user: string
+      ; password: (string [@sexp.opaque])
+      }
+      [@@deriving sexp]
+
+    type t =
+    { host: string
+    ; port: int
+    ; credentials: credentials option
+    }
+    [@@deriving sexp]
+
+    let make ?user ?password host port =
+      { host = host
+      ; port = port
+      ; credentials =
+        (match user, password with
+        | Some "", _ -> None
+        | Some u, Some p -> Some { user = u; password = p }
+        | _ -> None)
+      }
+
+    let validate str =
+      let uri = Uri.of_string str in
+      if Uri.path uri = ""
+        && Uri.query uri = []
+        && Uri.fragment uri = None
+      then
+        match Uri.scheme uri, Uri.host uri, Uri.port uri with
+        | Some "http", Some host, Some port ->
+          Some
+            { credentials =
+              (match Uri.user uri, Uri.password uri with
+              | Some user, Some password -> Some { user = Uri.pct_decode user; password = Uri.pct_decode password }
+              | _ -> None)
+            ; host
+            ; port
+            }
+        | _ -> None
+      else
+        None
+
+    let to_uri ~include_userinfo t =
+      let escape_userinfo = Uri.pct_encode ~component:`Userinfo in
+      let
+        userinfo =
+          Option.map
+            (fun credentials -> escape_userinfo credentials.user ^ ":" ^ escape_userinfo credentials.password)
+            t.credentials
+      in
+      Uri.empty
+      |> Fun.flip Uri.with_scheme (Some "http")
+      |> Fun.flip Uri.with_host (Some t.host)
+      |> Fun.flip Uri.with_port (Some t.port)
+      |> (fun uri -> if include_userinfo then Uri.with_userinfo uri userinfo else uri)
+
+  end
+
   type t = {
     _proxy : (OBus_proxy.t [@sexp.opaque])
   ; _manager : (OBus_proxy.t [@sexp.opaque])
@@ -279,7 +325,7 @@ struct
   ; ipv4 : IPv4.t option
   ; ipv6 : IPv6.t option
   ; ethernet : Ethernet.t
-  ; proxy : string option
+  ; proxy : Proxy.t option
   ; nameservers : string list
   }
   [@@deriving sexp]
@@ -300,7 +346,7 @@ struct
       try
         OBus_value.C.(v |> cast_single basic_byte)
         |> int_of_char
-        |> CCOpt.return
+        |> CCOption.return
       with
       | _ -> None
     in
@@ -310,18 +356,17 @@ struct
          let properties = v |> cast_single (dict string variant) in
          let proxy_method = properties |> List.assoc "Method" |> cast_single basic_string in
          if proxy_method = "manual" then
-           Some (
-             properties
-             |> List.assoc "Servers"
-             |> cast_single (array basic_string)
-             |> List.hd
-           )
+           properties
+           |> List.assoc "Servers"
+           |> cast_single (array basic_string)
+           |> List.hd
+           |> Proxy.validate
          else
            None
       with
         _ -> None
     in
-    CCOpt.(
+    CCOption.(
       pure (fun name type' state strength favorite autoconnect ipv4 ipv4_user_config ipv6 ethernet proxy nameservers ->
           { _proxy = OBus_proxy.make (OBus_context.sender context) path
           ; _manager = manager
@@ -363,12 +408,12 @@ struct
     in
     set_property service "Proxy.Configuration" dict
 
-  let set_manual_proxy service url =
+  let set_manual_proxy service proxy =
     let dict =
       OBus_value.C.make_single
         (OBus_value.C.(dict string variant))
         [ ("Method", OBus_value.C.(make_single basic_string) "manual")
-        ; ("Servers", OBus_value.C.(make_single (array basic_string)) [url])
+        ; ("Servers", OBus_value.C.(make_single (array basic_string)) [Proxy.to_uri ~include_userinfo:true proxy |> Uri.to_string])
         ]
     in
     set_property service "Proxy.Configuration" dict
@@ -408,16 +453,28 @@ struct
         (fun m -> m "connect to service %s" service.id)
     in
 
+    (* Store agent error in a local mutable variable *)
+    let agent_reported_error = ref None in
+    let on_agent_error msg = Lwt.return (agent_reported_error := Some msg) in
+
     (* Create and register an agent that will pass input to ConnMan *)
-    let%lwt agent_path, agent = Agent.create input in
+    let%lwt agent_path, agent = Agent.create input on_agent_error in
     let%lwt () = register_agent service._manager agent_path in
 
-    begin
-      (* Connect to service *)
-      OBus_method.call
-        Connman_interfaces.Net_connman_Service.m_Connect
-        service._proxy ()
-    end
+    (Lwt.catch 
+        (* Connect to service *)
+        (fun () ->
+          OBus_method.call
+            Connman_interfaces.Net_connman_Service.m_Connect
+            service._proxy ())
+        (* Give priority to error reported from agent, which is more informative *)
+        (function
+          | exn -> 
+              match !agent_reported_error with
+              | Some "invalid-key" -> Lwt.fail_with "Passphrase is not valid. Please check it and then try to connect again."
+              | Some msg -> Lwt.fail_with msg
+              | None -> Lwt.fail exn
+        ))
     [%lwt.finally
       (* Cleanup and destroy agent *)
       let%lwt () = unregister_agent service._manager agent_path in
@@ -456,7 +513,7 @@ struct
       OBus_method.call_with_context
         Net_connman_Manager.m_GetTechnologies proxy () in
     let to_technology (path, properties) : Technology.t option =
-      CCOpt.(pure
+      CCOption.(pure
                (fun name type' powered connected : Technology.t ->
                   { _proxy = OBus_proxy.make (OBus_context.sender context) path
                   ; name
@@ -496,6 +553,17 @@ struct
       >|= Lwt_react.E.map_s (fun () -> get_services manager)
     in
     Lwt_react.S.accum (service_changes |> Lwt_react.E.map (fun x _ -> x)) initial_services
+    |> return
+
+  (* Extract the proxy from the default route.
+   *
+   * The service with the default route will always be sorted at the top of the
+   * list. (From connman doc/overview-api.txt *)
+  let get_default_proxy manager =
+    let open Service in
+    let%lwt services = get_services manager in
+    List.find_opt (fun s -> s.state = Online || s.state = Ready) services
+    |> Fun.flip Option.bind (fun s -> s.proxy)
     |> return
 
 end

@@ -5,7 +5,7 @@ import os
 
 import kiosk_browser
 
-default_toggle_key = 'CTRL+SHIFT+F12'
+default_toggle_settings_key = 'CTRL+SHIFT+F12'
 
 parser = argparse.ArgumentParser(
     prog='kiosk-browser',
@@ -14,22 +14,19 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    '--toggle-key',
-    dest='toggle_key',
-    default=default_toggle_key,
+    '--toggle-settings',
+    dest='toggle_settings_key',
+    default=default_toggle_settings_key,
     help=
-    'Keyboard combination to toggle between primary and secondary websites. (Default: "%s")'
-    % default_toggle_key)
+    'Keyboard combination to toggle settings. (Default: "%s")'
+    % default_toggle_settings_key)
 
-parser.add_argument('primary_url', help='Primary URL to load')
-parser.add_argument('secondary_url', help='Secondary URL to load')
+parser.add_argument('kiosk_url', help='Kiosk URL')
+parser.add_argument('settings_url', help='Settings URL')
 
 args = parser.parse_args()
 
-# try:
-kiosk_browser.start(args.primary_url, args.secondary_url, args.toggle_key)
+# Go to root directory of the kiosk to give relative access to assets
+os.chdir(f'{os.path.dirname(__file__)}/..')
 
-# except InvalidUrl as error:
-#   parser.error(error)
-# except NoUrl as error:
-#   parser.error(error)
+kiosk_browser.start(args.kiosk_url, args.settings_url, args.toggle_settings_key)

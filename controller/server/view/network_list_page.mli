@@ -1,6 +1,5 @@
 type params =
   { proxy: string option
-  ; is_internet_connected: bool
   ; services: Connman.Service.t list
   ; interfaces: string
   }

@@ -24,7 +24,7 @@ let menu_alt page =
   match page with
   | Info -> "Information"
   | Network -> "Network"
-  | Localization -> "Localization"
+  | Localization -> "Localization & Display"
   | Shutdown -> "Shutdown"
 
 let menu_item current_page page =

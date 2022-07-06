@@ -6,6 +6,7 @@ let remote_management_form action button_label =
     ~a:[ a_action ("/remote-management/" ^ action)
     ; a_method `Post
     ; a_class [ "d-Info__RemoteManagementForm" ]
+    ; Unsafe.string_attrib "is" "disable-after-submit"
     ]
     [ input
         ~a:[ a_input_type `Submit

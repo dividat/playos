@@ -12,6 +12,7 @@ let select_form params options =
     ~a:[ a_action params.action_url
     ; a_method `Post
     ; a_class [ "d-Localization__Form" ]
+    ; Unsafe.string_attrib "is" "disable-after-submit"
     ]
     [ label
         ~a:[ a_class [ "d-Localization__Legend" ] ]
@@ -83,6 +84,20 @@ let keyboard_form keymaps current_keymap =
     }
     (List.map (select_option current_keymap) keymaps)
 
+let scaling_form current_scaling =
+  [ Screen_settings.Default; Screen_settings.FullHD; Screen_settings.Native ]
+    |> List.map (fun s ->
+                  select_option
+                     (Some (Screen_settings.string_of_scaling current_scaling))
+                     (Screen_settings.string_of_scaling s, Screen_settings.label_of_scaling s)
+                 )
+    |> select_form
+      { action_url = "/localization/scaling"
+      ; legend = "Display resolution"
+      ; select_name = "scaling"
+      ; placeholder = None
+      }
+
 type params =
   { timezone_groups: (string * ((string * string) list)) list
   ; current_timezone: string option
@@ -90,17 +105,19 @@ type params =
   ; current_lang: string option
   ; keymaps: (string * string) list
   ; current_keymap: string option
+  ; current_scaling: Screen_settings.scaling
   }
 
 let html params =
   Page.html ~current_page:Page.Localization (
     div
-      [ h1 ~a:[ a_class [ "d-Title" ] ] [ txt "Localization" ]
+      [ h1 ~a:[ a_class [ "d-Title" ] ] [ txt "Localization & Display" ]
       ; timezone_form params.timezone_groups params.current_timezone
       ; language_form params.langs params.current_lang
       ; keyboard_form params.keymaps params.current_keymap
+      ; scaling_form params.current_scaling
       ; aside
           ~a:[ a_class [ "d-Localization__Note" ] ]
-          [ txt "Note that keyboard and language changes require a restart." ]
+          [ txt "Note that changes to the keyboard, language and display settings require a restart." ]
       ]
   )
