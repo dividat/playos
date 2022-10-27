@@ -4,10 +4,10 @@ let
 
   nixpkgs = import ./patch-nixpkgs.nix {
     src = builtins.fetchGit {
-      name = "nixos-21.11-2021-03-07";
+      name = "nixos-22.05-2022-10-26";
       url = "https://github.com/nixos/nixpkgs";
-      ref = "refs/heads/nixos-21.11";
-      rev = "9b1c7ba323732ddc85a51850a7f10ecc5269b8e9";
+      ref = "refs/heads/nixos-22.05";
+      rev = "e6e675cafe6a1d1b0eeb9ac3fe046091244b714e";
     };
     patches = [];
   };
