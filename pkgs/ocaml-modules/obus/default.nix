@@ -1,6 +1,6 @@
 { lib, fetchFromGitHub, buildDunePackage
 , ppxlib, ppx_tools_versioned, ocaml_lwt
-, lwt_react, lwt_ppx, lwt_log, react, type_conv, xmlm, menhir }:
+, lwt_react, lwt_ppx, lwt_log, react, xmlm, menhir }:
 
 buildDunePackage rec {
   pname = "obus";
