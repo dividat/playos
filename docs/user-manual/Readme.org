@@ -164,15 +164,6 @@ Ethernet connections are automatically configured using DHCP or link-local addre
 
 Setup timezone, language, keyboard layout, and screen resolution preferences.
 
-** Changelog
-
-#+CAPTION: Changelog
-#+NAME: fig:controller-changelog
-#+attr_html: :width 800px
-[[../screenshots/controller-changelog.png]]
-
-Changelog can be displayed by clicking the *changelog* link in the bottom right of the screen.
-
 ** System Status
 
 #+CAPTION: System status
@@ -181,6 +172,15 @@ Changelog can be displayed by clicking the *changelog* link in the bottom right 
 [[../screenshots/controller-system-status.png]]
 
 Advanced system status information can be displayed by clicking the *system status* link in the bottom right of the screen.
+
+** Changelog
+
+#+CAPTION: Changelog
+#+NAME: fig:controller-changelog
+#+attr_html: :width 800px
+[[../screenshots/controller-changelog.png]]
+
+Changelog can be displayed by clicking the *changelog* link in the bottom right of the screen.
 
 ** Wiping user data
 
