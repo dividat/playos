@@ -2,14 +2,10 @@
 
 let
 
-  nixpkgs = import ./patch-nixpkgs.nix {
-    src = builtins.fetchGit {
-      name = "nixos-21.11-2021-03-07";
-      url = "https://github.com/nixos/nixpkgs";
-      ref = "refs/heads/nixos-21.11";
-      rev = "9b1c7ba323732ddc85a51850a7f10ecc5269b8e9";
-    };
-    patches = [];
+  nixpkgs = builtins.fetchTarball {
+    # nixos-21.11 2022-03-07
+    url = "https://github.com/nixos/nixpkgs/archive/9b1c7ba323732ddc85a51850a7f10ecc5269b8e9.tar.gz";
+    sha256 = "12m4bkbqdnwxq607w58fqnmx8wnii2f6g2rjlb4wwp79apkrzwb6";
   };
 
   overlay =
