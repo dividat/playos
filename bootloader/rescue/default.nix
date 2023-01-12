@@ -152,6 +152,9 @@ in
       { name = "initrd"; path = "${config.system.build.rescueRamdisk}/initrd"; }
     ];
 
+    # There is no persistent state for the rescue system
+    system.stateVersion = lib.trivial.release;
+
   };
   system = "x86_64-linux";
 }).config.system.build.rescueSystem

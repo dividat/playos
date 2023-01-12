@@ -71,4 +71,7 @@ with lib;
   # Add Memtest86+ to the CD.
   boot.loader.grub.memtest86.enable = true;
 
+  # There is no state living past a single boot into whichever version this was built with
+  system.stateVersion = lib.trivial.release;
+
 }
