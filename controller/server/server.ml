@@ -118,5 +118,7 @@ let () =
       |> app (const Lwt_main.run)
     )
   in
-  Term.(eval (main_t, Term.info ~doc:"PlayOS Controller" ~version:Info.version "playos-controller"))
+  main_t
+  |> Cmd.v (Cmd.info ~doc:"PlayOS Controller" ~version:Info.version "playos-controller")
+  |> Cmd.eval
   |> ignore
