@@ -43,8 +43,8 @@ type result =
   | RequestFailure of error
 
 let exec cmd =
-  let stdout_r, stdout_w = Unix.pipe () in
-  let stderr_r, stderr_w = Unix.pipe () in
+  let stdout_r, stdout_w = Unix.pipe ~cloexec:true () in
+  let stderr_r, stderr_w = Unix.pipe ~cloexec:true () in
   let%lwt result =
     Lwt_process.exec
       ~stdout:(`FD_move stdout_w)
