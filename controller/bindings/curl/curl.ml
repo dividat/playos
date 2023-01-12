@@ -54,7 +54,9 @@ let exec cmd =
   let stdout_input = Lwt_io.of_unix_fd ~mode:Lwt_io.input stdout_r in
   let stderr_input = Lwt_io.of_unix_fd ~mode:Lwt_io.input stderr_r in
   let%lwt stdout = Lwt_io.read stdout_input in
+  let%lwt () = Lwt_io.close stdout_input in
   let%lwt stderr = Lwt_io.read stderr_input in
+  let%lwt () = Lwt_io.close stderr_input in
   Lwt.return (result, stdout, stderr)
 
 let safe_int_of_string str =
