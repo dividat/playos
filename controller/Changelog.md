@@ -4,6 +4,10 @@
 
 - driver: Upgrade to 2.3.0 for recent versions of Senso Flex
 
+## Fixed
+
+- controller: Fix a file descriptor leak that could lead to the controller interface becoming unusable
+
 # [2022.4.0] - 2022-07-06
 
 # [2022.4.0-VALIDATION.1] - 2022-06-22
