@@ -54,10 +54,10 @@ struct
       Connman_interfaces.Net_connman_Technology.m_SetProperty proxy (name, value)
 
   let enable t =
-    set_property t._proxy "Powered" (true |> OBus_value.C.(make_single basic_boolean))
+    set_property t._proxy ~name:"Powered" ~value:(true |> OBus_value.C.(make_single basic_boolean))
 
   let disable t =
-    set_property t._proxy "Powered" (false |> OBus_value.C.(make_single basic_boolean))
+    set_property t._proxy ~name:"Powered" ~value:(false |> OBus_value.C.(make_single basic_boolean))
 
   let scan t =
     let%lwt () = Logs_lwt.debug ~src:log_src
@@ -368,7 +368,7 @@ struct
     in
     CCOption.(
       pure (fun name type' state strength favorite autoconnect ipv4 ipv4_user_config ipv6 ethernet proxy nameservers ->
-          { _proxy = OBus_proxy.make (OBus_context.sender context) path
+          { _proxy = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:path
           ; _manager = manager
           ; id = path |> CCList.last 1 |> CCList.hd
           ; name ; type'; state; strength; favorite; autoconnect
@@ -406,7 +406,7 @@ struct
         [ ("Method", OBus_value.C.(make_single basic_string) "direct")
         ]
     in
-    set_property service "Proxy.Configuration" dict
+    set_property service ~name:"Proxy.Configuration" ~value:dict
 
   let set_manual_proxy service proxy =
     let dict =
@@ -416,7 +416,7 @@ struct
         ; ("Servers", OBus_value.C.(make_single (array basic_string)) [Proxy.to_uri ~include_userinfo:true proxy |> Uri.to_string])
         ]
     in
-    set_property service "Proxy.Configuration" dict
+    set_property service ~name:"Proxy.Configuration" ~value:dict
 
 
   let set_manual_ipv4 service ~address ~netmask ~gateway =
@@ -429,7 +429,7 @@ struct
         ; ("Gateway", OBus_value.C.(make_single basic_string) gateway)
         ]
     in
-    set_property service "IPv4.Configuration" dict
+    set_property service ~name:"IPv4.Configuration" ~value:dict
 
   let set_dhcp_ipv4 service =
     let dict =
@@ -437,14 +437,14 @@ struct
         (OBus_value.C.(dict string variant))
         [("Method", OBus_value.C.(make_single basic_string) "dhcp")]
     in
-    set_property service "IPv4.Configuration" dict
+    set_property service ~name:"IPv4.Configuration" ~value:dict
 
   let set_nameservers service nameservers =
     let config =
         OBus_value.C.make_single
           (OBus_value.C.(array basic_string)) nameservers
     in
-    set_property service "Nameservers.Configuration" config
+    set_property service ~name:"Nameservers.Configuration" ~value:config
 
 
 
@@ -458,8 +458,8 @@ struct
     let on_agent_error msg = Lwt.return (agent_reported_error := Some msg) in
 
     (* Create and register an agent that will pass input to ConnMan *)
-    let%lwt agent_path, agent = Agent.create input on_agent_error in
-    let%lwt () = register_agent service._manager agent_path in
+    let%lwt agent_path, agent = Agent.create ~input on_agent_error in
+    let%lwt () = register_agent service._manager ~path:agent_path in
 
     (Lwt.catch 
         (* Connect to service *)
@@ -477,7 +477,7 @@ struct
         ))
     [%lwt.finally
       (* Cleanup and destroy agent *)
-      let%lwt () = unregister_agent service._manager agent_path in
+      let%lwt () = unregister_agent service._manager ~path:agent_path in
       Agent.destroy agent]
 
   let disconnect service =
@@ -504,8 +504,8 @@ struct
 
   let connect () =
     let%lwt system_bus = OBus_bus.system () in
-    let peer = OBus_peer.make system_bus "net.connman" in
-    OBus_proxy.make peer []
+    let peer = OBus_peer.make ~connection:system_bus ~name:"net.connman" in
+    OBus_proxy.make ~peer ~path:[]
     |> return
 
   let get_technologies proxy =
@@ -515,7 +515,7 @@ struct
     let to_technology (path, properties) : Technology.t option =
       CCOption.(pure
                (fun name type' powered connected : Technology.t ->
-                  { _proxy = OBus_proxy.make (OBus_context.sender context) path
+                  { _proxy = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:path
                   ; name
                   ; type'
                   ; powered
@@ -597,17 +597,17 @@ struct
 
   let get_technologies proxy =
     let%lwt (context, technologies) = OBus_method.call_with_context m_GetTechnologies proxy () in
-    let technologies = List.map (fun (x1, x2) -> (OBus_proxy.make (OBus_context.sender context) x1, x2)) technologies in
+    let technologies = List.map (fun (x1, x2) -> (OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1, x2)) technologies in
     return technologies
 
   let get_services proxy =
     let%lwt (context, services) = OBus_method.call_with_context m_GetServices proxy () in
-    let services = List.map (fun (x1, x2) -> (OBus_proxy.make (OBus_context.sender context) x1, x2)) services in
+    let services = List.map (fun (x1, x2) -> (OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1, x2)) services in
     return services
 
   let get_peers proxy =
     let%lwt (context, peers) = OBus_method.call_with_context m_GetPeers proxy () in
-    let peers = List.map (fun (x1, x2) -> (OBus_proxy.make (OBus_context.sender context) x1, x2)) peers in
+    let peers = List.map (fun (x1, x2) -> (OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1, x2)) peers in
     return peers
 
   let register_agent proxy ~path =
@@ -631,7 +631,7 @@ struct
   let create_session proxy ~settings ~notifier =
     let notifier = OBus_proxy.path notifier in
     let%lwt (context, session) = OBus_method.call_with_context m_CreateSession proxy (settings, notifier) in
-    let session = OBus_proxy.make (OBus_context.sender context) session in
+    let session = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:session in
     return session
 
   let destroy_session proxy ~session =
@@ -640,7 +640,7 @@ struct
 
   let request_private_network proxy =
     let%lwt (context, (path, settings, socket)) = OBus_method.call_with_context m_RequestPrivateNetwork proxy () in
-    let path = OBus_proxy.make (OBus_context.sender context) path in
+    let path = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:path in
     return (path, settings, socket)
 
   let release_private_network proxy ~path =
@@ -659,21 +659,21 @@ struct
   let technology_added proxy =
     OBus_signal.map_with_context
       (fun context (path, properties) ->
-         let path = OBus_proxy.make (OBus_context.sender context) path in
+         let path = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:path in
          (path, properties))
       (OBus_signal.make s_TechnologyAdded proxy)
 
   let technology_removed proxy =
     OBus_signal.map_with_context
       (fun context path ->
-         let path = OBus_proxy.make (OBus_context.sender context) path in
+         let path = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:path in
          path)
       (OBus_signal.make s_TechnologyRemoved proxy)
 
   let services_changed proxy =
     OBus_signal.map_with_context
       (fun context (changed, removed) ->
-         let changed = List.map (fun (x1, x2) -> (OBus_proxy.make (OBus_context.sender context) x1, x2)) changed in
+         let changed = List.map (fun (x1, x2) -> (OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1, x2)) changed in
          let removed = List.map (fun path -> OBus_proxy.make ~peer:(OBus_context.sender context) ~path) removed in
          (changed, removed))
       (OBus_signal.make s_ServicesChanged proxy)
@@ -681,7 +681,7 @@ struct
   let peers_changed proxy =
     OBus_signal.map_with_context
       (fun context (changed, removed) ->
-         let changed = List.map (fun (x1, x2) -> (OBus_proxy.make (OBus_context.sender context) x1, x2)) changed in
+         let changed = List.map (fun (x1, x2) -> (OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1, x2)) changed in
          let removed = List.map (fun path -> OBus_proxy.make ~peer:(OBus_context.sender context) ~path) removed in
          (changed, removed))
       (OBus_signal.make s_PeersChanged proxy)

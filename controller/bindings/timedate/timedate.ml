@@ -19,11 +19,11 @@ let set_timezone timezone =
 
 let daemon () =
   let%lwt system_bus = OBus_bus.system () in
-  let peer = OBus_peer.make system_bus "org.freedesktop.timedate1" in
+  let peer = OBus_peer.make ~connection:system_bus ~name:"org.freedesktop.timedate1" in
   return peer
 
 let proxy daemon =
-  OBus_proxy.make daemon ["org"; "freedesktop"; "timedate1"]
+  OBus_proxy.make ~peer:daemon ~path:["org"; "freedesktop"; "timedate1"]
 
 let get_active_timezone daemon =
   let%lwt raw_tz =

@@ -35,8 +35,10 @@ let nixos = pkgs.importFromNixos ""; in
         options = [ "mode=0755" ];
       };
 
-    };
+      # There is no persistent state for a live system
+      system.stateVersion = lib.trivial.release;
 
+    };
   };
   system = "x86_64-linux";
 }).config.system.build.isoImage

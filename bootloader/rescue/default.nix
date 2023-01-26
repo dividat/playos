@@ -2,7 +2,7 @@
 , squashfsTools, closureInfo, makeInitrd, linkFarm
 , importFromNixos
 , writeScript, dialog
-, vim, grub2_efi, rauc, _2048-in-terminal}:
+, vim, grub2_efi, rauc}:
 with lib;
 let
   nixos = importFromNixos "";
@@ -22,7 +22,6 @@ let
         "wipe-user-data" "Delete all user data." \
         "reboot" "Reboot immediately" \
         "shell" "Access shell" \
-        "2048" "2048" \
         2> $tempfile
 
       retval=$?
@@ -41,9 +40,6 @@ let
             fi
             reboot -f;;
           "reboot")
-            reboot -f;;
-          "2048")
-            2048
             reboot -f;;
           "shell")
             exit;;
@@ -102,7 +98,6 @@ in
       vim
       grub2_efi
       rauc
-      _2048-in-terminal
     ];
 
     # Set up automatic login and start a rescue kiosk
@@ -156,6 +151,9 @@ in
       { name = "kernel"; path = "${config.system.build.kernel}/bzImage"; }
       { name = "initrd"; path = "${config.system.build.rescueRamdisk}/initrd"; }
     ];
+
+    # There is no persistent state for the rescue system
+    system.stateVersion = lib.trivial.release;
 
   };
   system = "x86_64-linux";

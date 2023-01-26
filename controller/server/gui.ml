@@ -252,7 +252,7 @@ module NetworkGui = struct
 
   let details ~connman req =
     let service_id = param req "id" in
-    let%lwt service = with_service connman service_id in
+    let%lwt service = with_service ~connman service_id in
     Lwt.return (page (Network_details_page.html service))
 
   (** Validate a proxy, fail if the proxy is given but invalid *)

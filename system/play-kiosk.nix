@@ -7,7 +7,6 @@
     isNormalUser = true;
     home = "/home/play";
     extraGroups = [
-      "audio" # Play audio
       "dialout" # Access to serial ports for the Senso flex
     ];
   };
@@ -97,12 +96,9 @@
   };
 
   # Audio
+  sound.enable = true;
   hardware.pulseaudio = {
     enable = true;
-
-    # Run PulseAudio as System-Wide daemon. See [1] for why this is in general a bad idea, but ok for our case.
-    # [1] https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/WhatIsWrongWithSystemWide/
-    systemWide = true;
   };
 
   # Enable avahi for Senso discovery

@@ -9,11 +9,11 @@ type t = OBus_peer.Private.t
 
 let daemon () =
   let%lwt system_bus = OBus_bus.system () in
-  let peer = OBus_peer.make system_bus "de.pengutronix.rauc" in
+  let peer = OBus_peer.make ~connection:system_bus ~name:"de.pengutronix.rauc" in
   return peer
 
 let proxy daemon =
-  OBus_proxy.make daemon []
+  OBus_proxy.make ~peer:daemon ~path:[]
 
 module Slot =
 struct
