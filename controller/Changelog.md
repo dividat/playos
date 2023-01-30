@@ -1,5 +1,9 @@
 # [UNRELEASED]
 
+## Added
+
+- os: Include basic network troubleshooting command-line tools
+
 ## Changed
 
 - driver: Upgrade to 2.3.0 for recent versions of Senso Flex
