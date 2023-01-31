@@ -4,9 +4,18 @@
   # Enable non-free firmware
   hardware.enableRedistributableFirmware = true;
 
+  # Tools for basic network troubleshooting
+  # We purposefully omit more powerful tools such as tcpdump and nmap, which
+  # sysadmins may not want to be present in their networks.
+  environment.systemPackages = with pkgs; [
+    ethtool # for inspecting Ethernet interface status
+    bind.dnsutils # dig and nslookup for DNS
+    traceroute # for connectivity
+  ];
+
   # Set up networking with ConnMan
-  # We need to work around various issues in the interplay of
-  # connman and wpa_supplicant for this to work.
+  # We need to work around various issues in the interplay of connman and
+  # wpa_supplicant for this to work.
   services.connman = {
     enable = true;
     enableVPN = false;
