@@ -43,6 +43,20 @@ See the output of `run-playos-in-vm --help` for more information.
 
 The default user-mode network stack is used to create a virtual Ethernet connection with bridged Internet access for the guest. If you find that the guest has a dysfunctional Internet connection, check your host's firewall settings. If using ConnMan, restart ConnMan service and try again.
 
+## Testing
+
+Subcomponent tests using the [NixOS test framework](https://nixos.org/manual/nixos/stable/index.html#sec-nixos-tests) may be added to `test/integration`.
+
+Run tests with
+
+    testing/run
+
+or individual tests with
+
+    nix-build testing/integration/EXAMPLE.nix
+
+Tests added to `test/integration` are executed via a GitHub Action when pushing or creating pull requests.
+
 ## Deployment
 
 Update bundles are hosted on Amazon S3. The script `bin/deploy-playos-update` will handle signing and uploading of bundle.
