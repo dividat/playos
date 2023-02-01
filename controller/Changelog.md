@@ -12,6 +12,7 @@
 ## Fixed
 
 - controller: Fix a file descriptor leak that could lead to the controller interface becoming unusable
+- os: Add a mechanism to recover from a status file corruption that could prevent systems from updating
 
 # [2022.4.0] - 2022-07-06
 
