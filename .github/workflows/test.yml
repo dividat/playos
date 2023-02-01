@@ -10,4 +10,6 @@ jobs:
     - uses: cachix/install-nix-action@v18
       with:
         nix_path: nixpkgs=channel:nixos-unstable
+        extra_nix_config: |
+          system-features = nixos-test benchmark big-parallel kvm
     - run: NIXPKGS_ALLOW_UNFREE=1 nix-build
