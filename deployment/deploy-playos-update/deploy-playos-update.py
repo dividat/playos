@@ -167,6 +167,25 @@ def _main(opts):
             ],
             check=True)
 
+        # Create copy of latest manual at fixed name
+        subprocess.run(
+            [
+                AWS_CLI,
+                "s3",
+                "cp",
+                # We have to re-upload this file; copying within bucket is faster, but does not allow setting headers
+                manual_dst,
+                DEPLOY_URL + "manual-latest.pdf",
+                "--acl",
+                "public-read",
+                "--cache-control",
+                "max-age=0",
+                "--content-disposition",
+                "attachment; filename=\"%s\"" % manual_filename
+            ],
+            check=True)
+
+
         installer_checksum = compute_sha256(installer_iso_src)
         installer_iso_url = UPDATE_URL + VERSION + "/" + installer_iso_filename
         manual_url = UPDATE_URL + VERSION + "/" + manual_filename
