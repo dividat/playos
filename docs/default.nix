@@ -1,4 +1,9 @@
-{ stdenv, pandoc, python39Packages, version }:
+{ stdenv, makeFontsConf, pandoc, python39Packages, ibm-plex, version }:
+let
+  fontsConf = makeFontsConf {
+    fontDirectories = [ ibm-plex ];
+  };
+in
 stdenv.mkDerivation {
   name = "playos-docs-${version}";
 
@@ -8,6 +13,7 @@ stdenv.mkDerivation {
 
   installPhase = ''
     DATE=$(date -I)
+    export FONTCONFIG_FILE="${fontsConf}"
 
     mkdir -p $out
 
