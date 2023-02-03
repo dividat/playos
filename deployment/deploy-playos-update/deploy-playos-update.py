@@ -10,6 +10,7 @@ import sys
 
 UNSIGNED_RAUC_BUNDLE = "@unsignedRaucBundle@"
 INSTALLER_ISO = "@installer@"
+DOCS = "@docs@"
 VERSION = "@version@"
 
 # Certificate installed on system
@@ -114,11 +115,18 @@ def _main(opts):
         with open(latest_file, 'w') as latest:
             latest.write(VERSION + "\n")
 
+        # Write installer ISO
         installer_iso_filename = "playos-installer-" + VERSION + ".iso"
         installer_iso_src = os.path.join(INSTALLER_ISO, "iso", installer_iso_filename)
         installer_iso_dst = os.path.join(version_dir, installer_iso_filename)
         subprocess.run(["cp", installer_iso_src, installer_iso_dst],
             check=True)
+
+        # Write PDF manual
+        manual_filename = "playos-manual-" + VERSION + ".pdf"
+        manual_src = os.path.join(DOCS, "user-manual.pdf")
+        manual_dst = os.path.join(version_dir, manual_filename)
+        subprocess.run(["cp", manual_src, manual_dst], check=True)
 
         # Print some information and wait for confirmation
         print("Update URL:\t%s" % UPDATE_URL)
@@ -161,7 +169,9 @@ def _main(opts):
 
         installer_checksum = compute_sha256(installer_iso_src)
         installer_iso_url = UPDATE_URL + VERSION + "/" + installer_iso_filename
+        manual_url = UPDATE_URL + VERSION + "/" + manual_filename
         print("Deployment completed.\n")
+        print("Manual: %s" % manual_url)
         print("Installer URL: %s" % installer_iso_url)
         print("Installer checksum (SHA256): %s" % installer_checksum)
 
