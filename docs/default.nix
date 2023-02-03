@@ -1,11 +1,10 @@
-{ stdenv, pandoc
-, version}:
+{ stdenv, pandoc, python39Packages, version }:
 stdenv.mkDerivation {
   name = "playos-docs-${version}";
 
   src = ./.;
 
-  buildInputs = [ pandoc ];
+  buildInputs = [ pandoc python39Packages.weasyprint ];
 
   installPhase = ''
     DATE=$(date -I)
@@ -20,6 +19,7 @@ stdenv.mkDerivation {
       -t html5 \
       --standalone --self-contained -o $out/arch.html \
       Readme.org
+    weasyprint $out/arch.html $out/arch.pdf
 
     cd ../user-manual
     pandoc \
@@ -29,5 +29,6 @@ stdenv.mkDerivation {
         -t html5 \
         --standalone --self-contained -o $out/user-manual.html \
         Readme.org
+    weasyprint $out/user-manual.html $out/user-manual.pdf
   '';
 }
