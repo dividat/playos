@@ -2,6 +2,10 @@
 
 {
 
+  imports = [
+    ./modules/playos-status.nix
+  ];
+
   # Kiosk runs as a non-privileged user
   users.users.play = {
     isNormalUser = true;
