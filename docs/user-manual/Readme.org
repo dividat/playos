@@ -8,7 +8,7 @@ PlayOS is a custom operating system for running Dividat Play together with Divid
 
 PlayOS runs on most standard ~x86_64~ systems.
 
-The only recommended and supported machine is the /Shuttle DH110/.
+The only recommended and supported machines are the /Shuttle DH110/ and /ASUS PB62/ series.
 
 * Usage
 
