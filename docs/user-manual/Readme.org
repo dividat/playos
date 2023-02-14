@@ -10,75 +10,6 @@ PlayOS runs on most standard ~x86_64~ systems.
 
 The only recommended and supported machine is the /Shuttle DH110/.
 
-* Installation
-
-The following instructions are suitable for installing PlayOS to a modern PC and assume that you have access to a USB stick with the desired version of the PlayOS installer.
-
-** Selecting boot medium
-
-<<selecting-boot-medium>>Insert the USB key into the PC. Press and keep pressing the ~F8~ key on the keyboard as you power on the computer to open the boot selection menu. Select the USB key and hit ~Enter~:
-
-#+CAPTION: Boot medium menu after pressing F8
-#+NAME: fig:boot-selection
-#+attr_html: :width 800px
-[[../screenshots/boot-selection.png]]
-
-On systems up until early 2023 the ~F7~ key needs to be pressed while booting instead.
-
-#+CAPTION: Boot medium menu after pressing F7
-#+NAME: fig:boot-selection-dh110
-#+attr_html: :width 800px
-[[../screenshots/boot-selection-dh110.png]]
-
-If you use any other PC, the steps for selecting the boot medium may differ.
-
-** Running the installer
-
-The installer will start and display a boot loader menu:
-
-#+CAPTION: Installer boot loader
-#+NAME: fig:installer-boot-loader.png
-#+attr_html: :width 800px
-[[../screenshots/installer-boot-loader.png]]
-
-Select the first entry and press ~Enter~. This will boot the PlayOS installer. After the installer is completely booted a prompt will ask for confirmation to install PlayOS on the computer's disk:
-
-#+CAPTION: Confirmation to install PlayOS
-#+NAME: fig:install-playos.png
-#+attr_html: :width 800px
-[[../screenshots/install-playos.png]]
-
-To continue installation enter ~y~ and press ~Enter~. Note that installation will delete any data already present on the computer's storage disk.
-
-Installation takes around 5 to 10 minutes. After the installation completes successfully, the computer will automatically restart the computer and boot into the newly installed PlayOS system.
-
-** Required boot configuration in BIOS
-
-In order to install and run PlayOS, the PC needs to be set to UEFI mode and allow booting custom operating systems. When updating a computer that has been used with PlayOS before, there should be nothing to do. Hints for initial setup are given below.
-
-To check or set the configuration, press the ~Delete~ key immediately after powering on the computer.
-
-Now make sure that UEFI Secure Boot is disabled:
-
-#+CAPTION: Navigate to the tab /Boot/ and under /Secure Boot/ set /OS Type/ to /Other OS/.
-#+NAME: fig:secure-boot
-#+attr_html: :width 800px
-[[../screenshots/secure-boot.png]]
-
-#+CAPTION: Systems before 2023: Navigate to the tab /Security/ and set the option /Secure Boot Control/ to /Disabled/.
-#+NAME: fig:secure-boot-dh110
-#+attr_html: :width 800px
-[[../screenshots/secure-boot-dh110.png]]
-
-In systems obtained before 2023 you may also need to navigate to the tab /Boot/ and set the option /Boot Mode Select/ to /UEFI/:
-
-#+CAPTION: Selecting UEFI boot mode
-#+NAME: fig:bios-uefi
-#+attr_html: :width 800px
-[[../screenshots/bios-uefi.png]]
-
-Once the configuration is complete, navigate to /Exit/ and choose the option to save and exit BIOS.
-
 * Usage
 
 The system will automatically boot and load Dividat Play.
@@ -98,17 +29,11 @@ Connection to an attached Dividat Senso will automatically be configured. To man
 
 The system may be shut down by pressing the power button on the computer or alternatively from the administrator menu.
 
-* Status screen
-
-A status screen providing a brief status report about various components of the system is available on `tty8`. It can be accessed using the key combination ~Ctrl-Alt-F8~. To get back from the status screen to the graphical interface, use ~Ctrl-Alt-F7~.
-
 * Administration
 
-<<administration>>A menu for system administration is provided and may be accessed with the key combination ~Ctrl-Shift-F12~.
+<<administration>>A menu for system administration may be accessed with the key combination ~Ctrl-Shift-F12~.
 
-Multiple pages are available and may be navigated with the icons on the right of the screen.
-
-The initial page displayed is a page displaying basic system information.
+The administration interface opens to a page displaying basic system information.
 
 ** Information
 
@@ -202,6 +127,10 @@ View System Health, Update and RAUC states.
 
 View what has been added, changed and fixed with each version.
 
+** Status screen
+
+A status screen providing a brief status report about various components of the system is available on ~tty8~. It can be accessed using the key combination ~Ctrl-Alt-F8~. To get back from the status screen to the graphical interface, use ~Ctrl-Alt-F7~.
+
 ** Wiping user data
 
 Certain user data such as Play login credentials, wireless settings are stored persistently on the computer's disk.
@@ -223,6 +152,75 @@ The rescue system will boot and display a menu:
 [[../screenshots/rescue-system.png]]
 
 Select the entry "wipe-user-data" and press ~Enter~. This will delete all user data and reboot the computer.
+
+* Installation
+
+The following instructions are suitable for installing PlayOS to a modern PC and assume that you have access to a USB stick with the desired version of the PlayOS installer.
+
+** Selecting boot medium
+
+<<selecting-boot-medium>>Insert the USB key into the PC. Press and keep pressing the ~F8~ key on the keyboard as you power on the computer to open the boot selection menu. Select the USB key and hit ~Enter~:
+
+#+CAPTION: Boot medium menu after pressing F8
+#+NAME: fig:boot-selection
+#+attr_html: :width 800px
+[[../screenshots/boot-selection.png]]
+
+On systems up until early 2023 the ~F7~ key needs to be pressed while booting instead.
+
+#+CAPTION: Boot medium menu after pressing F7
+#+NAME: fig:boot-selection-dh110
+#+attr_html: :width 800px
+[[../screenshots/boot-selection-dh110.png]]
+
+If you use any other PC, the steps for selecting the boot medium may differ.
+
+** Running the installer
+
+The installer will start and display a boot loader menu:
+
+#+CAPTION: Installer boot loader
+#+NAME: fig:installer-boot-loader.png
+#+attr_html: :width 800px
+[[../screenshots/installer-boot-loader.png]]
+
+Select the first entry and press ~Enter~. This will boot the PlayOS installer. After the installer is completely booted a prompt will ask for confirmation to install PlayOS on the computer's disk:
+
+#+CAPTION: Confirmation to install PlayOS
+#+NAME: fig:install-playos.png
+#+attr_html: :width 800px
+[[../screenshots/install-playos.png]]
+
+To continue installation enter ~y~ and press ~Enter~. Note that installation will delete any data already present on the computer's storage disk.
+
+Installation takes around 5 to 10 minutes. After the installation completes successfully, the computer will automatically restart the computer and boot into the newly installed PlayOS system.
+
+** Required boot configuration in BIOS
+
+In order to install and run PlayOS, the PC needs to be set to UEFI mode and allow booting custom operating systems. When updating a computer that has been used with PlayOS before, there should be nothing to do. Hints for initial setup are given below.
+
+To check or set the configuration, press the ~Delete~ key immediately after powering on the computer.
+
+Now make sure that UEFI Secure Boot is disabled:
+
+#+CAPTION: Navigate to the tab /Boot/ and under /Secure Boot/ set /OS Type/ to /Other OS/.
+#+NAME: fig:secure-boot
+#+attr_html: :width 800px
+[[../screenshots/secure-boot.png]]
+
+#+CAPTION: Systems before 2023: Navigate to the tab /Security/ and set the option /Secure Boot Control/ to /Disabled/.
+#+NAME: fig:secure-boot-dh110
+#+attr_html: :width 800px
+[[../screenshots/secure-boot-dh110.png]]
+
+In systems obtained before 2023 you may also need to navigate to the tab /Boot/ and set the option /Boot Mode Select/ to /UEFI/:
+
+#+CAPTION: Selecting UEFI boot mode
+#+NAME: fig:bios-uefi
+#+attr_html: :width 800px
+[[../screenshots/bios-uefi.png]]
+
+Once the configuration is complete, navigate to /Exit/ and choose the option to save and exit BIOS.
 
 * Live System
 
