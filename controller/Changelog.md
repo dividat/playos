@@ -8,6 +8,7 @@
 
 - driver: Upgrade to 2.3.0 for recent versions of Senso Flex
 - os: Update nixpkgs channel to 22.11
+- os: Reduce loglevel for reduced business during system boot
 
 ## Fixed
 

@@ -11,6 +11,9 @@
     ];
   };
 
+  # Reduce warnings during boot to likely relevant level
+  boot.consoleLogLevel = pkgs.lib.mkForce 3;
+
   # Note that setting up "/home" as persistent fails due to https://github.com/NixOS/nixpkgs/issues/6481
   volatileRoot.persistentFolders."/home/play" = {
     mode = "0700";

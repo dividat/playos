@@ -204,6 +204,8 @@ The rescue system will boot and display a menu:
 
 Select the entry "wipe-user-data" and press ~Enter~. This will delete all user data and reboot the computer.
 
+The rescue system's boot logs may also be useful when analysing potential hardware issues, as it is configured to reveal more logs from the Linux kernel.
+
 * Live System
 
 A live system build of PlayOS is available and can be pointed to experimental versions of Play or other web addresses to allow for easy evaluation. This version of PlayOS boots from removable media such as USB keys and has no persistent storage at all. Any configuration done when booted will be reset to defaults on next boot.

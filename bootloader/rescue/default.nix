@@ -58,6 +58,9 @@ in
     # disable installation of bootloader
     boot.loader.grub.enable = false;
 
+    # Make sure we use a verbose loglevel in rescue mode
+    boot.consoleLogLevel = lib.mkForce 7;
+
     fileSystems = {
       "/" = {
         fsType = "tmpfs";
