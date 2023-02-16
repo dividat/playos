@@ -55,7 +55,7 @@ class CaptivePortal():
                     if r.status_code == 200:
                         self._status = Status.DIRECT_CONNECTED
 
-                    elif r.status_code in [301, 302, 303, 307]:
+                    elif r.status_code in [301, 302, 303, 307, 308]:
                         self._status = Status.DIRECT_CAPTIVE
                         self.show_captive_portal_message(r.headers['Location'])
 
