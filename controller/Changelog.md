@@ -7,6 +7,7 @@
 ## Changed
 
 - driver: Upgrade to 2.3.0 for recent versions of Senso Flex
+- os: Route audio output to both line-out and attached HDMI/DisplayPort outputs
 - os: Update nixpkgs channel to 22.11
 
 ## Fixed
