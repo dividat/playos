@@ -157,6 +157,37 @@ Select the entry "wipe-user-data" and press ~Enter~. This will delete all user d
 
 The following instructions are suitable for installing PlayOS to a modern PC and assume that you have access to a USB stick with the desired version of the PlayOS installer.
 
+** (First install) Required boot configuration in BIOS
+
+This section is only relevant when a PC is first installed with PlayOS. If you are updating an existing installation you can skip to the next section.
+
+In order to install and run PlayOS, the PC needs to be set to UEFI mode and allow booting custom operating systems.
+
+To check or set the configuration, press the ~Delete~ key immediately after powering on the computer.
+
+Now make sure that UEFI Secure Boot is disabled:
+
+#+CAPTION: Navigate to the tab /Boot/ and under /Secure Boot/ set /OS Type/ to /Other OS/.
+#+NAME: fig:secure-boot
+#+attr_html: :width 800px
+[[../screenshots/secure-boot.png]]
+
+In systems obtained before 2023 the screen looks differently:
+
+#+CAPTION: Systems before 2023: Navigate to the tab /Security/ and set the option /Secure Boot Control/ to /Disabled/.
+#+NAME: fig:secure-boot-dh110
+#+attr_html: :width 800px
+[[../screenshots/secure-boot-dh110.png]]
+
+In systems obtained before 2023 you may also need to navigate to the tab /Boot/ and set the option /Boot Mode Select/ to /UEFI/:
+
+#+CAPTION: Selecting UEFI boot mode
+#+NAME: fig:bios-uefi
+#+attr_html: :width 800px
+[[../screenshots/bios-uefi.png]]
+
+Once the configuration is complete, navigate to /Exit/ and choose the option to save and exit BIOS.
+
 ** Selecting boot medium
 
 <<selecting-boot-medium>>Insert the USB key into the PC. Press and keep pressing the ~F8~ key on the keyboard as you power on the computer to open the boot selection menu. Select the USB key and hit ~Enter~:
@@ -193,34 +224,7 @@ Select the first entry and press ~Enter~. This will boot the PlayOS installer. A
 
 To continue installation enter ~y~ and press ~Enter~. Note that installation will delete any data already present on the computer's storage disk.
 
-Installation takes around 5 to 10 minutes. After the installation completes successfully, the computer will automatically restart the computer and boot into the newly installed PlayOS system.
-
-** Required boot configuration in BIOS
-
-In order to install and run PlayOS, the PC needs to be set to UEFI mode and allow booting custom operating systems. When updating a computer that has been used with PlayOS before, there should be nothing to do. Hints for initial setup are given below.
-
-To check or set the configuration, press the ~Delete~ key immediately after powering on the computer.
-
-Now make sure that UEFI Secure Boot is disabled:
-
-#+CAPTION: Navigate to the tab /Boot/ and under /Secure Boot/ set /OS Type/ to /Other OS/.
-#+NAME: fig:secure-boot
-#+attr_html: :width 800px
-[[../screenshots/secure-boot.png]]
-
-#+CAPTION: Systems before 2023: Navigate to the tab /Security/ and set the option /Secure Boot Control/ to /Disabled/.
-#+NAME: fig:secure-boot-dh110
-#+attr_html: :width 800px
-[[../screenshots/secure-boot-dh110.png]]
-
-In systems obtained before 2023 you may also need to navigate to the tab /Boot/ and set the option /Boot Mode Select/ to /UEFI/:
-
-#+CAPTION: Selecting UEFI boot mode
-#+NAME: fig:bios-uefi
-#+attr_html: :width 800px
-[[../screenshots/bios-uefi.png]]
-
-Once the configuration is complete, navigate to /Exit/ and choose the option to save and exit BIOS.
+Installation takes around 5 to 10 minutes. After the installation completes successfully, the computer will automatically restart and boot into the newly installed PlayOS system.
 
 * Live System
 
