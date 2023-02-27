@@ -7,7 +7,6 @@
     isNormalUser = true;
     home = "/home/play";
     extraGroups = [
-      "audio" # Play audio
       "dialout" # Access to serial ports for the Senso flex
     ];
   };
@@ -51,6 +50,18 @@
             if [ -f "$scaling_pref" ] && [ $(cat "$scaling_pref") = "full-hd" ]; then
                xrandr --size 1920x1080
             fi
+
+            # We want to avoid making the user configure audio outputs, but
+            # instead route audio to both the standard output and any connected
+            # displays. This looks for any "HDMI" device on ALSA card 0 and
+            # tries to add a sink for it. Both HDMI and DisplayPort connectors
+            # will count as "HDMI". We ignore failure from disconnected ports.
+            for dev_num in $(aplay -l | grep "^card 0:" | grep "HDMI" | grep "device [0-9]\+" | sed "s/.*device \([0-9]\+\):.*/\1/"); do
+              printf "Creating ALSA sink for device $dev_num: "
+              pactl load-module module-alsa-sink device="hw:0,$dev_num" sink_name="hdmi$dev_num" sink_properties="device.description='HDMI-$dev_num'" || true
+            done
+            pactl load-module module-combine-sink sink_name=combined
+            pactl set-default-sink combined
 
             # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-5/qtwebengine-debugging.html)
             export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
@@ -97,12 +108,9 @@
   };
 
   # Audio
+  sound.enable = true;
   hardware.pulseaudio = {
     enable = true;
-
-    # Run PulseAudio as System-Wide daemon. See [1] for why this is in general a bad idea, but ok for our case.
-    # [1] https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/WhatIsWrongWithSystemWide/
-    systemWide = true;
   };
 
   # Enable avahi for Senso discovery

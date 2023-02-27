@@ -15,8 +15,8 @@ struct
 
   let connect () =
     let%lwt system_bus = OBus_bus.system () in
-    let peer = OBus_peer.make system_bus "org.freedesktop.systemd1" in
-    OBus_proxy.make peer ["org"; "freedesktop"; "systemd1"]
+    let peer = OBus_peer.make ~connection:system_bus ~name:"org.freedesktop.systemd1" in
+    OBus_proxy.make ~peer ~path:["org"; "freedesktop"; "systemd1"]
     |> return
 
   type system_state =
@@ -51,7 +51,7 @@ struct
   let get_unit proxy name =
     let%lwt (context, x1) = OBus_method.call_with_context
         Org_freedesktop_systemd1_Manager.m_GetUnit proxy name in
-    let unit = OBus_proxy.make (OBus_context.sender context) x1 in
+    let unit = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return unit
 
   let restart_unit proxy name =
@@ -60,7 +60,7 @@ struct
         Org_freedesktop_systemd1_Manager.m_RestartUnit proxy (name, "replace")
     in
     (* a proxy to the job to restart the service *)
-    (* let job = OBus_proxy.make (OBus_context.sender context) x1 in *)
+    (* let job = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in *)
     (* but we don't use it. *)
     return_unit
 
@@ -381,68 +381,68 @@ struct
 
   let get_unit proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_GetUnit proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let get_unit_by_pid proxy x1 =
     let x1 = Int32.of_int x1 in
     let%lwt (context, x1) = OBus_method.call_with_context m_GetUnitByPID proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let get_unit_by_invocation_id proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_GetUnitByInvocationID proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let get_unit_by_control_group proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_GetUnitByControlGroup proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let load_unit proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_LoadUnit proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let start_unit proxy x1 x2 =
     let%lwt (context, x1) = OBus_method.call_with_context m_StartUnit proxy (x1, x2) in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let start_unit_replace proxy x1 x2 x3 =
     let%lwt (context, x1) = OBus_method.call_with_context m_StartUnitReplace proxy (x1, x2, x3) in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let stop_unit proxy x1 x2 =
     let%lwt (context, x1) = OBus_method.call_with_context m_StopUnit proxy (x1, x2) in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let reload_unit proxy x1 x2 =
     let%lwt (context, x1) = OBus_method.call_with_context m_ReloadUnit proxy (x1, x2) in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let restart_unit proxy x1 x2 =
     let%lwt (context, x1) = OBus_method.call_with_context m_RestartUnit proxy (x1, x2) in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let try_restart_unit proxy x1 x2 =
     let%lwt (context, x1) = OBus_method.call_with_context m_TryRestartUnit proxy (x1, x2) in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let reload_or_restart_unit proxy x1 x2 =
     let%lwt (context, x1) = OBus_method.call_with_context m_ReloadOrRestartUnit proxy (x1, x2) in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let reload_or_try_restart_unit proxy x1 x2 =
     let%lwt (context, x1) = OBus_method.call_with_context m_ReloadOrTryRestartUnit proxy (x1, x2) in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let kill_unit proxy x1 x2 x3 =
@@ -463,7 +463,7 @@ struct
 
   let start_transient_unit proxy x1 x2 x3 x4 =
     let%lwt (context, x1) = OBus_method.call_with_context m_StartTransientUnit proxy (x1, x2, x3, x4) in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let get_unit_processes proxy x1 =
@@ -478,19 +478,19 @@ struct
   let get_job proxy x1 =
     let x1 = Int32.of_int x1 in
     let%lwt (context, x1) = OBus_method.call_with_context m_GetJob proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let get_job_after proxy x1 =
     let x1 = Int32.of_int x1 in
     let%lwt (context, x1) = OBus_method.call_with_context m_GetJobAfter proxy x1 in
-    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6) -> (Int32.to_int x1, x2, x3, x4, OBus_proxy.make (OBus_context.sender context) x5, OBus_proxy.make (OBus_context.sender context) x6)) x1 in
+    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6) -> (Int32.to_int x1, x2, x3, x4, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x5, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x6)) x1 in
     return x1
 
   let get_job_before proxy x1 =
     let x1 = Int32.of_int x1 in
     let%lwt (context, x1) = OBus_method.call_with_context m_GetJobBefore proxy x1 in
-    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6) -> (Int32.to_int x1, x2, x3, x4, OBus_proxy.make (OBus_context.sender context) x5, OBus_proxy.make (OBus_context.sender context) x6)) x1 in
+    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6) -> (Int32.to_int x1, x2, x3, x4, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x5, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x6)) x1 in
     return x1
 
   let cancel_job proxy x1 =
@@ -505,27 +505,27 @@ struct
 
   let list_units proxy =
     let%lwt (context, x1) = OBus_method.call_with_context m_ListUnits proxy () in
-    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10) -> (x1, x2, x3, x4, x5, x6, OBus_proxy.make (OBus_context.sender context) x7, Int32.to_int x8, x9, OBus_proxy.make (OBus_context.sender context) x10)) x1 in
+    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10) -> (x1, x2, x3, x4, x5, x6, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x7, Int32.to_int x8, x9, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x10)) x1 in
     return x1
 
   let list_units_filtered proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_ListUnitsFiltered proxy x1 in
-    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10) -> (x1, x2, x3, x4, x5, x6, OBus_proxy.make (OBus_context.sender context) x7, Int32.to_int x8, x9, OBus_proxy.make (OBus_context.sender context) x10)) x1 in
+    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10) -> (x1, x2, x3, x4, x5, x6, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x7, Int32.to_int x8, x9, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x10)) x1 in
     return x1
 
   let list_units_by_patterns proxy x1 x2 =
     let%lwt (context, x1) = OBus_method.call_with_context m_ListUnitsByPatterns proxy (x1, x2) in
-    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10) -> (x1, x2, x3, x4, x5, x6, OBus_proxy.make (OBus_context.sender context) x7, Int32.to_int x8, x9, OBus_proxy.make (OBus_context.sender context) x10)) x1 in
+    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10) -> (x1, x2, x3, x4, x5, x6, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x7, Int32.to_int x8, x9, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x10)) x1 in
     return x1
 
   let list_units_by_names proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_ListUnitsByNames proxy x1 in
-    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10) -> (x1, x2, x3, x4, x5, x6, OBus_proxy.make (OBus_context.sender context) x7, Int32.to_int x8, x9, OBus_proxy.make (OBus_context.sender context) x10)) x1 in
+    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6, x7, x8, x9, x10) -> (x1, x2, x3, x4, x5, x6, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x7, Int32.to_int x8, x9, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x10)) x1 in
     return x1
 
   let list_jobs proxy =
     let%lwt (context, x1) = OBus_method.call_with_context m_ListJobs proxy () in
-    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6) -> (Int32.to_int x1, x2, x3, x4, OBus_proxy.make (OBus_context.sender context) x5, OBus_proxy.make (OBus_context.sender context) x6)) x1 in
+    let x1 = List.map (fun (x1, x2, x3, x4, x5, x6) -> (Int32.to_int x1, x2, x3, x4, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x5, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x6)) x1 in
     return x1
 
   let subscribe proxy =
@@ -644,14 +644,14 @@ struct
   let unit_new proxy =
     OBus_signal.map_with_context
       (fun context (x1, x2) ->
-         let x2 = OBus_proxy.make (OBus_context.sender context) x2 in
+         let x2 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x2 in
          (x1, x2))
       (OBus_signal.make s_UnitNew proxy)
 
   let unit_removed proxy =
     OBus_signal.map_with_context
       (fun context (x1, x2) ->
-         let x2 = OBus_proxy.make (OBus_context.sender context) x2 in
+         let x2 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x2 in
          (x1, x2))
       (OBus_signal.make s_UnitRemoved proxy)
 
@@ -659,7 +659,7 @@ struct
     OBus_signal.map_with_context
       (fun context (x1, x2, x3) ->
          let x1 = Int32.to_int x1 in
-         let x2 = OBus_proxy.make (OBus_context.sender context) x2 in
+         let x2 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x2 in
          (x1, x2, x3))
       (OBus_signal.make s_JobNew proxy)
 
@@ -667,7 +667,7 @@ struct
     OBus_signal.map_with_context
       (fun context (x1, x2, x3, x4) ->
          let x1 = Int32.to_int x1 in
-         let x2 = OBus_proxy.make (OBus_context.sender context) x2 in
+         let x2 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x2 in
          (x1, x2, x3, x4))
       (OBus_signal.make s_JobRemoved proxy)
 
@@ -832,7 +832,7 @@ struct
 
   let job proxy =
     OBus_property.map_r_with_context
-      (fun context x -> (fun (x1, x2) -> (Int32.to_int x1, OBus_proxy.make (OBus_context.sender context) x2)) x)
+      (fun context x -> (fun (x1, x2) -> (Int32.to_int x1, OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x2)) x)
       (OBus_property.make p_Job proxy)
 
   let stop_when_unneeded proxy =
@@ -936,37 +936,37 @@ struct
 
   let start proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_Start proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let stop proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_Stop proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let reload proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_Reload proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let restart proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_Restart proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let try_restart proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_TryRestart proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let reload_or_restart proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_ReloadOrRestart proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let reload_or_try_restart proxy x1 =
     let%lwt (context, x1) = OBus_method.call_with_context m_ReloadOrTryRestart proxy x1 in
-    let x1 = OBus_proxy.make (OBus_context.sender context) x1 in
+    let x1 = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:x1 in
     return x1
 
   let kill proxy x1 x2 =
