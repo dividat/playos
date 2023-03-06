@@ -16,7 +16,10 @@ def widget(parent, title, url, additional_close_keys, on_close):
     dialog = QtWidgets.QDialog(parent)
     w = parent.width()
     h = parent.height()
-    dialog.setGeometry(w * (1 - dialog_ratio) / 2, h * (1 - dialog_ratio) / 2, w * dialog_ratio, h * dialog_ratio)
+    dialog.setGeometry(int(w * (1 - dialog_ratio) / 2),
+                       int(h * (1 - dialog_ratio) / 2),
+                       int(w * dialog_ratio),
+                       int(h * dialog_ratio))
 
     show_webview_window(dialog, title, url)
 
@@ -58,7 +61,7 @@ def title_line(dialog, title):
         color: white;
         font-family: monospace;
         font-size: 16px;
-    """);
+    """)
 
     button = QtWidgets.QPushButton("❌", dialog)
     button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))

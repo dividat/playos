@@ -1,6 +1,6 @@
 { lib, fetchFromGitHub, buildDunePackage
 , ppxlib, ppx_tools_versioned, ocaml_lwt
-, lwt_react, lwt_ppx, lwt_log, react, type_conv, xmlm, menhir }:
+, lwt_react, lwt_ppx, lwt_log, react, xmlm, menhir }:
 
 buildDunePackage rec {
   pname = "obus";
@@ -11,8 +11,9 @@ buildDunePackage rec {
   src = fetchFromGitHub {
     owner = "ocaml-community";
     repo = "obus";
-    rev = "0c5ec967da943d75d11b6c65460c306e37993b23";
-    sha256 = "1g8mn5851vzzq7cbv4i51aq4xls1d4krzw2zxs96vf26mdnwvfxi";
+    # Unreleased, we need https://github.com/ocaml-community/obus/pull/28
+    rev = "03129dac072e7a7370c2c92b9d447e47f784b7c7";
+    sha256 = "/IVbn9bgZgxfXbpfrj2PRv06rylL59BTVEzVDZ16fgc=";
   };
 
   useDune2 = true;

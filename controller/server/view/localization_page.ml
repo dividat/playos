@@ -109,15 +109,15 @@ type params =
   }
 
 let html params =
-  Page.html ~current_page:Page.Localization (
-    div
-      [ h1 ~a:[ a_class [ "d-Title" ] ] [ txt "Localization & Display" ]
-      ; timezone_form params.timezone_groups params.current_timezone
+  Page.html 
+    ~current_page:Page.Localization 
+    ~header:(Page.header_title ~icon:Icon.letter [ txt "Localization & Display" ])
+    (div
+      [ timezone_form params.timezone_groups params.current_timezone
       ; language_form params.langs params.current_lang
       ; keyboard_form params.keymaps params.current_keymap
       ; scaling_form params.current_scaling
       ; aside
           ~a:[ a_class [ "d-Localization__Note" ] ]
           [ txt "Note that changes to the keyboard, language and display settings require a restart." ]
-      ]
-  )
+      ])

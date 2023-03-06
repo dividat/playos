@@ -15,14 +15,9 @@ $if(keywords)$
 $endif$
   <title>$if(title-prefix)$$title-prefix$ – $endif$$pagetitle$</title>
   <style type="text/css">
-      body {
-        font-family: 'Helvetica', sans-serif;
-        font-size: 100%;
-      }
-
       #content {
         margin: 20px auto;
-        width: 750px;
+        max-width: 80ch;
       }
 
       #footer {
@@ -30,13 +25,21 @@ $endif$
         font-size: 75%;
       }
 
-      code{white-space: pre-wrap;}
+      body {
+        font-family: 'IBM Plex Sans', ui-sans-serif, sans-serif;
+        font-size: 100%;
+      }
+      code,pre,kbd{font-family: 'IBM Plex Mono', ui-monospace, monospace;}
+      code,kbd{white-space:pre-wrap;font-weight:bold;}
+      h1[data-number]{margin-top:5rem;}
+      h1[data-number]:first-of-type{margin-top:0;page-break-before:always;}
       span.smallcaps{font-variant: small-caps;}
       span.underline{text-decoration: underline;}
       div.column{display: inline-block; vertical-align: top; width: 50%;}
       dl>dt{font-weight: bold;}
       figure{width:100%; margin:0;}
-      figure>img{max-width: 100%; }
+      figure>figcaption{font-size:75%;}
+      figure>img{box-sizing:border-box;max-width:100%;border:1px solid #ddd;padding:3px;}
       figure>img.align-center{margin-left: auto; margin-right: auto; display: block;}
       img.align-center+figcaption{text-align: center;}
       .attention{background-color: #ffffdd;}
@@ -56,9 +59,6 @@ $endfor$
 $if(math)$
   $math$
 $endif$
-  <!--[if lt IE 9]>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
-  <![endif]-->
 $for(header-includes)$
   $header-includes$
 $endfor$

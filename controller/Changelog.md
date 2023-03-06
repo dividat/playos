@@ -1,3 +1,22 @@
+# [2023.2.0] - 2023-03-06
+
+# [2023.2.0-VALIDATION] - 2023-02-27
+
+## Added
+
+- os: Include basic network troubleshooting command-line tools
+
+## Changed
+
+- driver: Upgrade to 2.3.0 for recent versions of Senso Flex
+- os: Route audio output to both line-out and attached HDMI/DisplayPort outputs
+- os: Update nixpkgs channel to 22.11
+
+## Fixed
+
+- controller: Fix a file descriptor leak that could lead to the controller interface becoming unusable
+- os: Add a mechanism to recover from a status file corruption that could prevent systems from updating
+
 # [2022.4.0] - 2022-07-06
 
 # [2022.4.0-VALIDATION.1] - 2022-06-22
@@ -16,6 +35,7 @@
 
 - os: Update nixpkgs channel to 21.11
 - os: Disable virtual terminals that are not used by PlayOS
+- controller: Reorganize layout with an aside menu and a header bar
 - controller: Split proxy configuration form into multiple inputs for greater ease of use
 - controller: Provide a more helpful error message when network connection is failing
 - controller: Mark connected network services in service list

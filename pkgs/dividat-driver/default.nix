@@ -2,11 +2,7 @@
 
 let
 
-  channel = "develop";
-
-  version = "2.2.0-rc2";
-
-  releaseUrl = "https://dist.dividat.com/releases/driver2/";
+  version = "2.3.0";
 
 in buildGoModule rec {
 
@@ -16,19 +12,17 @@ in buildGoModule rec {
   src = fetchFromGitHub {
     owner = "dividat";
     repo = "driver";
-    rev = "9146cbf2f540cd5aa9cea5828f83993c8629657b";
-    sha256 = "1lsh0lyjwdhk24zrryaqszl1k3356yzckzx32q7mbcvvkh17hs9q";
+    rev = version;
+    sha256 = "sha256-OLSd+q5oe5Fd7GtKsJkkpTiEndpt/x1X0xdzGzZ7Zpg=";
   };
 
-  vendorSha256 = "1lvgp9q3g3mpmj6khbg6f1z9zgdlmwgf65rqx4d7v50a1m7g9a0m";
+  vendorSha256 = "sha256-oL7upl231aWbkBfybmP5fSTySFJkEI3vGKaWJu+Q30Q=";
 
   nativeBuildInputs = with pkgs; [ pkgconfig pcsclite ];
   buildInputs = with pkgs; [ pcsclite ];
 
   ldflags = [
-    "-X github.com/dividat/driver/src/dividat-driver/server.channel=${channel}"
     "-X github.com/dividat/driver/src/dividat-driver/server.version=${version}"
-    "-X github.com/dividat/driver/src/dividat-driver/update.releaseUrl=${releaseUrl}"
   ];
 
 }

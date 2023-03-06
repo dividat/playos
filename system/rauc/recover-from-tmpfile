@@ -1,0 +1,46 @@
+#! /usr/bin/env bash
+
+# This script is designed to recover files written with glib's
+# g_file_set_contents function. On journaling filesystems this function
+# ensures atomic updates to the target file by writing to a temporary
+# file and moving that to the target destination in a second step.
+# On journal-less filesystems such as FAT, the moving may itself not be
+# atomic and we can end up with an empty target file and a complete
+# temporary file. This is the situation this script is designed to
+# detect and recover from, by repeating the moving from temp file to
+# target.
+
+FILE="$1"
+
+# Get absolute path for given file name
+TARGET="$(realpath --no-symlinks "$FILE")"
+
+if ! [ -s "$TARGET" ]; then
+  # We expect a random alnum suffix of "up to" 7 characters
+  # (https://docs.gtk.org/glib/func.file_set_contents_full.html).
+  # The ones actually observed were 6 characters long, and we want to
+  # ignore files that don't seem likely to be tempfile copies.
+  TMP_SUFFIX="\.\w{5,7}"
+
+  PARENT="$(dirname "$TARGET")"
+  # List temp files based off of the target's name, with newer files first
+  CANDIDATES=($(ls -t --time=birth -d "$PARENT/"* | grep -E "$TARGET$TMP_SUFFIX"))
+  GREP_EXIT="$?"
+
+  if [ "$GREP_EXIT" -eq 0 ] && [ "${#CANDIDATES[@]}" -ge 1 ]; then
+    # Use the first, i.e. newest alternative as replacement
+    REPLACEMENT="${CANDIDATES[0]}"
+    if [ -s "$REPLACEMENT" ]; then
+      mv "$REPLACEMENT" "$FILE"
+      echo "Detected missing or empty '$FILE' and replaced it with '$REPLACEMENT'."
+    else
+      # If the newest alternative is empty, we do not know what to do.
+      # Do not touch any evidence and abort.
+      echo "Both '$FILE' and recovery candidate '$REPLACEMENT' are empty. Aborting."
+    fi
+  else
+    echo "The file '$FILE' seems empty, but no alternatives were found. Aborting."
+  fi
+else
+  echo "The file '$FILE' seems OK. Nothing to do."
+fi
