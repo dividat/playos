@@ -1,8 +1,11 @@
+let
+  bootstrap = (import <nixpkgs> {});
+in
 {
   ###### Configuration that is passed into the build system #######
 
   # Certificate used for verification of update bundles
-  updateCert ? (import <nixpkgs> {}).lib.warn "Using dummy update certificate. Build artifacts can only be used for local development." ./pki/dummy/cert.pem
+  updateCert ? (bootstrap.lib.warn "Using dummy update certificate. Build artifacts can only be used for local development." ./pki/dummy/cert.pem)
 
   # url from where updates should be fetched
 , updateUrl ? "http://localhost:9000/"
@@ -10,6 +13,8 @@
 
   # url where kiosk points
 , kioskUrl ? "https://play.dividat.com"
+
+, applicationPath ? ./application.nix
 
   ##### Allow disabling the build of unused artifacts when developing/testing #####
 , buildInstaller ? true
@@ -19,31 +24,21 @@
 }:
 
 let
-  version = "2023.2.0";
 
-  # List the virtual terminals that can be switched to from the Xserver
-  activeVirtualTerminals = [ 7 8 ];
+  application = import applicationPath;
 
-  pkgs = import ./pkgs { inherit version updateUrl kioskUrl activeVirtualTerminals; };
+  pkgs = import ./pkgs (with application; {
+    inherit version updateUrl kioskUrl;
+    applicationOverlays = application.overlays;
+  });
 
   # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
   components = with pkgs; lib.makeScope newScope (self: with self; {
 
-    greeting = label: ''
-                                         _
-                                     , -"" "".
-                                   ,'  ____  `.
-                                 ,'  ,'    `.  `._
-        (`.         _..--.._   ,'  ,'        \\    \\
-       (`-.\\    .-""        ""'   /          (  d _b
-      (`._  `-"" ,._             (            `-(   \\
-      <_  `     (  <`<            \\              `-._\\
-       <`-       (__< <           :                      ${label}
-        (__        (_<_<          ;
-    -----`------------------------------------------------------ ----------- ------- ----- --- -- -
-    '';
+    version = application.version;
+    inherit updateUrl deployUrl kioskUrl;
 
-    inherit updateUrl deployUrl kioskUrl version;
+    greeting = lib.attrsets.attrByPath [ "greeting" ] (label: label) application;
 
     # Documentations
     docs = callPackage ./docs {};
@@ -52,10 +47,10 @@ let
     updateCert = copyPathToStore updateCert;
 
     # NixOS system toplevel
-    systemToplevel = callPackage ./system {};
+    systemToplevel = callPackage ./system { application = application.module; };
 
     # USB live system
-    live = callPackage ./live {};
+    live = callPackage ./live { application = application.module; };
 
     # Installation script
     install-playos = callPackage ./installer/install-playos {
@@ -75,7 +70,7 @@ let
     unsignedRaucBundle = callPackage ./rauc-bundle {};
 
     # NixOS system toplevel with test machinery
-    testingToplevel = callPackage ./testing/system {};
+    testingToplevel = callPackage ./testing/system { application = application.module; };
 
     # Disk image containing pre-installed system
     disk = if buildDisk then callPackage ./testing/disk {} else null;
@@ -88,7 +83,7 @@ let
 in
 
 with pkgs; stdenv.mkDerivation {
-  name = "playos-${version}";
+  name = "playos-${components.version}";
 
   buildInputs = [
     rauc
@@ -110,15 +105,15 @@ with pkgs; stdenv.mkDerivation {
   ''
 
   + lib.optionalString buildLive ''
-    ln -s ${components.live}/iso/playos-live-${version}.iso $out/playos-live-${version}.iso
+    ln -s ${components.live}/iso/playos-live-${components.version}.iso $out/playos-live-${components.version}.iso
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
-    ln -s ${components.installer}/iso/playos-installer-${version}.iso $out/playos-installer-${version}.iso
+    ln -s ${components.installer}/iso/playos-installer-${components.version}.iso $out/playos-installer-${components.version}.iso
   ''
   # RAUC bundle
   + lib.optionalString buildBundle ''
-    ln -s ${components.unsignedRaucBundle} $out/playos-${version}-UNSIGNED.raucb
+    ln -s ${components.unsignedRaucBundle} $out/playos-${components.version}-UNSIGNED.raucb
     cp ${components.deploy-playos-update} $out/bin/deploy-playos-update
     chmod +x $out/bin/deploy-playos-update
   '';

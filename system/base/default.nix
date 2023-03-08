@@ -8,6 +8,10 @@
 with lib;
 {
   imports = [
+    ./localization.nix
+    ./networking.nix
+    ./remote-maintenance.nix
+    ./self-update
     ./system-partition.nix
     ./volatile-root.nix
   ];
@@ -21,11 +25,6 @@ with lib;
     playos.kioskUrl = mkOption {
       type = types.str;
     };
-
-    playos.updateCert = mkOption {
-      type = types.package;
-    };
-
   };
 
   config = {
@@ -39,14 +38,34 @@ with lib;
     # disable installation of bootloader
     boot.loader.grub.enable = false;
 
-    playos = {
-      inherit version updateCert kioskUrl;
-    };
+    # disable installation of inaccessible documentation
+    documentation.enable = false;
+
+    playos = { inherit version kioskUrl; };
 
     # 'Welcome Screen'
     services.getty = {
       greetingLine = greeting "Dividat PlayOS (${version})";
       helpLine = "";
+    };
+
+    # Storage
+    fileSystems = {
+      "/boot" = {
+        device = "/dev/disk/by-label/ESP";
+      };
+    };
+    systemPartition = {
+      enable = true;
+      device = "/dev/root";
+      options = [ "rw" ];
+    };
+    volatileRoot.persistentDataPartition.device = "/dev/disk/by-label/data";
+
+    # Enable self-update from bundles with given signatures
+    selfUpdate = {
+      enable = true;
+      updateCert = updateCert;
     };
 
     # Start controller

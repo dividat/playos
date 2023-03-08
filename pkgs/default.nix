@@ -1,4 +1,4 @@
-{ version, updateUrl, kioskUrl, activeVirtualTerminals ? [] }:
+{ applicationOverlays ? [], version, updateUrl, kioskUrl }:
 
 let
 
@@ -14,19 +14,6 @@ let
       importFromNixos = path: import (nixpkgs + "/nixos/" + path);
 
       rauc = (import ./rauc) super;
-
-      dividat-driver = (import ./dividat-driver) {
-        inherit (super) stdenv fetchFromGitHub buildGoModule;
-        pkgs = self;
-      };
-
-      playos-kiosk-browser = import ../kiosk {
-        pkgs = self;
-        system_name = "PlayOS";
-        system_version = version;
-      };
-
-      breeze-contrast-cursor-theme = super.callPackage ./breeze-contrast-cursor-theme {};
 
       ocamlPackages = super.ocamlPackages.overrideScope' (self: super: {
         semver = self.callPackage ./ocaml-modules/semver {};
@@ -45,9 +32,6 @@ let
 
 in
 
-  import nixpkgs {
-    overlays = [
-      overlay
-      (import ./xorg { inherit activeVirtualTerminals; })
-    ];
-  }
+import nixpkgs {
+  overlays = [ overlay ] ++ applicationOverlays;
+}

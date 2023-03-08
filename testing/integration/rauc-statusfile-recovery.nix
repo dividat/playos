@@ -10,13 +10,11 @@ pkgs.nixosTest {
 
   nodes = {
     client = { config, pkgs, ... }: {
-      imports = [ ../../system/rauc ];
+      imports = [ ../../system/base/self-update ];
       config = {
-        playos.updateCert = pkgs.writeText "dummy.pem"  "";
-      };
-      options = with pkgs.lib; {
-        playos.updateCert = mkOption {
-          type = types.package;
+        selfUpdate = {
+          enable = true;
+          updateCert = pkgs.writeText "dummy.pem"  "";
         };
       };
     };

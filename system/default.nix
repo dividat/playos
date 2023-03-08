@@ -1,15 +1,15 @@
 # Build NixOS system
-{pkgs, lib, version, updateCert, kioskUrl, playos-controller, greeting }:
+{pkgs, lib, version, updateCert, kioskUrl, playos-controller, greeting, application }:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
   configuration = {...}: {
     imports = [
-      # general PlayOS modules
-      ((import ./modules/playos.nix) {inherit pkgs version updateCert kioskUrl greeting playos-controller;})
+      # General PlayOS modules
+      ((import ./base) {inherit pkgs version updateCert kioskUrl greeting playos-controller;})
 
-      # system configuration
-      ./configuration.nix
+      # Application-specific module
+      application
     ];
 
     # As we control which state can be persisted past a reboot, we always set the stateVersion the system was built with.
