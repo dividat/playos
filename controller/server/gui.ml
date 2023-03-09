@@ -21,8 +21,9 @@ let static () =
   Opium.Middleware.static ~local_path:static_dir ~uri_prefix:"/static" ()
 
 let page html =
+  let headers = Cohttp.Header.init_with "content-type" "text/html" in
   Format.asprintf "%a" (Tyxml.Html.pp ()) html
-  |> Response.of_string_body
+  |> Response.of_string_body ~headers
 
 let success content =
   page (Page.html (Tyxml.Html.txt content))
