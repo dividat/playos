@@ -493,7 +493,7 @@ module ChangelogGui = struct
         Lwt.return (page (Changelog_page.html changelog)))
 end
 
-module RemoteManagementGui = struct
+module RemoteMaintenanceGui = struct
 
   let rec wait_until_zerotier_is_on () =
     match%lwt Zerotier.get_status () with
@@ -505,18 +505,18 @@ module RemoteManagementGui = struct
 
   let build ~systemd app =
     app
-    |> post "/remote-management/enable" (fun _ ->
+    |> post "/remote-maintenance/enable" (fun _ ->
         let%lwt () = Systemd.Manager.start_unit systemd "zerotierone.service" in
         with_timeout
           { duration = 2.0
           ; on_timeout = fun () ->
-              let msg = "Timeout starting remote management service." in
+              let msg = "Timeout starting remote maintenance service." in
               let%lwt () = Logs_lwt.err (fun m -> m "%s" msg) in
               fail_with msg
           }
           wait_until_zerotier_is_on)
 
-    |> post "/remote-management/disable" (fun _ ->
+    |> post "/remote-maintenance/disable" (fun _ ->
         let%lwt () = Systemd.Manager.stop_unit systemd "zerotierone.service" in
         redirect' (Uri.of_string "/info"))
 end
@@ -541,7 +541,7 @@ let routes ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman app =
   |> LabelGui.build
   |> StatusGui.build ~health_s ~update_s ~rauc
   |> ChangelogGui.build
-  |> RemoteManagementGui.build ~systemd
+  |> RemoteMaintenanceGui.build ~systemd
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
 let start ~port ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman =

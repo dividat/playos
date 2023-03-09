@@ -10,8 +10,8 @@ with lib;
     # Play Kiosk and Driver
     ./play-kiosk.nix
 
-    # Remote management
-    ./remote-management.nix
+    # Remote maintenance
+    ./remote-maintenance.nix
 
     # Localization
     ./localization.nix
