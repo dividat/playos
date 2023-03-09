@@ -1,10 +1,10 @@
 { config, pkgs, lib, ... }:
 let
-  cfg = config.selfUpdate;
+  cfg = config.playos.selfUpdate;
 in
 {
   options = {
-    selfUpdate = with lib; {
+    playos.selfUpdate = with lib; {
       enable = mkEnableOption "Online self update";
 
       updateCert = mkOption {
@@ -16,7 +16,7 @@ in
     };
   };
 
-  config = lib.mkIf config.selfUpdate.enable {
+  config = lib.mkIf cfg.enable {
     environment.systemPackages = with pkgs; [ rauc ];
 
     services.dbus.packages = with pkgs; [ rauc ];

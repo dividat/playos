@@ -1,10 +1,10 @@
 {config, pkgs, lib, ... }:
 let
-  cfg = config.remoteMaintenance;
+  cfg = config.playos.remoteMaintenance;
 in
 {
   options = {
-    remoteMaintenance = with lib; {
+    playos.remoteMaintenance = with lib; {
       enable = mkEnableOption "Remote maintenance";
 
       networks = mkOption {
@@ -24,14 +24,12 @@ in
     };
   };
 
-  config = lib.mkIf config.remoteMaintenance.enable {
-    # Enable ZeroTier for remote maintenance
+  config = lib.mkIf cfg.enable {
     services.zerotierone = {
       enable = true;
-      # from the ext.dividat.com network.
       joinNetworks = cfg.networks;
     };
-    # Prevent ZeroTier from running on startup
+    # Prevent ZeroTier from running on startup, it is started manually
     systemd.services.zerotierone.wantedBy = lib.mkForce [];
 
     # Allow remote access via OpenSSH

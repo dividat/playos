@@ -1,11 +1,11 @@
 { config, pkgs, lib, ... }:
 let
-  cfg = config.volatileRoot;
+  cfg = config.playos.storage;
 in
 with lib;
 {
   options = {
-    volatileRoot = {
+    playos.storage = {
       persistentDataPartition = {
         device = mkOption {
           default = null;

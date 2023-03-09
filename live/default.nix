@@ -1,12 +1,12 @@
 # Build NixOS system
-{pkgs, lib, version, updateCert, kioskUrl, greeting, playos-controller, application}:
+{pkgs, lib, version, kioskUrl, greeting, playos-controller, application}:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
   configuration = {...}: {
     imports = [
       # Base system
-      ((import ../system/base) {inherit pkgs version updateCert kioskUrl greeting playos-controller;})
+      ((import ../system/base) {inherit pkgs version kioskUrl greeting playos-controller;})
       # Application-specific
       application
 
@@ -24,20 +24,22 @@ let nixos = pkgs.importFromNixos ""; in
       isoImage.appendToMenuLabel = " Live System";
 
       # Set up as completely volatile system
-      systemPartition.enable = mkForce false;
-      volatileRoot.persistentDataPartition = mkForce {
+      fileSystems."/boot" = {
         device = "tmpfs";
         fsType = "tmpfs";
         options = [ "mode=0755" ];
       };
-      fileSystems."/boot" = lib.mkForce {
-        device = "tmpfs";
-        fsType = "tmpfs";
-        options = [ "mode=0755" ];
+      playos.storage = {
+        systemPartition.enable = false;
+        persistentDataPartition = {
+          device = "tmpfs";
+          fsType = "tmpfs";
+          options = [ "mode=0755" ];
+        };
       };
 
       # Live system does not self update
-      selfUpdate.enable = mkForce false;
+      playos.selfUpdate.enable = false;
 
       # There is no persistent state for a live system
       system.stateVersion = lib.trivial.release;

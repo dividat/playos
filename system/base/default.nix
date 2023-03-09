@@ -1,7 +1,7 @@
 # This is the toplevel module for all PlayOS related functionalities.
 
 # Things that are injected into the system
-{pkgs, version, updateCert, kioskUrl, greeting, playos-controller}:
+{pkgs, version, kioskUrl, greeting, playos-controller}:
 
 
 {config, lib, ...}:
@@ -47,25 +47,6 @@ with lib;
     services.getty = {
       greetingLine = greeting "Dividat PlayOS (${version})";
       helpLine = "";
-    };
-
-    # Storage
-    fileSystems = {
-      "/boot" = {
-        device = "/dev/disk/by-label/ESP";
-      };
-    };
-    systemPartition = {
-      enable = true;
-      device = "/dev/root";
-      options = [ "rw" ];
-    };
-    volatileRoot.persistentDataPartition.device = "/dev/disk/by-label/data";
-
-    # Enable self-update from bundles with given signatures
-    selfUpdate = {
-      enable = true;
-      updateCert = updateCert;
     };
 
     # Start controller

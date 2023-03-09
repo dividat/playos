@@ -12,7 +12,7 @@ pkgs.nixosTest {
     client = { config, pkgs, ... }: {
       imports = [ ../../system/base/self-update ];
       config = {
-        selfUpdate = {
+        playos.selfUpdate = {
           enable = true;
           updateCert = pkgs.writeText "dummy.pem"  "";
         };

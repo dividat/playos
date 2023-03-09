@@ -36,7 +36,7 @@ rec {
       };
 
       # Note that setting up "/home" as persistent fails due to https://github.com/NixOS/nixpkgs/issues/6481
-      volatileRoot.persistentFolders."/home/play" = {
+      playos.storage.persistentFolders."/home/play" = {
         mode = "0700";
         user = "play";
         group = "users";
@@ -149,8 +149,7 @@ rec {
         });
       '';
 
-      # Remote maintenance via ZeroTier + SSH
-      remoteMaintenance = {
+      playos.remoteMaintenance = {
         enable = true;
         networks = [ "a09acf02330ccc60" ];
         authorizedKeys = [
@@ -160,7 +159,7 @@ rec {
       };
 
       # Enable persistent journaling with low maximum size
-      volatileRoot.persistentFolders."/var/log/journal" = {
+      playos.storage.persistentFolders."/var/log/journal" = {
         mode = "0755";
         user = "root";
         group = "root";

@@ -7,7 +7,7 @@ let
 in {
 
   # Localization configuration
-  volatileRoot.persistentFolders."/var/lib/gui-localization" = {
+  playos.storage.persistentFolders."/var/lib/gui-localization" = {
     mode = "0755";
     user = "root";
     group = "root";
