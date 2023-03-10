@@ -1,6 +1,6 @@
 {config, pkgs, lib, ... }:
 {
-  # Enable ZeroTier for remote management
+  # Enable ZeroTier for remote maintenance
   services.zerotierone = {
     enable = true;
     # from the ext.dividat.com network.

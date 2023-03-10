@@ -204,11 +204,9 @@ If Internet connectivity is not available a list of available wireless networks 
  Functionality to connect to bluetooth audio devices (e.g. bluetooth headphone). This would require an additional D-Bus binding to [[http://www.bluez.org/][Bluez]] and an user interface for setting up device.
 
 
-** Remote management
+** Remote maintenance
 
-In order to allow manual remote management, the system is connected to a private [[http://zerotier.com/][ZeroTier]] network and allows root access via SSH to special keys held by technical support staff.
-
-This feature is intended to weed out issues in early phases of deployment. Once system is considered stable this feature will be disabled.
+In order to allow remote troubleshooting, the system can connect to a private [[http://zerotier.com/][ZeroTier]] network which allows root access via SSH to special keys held by technical support staff. This connection is inactive by default and only established on an opt-in basis.
 
 ** Rescue system
 

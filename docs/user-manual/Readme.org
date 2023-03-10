@@ -49,7 +49,7 @@ Items:
 - Kiosk URL: Location of web application that is loaded automatically
 - Machine ID: A unique identifier for the machine
 - Local time: Current time with timezone
-- Remote maintenance: Button to enable remote maintenance mode
+- Remote maintenance: Button to temporarily allow remote maintenance
 
 
 ** Network
