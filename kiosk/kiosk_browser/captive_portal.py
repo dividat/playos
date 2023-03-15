@@ -55,9 +55,15 @@ class CaptivePortal():
                     if r.status_code == 200:
                         self._status = Status.DIRECT_CONNECTED
 
+                    # The conventional redirection to the captive portal address.
                     elif r.status_code in [301, 302, 303, 307, 308]:
                         self._status = Status.DIRECT_CAPTIVE
                         self.show_captive_portal_message(r.headers['Location'])
+
+                    # The alternative 511 with link to captive portal.
+                    elif r.status_code == 511:
+                        self._status = Status.DIRECT_CAPTIVE
+                        self.show_captive_portal_message(check_connection_url)
 
                     else:
                         self._status = Status.DIRECT_DISCONNECTED
