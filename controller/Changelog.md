@@ -1,5 +1,9 @@
 # [UNRELEASED]
 
+## Changed
+
+- os: Widen rules for captive portal detection
+
 # [2023.2.0] - 2023-03-06
 
 # [2023.2.0-VALIDATION] - 2023-02-27
