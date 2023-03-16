@@ -9,6 +9,7 @@ import threading
 import time
 import logging
 from enum import Enum, auto
+from http import HTTPStatus
 from PyQt5 import QtWidgets
 
 check_connection_url = 'http://captive.dividat.com/'
@@ -29,6 +30,25 @@ def sleep(status):
         time.sleep(5)
     else:
         time.sleep(60)
+
+def is_redirect(status_code):
+    """Check whether a status code is a redirect that is mandatorily paired with a location header."""
+    return status_code in [
+        HTTPStatus.MOVED_PERMANENTLY,
+        HTTPStatus.FOUND,
+        HTTPStatus.SEE_OTHER,
+        HTTPStatus.TEMPORARY_REDIRECT,
+        HTTPStatus.PERMANENT_REDIRECT
+    ]
+
+def is_likely_replaced_page(status_code):
+    """Check whether a status code is known or surmised to be used by captive portals that replace page contents."""
+    return status_code in [
+        HTTPStatus.OK,
+        HTTPStatus.UNAUTHORIZED,
+        HTTPStatus.PROXY_AUTHENTICATION_REQUIRED,
+        HTTPStatus.NETWORK_AUTHENTICATION_REQUIRED
+    ]
 
 class CaptivePortal():
 
@@ -52,16 +72,14 @@ class CaptivePortal():
                 try:
                     r = requests.get(check_connection_url, allow_redirects = False)
 
-                    if r.status_code == 200:
+                    if r.status_code == HTTPStatus.OK and 'Open Sesame' in r.text:
                         self._status = Status.DIRECT_CONNECTED
 
-                    # The conventional redirection to the captive portal address.
-                    elif r.status_code in [301, 302, 303, 307, 308]:
+                    elif is_redirect(r.status_code):
                         self._status = Status.DIRECT_CAPTIVE
                         self.show_captive_portal_message(r.headers['Location'])
 
-                    # The alternative 511 with link to captive portal.
-                    elif r.status_code == 511:
+                    elif is_likely_replaced_page(r.status_code):
                         self._status = Status.DIRECT_CAPTIVE
                         self.show_captive_portal_message(check_connection_url)
 
