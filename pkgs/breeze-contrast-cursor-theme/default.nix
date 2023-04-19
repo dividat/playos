@@ -1,4 +1,4 @@
-{ stdenv, fetchzip, lib, ... }:
+{ stdenv, unzip, lib, ... }:
 
 # Inspiration:
 # https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=breeze-contrast-cursor-theme
@@ -7,11 +7,15 @@ stdenv.mkDerivation rec {
   version = "1.0";
   themeName = "Breeze_Contrast";
 
-  src = ./theme;
+  buildInputs = [ unzip ];
+
+  # From mirror at https://code.jpope.org/jpope/breeze_cursor_sources
+  # We inline the ZIP as the mirror was sometimes unreachable in the past.
+  src = ./breeze-contrast-cursor-theme.zip;
 
   installPhase = ''
-    install -d $out/share/icons
-    cp -r share/icons/${themeName} $out/share/icons/${themeName}
+    install -d $out/share/icons/${themeName}
+    cp -rf * $out/share/icons/${themeName}
   '';
 
   meta = {
