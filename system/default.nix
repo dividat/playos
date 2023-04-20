@@ -22,7 +22,7 @@ let nixos = pkgs.importFromNixos ""; in
       systemPartition = {
         enable = true;
         device = "/dev/root";
-        options = [ "rw" ];
+        options = [ "ro" ];
       };
       persistentDataPartition.device = "/dev/disk/by-label/data";
     };

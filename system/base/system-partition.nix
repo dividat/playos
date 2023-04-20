@@ -32,7 +32,7 @@ in
     };
   };
 
-  config = mkIf config.playos.storage.systemPartition.enable {
+  config = mkIf cfg.enable {
     fileSystems = {
       "/mnt/system" = {
         device = cfg.device;
