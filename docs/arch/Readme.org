@@ -12,11 +12,28 @@ Installations of Dividat Play and Dividat Senso usually receive a dedicated comp
 
 PlayOS is a custom [[https://nixos.org/][NixOS]] system that runs Dividat Play in a restricted kiosk environment. Installations can be upgraded atomically over-the-air. Deployed machines have two system partitions (A/B), each containing a complete system. PlayOS is compatible with NixOS modules and packages, everything that is available from upstream NixOS can be used.
 
-** Build System
+** Layers
+
+PlayOS is a layer on top of NixOS and is itself organized into a base and application layer. The base layer provides:
+
+- Automatic A/B update mechanism
+- Read-only system partitions, with selected persisted configuration data
+- Web-based configuration interface for
+  - network (LAN, WLAN, HTTP proxy, static IP),
+  - localization,
+  - system status,
+  - remote maintenance.
+- Installer
+- Live system
+- Remote maintenance via ZeroTier
+
+The application layer configures the base system's parameters for remote update and maintenance and defines the "payload" application that PlayOS should run.
+
+** Development and Testing
+
+*** Build System
 
 [[https://nixos.org/nix/][Nix]] is used as build system. Running ~nix build~ in the repository root will build all artifacts required to deploy system (via fresh installation or upgrade).
-
-** Testing
 
 *** Virtual Machines
 
@@ -43,7 +60,8 @@ For a more complete test a virtual disk containing all necessary partitions and 
    machine. Don’t forget to remove the optical drive in ~Settings > Storage~
    once the installation has been completed.
 
-* System
+* Base Layer
+
 ** Disk layout
 
 A PlayOS installation has 4 partitions:
@@ -52,6 +70,12 @@ A PlayOS installation has 4 partitions:
 - Data partition: Contains persistent user data.
 - System partition A
 - System partition B
+
+** Installer
+
+A bootable image is built that can be used to install systems. The installation is performed by a Python script (~install-playos.py~). It will automatically detect a suitable device to install the system to and ask for confirmation before partitioning, formatting and installing the system. Optionally the script can be used non-interactively.
+
+Reasons for using Python include the [[https://github.com/dcantrell/pyparted][pyparted]] bindings to the [[https://www.gnu.org/software/parted/][GNU parted]] library for partitioning.
 
 ** Booting
 
@@ -97,20 +121,6 @@ A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Document
 Every machine is assigned a [[https://tools.ietf.org/html/rfc4122][Universal Unique IDentifier]] (machine-id) during installation. The machine-id is stored on the ~/boot~ partition and is persisted between [[*Update Mechanism][updates]] and [[*Rescue system][user data wiping]].
 
 The machine-id is set on boot via the ~system.machine_id~ kernel argument and then [[https://www.freedesktop.org/software/systemd/man/machine-id.html][handled by the init system]].
-
-** Dividat Driver
-
-The [[https://github.com/dividat/driver][Dividat Driver]], which handles connectivity between Dividat Play and Dividat Senso hardware, is installed and runs as a system service.
-
-** Kiosk
-
-System automatically logs in the user ~play~, starts an X session and launches a custom Kiosk Application based on [[http://doc.qt.io/qt-5/qtwebengine-index.html][QtWebEngine]]. The Kiosk Application loads Dividat Play in a restricted environment.
-
-A [[*User interface][user interface for system configuration]] can be accessed with the key-combination ~Ctrl-Shift-F12~.
-
-If a captive portal is detected, which requires user interaction before granting Internet access, a prompt appears to open it.
-
-For debugging the [[https://doc.qt.io/qt-5/qtwebengine-debugging.html][Qt WebEngine Developer Tools]] are enabled and accessible at http://localhost:3355 and chrome://inspect/#devices. The Dev Tools can be used to inspect and interact with the running page (e.g. load a new page with ~location.replace("https://nixos.org")~).
 
 ** PlayOS Controller
 
@@ -175,10 +185,6 @@ If Internet connectivity is not available a list of available wireless networks 
 - Manual configuration of Ethernet interfaces is currently not possible. Ethernet interfaces are configured to use DHCP and fall back to link-local address configuration. This allows plug-and-play connectivity to Dividat Senso (link-local) and networks using DHCP.
 - Only WEP or WPA with passphrase is supported by the GUI. Further methods may be implemented by extending the ~Connman.Agent~ module and support in GUI. Manual configuration of ConnMan can be done via ~connmanctl~ (e.g. [[https://wiki.archlinux.org/index.php/ConnMan#Connecting_to_eduroam_(802.1X)][connecting to WPA Enterprise]]).
 
-**** Audio
-
- Audio is handled with [[https://www.freedesktop.org/wiki/Software/PulseAudio/][PulseAudio]], trying to play sound on all available output devices. User configuration of volume should be done through the HDMI display device (e.g. the TV).
-
 ** Remote maintenance
 
 In order to allow remote troubleshooting, the system can connect to a private [[http://zerotier.com/][ZeroTier]] network which allows root access via SSH to special keys held by technical support staff. This connection is inactive by default and only established on an opt-in basis.
@@ -200,8 +206,22 @@ The rescue system consists of a Linux kernel and a initial ramdisk with an embed
 
 Use cases for rescue system beside wiping user data are not clear. In general reinstalling the system completely is a safer way of restoring system functionality. Nevertheless RAUC and Grub utilities are installed.
 
-* Installer
+* Application Layer
 
-A bootable image is built that can be used to install systems. The installation is performed by a Python script (~install-playos.py~). It will automatically detect a suitable device to install the system to and ask for confirmation before partitioning, formatting and installing the system. Optionally the script can be used non-interactively.
+** Dividat Driver
 
-Reasons for using Python include the [[https://github.com/dcantrell/pyparted][pyparted]] bindings to the [[https://www.gnu.org/software/parted/][GNU parted]] library for partitioning.
+The [[https://github.com/dividat/driver][Dividat Driver]], which handles connectivity between Dividat Play and Dividat Senso hardware, is installed and runs as a system service.
+
+** Kiosk
+
+System automatically logs in the user ~play~, starts an X session and launches a custom Kiosk Application based on [[http://doc.qt.io/qt-5/qtwebengine-index.html][QtWebEngine]]. The Kiosk Application loads Dividat Play in a restricted environment.
+
+A [[*User interface][user interface for system configuration]] can be accessed with the key-combination ~Ctrl-Shift-F12~.
+
+If a captive portal is detected, which requires user interaction before granting Internet access, a prompt appears to open it.
+
+For debugging the [[https://doc.qt.io/qt-5/qtwebengine-debugging.html][Qt WebEngine Developer Tools]] are enabled and accessible at http://localhost:3355 and chrome://inspect/#devices. The Dev Tools can be used to inspect and interact with the running page (e.g. load a new page with ~location.replace("https://nixos.org")~).
+
+** Audio
+
+Audio is handled with [[https://www.freedesktop.org/wiki/Software/PulseAudio/][PulseAudio]], trying to play sound on all available output devices. User configuration of volume should be done through the HDMI display device (e.g. the TV).
