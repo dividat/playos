@@ -3,6 +3,7 @@
 ## Changed
 
 - os: Widen rules for captive portal detection
+- os: Split system definition into base and application layers
 
 # [2023.2.0] - 2023-03-06
 
