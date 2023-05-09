@@ -2,11 +2,11 @@
 
 * Overview
 
-PlayOS is a custom Linux system for running Dividat Play. This document describes technical architecture of PlayOS.
+PlayOS is a custom Linux system for running Dividat Play. This document describes the fundamental architecture of PlayOS.
 
 ** Background
 
-[[https://dividat.com/en/products/dividat][Dividat Play]] is a web-based application used in conjunction with the [[https://dividat.com/en/products/dividat][Dividat Senso]] hardware as a game-based training system.
+Dividat Play is a web-based application used in conjunction with the Dividat Senso hardware as a game-based training system.
 
 Installations of Dividat Play and Dividat Senso usually receive a dedicated computer to run the software. PlayOS is a custom Linux system for such computers.
 
@@ -33,13 +33,17 @@ The application layer configures the base system's parameters for remote update 
 
 *** Build System
 
-[[https://nixos.org/nix/][Nix]] is used as build system. Running ~nix build~ in the repository root will build all artifacts required to deploy system (via fresh installation or upgrade).
+[[https://nixos.org/nix/][Nix]] is used as build system. Running ~nix build~ in the repository root will build all artifacts required to deploy the system (via fresh installation or upgrade).
 
 *** Virtual Machines
 
-System can be run in a virtual machine. For this the tool ~run-playos-in-vm~ is provided.
+The system can be run in a virtual machine.
 
-With minimal test instrumentation a virtual machine can be started without creating a (virtual) disk. For this a system partition is created on a folder on the host and shared to the virtual machine via [[https://wiki.qemu.org/Documentation/9psetup][9P]]. This allows for rapid development cycles as no images containing the entire system have to be built. However low-level system components (such as bootloader) are bypassed with test instrumentation.
+**** QEMU VM
+
+For rapid testing the QEMU instrumentation ~run-playos-in-vm~ is provided as part of the Nix build.
+
+With this tool a virtual machine can be started without creating a (virtual) disk. For this a system partition is created on a folder on the host and shared to the virtual machine via [[https://wiki.qemu.org/Documentation/9psetup][9P]]. This allows for rapid development cycles as no images containing the entire system have to be built. Note however that low-level system components (such as the bootloader) are bypassed in this build.
 
 For a more complete test a virtual disk containing all necessary partitions and pre-installed systems can be used.
 
@@ -81,13 +85,13 @@ Reasons for using Python include the [[https://github.com/dcantrell/pyparted][py
 
 PlayOS can only boot in UEFI mode. [[https://www.gnu.org/software/grub/][GNU Grub]] is used as bootloader.
 
-The bootloader automatically [[*Boot selection logic][chooses system to boot]] (A or B) based on persistent variables (GRUB environment variables on the EFI system partition). Automatic selection can be interrupted by user pressing the ~<ESC>~ key.
+The bootloader automatically [[*Boot selection logic][chooses the system to boot]] (A or B) based on persistent variables. Automatic selection can be interrupted by user pressing the ~<ESC>~ key.
 
 The bootloader boots the selected system by loading the kernel and initial ram disk from the [[*System partition][system partition]]. The bootloader passes the device the system partition is located on as well as the [[*Update Mechanism][RAUC]] slot as kernel arguments (e.g. ~root=/dev/by-label/system.a rauc.slot=a~).
 
 *** Boot selection logic
 
-The [[*Booting][GRUB]] environment variables ~ORDER~, ~a_TRY~, ~b_TRY~, ~a_OK~ and ~b_OK~ are used to select system to boot:
+The [[*Booting][GRUB]] environment variables ~ORDER~, ~a_TRY~, ~b_TRY~, ~a_OK~ and ~b_OK~ are used to select which system to boot:
 
 - ~ORDER~ describes the order in which boots should be attempted (e.g. ~"a b"~).
 - ~a_TRY~ and ~b_TRY~ describes the number of attempts to boot the respective systems.
@@ -95,15 +99,15 @@ The [[*Booting][GRUB]] environment variables ~ORDER~, ~a_TRY~, ~b_TRY~, ~a_OK~ a
 
 GRUB attempts to boot the first system in ~ORDER~ which has a value less than 3 in the respecitve ~TRY~ variable and where ~a_OK~ is not equal ~0~. If there are no boot options available GRUB will display a boot selection menu.
 
-See also sections on the [[*Update Mechanism][Update Mechanism]] and [[*Mark system as good][Mark system as good]].
+See also the sections on the [[*Update Mechanism][Update Mechanism]] and [[*Mark system as good][Mark system as good]].
 
 ** Init system
 
-After low-level system is initialized from the initial ram disk (Stage 1) the ~/init~ script on the system partition (Stage 2) is run, which will start all necessary services to make system usable.
+After low-level system is initialized from the initial ram disk (Stage 1) the ~/init~ script on the system partition (Stage 2) is run, which will start all necessary services.
 
 ** System partition
 
-A system partition contains following files:
+A system partition contains the following files:
 
 - ~/kernel~: Linux kernel
 - ~/initrd~: Initial ram disk
@@ -114,7 +118,7 @@ The system partition is mounted on ~/mnt/system~ (read-only).
 
 ** Volatile root
 
-A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt][tmpfs]]) is used as root. Folders containing persistent user data need to be specified explicitly and are bind mounted to correct locations on root.
+A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt][tmpfs]]) is used as root. Folders containing persistent user data need to be specified explicitly at build-time and are bind mounted to correct locations on root.
 
 ** Machine ID
 
@@ -126,19 +130,19 @@ The machine-id is set on boot via the ~system.machine_id~ kernel argument and th
 
 The PlayOS Controller is an application that manages system updates, checks system health and offers a unified graphical user interface for system configuration. The PlayOS Controller runs as a system service.
 
-PlayOS controller is implemented in [[https://ocaml.org/][OCaml]]. OCaml allows [[https://ocaml.github.io/ocamlunix/ocamlunix.html][lower-level system programming]], offers an excellent [[https://github.com/diml/obus][D-Bus interface]] and various libraries/tools for creating web-based user interfaces (e.g. [[https://github.com/rgrinberg/opium][opium]] and [[https://github.com/ocsigen/tyxml][tyxml]]).
+The PlayOS controller is implemented in [[https://ocaml.org/][OCaml]]. OCaml allows [[https://ocaml.github.io/ocamlunix/ocamlunix.html][lower-level system programming]], offers an excellent [[https://github.com/diml/obus][D-Bus interface]] and various libraries/tools for creating web-based user interfaces (e.g. [[https://github.com/rgrinberg/opium][opium]] and [[https://github.com/ocsigen/tyxml][tyxml]]).
 
 *** Update Mechanism
 
-[[https://www.rauc.io/][RAUC]] is used as update client. Updates are distributed as RAUC [[https://rauc.readthedocs.io/en/latest/basic.html#update-artifacts-bundles][bundles]], that are installed on the inactive system partition. [[*Bundle verification][Bundle verification]], target system partition selection, atomic update and boot loader integration are handled by RAUC. Checking for available updates and downloading them is handled by the controller, which then invokes RAUC to complete installation.
+[[https://www.rauc.io/][RAUC]] is used as the self-update client. Updates are distributed as [[https://rauc.readthedocs.io/en/latest/basic.html#update-artifacts-bundles][RAUC bundles]] and are always installed to the inactive system partition. [[*Bundle verification][Bundle verification]], target system partition selection, atomic update and boot loader integration are handled by RAUC. Checking for available updates and downloading them is handled by the controller, which then invokes RAUC to install the update.
 
 **** Checking for new available versions
 
-The controller retrieves the version of the latest available release from a predefined URL, the update URL. An update is downloaded and installed if the booted system is outdated. Note that an update will not be downloaded if the booted system is up to date but the inactive partition is outdated. That means that in normal operation the active partition will be run the latest available version, whereas the inactive partition has the (latest-1) version installed.
+The controller retrieves the version of the latest available release from a predefined URL, the update URL. An update is downloaded and installed if the booted system is outdated. Note that an update will not be downloaded if the booted system is up to date but the inactive partition is outdated. That means that in normal operation the active partition will be running the latest available version, whereas the inactive partition has the (latest-1) version installed.
 
 **** Bundle verification
 
-RAUC bundles are signed. Before installing an update RAUC will verify signature against certificate installed on system (see [[https://rauc.readthedocs.io/en/latest/advanced.html#security][here]]).
+RAUC bundles are signed. Before installing an update RAUC will verify the bundle signature against the certificate installed on the system (see [[https://rauc.readthedocs.io/en/latest/advanced.html#security][here]]).
 
 The certificate to be installed on the system must be passed to the build system with the ~updateCert~ argument.
 
@@ -146,22 +150,22 @@ The RAUC bundle produced by the build system is signed by a dummy development/te
 
 **** Installation
 
-During installation of a new system on slot ~x~ the ~x_OK~ variable is set to ~0~, marking the system non-bootable. After successful installation, [[https://rauc.readthedocs.io/en/latest/reference.html#grub][RAUC sets]] the ~ORDER~ to contain ~x~ as first element and sets the number of tries to 0 (~x_TRY=0~) and marks the system bootable (~x_OK=1~). On next boot GRUB attempts to boot system ~x~ for 3 times before falling back to the next system in ~ORDER~ (see [[*Boot selection logic][boot selection logic]]).
+During installation of a new system on slot ~x~ the ~x_OK~ variable is set to ~0~, marking the system non-bootable. After successful installation, [[https://rauc.readthedocs.io/en/latest/reference.html#grub][RAUC sets]] the ~ORDER~ to contain ~x~ as first element and sets the number of tries to 0 (~x_TRY=0~) and marks the system bootable (~x_OK=1~). On next boot, GRUB attempts to boot system ~x~ for 3 times before falling back to the next system in ~ORDER~ (see [[*Boot selection logic][boot selection logic]]).
 
 **** Deployment of updates
 
-Updates are deployed to Amazon S3.
+Bundles are deployed to Amazon S3.
 
 *** Mark system as good
 
-The controller marks the currently running system good after:
+The controller marks the currently running system as good after:
 
  - Controller is running for at least 30 seconds
  - System state as reported by systemd is "Running"
 
 If system ~x~ is considered to be running satisfactory the system is marked good via RAUC, which resets the number of boot attempts (~x_TRY=0~) and marks the system bootable (~x_OK=1~) (see [[*Boot selection logic][boot selection logic]]).
 
-Note that if system is rebooted before controller can mark the system as good, the boot attempt counter (~x_TRY~) will be incremented. [[*Boot selection logic][The boot selection logic]] will not boot a system with more than 3 boot attempts.
+Note that if the system is rebooted before the controller can mark the system as good, the boot attempt counter (~x_TRY~) will be incremented. [[*Boot selection logic][The boot selection logic]] will not boot a system with more than 3 boot attempts.
 
 
 *** User interface
@@ -170,15 +174,15 @@ A web-based graphical user interface is provided for system configuration and ob
 
 **** System information
 
-Basic information, such as version and id are displayed.
+Basic information, such as system version and machine-id are displayed.
 
 **** Network configuration
 
-The controller periodically checks Internet connectivity (with a HTTP request to ~http://captive.dividat.com~). If Internet is connected this is indicated with a check mark.
+The controller periodically checks Internet connectivity (with an HTTP request to ~http://captive.dividat.com~). If the probe can be reached, this is indicated with a check mark.
 
-User can connect to the network and optionally provide a passphrase for WEP/WPA.
+The user can connect to the network and optionally provide a passphrase for WEP/WPA.
 
-[[https://01.org/connman][ConnMan]] is used as network manager. The controller interfaces with ConnMan via its D-Bus API. ConnMan is used in favor of NetworkManager as it is more lightweight, has more predictable behavior when connecting with link-local networks (see [[https://mail.gnome.org/archives/networkmanager-list/2009-April/msg00102.html][here]]) and has a easy to use D-Bus API (see [[https://git.kernel.org/pub/scm/network/connman/connman.git/tree/doc][documentation in the project repository]]).
+[[https://01.org/connman][ConnMan]] is used as network manager. The controller interfaces with ConnMan via its D-Bus API. ConnMan is used in favor of NetworkManager as it is more lightweight, has more predictable behavior when connecting with link-local networks (see [[https://mail.gnome.org/archives/networkmanager-list/2009-April/msg00102.html][here]]) and has an easy to use D-Bus API (see [[https://git.kernel.org/pub/scm/network/connman/connman.git/tree/doc][documentation in the project repository]]).
 
 Ethernet interfaces are configured automatically and use DHCP if available or default to a link-local address scheme (which is important for connecting to Dividat Senso via Ethernet). If required for Internet access, it is also possible to configure a static IP for a specific Ethernet interace.
 
@@ -190,20 +194,18 @@ In order to allow remote troubleshooting, the system can connect to a private [[
 
 ** Rescue system
 
-A minimal Linux rescue system is installed on the ESP partition. It's main purpose is to wipe any user data by reformatting the data partition.
-
-The rescue system can be started by manually selecting the entry from the boot loader menu.
+A minimal Linux rescue system is installed on the ESP partition. The rescue system can be started by manually selecting the entry from the boot loader menu.
 
 #+CAPTION: Rescue System
 #+NAME:   fig:rescue-system
 #+attr_html: :width 800px
 [[../screenshots/rescue-system.png]]
 
-After booting a menu is shown where user can choose to wipe user data (reformat data partition), reboot, access a Linux shell or play a game.
+After booting a menu is shown where user can choose to wipe user data (reformat data partition), reboot or access a Linux shell.
 
-The rescue system consists of a Linux kernel and a initial ramdisk with an embedded squashfs containing the system software.
+The rescue system consists of a Linux kernel and an initial ramdisk with an embedded squashfs containing the system software.
 
-Use cases for rescue system beside wiping user data are not clear. In general reinstalling the system completely is a safer way of restoring system functionality. Nevertheless RAUC and Grub utilities are installed.
+The main purpose of the rescue system is to perform a factory reset by wiping user data. In general, reinstalling the system completely is a safe alternative for restoring system functionality. Nevertheless RAUC and Grub utilities are installed.
 
 * Application Layer
 
@@ -213,9 +215,9 @@ The [[https://github.com/dividat/driver][Dividat Driver]], which handles connect
 
 ** Kiosk
 
-System automatically logs in the user ~play~, starts an X session and launches a custom Kiosk Application based on [[http://doc.qt.io/qt-5/qtwebengine-index.html][QtWebEngine]]. The Kiosk Application loads Dividat Play in a restricted environment.
+The system automatically logs in the user ~play~, starts an X session and launches a custom Kiosk Application based on [[http://doc.qt.io/qt-5/qtwebengine-index.html][QtWebEngine]]. The Kiosk Application loads Dividat Play in a restricted environment.
 
-A [[*User interface][user interface for system configuration]] can be accessed with the key-combination ~Ctrl-Shift-F12~.
+The [[*User interface][user interface for system configuration]] can be accessed with the key-combination ~Ctrl-Shift-F12~.
 
 If a captive portal is detected, which requires user interaction before granting Internet access, a prompt appears to open it.
 
