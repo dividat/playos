@@ -196,11 +196,6 @@ In order to allow remote troubleshooting, the system can connect to a private [[
 
 A minimal Linux rescue system is installed on the ESP partition. The rescue system can be started by manually selecting the entry from the boot loader menu.
 
-#+CAPTION: Rescue System
-#+NAME:   fig:rescue-system
-#+attr_html: :width 800px
-[[../screenshots/rescue-system.png]]
-
 After booting a menu is shown where user can choose to wipe user data (reformat data partition), reboot or access a Linux shell.
 
 The rescue system consists of a Linux kernel and an initial ramdisk with an embedded squashfs containing the system software.
