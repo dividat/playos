@@ -21,6 +21,13 @@ in
         description = "Public SSH keys authorized to log in";
       };
 
+      optIn = mkOption {
+        default = true;
+        example = false;
+        description = "If opt-in is enabled, ZeroTier needs to be started on the machine before remote access is possible";
+        type = lib.types.bool;
+      };
+
     };
   };
 
@@ -29,8 +36,9 @@ in
       enable = true;
       joinNetworks = cfg.networks;
     };
-    # Prevent ZeroTier from running on startup, it is started manually
-    systemd.services.zerotierone.wantedBy = lib.mkForce [];
+
+    # If opt-in is enabled, prevent ZeroTier from running on startup
+    systemd.services.zerotierone.wantedBy = lib.mkIf cfg.optIn (lib.mkForce []);
 
     # Allow remote access via OpenSSH
     services.openssh = {
