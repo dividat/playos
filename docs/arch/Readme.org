@@ -221,3 +221,13 @@ For debugging the [[https://doc.qt.io/qt-5/qtwebengine-debugging.html][Qt WebEng
 ** Audio
 
 Audio is handled with [[https://www.freedesktop.org/wiki/Software/PulseAudio/][PulseAudio]], trying to play sound on all available output devices. User configuration of volume should be done through the HDMI display device (e.g. the TV).
+
+* Limitations
+
+** Layers
+
+At the moment the split into base and application layers still has some impurities which could be avoided to further clarify which is which:
+
+- The kiosk URL is conceptually part of the application but passed as a parameter to base components for purely informational purposes. The application could instead specify arbitrary metadata for the base system to display in suitable places (controller, installer).
+- The PlayOS name is hardcoded and could be made parametric.
+- Some localization options (system language, keyboard, screen resolution) from the base system have no effect if the application layer does not apply them.
