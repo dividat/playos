@@ -10,7 +10,7 @@ pkgs.nixosTest {
 
   nodes = {
     client = { config, pkgs, ... }: {
-      imports = [ ../../system/base/self-update ];
+      imports = [ ../../base/self-update ];
       config = {
         playos.selfUpdate = {
           enable = true;

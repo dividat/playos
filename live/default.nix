@@ -5,8 +5,8 @@ let nixos = pkgs.importFromNixos ""; in
 (nixos {
   configuration = {...}: {
     imports = [
-      # Base system
-      ((import ../system/base) {inherit pkgs version kioskUrl greeting playos-controller;})
+      # Base layer
+      ((import ../base) {inherit pkgs version kioskUrl greeting playos-controller;})
       # Application-specific
       application
 

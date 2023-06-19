@@ -46,8 +46,8 @@ let
     # Certificate used for verification of update bundles
     updateCert = copyPathToStore updateCert;
 
-    # NixOS system toplevel
-    systemToplevel = callPackage ./system { application = application.module; };
+    # System image as used in full installation
+    systemImage = callPackage ./system-image { application = application.module; };
 
     # USB live system
     live = callPackage ./live { application = application.module; };

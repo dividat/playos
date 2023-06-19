@@ -1,4 +1,4 @@
-# Build NixOS system
+# Build an installable system image assuming a disk layout of a full A/B installation
 {pkgs, lib, version, updateCert, kioskUrl, playos-controller, greeting, application }:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
@@ -6,7 +6,7 @@ let nixos = pkgs.importFromNixos ""; in
   configuration = {...}: {
     imports = [
       # General PlayOS modules
-      ((import ./base) {inherit pkgs version kioskUrl greeting playos-controller;})
+      ((import ../base) {inherit pkgs version kioskUrl greeting playos-controller;})
 
       # Application-specific module
       application
