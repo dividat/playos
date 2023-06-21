@@ -16,7 +16,7 @@ PARTITION_SIZE_GB_DATA = 5
 
 GRUB_CFG = "@grubCfg@"
 GRUB_ENV = '/mnt/boot/grub/grubenv'
-SYSTEM_TOP_LEVEL = "@systemToplevel@"
+SYSTEM_IMAGE = "@systemImage@"
 RESCUE_SYSTEM = "@rescueSystem@"
 SYSTEM_CLOSURE_INFO = "@systemClosureInfo@"
 VERSION = "@version@"
@@ -205,13 +205,13 @@ def install_system(partitionPath, label):
 
     # Copy kernel, initrd and init
     subprocess.run(
-        ['cp', '-av', SYSTEM_TOP_LEVEL + '/kernel', '/mnt/system/kernel'],
+        ['cp', '-av', SYSTEM_IMAGE + '/kernel', '/mnt/system/kernel'],
         check=True)
     subprocess.run(
-        ['cp', '-av', SYSTEM_TOP_LEVEL + '/initrd', '/mnt/system/initrd'],
+        ['cp', '-av', SYSTEM_IMAGE + '/initrd', '/mnt/system/initrd'],
         check=True)
     subprocess.run(
-        ['cp', '-av', SYSTEM_TOP_LEVEL + '/init', '/mnt/system/init'],
+        ['cp', '-av', SYSTEM_IMAGE + '/init', '/mnt/system/init'],
         check=True)
 
     # Unmount system partition

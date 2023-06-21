@@ -1,18 +1,14 @@
 # Build NixOS system
-{pkgs, lib, version, updateCert, kioskUrl, greeting, playos-controller}:
+{pkgs, lib, version, kioskUrl, greeting, playos-controller, application}:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
   configuration = {...}: {
     imports = [
-      # general PlayOS modules
-      ((import ../system/modules/playos.nix) {inherit pkgs version updateCert kioskUrl greeting playos-controller;})
-      # Play Kiosk and Driver
-      ../system/play-kiosk.nix
-      # Networking
-      ../system/networking
-      # Localization
-      ../system/localization.nix
+      # Base layer
+      ((import ../base) {inherit pkgs version kioskUrl greeting playos-controller;})
+      # Application-specific
+      application
 
       (pkgs.importFromNixos "modules/installer/cd-dvd/iso-image.nix")
     ];
@@ -28,12 +24,22 @@ let nixos = pkgs.importFromNixos ""; in
       isoImage.appendToMenuLabel = " Live System";
 
       # Set up as completely volatile system
-      systemPartition.enable = mkForce false;
-      volatileRoot.persistentDataPartition = {
+      fileSystems."/boot" = {
         device = "tmpfs";
         fsType = "tmpfs";
         options = [ "mode=0755" ];
       };
+      playos.storage = {
+        systemPartition.enable = false;
+        persistentDataPartition = {
+          device = "tmpfs";
+          fsType = "tmpfs";
+          options = [ "mode=0755" ];
+        };
+      };
+
+      # Live system does not self update
+      playos.selfUpdate.enable = false;
 
       # There is no persistent state for a live system
       system.stateVersion = lib.trivial.release;

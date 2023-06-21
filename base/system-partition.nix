@@ -1,11 +1,11 @@
 { config, pkgs, lib, options, ... }:
 with lib;
 let
-  cfg = config.systemPartition;
+  cfg = config.playos.storage.systemPartition;
 in
 {
   options = {
-    systemPartition = {
+    playos.storage.systemPartition = {
       enable = mkEnableOption "System partition";
 
       device = mkOption {
@@ -32,7 +32,7 @@ in
     };
   };
 
-  config = mkIf config.systemPartition.enable {
+  config = mkIf cfg.enable {
     fileSystems = {
       "/mnt/system" = {
         device = cfg.device;

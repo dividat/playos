@@ -74,7 +74,7 @@
   '';
 
   # Make connman folder persistent
-  volatileRoot.persistentFolders."/var/lib/connman" = {
+  playos.storage.persistentFolders."/var/lib/connman" = {
     mode = "0700";
     user = "root";
     group = "root";

@@ -2,27 +2,48 @@
 
 * Overview
 
-PlayOS is a custom Linux system for running Dividat Play. This document describes technical architecture of PlayOS.
+PlayOS is a custom Linux system for running Dividat Play. This document describes the fundamental architecture of PlayOS.
 
 ** Background
 
-[[https://dividat.com/en/products/dividat][Dividat Play]] is a web-based application used in conjunction with the [[https://dividat.com/en/products/dividat][Dividat Senso]] hardware as a game-based training system.
+Dividat Play is a web-based application used in conjunction with the Dividat Senso hardware as a game-based training system.
 
 Installations of Dividat Play and Dividat Senso usually receive a dedicated computer to run the software. PlayOS is a custom Linux system for such computers.
 
 PlayOS is a custom [[https://nixos.org/][NixOS]] system that runs Dividat Play in a restricted kiosk environment. Installations can be upgraded atomically over-the-air. Deployed machines have two system partitions (A/B), each containing a complete system. PlayOS is compatible with NixOS modules and packages, everything that is available from upstream NixOS can be used.
 
-** Build System
+** Layers
 
-[[https://nixos.org/nix/][Nix]] is used as build system. Running ~nix build~ in the repository root will build all artifacts required to deploy system (via fresh installation or upgrade).
+PlayOS is a layer on top of NixOS and is itself organized into a base and application layer. The base layer provides:
 
-** Testing
+- Automatic A/B update mechanism
+- Read-only system partitions, with selected persisted configuration data
+- Web-based configuration interface for
+  - network (LAN, WLAN, HTTP proxy, static IP),
+  - localization,
+  - system status,
+  - remote maintenance.
+- Installer
+- Live system
+- Remote maintenance via ZeroTier
+
+The application layer configures the base system's parameters for remote update and maintenance and defines the "payload" application that PlayOS should run.
+
+** Development and Testing
+
+*** Build System
+
+[[https://nixos.org/nix/][Nix]] is used as build system. Running ~nix build~ in the repository root will build all artifacts required to deploy the system (via fresh installation or upgrade).
 
 *** Virtual Machines
 
-System can be run in a virtual machine. For this the tool ~run-playos-in-vm~ is provided.
+The system can be run in a virtual machine.
 
-With minimal test instrumentation a virtual machine can be started without creating a (virtual) disk. For this a system partition is created on a folder on the host and shared to the virtual machine via [[https://wiki.qemu.org/Documentation/9psetup][9P]]. This allows for rapid development cycles as no images containing the entire system have to be built. However low-level system components (such as bootloader) are bypassed with test instrumentation.
+**** QEMU VM
+
+For rapid testing the QEMU instrumentation ~run-playos-in-vm~ is provided as part of the Nix build.
+
+With this tool a virtual machine can be started without creating a (virtual) disk. For this a system partition is created on a folder on the host and shared to the virtual machine via [[https://wiki.qemu.org/Documentation/9psetup][9P]]. This allows for rapid development cycles as no images containing the entire system have to be built. Note however that low-level system components (such as the bootloader) are bypassed in this build.
 
 For a more complete test a virtual disk containing all necessary partitions and pre-installed systems can be used.
 
@@ -43,19 +64,8 @@ For a more complete test a virtual disk containing all necessary partitions and 
    machine. Don’t forget to remove the optical drive in ~Settings > Storage~
    once the installation has been completed.
 
-*** TODO Automated Testing
+* Base Layer
 
-NixOS has a very cool [[https://nixos.org/nixos/manual/index.html#sec-obtaining][testing framework]] (see also [[https://nixos.org/~eelco/talks/issre-nov-2010.pdf][this presentation]]). It relies on the module <nixos/modules/virtualisation/qemu-vm.nix> and <nixos/modules/testing/test-instrumentation.nix> to set up a efficient virtual machine.
-
-However ~qemu-vm.nix~ assumes a certain filesystem layout which is incompatible with our ~system-partition~ module. Possible solutions:
-
-- Create our own test machinery (extending ~run-playos-in-vm~).
-- Do testing without ~system-partition~ (and other low-level) modules.
-- Figure out how to override filesystem assumptions in ~qemu-vm.nix~ and use the NixOS tooling machinery.
-
-Doing testing without low-level modules is not desirable. Those are exactly the things that need to be tested extensively and creating own machinery is unnecessary. We need to figure out how to override assumptions in ~qemu-vm.nix~ and possibly adapt our modules to be testable with existing machinery.
-
-* System
 ** Disk layout
 
 A PlayOS installation has 4 partitions:
@@ -65,17 +75,23 @@ A PlayOS installation has 4 partitions:
 - System partition A
 - System partition B
 
+** Installer
+
+A bootable image is built that can be used to install systems. The installation is performed by a Python script (~install-playos.py~). It will automatically detect a suitable device to install the system to and ask for confirmation before partitioning, formatting and installing the system. Optionally the script can be used non-interactively.
+
+Reasons for using Python include the [[https://github.com/dcantrell/pyparted][pyparted]] bindings to the [[https://www.gnu.org/software/parted/][GNU parted]] library for partitioning.
+
 ** Booting
 
 PlayOS can only boot in UEFI mode. [[https://www.gnu.org/software/grub/][GNU Grub]] is used as bootloader.
 
-The bootloader automatically [[*Boot selection logic][chooses system to boot]] (A or B) based on persistent variables (GRUB environment variables on the EFI system partition). Automatic selection can be interrupted by user pressing the ~<ESC>~ key.
+The bootloader automatically [[*Boot selection logic][chooses the system to boot]] (A or B) based on persistent variables. Automatic selection can be interrupted by user pressing the ~<ESC>~ key.
 
 The bootloader boots the selected system by loading the kernel and initial ram disk from the [[*System partition][system partition]]. The bootloader passes the device the system partition is located on as well as the [[*Update Mechanism][RAUC]] slot as kernel arguments (e.g. ~root=/dev/by-label/system.a rauc.slot=a~).
 
 *** Boot selection logic
 
-The [[*Booting][GRUB]] environment variables ~ORDER~, ~a_TRY~, ~b_TRY~, ~a_OK~ and ~b_OK~ are used to select system to boot:
+The [[*Booting][GRUB]] environment variables ~ORDER~, ~a_TRY~, ~b_TRY~, ~a_OK~ and ~b_OK~ are used to select which system to boot:
 
 - ~ORDER~ describes the order in which boots should be attempted (e.g. ~"a b"~).
 - ~a_TRY~ and ~b_TRY~ describes the number of attempts to boot the respective systems.
@@ -83,15 +99,15 @@ The [[*Booting][GRUB]] environment variables ~ORDER~, ~a_TRY~, ~b_TRY~, ~a_OK~ a
 
 GRUB attempts to boot the first system in ~ORDER~ which has a value less than 3 in the respecitve ~TRY~ variable and where ~a_OK~ is not equal ~0~. If there are no boot options available GRUB will display a boot selection menu.
 
-See also sections on the [[*Update Mechanism][Update Mechanism]] and [[*Mark system as good][Mark system as good]].
+See also the sections on the [[*Update Mechanism][Update Mechanism]] and [[*Mark system as good][Mark system as good]].
 
 ** Init system
 
-After low-level system is initialized from the initial ram disk (Stage 1) the ~/init~ script on the system partition (Stage 2) is run, which will start all necessary services to make system usable.
+After low-level system is initialized from the initial ram disk (Stage 1) the ~/init~ script on the system partition (Stage 2) is run, which will start all necessary services.
 
 ** System partition
 
-A system partition contains following files:
+A system partition contains the following files:
 
 - ~/kernel~: Linux kernel
 - ~/initrd~: Initial ram disk
@@ -102,7 +118,7 @@ The system partition is mounted on ~/mnt/system~ (read-only).
 
 ** Volatile root
 
-A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt][tmpfs]]) is used as root. Folders containing persistent user data need to be specified explicitly and are bind mounted to correct locations on root.
+A temporary filesystem in volatile memory ([[https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt][tmpfs]]) is used as root. Folders containing persistent user data need to be specified explicitly at build-time and are bind mounted to correct locations on root.
 
 ** Machine ID
 
@@ -110,37 +126,23 @@ Every machine is assigned a [[https://tools.ietf.org/html/rfc4122][Universal Uni
 
 The machine-id is set on boot via the ~system.machine_id~ kernel argument and then [[https://www.freedesktop.org/software/systemd/man/machine-id.html][handled by the init system]].
 
-** Dividat Driver
-
-The [[https://github.com/dividat/driver][Dividat Driver]], which handles connectivity between Dividat Play and Dividat Senso hardware, is installed and runs as a system service.
-
-** Kiosk
-
-System automatically logs in the user ~play~, starts an X session and launches a custom Kiosk Application based on [[http://doc.qt.io/qt-5/qtwebengine-index.html][QtWebEngine]]. The Kiosk Application loads Dividat Play in a restricted environment.
-
-A [[*User interface][user interface for system configuration]] can be accessed with the key-combination ~Ctrl-Shift-F12~.
-
-If a captive portal is detected, which requires user interaction before granting Internet access, a prompt appears to open it.
-
-For debugging the [[https://doc.qt.io/qt-5/qtwebengine-debugging.html][Qt WebEngine Developer Tools]] are enabled and accessible at http://localhost:3355 and chrome://inspect/#devices. The Dev Tools can be used to inspect and interact with the running page (e.g. load a new page with ~location.replace("https://nixos.org")~).
-
-** TODO PlayOS Controller
+** PlayOS Controller
 
 The PlayOS Controller is an application that manages system updates, checks system health and offers a unified graphical user interface for system configuration. The PlayOS Controller runs as a system service.
 
-PlayOS controller is implemented in [[https://ocaml.org/][OCaml]]. OCaml allows [[https://ocaml.github.io/ocamlunix/ocamlunix.html][lower-level system programming]] offers an excellent [[https://github.com/diml/obus][D-Bus interface]] and various libraries/tools for creating web-based user interfaces (e.g. [[https://github.com/rgrinberg/opium][opium]] and [[https://github.com/ocsigen/tyxml][tyxml]]).
+The PlayOS controller is implemented in [[https://ocaml.org/][OCaml]]. OCaml allows [[https://ocaml.github.io/ocamlunix/ocamlunix.html][lower-level system programming]], offers an excellent [[https://github.com/diml/obus][D-Bus interface]] and various libraries/tools for creating web-based user interfaces (e.g. [[https://github.com/rgrinberg/opium][opium]] and [[https://github.com/ocsigen/tyxml][tyxml]]).
 
 *** Update Mechanism
 
-[[https://www.rauc.io/][RAUC]] is used as update client. Updates are distributed as RAUC [[https://rauc.readthedocs.io/en/latest/basic.html#update-artifacts-bundles][bundles]], that are installed on the inactive system partition. [[*Bundle verification][Bundle verification]], target system partition selection, atomic update and boot loader integration are handled by RAUC. Checking for available updates and downloading them is handled by the controller, which then invokes RAUC to complete installation.
+[[https://www.rauc.io/][RAUC]] is used as the self-update client. Updates are distributed as [[https://rauc.readthedocs.io/en/latest/basic.html#update-artifacts-bundles][RAUC bundles]] and are always installed to the inactive system partition. [[*Bundle verification][Bundle verification]], target system partition selection, atomic update and boot loader integration are handled by RAUC. Checking for available updates and downloading them is handled by the controller, which then invokes RAUC to install the update.
 
 **** Checking for new available versions
 
-The controller retrieves the version of the latest available release from a predefined URL, the update URL. An update is downloaded and installed if the booted system is outdated. Note that an update will not be downloaded if the booted system is up to date but the inactive partition is outdated. That means that in normal operation the active partition will be run the latest available version, whereas the inactive partition has the (latest-1) version installed.
+The controller retrieves the version of the latest available release from a predefined URL, the update URL. An update is downloaded and installed if the booted system is outdated. Note that an update will not be downloaded if the booted system is up to date but the inactive partition is outdated. That means that in normal operation the active partition will be running the latest available version, whereas the inactive partition has the (latest-1) version installed.
 
 **** Bundle verification
 
-RAUC bundles are signed. Before installing an update RAUC will verify signature against certificate installed on system (see [[https://rauc.readthedocs.io/en/latest/advanced.html#security][here]]).
+RAUC bundles are signed. Before installing an update RAUC will verify the bundle signature against the certificate installed on the system (see [[https://rauc.readthedocs.io/en/latest/advanced.html#security][here]]).
 
 The certificate to be installed on the system must be passed to the build system with the ~updateCert~ argument.
 
@@ -148,26 +150,22 @@ The RAUC bundle produced by the build system is signed by a dummy development/te
 
 **** Installation
 
-During installation of a new system on slot ~x~ the ~x_OK~ variable is set to ~0~, marking the system non-bootable. After successful installation, [[https://rauc.readthedocs.io/en/latest/reference.html#grub][RAUC sets]] the ~ORDER~ to contain ~x~ as first element and sets the number of tries to 0 (~x_TRY=0~) and marks the system bootable (~x_OK=1~). On next boot GRUB attempts to boot system ~x~ for 3 times before falling back to the next system in ~ORDER~ (see [[*Boot selection logic][boot selection logic]]).
+During installation of a new system on slot ~x~ the ~x_OK~ variable is set to ~0~, marking the system non-bootable. After successful installation, [[https://rauc.readthedocs.io/en/latest/reference.html#grub][RAUC sets]] the ~ORDER~ to contain ~x~ as first element and sets the number of tries to 0 (~x_TRY=0~) and marks the system bootable (~x_OK=1~). On next boot, GRUB attempts to boot system ~x~ for 3 times before falling back to the next system in ~ORDER~ (see [[*Boot selection logic][boot selection logic]]).
 
 **** Deployment of updates
 
-Updates are deployed to Amazon S3.
+Bundles are deployed to Amazon S3.
 
 *** Mark system as good
 
-The controller marks the currently running system good after:
+The controller marks the currently running system as good after:
 
  - Controller is running for at least 30 seconds
  - System state as reported by systemd is "Running"
 
 If system ~x~ is considered to be running satisfactory the system is marked good via RAUC, which resets the number of boot attempts (~x_TRY=0~) and marks the system bootable (~x_OK=1~) (see [[*Boot selection logic][boot selection logic]]).
 
-Note that if system is rebooted before controller can mark the system as good, the boot attempt counter (~x_TRY~) will be incremented. [[*Boot selection logic][The boot selection logic]] will not boot a system with more than 3 boot attempts.
-
-*** TODO Logging Mechanism
-
-Important system events should be logged to ~log.dividat.com~.
+Note that if the system is rebooted before the controller can mark the system as good, the boot attempt counter (~x_TRY~) will be incremented. [[*Boot selection logic][The boot selection logic]] will not boot a system with more than 3 boot attempts.
 
 
 *** User interface
@@ -176,33 +174,19 @@ A web-based graphical user interface is provided for system configuration and ob
 
 **** System information
 
-Basic information, such as version and id are displayed.
+Basic information, such as system version and machine-id are displayed.
 
 **** Network configuration
 
-The controller periodically checks Internet connectivity (with a HTTP request to ~http://api.dividat.com~). If Internet is connected this is indicated with a check mark.
+The controller periodically checks Internet connectivity (with an HTTP request to ~http://captive.dividat.com~). If the probe can be reached, this is indicated with a check mark.
 
-If Internet connectivity is not available a list of available wireless networks will be displayed. User can connect to the network and optionally provide a passphrase for WEP/WPA.
+The user can connect to the network and optionally provide a passphrase for WEP/WPA.
 
-[[https://01.org/connman][ConnMan]] is used as network manager. The controller interfaces with ConnMan via its D-Bus API. ConnMan is used in favor of NetworkManager as it is more lightweight, has more predictable behavior when connecting with link-local networks (see [[https://mail.gnome.org/archives/networkmanager-list/2009-April/msg00102.html][here]]) and has a easy to use D-Bus API (see [[https://git.kernel.org/pub/scm/network/connman/connman.git/tree/doc][documentation in the project repository]]).
+[[https://01.org/connman][ConnMan]] is used as network manager. The controller interfaces with ConnMan via its D-Bus API. ConnMan is used in favor of NetworkManager as it is more lightweight, has more predictable behavior when connecting with link-local networks (see [[https://mail.gnome.org/archives/networkmanager-list/2009-April/msg00102.html][here]]) and has an easy to use D-Bus API (see [[https://git.kernel.org/pub/scm/network/connman/connman.git/tree/doc][documentation in the project repository]]).
 
-***** Limitations
+Ethernet interfaces are configured automatically and use DHCP if available or default to a link-local address scheme (which is important for connecting to Dividat Senso via Ethernet). If required for Internet access, it is also possible to configure a static IP for a specific Ethernet interace.
 
-- Manual configuration of Ethernet interfaces is currently not possible. Ethernet interfaces are configured to use DHCP and fall back to link-local address configuration. This allows plug-and-play connectivity to Dividat Senso (link-local) and networks using DHCP.
-- Only WEP or WPA with passphrase is supported by the GUI. Further methods may be implemented by extending the ~Connman.Agent~ module and support in GUI. Manual configuration of ConnMan can be done via ~connmanctl~ (e.g. [[https://wiki.archlinux.org/index.php/ConnMan#Connecting_to_eduroam_(802.1X)][connecting to WPA Enterprise]]).
-
-**** TODO Audio
-
- Audio is handled with [[https://www.freedesktop.org/wiki/Software/PulseAudio/][PulseAudio]] running as a [[https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/User/SystemWide/][system-wide]] daemon.
-
- Controller should set default audo output to HDMI and set volume to maximum. User configuration of volume should be done through the HDMI display device (e.g. the TV).
-
- https://github.com/savonet/ocaml-pulseaudio
-
-***** TODO Bluetooth
-
- Functionality to connect to bluetooth audio devices (e.g. bluetooth headphone). This would require an additional D-Bus binding to [[http://www.bluez.org/][Bluez]] and an user interface for setting up device.
-
+Connecting to WiFi networks with a passphrase is supported by the GUI. There is no support for connecting to WPA Enterprise.
 
 ** Remote maintenance
 
@@ -210,53 +194,40 @@ In order to allow remote troubleshooting, the system can connect to a private [[
 
 ** Rescue system
 
-A minimal Linux rescue system is installed on the ESP partition. It's main purpose is to wipe any user data by reformatting the data partition.
+A minimal Linux rescue system is installed on the ESP partition. The rescue system can be started by manually selecting the entry from the boot loader menu.
 
-The rescue system can be started by manually selecting the entry from the boot loader menu.
+After booting a menu is shown where user can choose to wipe user data (reformat data partition), reboot or access a Linux shell.
 
-#+CAPTION: Rescue System
-#+NAME:   fig:rescue-system
-#+attr_html: :width 800px
-[[../screenshots/rescue-system.png]]
+The rescue system consists of a Linux kernel and an initial ramdisk with an embedded squashfs containing the system software.
 
-After booting a menu is shown where user can choose to wipe user data (reformat data partition), reboot, access a Linux shell or play a game.
+The main purpose of the rescue system is to perform a factory reset by wiping user data. In general, reinstalling the system completely is a safe alternative for restoring system functionality. Nevertheless RAUC and Grub utilities are installed.
 
-The rescue system consists of a Linux kernel and a initial ramdisk with an embedded squashfs containing the system software.
+* Application Layer
 
-Use cases for rescue system beside wiping user data are not clear. In general reinstalling the system completely is a safer way of restoring system functionality. Nevertheless RAUC and Grub utilities are installed.
+** Dividat Driver
 
-* TODO Installer
+The [[https://github.com/dividat/driver][Dividat Driver]], which handles connectivity between Dividat Play and Dividat Senso hardware, is installed and runs as a system service.
 
-A bootable image is built that can be used to install systems. The installation is performed by a Python script (~install-playos.py~). It will automatically detect a suitable device to install the system to and ask for confirmation before partitioning, formatting and installing the system. Optionally the script can be used non-interactively.
+** Kiosk
 
-Reasons for using Python include the [[https://github.com/dcantrell/pyparted][pyparted]] bindings to the [[https://www.gnu.org/software/parted/][GNU parted]] library for partitioning.
+The system automatically logs in the user ~play~, starts an X session and launches a custom Kiosk Application based on [[http://doc.qt.io/qt-5/qtwebengine-index.html][QtWebEngine]]. The Kiosk Application loads Dividat Play in a restricted environment.
 
-** TODO Use RAUC bundle during installation
+The [[*User interface][user interface for system configuration]] can be accessed with the key-combination ~Ctrl-Shift-F12~.
 
-Currently installation script copies the target system directly from the Nix store. This allows for more efficient creation of disk images for testing as the system to be installed only is copied to a disk or bundle once. The disadvantage is that initial installation is different than updating a system with RAUC.
+If a captive portal is detected, which requires user interaction before granting Internet access, a prompt appears to open it.
 
-One way in which this difference manifests itself is that RAUC writes certain meta-data to the ~/boot/status.ini~ file which is required by the [[*Update Mechanism][update mechanism implemented by the controller]]. On initial installation this meta-data is written by the installation script, impersonating RAUC.
+For debugging the [[https://doc.qt.io/qt-5/qtwebengine-debugging.html][Qt WebEngine Developer Tools]] are enabled and accessible at http://localhost:3355 and chrome://inspect/#devices. The Dev Tools can be used to inspect and interact with the running page (e.g. load a new page with ~location.replace("https://nixos.org")~).
 
-Some work has been done towards using RAUC bundles during installation:
+** Audio
 
-- [2018-12-07 Fri] Initial experimentation
-  - Not compressing system tarball with xz increases size of rauc bundle from 180MB to 280MB (no X system).
-  - Rauc has [[https://rauc.readthedocs.io/en/latest/examples.html#write-slots-without-update-mechanics][write-slot]] option that can write an image to a slot. This still requires rauc to be properly configured on installation system (it needs to know about slots).
-  - Using Rauc nicely makes the installer script more complicated. Currently not worth the effort.
-  - Another idea: use rauc bundle but bypass rauc (bundle is just a squashfs image). However crypthographic verification of bundle is also bypassed.
-- [2019-01-18 Fri] More thoughts
-  - Maybe using RAUC nicely is not such a bad idea, as then version information is correctly set. And having a working RAUC is very useful. Also from rescue system.
-- [2019-01-21 Mon] Another try
-  - RAUC bundle creation is more efficient now and installing with RAUC is fast (i.e. ~rauc install~).
-  - Attempted to use ~rauc install~ with ~--conf~ option:
-    #+BEGIN_SRC shell
-    Error creating proxy: Could not connect: No such file or directory
-    D-Bus error while installing `/nix/store/75zbfm75ymvxq9cn5bqvp4hfxiwrx9kc-bundle-2019.1.0-dev.raucb`
-    Error creating proxy: Could not connect: No such file or directory
-    D-Bus error while installing `/nix/store/75zbfm75ymvxq9cn5bqvp4hfxiwrx9kc-bundle-2019.1.0-dev.raucb`
-    #+END_SRC
-    Fails as RAUC needs to have D-Bus access which requires system configuration not present in the installer or the environment used to create the testing disk image.
-  - Mounting the RAUC bundle and simply untaring also failed: ~mount: /mnt/rauc-bundle: mount failed: Operation not permitted.~. Me thinks the minimal Linux kernel used does not have squashfs suport.
-  - Using the bundle for installation would be very nice as certain RAUC meta data is set properly (installed version, etc.) and also makes difference between fresh install and updated system smaller. Running RAUC (with proper D-Bus setup) on installer system is feasible. Currently the test disk image is created with the same installation script as is on the installer. If the installation script would require a fully running RAUC, then the disk creation would have to be adapted to either use a more complete Linux system (possibly the installer - making creation of the test disk very slow) or not use the installation script (not the idea of the testing disk). Further pondering required.
+Audio is handled with [[https://www.freedesktop.org/wiki/Software/PulseAudio/][PulseAudio]], trying to play sound on all available output devices. User configuration of volume should be done through the HDMI display device (e.g. the TV).
 
-** TODO Check for latest version of bundle over network
+* Limitations
+
+** Layers
+
+At the moment the split into base and application layers still has some impurities which could be avoided to further clarify which is which:
+
+- The kiosk URL is conceptually part of the application but passed as a parameter to base components for purely informational purposes. The application could instead specify arbitrary metadata for the base system to display in suitable places (controller, installer).
+- The PlayOS name is hardcoded and could be made parametric.
+- Some localization options (system language, keyboard, screen resolution) from the base system have no effect if the application layer does not apply them.

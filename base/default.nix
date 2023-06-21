@@ -1,16 +1,19 @@
 # This is the toplevel module for all PlayOS related functionalities.
 
 # Things that are injected into the system
-{pkgs, version, updateCert, kioskUrl, greeting, playos-controller}:
+{pkgs, version, kioskUrl, greeting, playos-controller}:
 
 
 {config, lib, ...}:
 with lib;
 {
   imports = [
+    ./localization.nix
+    ./networking.nix
+    ./remote-maintenance.nix
+    ./self-update
     ./system-partition.nix
     ./volatile-root.nix
-    ./playos-status.nix
   ];
 
   options = {
@@ -22,11 +25,6 @@ with lib;
     playos.kioskUrl = mkOption {
       type = types.str;
     };
-
-    playos.updateCert = mkOption {
-      type = types.package;
-    };
-
   };
 
   config = {
@@ -40,9 +38,10 @@ with lib;
     # disable installation of bootloader
     boot.loader.grub.enable = false;
 
-    playos = {
-      inherit version updateCert kioskUrl;
-    };
+    # disable installation of inaccessible documentation
+    documentation.enable = false;
+
+    playos = { inherit version kioskUrl; };
 
     # 'Welcome Screen'
     services.getty = {

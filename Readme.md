@@ -1,6 +1,23 @@
 # PlayOS
 
-A custom Linux system (built on [NixOS](https://nixos.org/)) to run web applications in a fullscreen kiosk. Built for Dividat Play.
+PlayOS is a Linux system to act as an application kiosk. PlayOS is a layer on top of [NixOS](https://nixos.org/).
+
+The base layer functionality of PlayOS is:
+
+- Automatic A/B update mechanism
+- Read-only system partitions, with selected persisted configuration data
+- Web-based configuration interface for
+  - network (LAN, WLAN, HTTP proxy, static IP),
+  - localization,
+  - system status,
+  - remote maintenance.
+- Installer
+- Live system
+- Remote maintenance via ZeroTier
+
+The application layer may be defined in a single Nix file.
+
+This repository contains the application layer for running the Dividat Play web app and supporting system services in a fullscreen kiosk.
 
 See the [documentation](docs/arch) for more information.
 
