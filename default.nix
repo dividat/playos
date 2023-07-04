@@ -35,8 +35,8 @@ let
   # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
   components = with pkgs; lib.makeScope newScope (self: with self; {
 
-    version = application.version;
     inherit updateUrl deployUrl kioskUrl;
+    inherit (application) version fullProductName;
 
     greeting = lib.attrsets.attrByPath [ "greeting" ] (label: label) application;
 
@@ -47,10 +47,10 @@ let
     updateCert = copyPathToStore updateCert;
 
     # System image as used in full installation
-    systemImage = callPackage ./system-image { application = application.module; };
+    systemImage = callPackage ./system-image { application = application; };
 
     # USB live system
-    live = callPackage ./live { application = application.module; };
+    live = callPackage ./live { application = application; };
 
     # Installation script
     install-playos = callPackage ./installer/install-playos {
@@ -70,7 +70,7 @@ let
     unsignedRaucBundle = callPackage ./rauc-bundle {};
 
     # NixOS system toplevel with test machinery
-    testingToplevel = callPackage ./testing/system { application = application.module; };
+    testingToplevel = callPackage ./testing/system { application = application; };
 
     # Disk image containing pre-installed system
     disk = if buildDisk then callPackage ./testing/disk {} else null;

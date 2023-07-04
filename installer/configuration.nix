@@ -1,4 +1,4 @@
-{ config, pkgs, lib, install-playos, version, greeting, ... }:
+{ config, pkgs, lib, install-playos, version, fullProductName, greeting, ... }:
 
 with lib;
 
@@ -24,7 +24,7 @@ with lib;
   # Allow the user to log in as root without a password.
   users.users.root.initialHashedPassword = "";
 
-  services.getty.greetingLine = greeting "Dividat PlayOS installer (${version})";
+  services.getty.greetingLine = greeting "${fullProductName} installer (${version})";
 
   environment.loginShellInit = ''
     install-playos --reboot

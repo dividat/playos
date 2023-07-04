@@ -1,4 +1,5 @@
 rec {
+    fullProductName = "Dividat PlayOS";
     version = "2023.2.0";
 
     greeting = label: ''

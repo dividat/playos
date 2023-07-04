@@ -1,7 +1,7 @@
 # This is the toplevel module for all PlayOS related functionalities.
 
 # Things that are injected into the system
-{pkgs, version, kioskUrl, greeting, playos-controller}:
+{pkgs, version, kioskUrl, fullProductName, greeting, playos-controller}:
 
 
 {config, lib, ...}:
@@ -45,7 +45,7 @@ with lib;
 
     # 'Welcome Screen'
     services.getty = {
-      greetingLine = greeting "Dividat PlayOS (${version})";
+      greetingLine = greeting "${fullProductName} (${version})";
       helpLine = "";
     };
 
