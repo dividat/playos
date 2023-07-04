@@ -10,6 +10,9 @@ with lib;
     (pkgs.importFromNixos "modules/installer/cd-dvd/iso-image.nix")
   ];
 
+  # Custom label when identifying OS
+  system.nixos.label = "${safeProductName}-${version}";
+
   environment.systemPackages = [
     install-playos
   ];
