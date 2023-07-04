@@ -8,7 +8,7 @@ let nixos = pkgs.importFromNixos ""; in
       # Base layer
       ((import ../base) {
         inherit pkgs kioskUrl playos-controller;
-        inherit (application) fullProductName greeting version;
+        inherit (application) safeProductName fullProductName greeting version;
       })
       # Application-specific
       application.module
@@ -23,7 +23,7 @@ let nixos = pkgs.importFromNixos ""; in
       # ISO image customization
       isoImage.makeEfiBootable = true;
       isoImage.makeUsbBootable = true;
-      isoImage.isoName = "playos-live-${application.version}.iso";
+      isoImage.isoName = "${application.safeProductName}-live-${application.version}.iso";
       isoImage.appendToMenuLabel = " Live System";
 
       # Set up as completely volatile system

@@ -1,15 +1,15 @@
 # This is the toplevel module for all PlayOS related functionalities.
 
 # Things that are injected into the system
-{pkgs, version, kioskUrl, fullProductName, greeting, playos-controller}:
+{pkgs, version, kioskUrl, safeProductName, fullProductName, greeting, playos-controller}:
 
 
 {config, lib, ...}:
 with lib;
 {
   imports = [
+    (import ./networking.nix { hostName = safeProductName; inherit lib pkgs config; })
     ./localization.nix
-    ./networking.nix
     ./remote-maintenance.nix
     ./self-update
     ./system-partition.nix
@@ -33,7 +33,7 @@ with lib;
     nixpkgs.pkgs = pkgs;
 
     # Custom label when identifying OS
-    system.nixos.label = "PlayOS-${version}";
+    system.nixos.label = "${safeProductName}-${version}";
 
     # disable installation of bootloader
     boot.loader.grub.enable = false;

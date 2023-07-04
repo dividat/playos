@@ -1,4 +1,4 @@
-{ applicationOverlays ? [], version, updateUrl, kioskUrl }:
+{ applicationOverlays ? [], version, safeProductName ? "playos", updateUrl, kioskUrl }:
 
 let
 
@@ -24,6 +24,7 @@ let
       playos-controller = import ../controller {
         pkgs = self;
         version = version;
+        bundleName = safeProductName;
         updateUrl = updateUrl;
         kioskUrl = kioskUrl;
       };

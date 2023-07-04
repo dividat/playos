@@ -12,6 +12,8 @@ UNSIGNED_RAUC_BUNDLE = "@unsignedRaucBundle@"
 INSTALLER_ISO = "@installer@"
 DOCS = "@docs@"
 VERSION = "@version@"
+FULL_PRODUCT_NAME = "@fullProductName@"
+SAFE_PRODUCT_NAME = "@safeProductName@"
 
 # Certificate installed on system
 UPDATE_CERT = "@updateCert@"
@@ -94,7 +96,7 @@ def sign_rauc_bundle(key, cert, out):
 
 def _main(opts):
 
-    print("Deploying PlayOS update:\n")
+    print(f"Deploying {FULL_PRODUCT_NAME} update:\n")
 
     output_cert = UPDATE_CERT if opts.override_cert == None else opts.override_cert
 
@@ -106,8 +108,7 @@ def _main(opts):
         os.makedirs(version_dir, exist_ok=True)
 
         # Sign RAUC bundle (and verify signature)
-        signed_bundle = os.path.join(version_dir,
-                                     "playos-" + VERSION + ".raucb")
+        signed_bundle = os.path.join(version_dir, f"{SAFE_PRODUCT_NAME}-{VERSION}.raucb")
         sign_rauc_bundle(key=opts.key, cert=output_cert, out=signed_bundle)
 
         # Write latest file
@@ -116,14 +117,14 @@ def _main(opts):
             latest.write(VERSION + "\n")
 
         # Write installer ISO
-        installer_iso_filename = "playos-installer-" + VERSION + ".iso"
+        installer_iso_filename = f"{SAFE_PRODUCT_NAME}-installer-{VERSION}.iso"
         installer_iso_src = os.path.join(INSTALLER_ISO, "iso", installer_iso_filename)
         installer_iso_dst = os.path.join(version_dir, installer_iso_filename)
         subprocess.run(["cp", installer_iso_src, installer_iso_dst],
             check=True)
 
         # Write PDF manual
-        manual_filename = "playos-manual-" + VERSION + ".pdf"
+        manual_filename = "${SAFE_PRODUCT_NAME}-manual-{VERSION}.pdf"
         manual_src = os.path.join(DOCS, "user-manual.pdf")
         manual_dst = os.path.join(version_dir, manual_filename)
         subprocess.run(["cp", manual_src, manual_dst], check=True)
@@ -198,7 +199,7 @@ def _main(opts):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Deploy PlayOS update")
+    parser = argparse.ArgumentParser(description=f"Deploy {FULL_PRODUCT_NAME} update")
     parser.add_argument('-v', '--version', action='version', version=VERSION)
     parser.add_argument('--key', help="key file or PKCS#11 URL", required=True)
     parser.add_argument('--override-cert', help="use a previous cert when switching PKI pairs")

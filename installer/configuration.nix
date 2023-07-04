@@ -1,4 +1,4 @@
-{ config, pkgs, lib, install-playos, version, fullProductName, greeting, ... }:
+{ config, pkgs, lib, install-playos, version, safeProductName, fullProductName, greeting, ... }:
 
 with lib;
 
@@ -49,7 +49,7 @@ with lib;
   };
 
   networking = {
-    hostName = "playos-installer";
+    hostName = "${safeProductName}-installer";
 
     # enable wpa_supplicant
     wireless = {
@@ -58,7 +58,7 @@ with lib;
   };
 
   # ISO naming.
-  isoImage.isoName = "playos-installer-${version}.iso";
+  isoImage.isoName = "${safeProductName}-installer-${version}.iso";
 
   isoImage.volumeID = substring 0 11 "PLAYOS_ISO";
 

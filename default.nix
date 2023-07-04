@@ -36,7 +36,7 @@ let
   components = with pkgs; lib.makeScope newScope (self: with self; {
 
     inherit updateUrl deployUrl kioskUrl;
-    inherit (application) version fullProductName;
+    inherit (application) version safeProductName fullProductName;
 
     greeting = lib.attrsets.attrByPath [ "greeting" ] (label: label) application;
 
@@ -58,13 +58,13 @@ let
     };
 
     # Rescue system
-    rescueSystem = callPackage ./bootloader/rescue {};
+    rescueSystem = callPackage ./bootloader/rescue { application = application; };
 
     # Installer ISO image
     installer = callPackage ./installer {};
 
     # Script to deploy updates
-    deploy-playos-update = callPackage ./deployment/deploy-playos-update {};
+    deploy-update = callPackage ./deployment/deploy-update { application = application; };
 
     # RAUC bundle
     unsignedRaucBundle = callPackage ./rauc-bundle {};
@@ -83,7 +83,7 @@ let
 in
 
 with pkgs; stdenv.mkDerivation {
-  name = "playos-${components.version}";
+  name = "${components.safeProductName}-${components.version}";
 
   buildInputs = [
     rauc
@@ -105,15 +105,15 @@ with pkgs; stdenv.mkDerivation {
   ''
 
   + lib.optionalString buildLive ''
-    ln -s ${components.live}/iso/playos-live-${components.version}.iso $out/playos-live-${components.version}.iso
+    ln -s ${components.live}/iso/${components.safeProductName}-live-${components.version}.iso $out/${components.safeProductName}-live-${components.version}.iso
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
-    ln -s ${components.installer}/iso/playos-installer-${components.version}.iso $out/playos-installer-${components.version}.iso
+    ln -s ${components.installer}/iso/${components.safeProductName}-installer-${components.version}.iso $out/${components.safeProductName}-installer-${components.version}.iso
   ''
   # RAUC bundle
   + lib.optionalString buildBundle ''
-    ln -s ${components.unsignedRaucBundle} $out/playos-${components.version}-UNSIGNED.raucb
+    ln -s ${components.unsignedRaucBundle} $out/${components.safeProductName}-${components.version}-UNSIGNED.raucb
     cp ${components.deploy-update} $out/bin/deploy-update
     chmod +x $out/bin/deploy-update
   '';

@@ -8,7 +8,7 @@ let nixos = pkgs.importFromNixos ""; in
     # Base layer
     (import ../../base {
       inherit pkgs kioskUrl playos-controller;
-      inherit (application) fullProductName greeting version;
+      inherit (application) safeProductName fullProductName greeting version;
     })
 
     # Application-specific

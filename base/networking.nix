@@ -1,4 +1,4 @@
-{config, pkgs, lib, ... }:
+{config, pkgs, lib, hostName, ... }:
 
 {
   # Enable non-free firmware
@@ -37,7 +37,7 @@
   };
 
   networking = {
-    hostName = "playos";
+    hostName = hostName;
 
     wireless = {
       enable = true;

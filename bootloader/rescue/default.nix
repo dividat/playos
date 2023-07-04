@@ -1,4 +1,5 @@
 { stdenv, lib
+, application
 , squashfsTools, closureInfo, makeInitrd, linkFarm
 , importFromNixos
 , writeScript, dialog
@@ -87,7 +88,7 @@ in
       '';
     };
     networking = {
-      hostName = "playos-rescue";
+      hostName = "${application.safeProductName}-rescue";
       # enable wpa_supplicant
       wireless = {
         enable = true;
