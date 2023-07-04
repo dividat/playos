@@ -76,7 +76,7 @@ let
     disk = if buildDisk then callPackage ./testing/disk {} else null;
 
     # Script for spinning up VMs
-    run-playos-in-vm = callPackage ./testing/run-playos-in-vm {};
+    run-in-vm = callPackage ./testing/run-in-vm {};
 
   });
 
@@ -97,8 +97,8 @@ with pkgs; stdenv.mkDerivation {
     ln -s ${components.docs} $out/docs
 
     mkdir -p $out/bin
-    cp ${components.run-playos-in-vm} $out/bin/run-playos-in-vm
-    chmod +x $out/bin/run-playos-in-vm
+    cp ${components.run-in-vm} $out/bin/run-in-vm
+    chmod +x $out/bin/run-in-vm
 
     # Certificate used to verify update bundles
     ln -s ${updateCert} $out/cert.pem
@@ -114,8 +114,8 @@ with pkgs; stdenv.mkDerivation {
   # RAUC bundle
   + lib.optionalString buildBundle ''
     ln -s ${components.unsignedRaucBundle} $out/playos-${components.version}-UNSIGNED.raucb
-    cp ${components.deploy-playos-update} $out/bin/deploy-playos-update
-    chmod +x $out/bin/deploy-playos-update
+    cp ${components.deploy-update} $out/bin/deploy-update
+    chmod +x $out/bin/deploy-update
   '';
 
 }

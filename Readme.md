@@ -51,10 +51,10 @@ A helper is available to quickly start a virtual machine:
 ./build vm
 ```
 
-In order to get the vm system journal, look at the output of `run-playos-in-vm`
+In order to get the vm system journal, look at the output of `run-in-vm`
 for a command starting with `socat`.
 
-See the output of `run-playos-in-vm --help` for more information.
+See the output of `run-in-vm --help` for more information.
 
 #### Guest networking
 
@@ -76,7 +76,7 @@ Tests added to `test/integration` are executed via a GitHub Action when pushing 
 
 ## Deployment
 
-Update bundles are hosted on Amazon S3. The script `bin/deploy-playos-update` will handle signing and uploading of bundle.
+Update bundles are hosted on Amazon S3. The script `bin/deploy-update` will handle signing and uploading of bundle.
 
 The arguments `updateUrl` (from where updates will be fetched by PlayOS systems), `deployURL` (where bundles should be deployed to) must be specified. For example: `nix build --arg updateUrl https://dist.dividat.com/releases/playos/master/ --arg deployUrl s3://dist.dividat.ch/releases/playos/master/`.
 
@@ -86,7 +86,7 @@ To release an update to the `develop` channel:
 
 ```
 ./build develop
-./result/bin/deploy-playos-update --key PATH_TO_KEY.pem
+./result/bin/deploy-update --key PATH_TO_KEY.pem
 ```
 
 ### Key switch
