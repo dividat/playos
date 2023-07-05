@@ -124,7 +124,7 @@ def _main(opts):
             check=True)
 
         # Write PDF manual
-        manual_filename = "${SAFE_PRODUCT_NAME}-manual-{VERSION}.pdf"
+        manual_filename = f"{SAFE_PRODUCT_NAME}-manual-{VERSION}.pdf"
         manual_src = os.path.join(DOCS, "user-manual.pdf")
         manual_dst = os.path.join(version_dir, manual_filename)
         subprocess.run(["cp", manual_src, manual_dst], check=True)
