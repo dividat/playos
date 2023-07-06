@@ -1,4 +1,4 @@
-{ applicationOverlays ? [], version, safeProductName ? "playos", updateUrl, kioskUrl }:
+{ applicationOverlays ? [] }:
 
 let
 
@@ -19,15 +19,6 @@ let
         semver = self.callPackage ./ocaml-modules/semver {};
         obus = self.callPackage ./ocaml-modules/obus {};
       });
-
-      # Controller
-      playos-controller = import ../controller {
-        pkgs = self;
-        version = version;
-        bundleName = safeProductName;
-        updateUrl = updateUrl;
-        kioskUrl = kioskUrl;
-      };
 
     };
 

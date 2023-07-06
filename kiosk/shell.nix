@@ -1,8 +1,9 @@
 let
-  pkgs = import ../pkgs {
-    version = "1.0.0-dev";
-    updateUrl = "http://localhost:9999";
-    kioskUrl = "https://dev-play.dividat.com/";
-  };
+  pkgs = import ../pkgs {};
 in
-  pkgs.playos-kiosk-browser
+  import ./default.nix {
+    pkgs = pkgs;
+    system_name = "PlayOS";
+    system_version = "1.0.0-dev";
+  }
+

@@ -1,9 +1,5 @@
 let
-  pkgs = import ../../pkgs {
-    version = "1.0.0";
-    updateUrl = "http://localhost/";
-    kioskUrl = "http://localhost/";
-  };
+  pkgs = import ../../pkgs { };
 in
 pkgs.nixosTest {
   name = "rauc statusfile recovery";

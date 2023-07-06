@@ -28,7 +28,6 @@ let
   application = import applicationPath;
 
   pkgs = import ./pkgs (with application; {
-    inherit version updateUrl kioskUrl;
     applicationOverlays = application.overlays;
   });
 
@@ -39,6 +38,15 @@ let
     inherit (application) version safeProductName fullProductName;
 
     greeting = lib.attrsets.attrByPath [ "greeting" ] (label: label) application;
+
+    # Controller
+    playos-controller = import ./controller {
+      pkgs = pkgs;
+      version = version;
+      bundleName = safeProductName;
+      updateUrl = updateUrl;
+      kioskUrl = kioskUrl;
+    };
 
     # Documentations
     docs = callPackage ./docs {};
