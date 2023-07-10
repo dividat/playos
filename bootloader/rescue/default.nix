@@ -17,7 +17,7 @@ let
     do
 
       ${dialog}/bin/dialog --clear --title "" \
-        --backtitle "PlayOS - Rescue System" \
+        --backtitle "${application.fullProductName} - Rescue System" \
         --nocancel \
         --menu "Please Select an action" 0 0 0 \
         "wipe-user-data" "Delete all user data." \
