@@ -28,17 +28,25 @@ let
   application = import applicationPath;
 
   pkgs = import ./pkgs (with application; {
-    inherit version updateUrl kioskUrl;
     applicationOverlays = application.overlays;
   });
 
   # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
   components = with pkgs; lib.makeScope newScope (self: with self; {
 
-    version = application.version;
     inherit updateUrl deployUrl kioskUrl;
+    inherit (application) version safeProductName fullProductName;
 
     greeting = lib.attrsets.attrByPath [ "greeting" ] (label: label) application;
+
+    # Controller
+    playos-controller = import ./controller {
+      pkgs = pkgs;
+      version = version;
+      bundleName = safeProductName;
+      updateUrl = updateUrl;
+      kioskUrl = kioskUrl;
+    };
 
     # Documentations
     docs = callPackage ./docs {};
@@ -47,10 +55,10 @@ let
     updateCert = copyPathToStore updateCert;
 
     # System image as used in full installation
-    systemImage = callPackage ./system-image { application = application.module; };
+    systemImage = callPackage ./system-image { application = application; };
 
     # USB live system
-    live = callPackage ./live { application = application.module; };
+    live = callPackage ./live { application = application; };
 
     # Installation script
     install-playos = callPackage ./installer/install-playos {
@@ -58,32 +66,32 @@ let
     };
 
     # Rescue system
-    rescueSystem = callPackage ./bootloader/rescue {};
+    rescueSystem = callPackage ./bootloader/rescue { application = application; };
 
     # Installer ISO image
     installer = callPackage ./installer {};
 
     # Script to deploy updates
-    deploy-playos-update = callPackage ./deployment/deploy-playos-update {};
+    deploy-update = callPackage ./deployment/deploy-update { application = application; };
 
     # RAUC bundle
     unsignedRaucBundle = callPackage ./rauc-bundle {};
 
     # NixOS system toplevel with test machinery
-    testingToplevel = callPackage ./testing/system { application = application.module; };
+    testingToplevel = callPackage ./testing/system { application = application; };
 
     # Disk image containing pre-installed system
     disk = if buildDisk then callPackage ./testing/disk {} else null;
 
     # Script for spinning up VMs
-    run-playos-in-vm = callPackage ./testing/run-playos-in-vm {};
+    run-in-vm = callPackage ./testing/run-in-vm {};
 
   });
 
 in
 
 with pkgs; stdenv.mkDerivation {
-  name = "playos-${components.version}";
+  name = "${components.safeProductName}-${components.version}";
 
   buildInputs = [
     rauc
@@ -97,25 +105,25 @@ with pkgs; stdenv.mkDerivation {
     ln -s ${components.docs} $out/docs
 
     mkdir -p $out/bin
-    cp ${components.run-playos-in-vm} $out/bin/run-playos-in-vm
-    chmod +x $out/bin/run-playos-in-vm
+    cp ${components.run-in-vm} $out/bin/run-in-vm
+    chmod +x $out/bin/run-in-vm
 
     # Certificate used to verify update bundles
     ln -s ${updateCert} $out/cert.pem
   ''
 
   + lib.optionalString buildLive ''
-    ln -s ${components.live}/iso/playos-live-${components.version}.iso $out/playos-live-${components.version}.iso
+    ln -s ${components.live}/iso/${components.safeProductName}-live-${components.version}.iso $out/${components.safeProductName}-live-${components.version}.iso
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
-    ln -s ${components.installer}/iso/playos-installer-${components.version}.iso $out/playos-installer-${components.version}.iso
+    ln -s ${components.installer}/iso/${components.safeProductName}-installer-${components.version}.iso $out/${components.safeProductName}-installer-${components.version}.iso
   ''
   # RAUC bundle
   + lib.optionalString buildBundle ''
-    ln -s ${components.unsignedRaucBundle} $out/playos-${components.version}-UNSIGNED.raucb
-    cp ${components.deploy-playos-update} $out/bin/deploy-playos-update
-    chmod +x $out/bin/deploy-playos-update
+    ln -s ${components.unsignedRaucBundle} $out/${components.safeProductName}-${components.version}-UNSIGNED.raucb
+    cp ${components.deploy-update} $out/bin/deploy-update
+    chmod +x $out/bin/deploy-update
   '';
 
 }

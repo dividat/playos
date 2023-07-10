@@ -1,15 +1,18 @@
-{pkgs, lib, version, kioskUrl, playos-controller, greeting, application}:
+{pkgs, lib, kioskUrl, playos-controller, application}:
 
 let nixos = pkgs.importFromNixos ""; in
 
 (nixos {
   configuration = {...}: {
   imports = [
-    # General PlayOS modules
-    (import ../../base { inherit pkgs version kioskUrl greeting playos-controller; })
+    # Base layer
+    (import ../../base {
+      inherit pkgs kioskUrl playos-controller;
+      inherit (application) safeProductName fullProductName greeting version;
+    })
 
     # Application-specific
-    application
+    application.module
 
     # Testing machinery
     (import ./testing.nix { inherit lib pkgs; })

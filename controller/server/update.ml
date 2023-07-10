@@ -4,6 +4,8 @@ open Sexplib.Conv
 
 let log_src = Logs.Src.create "update"
 
+let bundle_name =
+  "@PLAYOS_BUNDLE_NAME@"
 
 (* Version handling *)
 
@@ -65,14 +67,15 @@ let get_version_info ~proxy url rauc =
       |> return
   ) |> Lwt_result.catch
 
+let bundle_file_name version =
+  Format.sprintf "%s-%s.raucb" bundle_name version
+
 let latest_download_url ~update_url version_string =
-  let bundle = Format.sprintf "playos-%s.raucb" version_string in
-  Format.sprintf "%s%s/%s" update_url version_string bundle
+  Format.sprintf "%s%s/%s" update_url version_string (bundle_file_name version_string)
 
 (** download RAUC bundle *)
 let download ?proxy url version =
-  let bundle = Format.sprintf "playos-%s.raucb" version in
-  let bundle_path = Format.sprintf "/tmp/%s" bundle in
+  let bundle_path = Format.sprintf "/tmp/%s" (bundle_file_name version) in
   let options =
     [ "--continue-at"; "-" (* resume download *)
     ; "--limit-rate"; "10M"

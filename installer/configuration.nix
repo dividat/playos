@@ -1,4 +1,4 @@
-{ config, pkgs, lib, install-playos, version, greeting, ... }:
+{ config, pkgs, lib, install-playos, version, safeProductName, fullProductName, greeting, ... }:
 
 with lib;
 
@@ -9,6 +9,9 @@ with lib;
   imports = [
     (pkgs.importFromNixos "modules/installer/cd-dvd/iso-image.nix")
   ];
+
+  # Custom label when identifying OS
+  system.nixos.label = "${safeProductName}-${version}";
 
   environment.systemPackages = [
     install-playos
@@ -24,7 +27,7 @@ with lib;
   # Allow the user to log in as root without a password.
   users.users.root.initialHashedPassword = "";
 
-  services.getty.greetingLine = greeting "Dividat PlayOS installer (${version})";
+  services.getty.greetingLine = greeting "${fullProductName} installer (${version})";
 
   environment.loginShellInit = ''
     install-playos --reboot
@@ -49,7 +52,7 @@ with lib;
   };
 
   networking = {
-    hostName = "playos-installer";
+    hostName = "${safeProductName}-installer";
 
     # enable wpa_supplicant
     wireless = {
@@ -58,7 +61,7 @@ with lib;
   };
 
   # ISO naming.
-  isoImage.isoName = "playos-installer-${version}.iso";
+  isoImage.isoName = "${safeProductName}-installer-${version}.iso";
 
   isoImage.volumeID = substring 0 11 "PLAYOS_ISO";
 

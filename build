@@ -26,7 +26,7 @@ if [ "$TARGET" == "vm" ]; then
     --arg buildDisk false)
 
   echo
-  echo "Run ./result/bin/run-playos-in-vm to start a VM."
+  echo "Run ./result/bin/run-in-vm to start a VM."
   echo
   echo "- unfocus: ctrl-alt-g"
   echo "- quit: ctrl-alt-q"
@@ -44,7 +44,7 @@ elif [ "$TARGET" == "develop" ]; then
     --arg buildDisk false)
 
   echo
-  echo "Run ./result/bin/deploy-playos-update to deploy."
+  echo "Run ./result/bin/deploy-update to deploy."
 
 elif [ "$TARGET" == "validation" ]; then
 
@@ -58,7 +58,7 @@ elif [ "$TARGET" == "validation" ]; then
     --arg buildDisk false)
 
   echo
-  echo "Run ./result/bin/deploy-playos-update to deploy."
+  echo "Run ./result/bin/deploy-update to deploy."
 
 elif [ "$TARGET" == "master" ]; then
 
@@ -72,7 +72,7 @@ elif [ "$TARGET" == "master" ]; then
     --arg buildDisk false)
 
   echo
-  echo "Run ./result/bin/deploy-playos-update to deploy."
+  echo "Run ./result/bin/deploy-update to deploy."
 
 # Create a stuck system that will not self-update
 # usage: ./build stuck https://url-for-kiosk

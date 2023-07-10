@@ -1,14 +1,17 @@
 # Build NixOS system
-{pkgs, lib, version, kioskUrl, greeting, playos-controller, application}:
+{pkgs, lib, kioskUrl, playos-controller, application}:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
   configuration = {...}: {
     imports = [
       # Base layer
-      ((import ../base) {inherit pkgs version kioskUrl greeting playos-controller;})
+      ((import ../base) {
+        inherit pkgs kioskUrl playos-controller;
+        inherit (application) safeProductName fullProductName greeting version;
+      })
       # Application-specific
-      application
+      application.module
 
       (pkgs.importFromNixos "modules/installer/cd-dvd/iso-image.nix")
     ];
@@ -20,7 +23,7 @@ let nixos = pkgs.importFromNixos ""; in
       # ISO image customization
       isoImage.makeEfiBootable = true;
       isoImage.makeUsbBootable = true;
-      isoImage.isoName = "playos-live-${version}.iso";
+      isoImage.isoName = "${application.safeProductName}-live-${application.version}.iso";
       isoImage.appendToMenuLabel = " Live System";
 
       # Set up as completely volatile system

@@ -1,15 +1,18 @@
 # Build an installable system image assuming a disk layout of a full A/B installation
-{pkgs, lib, version, updateCert, kioskUrl, playos-controller, greeting, application }:
+{pkgs, lib, updateCert, kioskUrl, playos-controller, application }:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
   configuration = {...}: {
     imports = [
-      # General PlayOS modules
-      ((import ../base) {inherit pkgs version kioskUrl greeting playos-controller;})
+      # Base layer of PlayOS
+      ((import ../base) {
+        inherit pkgs kioskUrl playos-controller;
+        inherit (application) safeProductName fullProductName greeting version;
+      })
 
       # Application-specific module
-      application
+      application.module
     ];
 
     # Storage

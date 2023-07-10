@@ -41,7 +41,7 @@ The system can be run in a virtual machine.
 
 **** QEMU VM
 
-For rapid testing the QEMU instrumentation ~run-playos-in-vm~ is provided as part of the Nix build.
+For rapid testing the QEMU instrumentation ~run-in-vm~ is provided as part of the Nix build.
 
 With this tool a virtual machine can be started without creating a (virtual) disk. For this a system partition is created on a folder on the host and shared to the virtual machine via [[https://wiki.qemu.org/Documentation/9psetup][9P]]. This allows for rapid development cycles as no images containing the entire system have to be built. Note however that low-level system components (such as the bootloader) are bypassed in this build.
 
@@ -146,7 +146,7 @@ RAUC bundles are signed. Before installing an update RAUC will verify the bundle
 
 The certificate to be installed on the system must be passed to the build system with the ~updateCert~ argument.
 
-The RAUC bundle produced by the build system is signed by a dummy development/testing key. The bundle needs to be [[https://rauc.readthedocs.io/en/latest/advanced.html#resigning-bundles][resigned]] before it can be deployed. The script ~deploy-playos-update~ automates this process.
+The RAUC bundle produced by the build system is signed by a dummy development/testing key. The bundle needs to be [[https://rauc.readthedocs.io/en/latest/advanced.html#resigning-bundles][resigned]] before it can be deployed. The script ~deploy-update~ automates this process.
 
 **** Installation
 
