@@ -10,6 +10,7 @@ import sys
 
 UNSIGNED_RAUC_BUNDLE = "@unsignedRaucBundle@"
 INSTALLER_ISO = "@installer@"
+LIVE_ISO = "@live@"
 DOCS = "@docs@"
 VERSION = "@version@"
 FULL_PRODUCT_NAME = "@fullProductName@"
@@ -121,6 +122,13 @@ def _main(opts):
         installer_iso_src = os.path.join(INSTALLER_ISO, "iso", installer_iso_filename)
         installer_iso_dst = os.path.join(version_dir, installer_iso_filename)
         subprocess.run(["cp", installer_iso_src, installer_iso_dst],
+            check=True)
+
+        # Write live system ISO
+        live_iso_filename = f"{SAFE_PRODUCT_NAME}-live-{VERSION}.iso"
+        live_iso_src = os.path.join(LIVE_ISO, "iso", live_iso_filename)
+        live_iso_dst = os.path.join(version_dir, live_iso_filename)
+        subprocess.run(["cp", live_iso_src, live_iso_dst],
             check=True)
 
         # Write PDF manual
