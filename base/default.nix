@@ -28,9 +28,8 @@ with lib;
   };
 
   config = {
-
     # Use overlayed pkgs.
-    nixpkgs.pkgs = pkgs;
+    nixpkgs.pkgs = lib.mkDefault pkgs;
 
     # Custom label when identifying OS
     system.nixos.label = "${safeProductName}-${version}";

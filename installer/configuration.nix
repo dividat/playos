@@ -3,9 +3,6 @@
 with lib;
 
 {
-  # Force use of already overlayed nixpkgs in modules
-  nixpkgs.pkgs = pkgs;
-
   imports = [
     (pkgs.importFromNixos "modules/installer/cd-dvd/iso-image.nix")
   ];
