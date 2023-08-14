@@ -28,6 +28,7 @@ ocamlPackages.buildDunePackage rec {
 
   nativeBuildInputs = [
     discount # Transform Markdown to HTML
+    ocamlPackages.obus
   ];
 
   buildInputs = with ocamlPackages; [
