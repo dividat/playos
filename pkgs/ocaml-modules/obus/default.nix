@@ -18,12 +18,11 @@ buildDunePackage rec {
 
   useDune2 = true;
 
-  buildInputs = [ ];
+  nativeBuildInputs = [ menhir ];
   propagatedBuildInputs = [
     lwt_log
     lwt_ppx
     lwt_react
-    menhir
     ocaml_lwt
     ppxlib
     react
