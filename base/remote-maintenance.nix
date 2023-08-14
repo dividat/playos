@@ -44,8 +44,9 @@ in
     services.openssh = {
       enable = true;
 
-      # but not with password
-      passwordAuthentication = false;
+      # Restrict authentication to authorized keys
+      settings.PasswordAuthentication = false;
+      settings.KbdInteractiveAuthentication = false;
     };
 
     # only with these special keys:
