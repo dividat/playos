@@ -54,7 +54,7 @@ def run_vm(system, qemu_opts, kernel_arguments):
             'rauc.slot=a', 'console=tty0', 'console=hvc1'
         ])
         initrd = sp + '/initrd'
-        virtfs_opts = 'local,path={},security_model=none,multidevs=remap,mount_tag=system,readonly'.format(
+        virtfs_opts = 'local,path={},security_model=none,multidevs=remap,mount_tag=system,readonly=on'.format(
             sp)
         print("\nsystem partition at:\n\t{}".format(sp))
         print("Kernel arguments:\n\t{}".format(kernel_arguments))
@@ -67,11 +67,11 @@ def run_vm(system, qemu_opts, kernel_arguments):
             '-vga', 'virtio', # Display screen as big as possible
             # Unused shell. This is used by the "backdoor" in <nixos/modules/test-instrumentation.nix>.
             # TODO: Set up a Unix Socket from Python and connect to shell
-            '-chardev', 'socket,id=shell,path={}/not-working-shell,server,nowait'.format(backdoor_dir),
+            '-chardev', 'socket,id=shell,path={}/not-working-shell,server=on,wait=off'.format(backdoor_dir),
             '-device', 'virtio-serial',
             '-device', 'virtconsole,chardev=shell',
             # This is hvc1 and will show a login prompt
-            '-chardev', 'socket,id=backdoor,path={}/backdoor,server,nowait'.format(backdoor_dir),
+            '-chardev', 'socket,id=backdoor,path={}/backdoor,server=on,wait=off'.format(backdoor_dir),
             '-device', 'virtio-serial',
             '-device', 'virtconsole,chardev=backdoor'
         ] + qemu_opts)
