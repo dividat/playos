@@ -45,7 +45,7 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "playos-controller.service" ];
       serviceConfig = {
-        ExecStart = "${script}/bin/print-status";
+        ExecStart = [ "${script}/bin/print-status" ];
         User = "root";
         StandardOutput = "tty";
         TTYPath = ttyPath;

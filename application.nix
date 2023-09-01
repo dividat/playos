@@ -126,7 +126,7 @@ rec {
       # Driver service
       systemd.services."dividat-driver" = {
         description = "Dividat Driver";
-        serviceConfig.ExecStart = "${pkgs.dividat-driver}/bin/dividat-driver";
+        serviceConfig.ExecStart = [ "${pkgs.dividat-driver}/bin/dividat-driver" ];
         serviceConfig.User = "play";
         wantedBy = [ "multi-user.target" ];
       };

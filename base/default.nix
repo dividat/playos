@@ -53,7 +53,7 @@ with lib;
     systemd.services.playos-controller = {
       description = "PlayOS Controller";
       serviceConfig = {
-        ExecStart = "${playos-controller}/bin/playos-controller";
+        ExecStart = [ "${playos-controller}/bin/playos-controller" ];
         User = "root";
         RestartSec = "10s";
         Restart = "always";

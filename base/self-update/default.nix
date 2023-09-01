@@ -23,7 +23,7 @@ in
 
     systemd.services.rauc = {
       description = "RAUC Update Service";
-      serviceConfig.ExecStart = "${pkgs.rauc}/bin/rauc service";
+      serviceConfig.ExecStart = [ "${pkgs.rauc}/bin/rauc service" ];
       serviceConfig.User = "root";
       wantedBy = [ "multi-user.target" ];
     };
