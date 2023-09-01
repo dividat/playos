@@ -5,6 +5,7 @@ import os
 import sys
 import shutil
 import argparse
+import json
 import parted
 import uuid
 import configparser
@@ -27,13 +28,32 @@ PLAYOS_KIOSK_URL = "@kioskUrl@"
 
 def find_device(device_path):
     """Return suitable device to install PlayOS on"""
-    devices = parted.getAllDevices()
+    all_devices = parted.getAllDevices()
+
+    print(f"Found {len(all_devices)} devices:")
+    for device in all_devices:
+        print(f"\t{device.path}")
+
+    # We want to avoid installing to the installer medium, so we filter out
+    # devices from the boot disk. We use the fact that we mount from the
+    # installer medium at `/iso`.
+    boot_device = get_blockdevice("/iso")
+    if boot_device is None:
+        print("Could not identify installer medium. Considering all disks as installation targets.")
+        available_devices = all_devices
+    else:
+        available_devices = [device for device in all_devices if not device.path.startswith(boot_device)]
+
+    print(f"Found {len(available_devices)} installation targets:")
+    for device in available_devices:
+        print(f"\t{device.path}")
+
     device = None
-    if device_path == None:
+    if device_path is None:
         # Use the largest available disk
         try:
             device = sorted(
-                parted.getAllDevices(),
+                available_devices,
                 key=lambda d: d.length * d.sectorSize,
                 reverse=True)[0]
         except IndexError:
@@ -41,13 +61,27 @@ def find_device(device_path):
     else:
         try:
             device = next(
-                device for device in devices if device.path == device_path)
+                device for device in all_devices if device.path == device_path)
         except StopIteration:
             pass
     if device == None:
         raise ValueError('No suitable device to install on found.')
     else:
         return device
+
+
+def get_blockdevice(mount_path):
+    """Find the block device path for a given mountpoint."""
+    result = subprocess.run(['lsblk', '-J'], capture_output=True, text=True)
+    lsblk_data = json.loads(result.stdout)
+
+    # Find the parent device of the partition with mountpoint
+    for device in lsblk_data['blockdevices']:
+        if 'children' in device:
+            for child in device['children']:
+                if 'mountpoints' in child and mount_path in child['mountpoints']:
+                    return '/dev/' + device['name']
+    return None
 
 
 def commit(disk):
