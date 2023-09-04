@@ -30,9 +30,9 @@ def find_device(device_path):
     """Return suitable device to install PlayOS on"""
     all_devices = parted.getAllDevices()
 
-    print(f"Found {len(all_devices)} devices:")
+    print(f"Found {len(all_devices)} disk devices:")
     for device in all_devices:
-        print(f"\t{device.path}")
+        print(f'\t{device_info(device)}')
 
     # We want to avoid installing to the installer medium, so we filter out
     # devices from the boot disk. We use the fact that we mount from the
@@ -44,9 +44,9 @@ def find_device(device_path):
     else:
         available_devices = [device for device in all_devices if not device.path.startswith(boot_device)]
 
-    print(f"Found {len(available_devices)} installation targets:")
+    print(f"Found {len(available_devices)} possible installation targets:")
     for device in available_devices:
-        print(f"\t{device.path}")
+        print(f'\t{device_info(device)}')
 
     device = None
     if device_path is None:
@@ -82,6 +82,11 @@ def get_blockdevice(mount_path):
                 if 'mountpoints' in child and mount_path in child['mountpoints']:
                     return '/dev/' + device['name']
     return None
+
+
+def device_info(device):
+    gb_size = int((device.sectorSize * device.length) / (10**9))
+    return f'{device.path} ({device.model} - {gb_size} GB)'
 
 
 def commit(disk):
@@ -344,13 +349,8 @@ def _get_grubenv_entry(entry_name, device):
             stderr=subprocess.DEVNULL)
 
 
-def _device_size_in_gb(device):
-    return (device.sectorSize * device.length) / (10**9)
-
-
 def confirm(device, machine_id, no_confirm):
-    print('\n\nInstalling PlayOS ({}) to {} ({} - {:n}GB)'.format(
-        VERSION, device.path, device.model, _device_size_in_gb(device)))
+    print('\n\nInstalling PlayOS ({}) to {}'.format(VERSION, device_info(device)))
     print('  Machine ID: {}'.format(machine_id.hex))
     print('  Update URL: {}'.format(PLAYOS_UPDATE_URL))
     print('  Kiosk URL: {}\n'.format(PLAYOS_KIOSK_URL))
