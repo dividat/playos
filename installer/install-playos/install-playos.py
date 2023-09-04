@@ -64,10 +64,8 @@ def find_device(device_path):
                 device for device in all_devices if device.path == device_path)
         except StopIteration:
             pass
-    if device == None:
-        raise ValueError('No suitable device to install on found.')
-    else:
-        return device
+
+    return device
 
 
 def get_blockdevice(mount_path):
@@ -360,6 +358,9 @@ def confirm(device, machine_id, no_confirm):
 def _main(opts):
     # Detect device to install to
     device = find_device(opts.device)
+    if device is None:
+        print('\nNo suitable device to install on found.')
+        exit(1)
 
     # Ensure machine-id exists and is valid
     machine_id = _ensure_machine_id(opts.machine_id, device)
@@ -383,7 +384,7 @@ def _main(opts):
         if opts.reboot:
             subprocess.run(['reboot'])
         else:
-            print("Done. Please remove install medium and reboot.")
+            print('\nDone. Please remove install medium and reboot.')
 
         exit(0)
 
