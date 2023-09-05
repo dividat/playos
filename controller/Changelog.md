@@ -5,6 +5,7 @@
 - os: Widen rules for captive portal detection
 - os: Split system definition into base and application layers
 - os: Make build outputs and displayed system name configurable through application layer
+- os: Change installer script to exclude installer medium from installation targets
 - os: Include live system ISO in deployed outputs
 
 # [2023.2.0] - 2023-03-06
