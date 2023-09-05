@@ -70,11 +70,18 @@ rec {
                 setxkbmap $(cat /var/lib/gui-localization/keymap) || true
               fi
 
-              # force resolution
-              scaling_pref=/var/lib/gui-localization/screen-scaling
-              if [ -f "$scaling_pref" ] && [ $(cat "$scaling_pref") = "full-hd" ]; then
-                 xrandr --size 1920x1080
-              fi
+              # Set preferred screen resolution
+              scaling_pref=$(cat /var/lib/gui-localization/screen-scaling 2>/dev/null || echo "default")
+              case "$scaling_pref" in
+                "default" | "full-hd")
+                  xrandr --size 1920x1080;;
+                "native")
+                  # Nothing to do, let system decide.
+                  ;;
+                *)
+                  echo "Unknown scaling preference '$scaling_pref'. Ignoring."
+                  ;;
+              esac
 
               # We want to avoid making the user configure audio outputs, but
               # instead route audio to both the standard output and any connected
