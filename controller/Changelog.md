@@ -10,6 +10,7 @@
 - os: Include live system ISO in deployed outputs
 - os: Update nixpkgs channel to 23.05
 - status screen: Display persistent storage usage statistics
+- controller: Allow opening captive portal when settings are open
 
 # [2023.2.0] - 2023-03-06
 
