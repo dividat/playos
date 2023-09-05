@@ -286,11 +286,11 @@ def _suppress_unless_fails(completed_process):
 # from http://code.activestate.com/recipes/577058/
 def _query_continue(question, default=False):
     valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
-    if default == None:
+    if default is None:
         prompt = " [y/n] "
-    elif default == True:
+    elif default is True:
         prompt = " [Y/n] "
-    elif default == False:
+    elif default is False:
         prompt = " [y/N] "
     else:
         raise ValueError("invalid default answer: '%s'" % default)
@@ -306,9 +306,9 @@ def _query_continue(question, default=False):
 
 
 def _ensure_machine_id(passed_machine_id, device):
-    if passed_machine_id == None:
+    if passed_machine_id is None:
         previous_machine_id = _get_grubenv_entry('machine_id', device)
-        if previous_machine_id == None:
+        if previous_machine_id is None:
             return uuid.uuid4()
         else:
             return uuid.UUID(previous_machine_id)
@@ -335,7 +335,7 @@ def _get_grubenv_entry(entry_name, device):
             universal_newlines=True)
         entry_match = re.search("^" + entry_name + "=(.+)$", grub_list.stdout,
                                 re.MULTILINE)
-        if entry_match == None:
+        if entry_match is None:
             return None
         else:
             return entry_match.group(1)
