@@ -1,17 +1,24 @@
 from PyQt5 import QtWidgets, QtCore
+from dataclasses import dataclass
 from enum import Enum, auto
 
 from kiosk_browser import browser_widget, captive_portal
 from kiosk_browser import proxy as proxy_module
 from kiosk_browser import webview_dialog
 
-"""
-Dialog View being open
-"""
-class DialogView(Enum):
-    CLOSED = auto()
-    SETTINGS = auto()
-    CAPTIVE_PORTAL = auto()
+@dataclass
+class Closed:
+    pass
+
+@dataclass
+class Settings:
+    dialog: QtWidgets.QDialog
+
+@dataclass
+class CaptivePortal:
+    dialog: QtWidgets.QDialog
+
+Dialog = Closed | Settings | CaptivePortal
 
 class MainWidget(QtWidgets.QWidget):
 
@@ -24,6 +31,7 @@ class MainWidget(QtWidgets.QWidget):
         proxy = proxy_module.Proxy()
         proxy.start_monitoring_daemon()
 
+        self._dialog = Closed()
         self._settings_url = settings_url
         self._toggle_settings_key = toggle_settings_key
         self._browser_widget = browser_widget.BrowserWidget(
@@ -35,9 +43,6 @@ class MainWidget(QtWidgets.QWidget):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
         self._layout.addWidget(self._browser_widget)
-
-        # Dialog
-        self._dialog_view = DialogView.CLOSED
 
         # Captive portal
         self._captive_portal_url = ''
@@ -54,45 +59,55 @@ class MainWidget(QtWidgets.QWidget):
 
     def _show_captive_portal_message(self, url):
         self._captive_portal_url = QtCore.QUrl(url)
-        if self._captive_portal_message.parentWidget() == None and not self._dialog_view == DialogView.CAPTIVE_PORTAL:
-            self._layout.addWidget(self._captive_portal_message)
+        if self._captive_portal_message.parentWidget() == None:
+            match self._dialog:
+                case CaptivePortal(_):
+                    pass
+                case _:
+                    self._layout.addWidget(self._captive_portal_message)
 
     def _toggle_settings(self):
-        if self._dialog_view == DialogView.CLOSED:
-            self._show_settings()
-        else:
-            self._on_dialog_close()
+        match self._dialog:
+            case Closed():
+                self._show_settings()
+            case _:
+                self._close_dialog()
 
     def _show_settings(self):
         self._browser_widget.show_overlay()
-        self._dialog = webview_dialog.widget(
+        dialog = webview_dialog.widget(
                 parent = self, 
                 title = "System Settings", 
                 url = self._settings_url, 
                 additional_close_keys = [self._toggle_settings_key],
-                on_close = self._on_dialog_close
+                on_close = lambda: self._close_dialog()
             )
         # Open modeless to allow accessing captive portal message banner
         # https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QDialog.html#modeless-dialogs
-        self._dialog.show()
-        self._dialog_view = DialogView.SETTINGS
+        dialog.show()
+        self._dialog = Settings(dialog)
 
     def _show_captive_portal(self):
-        if not self._dialog_view == DialogView.CLOSED:
-            self._dialog.close()
+        self._close_dialog(reload_browser_widget = False)
         self._browser_widget.show_overlay()
         self._captive_portal_message.setParent(None)
-        self._dialog = webview_dialog.widget(
+        dialog = webview_dialog.widget(
                 parent = self, 
                 title = "Network Login", 
                 url = self._captive_portal_url,
                 additional_close_keys = [self._toggle_settings_key],
-                on_close = self._on_dialog_close
+                on_close = lambda: self._close_dialog()
             )
-        self._dialog.show()
-        self._dialog_view = DialogView.CAPTIVE_PORTAL
+        dialog.show()
+        self._dialog = CaptivePortal(dialog)
 
-    def _on_dialog_close(self):
-        self._dialog_view = DialogView.CLOSED
-        self._browser_widget.reload()
-        self._dialog.close()
+    def _close_dialog(self, reload_browser_widget = True):
+        match self._dialog:
+            case Settings(dialog):
+                dialog.close()
+                self._dialog = Closed()
+            case CaptivePortal(dialog):
+                dialog.close()
+                self._dialog = Closed()
+        if reload_browser_widget:
+            self._browser_widget.reload()
