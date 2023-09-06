@@ -6,6 +6,7 @@
 - os: Split system definition into base and application layers
 - os: Make build outputs and displayed system name configurable through application layer
 - os: Include live system ISO in deployed outputs
+- os: Update nixpkgs channel to 23.05
 
 # [2023.2.0] - 2023-03-06
 
