@@ -81,7 +81,6 @@ class MainWidget(QtWidgets.QWidget):
         if not self._dialog_view == DialogView.CLOSED:
             self._dialog.close()
         self._browser_widget.show_overlay()
-        self._is_captive_portal_dialog_open = True
         self._captive_portal_message.setParent(None)
         self._dialog = webview_dialog.widget(
                 parent = self, 
