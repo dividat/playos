@@ -1,6 +1,5 @@
 from PyQt5 import QtWidgets, QtCore
 from dataclasses import dataclass
-from enum import Enum, auto
 
 from kiosk_browser import browser_widget, captive_portal
 from kiosk_browser import proxy as proxy_module
