@@ -81,10 +81,13 @@ class MainWidget(QtWidgets.QWidget):
                 additional_close_keys = [self._toggle_settings_key],
                 on_close = lambda: self._close_dialog()
             )
+        self._dialog = Settings(dialog)
         # Open modeless to allow accessing captive portal message banner
         # https://doc.qt.io/qtforpython-5/PySide2/QtWidgets/QDialog.html#modeless-dialogs
+        # Focus directly to allow tabbing
         dialog.show()
-        self._dialog = Settings(dialog)
+        dialog.raise_()
+        dialog.activateWindow()
 
     def _show_captive_portal(self):
         self._close_dialog(reload_browser_widget = False)
@@ -97,8 +100,8 @@ class MainWidget(QtWidgets.QWidget):
                 additional_close_keys = [self._toggle_settings_key],
                 on_close = lambda: self._close_dialog()
             )
-        dialog.show()
         self._dialog = CaptivePortal(dialog)
+        dialog.exec_()
 
     def _close_dialog(self, reload_browser_widget = True):
         match self._dialog:
