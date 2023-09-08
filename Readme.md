@@ -43,24 +43,44 @@ For example: `nix build --arg buildInstaller false --arg buildBundle false` will
 
 A virtual machine (with test instrumentation) can be started without any of the above builds.
 
+## Testing
+
 ### Virtual machine
 
-A helper is available to quickly start a virtual machine:
+Most changes to system configuration and/or the contoller can be tested in a virtual machine.
+To create and run a VM, run:
 
-```
+```bash
 ./build vm
+./result/bin/run-in-vm
 ```
 
 In order to get the vm system journal, look at the output of `run-in-vm`
 for a command starting with `socat`.
 
-See the output of `run-in-vm --help` for more information.
+See the output of `./result/bin/run-in-vm --help` for more information.
 
 #### Guest networking
 
 The default user-mode network stack is used to create a virtual Ethernet connection with bridged Internet access for the guest. If you find that the guest has a dysfunctional Internet connection, check your host's firewall settings. If using ConnMan, restart ConnMan service and try again.
 
-## Testing
+### Testing on PlayOS hardware
+
+Changes such as NixOS upgrades, or to anything else that directly interacts with system hardware may necessitate testing on an actual machine. To do so, build a live system:
+
+```bash
+nix-build --arg buildInstaller false --arg buildBundle false --arg buildDisk false
+```
+
+Flash the iso in `./result/` to a USB stick and boot from this stick on the PlayOS computer.
+Unfortunately testing this way is currently a lengthy process and we would like to setup a workflow with a tighter feedback loop in the future.
+
+### Controller testing
+
+When making changes to the controller, it's possible to run and test it directly on your machine, without a VM or a live system. See the Controller's [Readme](controller/Readme.md) for details.
+
+
+### Automated Testing
 
 Subcomponent tests using the [NixOS test framework](https://nixos.org/manual/nixos/stable/index.html#sec-nixos-tests) may be added to `test/integration`.
 
