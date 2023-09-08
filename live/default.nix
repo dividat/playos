@@ -17,9 +17,6 @@ let nixos = pkgs.importFromNixos ""; in
     ];
 
     config = {
-      # Force use of already overlayed nixpkgs in modules
-      nixpkgs.pkgs = pkgs;
-
       # ISO image customization
       isoImage.makeEfiBootable = true;
       isoImage.makeUsbBootable = true;

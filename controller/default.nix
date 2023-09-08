@@ -26,8 +26,12 @@ ocamlPackages.buildDunePackage rec {
 
   useDune2 = true;
 
-  buildInputs = with ocamlPackages; [
+  nativeBuildInputs = [
     discount # Transform Markdown to HTML
+    ocamlPackages.obus
+  ];
+
+  buildInputs = with ocamlPackages; [
     nodejs
     utop
   ];
