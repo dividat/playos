@@ -14,6 +14,15 @@ with lib;
     install-playos
   ];
 
+  # Disable documentation
+  documentation = {
+    enable = false;
+    doc.enable = false;
+    info.enable = false;
+    man.enable = false;
+    nixos.enable = false;
+  };
+
   # Disable some other stuff we don't need.
   security.sudo.enable = mkDefault false;
   services.udisks2.enable = mkDefault false;
