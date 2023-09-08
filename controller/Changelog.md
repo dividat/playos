@@ -6,6 +6,7 @@
 - os: Widen rules for captive portal detection
 - os: Split system definition into base and application layers
 - os: Make build outputs and displayed system name configurable through application layer
+- os: Change installer script to exclude installer medium from installation targets
 - os: Include live system ISO in deployed outputs
 - os: Update nixpkgs channel to 23.05
 - status screen: Display persistent storage usage statistics
