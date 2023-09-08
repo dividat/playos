@@ -21,17 +21,14 @@ def widget(parent, title, url, additional_close_keys, on_close):
                        int(w * dialog_ratio),
                        int(h * dialog_ratio))
 
-    show_webview_window(dialog, title, url)
+    show_webview_window(dialog, title, url, lambda: focus_parent_then_close(parent, on_close))
 
     for key in set(['ESC', *additional_close_keys]):
-        QtWidgets.QShortcut(key, dialog).activated.connect(dialog.close)
-
-    # Finish after close
-    dialog.finished.connect(lambda: finish(parent, dialog, on_close))
+        QtWidgets.QShortcut(key, dialog).activated.connect(lambda: focus_parent_then_close(parent, on_close))
 
     return dialog
 
-def show_webview_window(dialog, title, url):
+def show_webview_window(dialog, title, url, on_close):
     """ Show webview window with decorations.
     """
 
@@ -43,13 +40,13 @@ def show_webview_window(dialog, title, url):
     layout.setContentsMargins(window_border, 0, window_border, window_border) # left, top, right, bottom
     widget.setLayout(layout)
 
-    layout.addWidget(title_line(dialog, title))
+    layout.addWidget(title_line(dialog, title, on_close))
 
     webview = QtWebEngineWidgets.QWebEngineView(dialog)
     webview.page().setUrl(url)
     layout.addWidget(webview)
 
-def title_line(dialog, title):
+def title_line(dialog, title, on_close):
     """ Title and close button.
     """
 
@@ -79,7 +76,7 @@ def title_line(dialog, title):
             background-color: rgba(255, 255, 255, 0.3);
         }
     """)
-    button.clicked.connect(dialog.close)
+    button.clicked.connect(on_close)
 
     layout = QtWidgets.QHBoxLayout()
     layout.setContentsMargins(5, 5, 5, 0) # left, top, right, bottom
@@ -90,8 +87,8 @@ def title_line(dialog, title):
 
     return line
 
-def finish(parent, dialog, on_close):
-    """ Give back the focus to the parent.
+def focus_parent_then_close(parent, on_close):
+    """ Give back the focus to the parent, then close.
     """
 
     parent.activateWindow()
