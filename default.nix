@@ -95,7 +95,7 @@ with pkgs; stdenv.mkDerivation {
 
   buildInputs = [
     rauc
-    (python39.withPackages(ps: with ps; [pyparted]))
+    (python3.withPackages(ps: with ps; [pyparted]))
     components.install-playos
   ];
 
