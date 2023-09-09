@@ -9,11 +9,16 @@ stdenv.mkDerivation {
 
   src = ./.;
 
-  buildInputs = [ pandoc python39Packages.weasyprint ];
+  buildInputs =
+    let
+      weasyprint = python39Packages.weasyprint.overrideAttrs {
+        makeWrapperArgs = [ "--set FONTCONFIG_FILE ${fontsConf}" ];
+      };
+    in
+    [ pandoc weasyprint ];
 
   installPhase = ''
     DATE=$(date -I)
-    export FONTCONFIG_FILE="${fontsConf}"
 
     mkdir -p $out
 
