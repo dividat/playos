@@ -69,7 +69,7 @@ let html ?current_page ?header content =
           ~a:[ a_class [ "d-Layout__Aside" ] ]
           [ nav
               ([ Info; Network; Localization; SystemStatus; Changelog ]
-                |> List.map (menu_item current_page))
+                |> List.concat_map (fun page -> [ menu_item current_page page; txt " " ]))
           ; div
               ~a: [ a_class [ "d-Layout__Shutdown" ] ]
               [ menu_item current_page Shutdown ]

@@ -5,6 +5,7 @@ import os
 import sys
 import shutil
 import argparse
+import json
 import parted
 import uuid
 import configparser
@@ -16,7 +17,7 @@ PARTITION_SIZE_GB_DATA = 5
 
 GRUB_CFG = "@grubCfg@"
 GRUB_ENV = '/mnt/boot/grub/grubenv'
-SYSTEM_TOP_LEVEL = "@systemToplevel@"
+SYSTEM_IMAGE = "@systemImage@"
 RESCUE_SYSTEM = "@rescueSystem@"
 SYSTEM_CLOSURE_INFO = "@systemClosureInfo@"
 VERSION = "@version@"
@@ -27,13 +28,32 @@ PLAYOS_KIOSK_URL = "@kioskUrl@"
 
 def find_device(device_path):
     """Return suitable device to install PlayOS on"""
-    devices = parted.getAllDevices()
+    all_devices = parted.getAllDevices()
+
+    print(f"Found {len(all_devices)} disk devices:")
+    for device in all_devices:
+        print(f'\t{device_info(device)}')
+
+    # We want to avoid installing to the installer medium, so we filter out
+    # devices from the boot disk. We use the fact that we mount from the
+    # installer medium at `/iso`.
+    boot_device = get_blockdevice("/iso")
+    if boot_device is None:
+        print("Could not identify installer medium. Considering all disks as installation targets.")
+        available_devices = all_devices
+    else:
+        available_devices = [device for device in all_devices if not device.path.startswith(boot_device)]
+
+    print(f"Found {len(available_devices)} possible installation targets:")
+    for device in available_devices:
+        print(f'\t{device_info(device)}')
+
     device = None
-    if device_path == None:
+    if device_path is None:
         # Use the largest available disk
         try:
             device = sorted(
-                parted.getAllDevices(),
+                available_devices,
                 key=lambda d: d.length * d.sectorSize,
                 reverse=True)[0]
         except IndexError:
@@ -41,13 +61,30 @@ def find_device(device_path):
     else:
         try:
             device = next(
-                device for device in devices if device.path == device_path)
+                device for device in all_devices if device.path == device_path)
         except StopIteration:
             pass
-    if device == None:
-        raise ValueError('No suitable device to install on found.')
-    else:
-        return device
+
+    return device
+
+
+def get_blockdevice(mount_path):
+    """Find the block device path for a given mountpoint."""
+    result = subprocess.run(['lsblk', '-J'], capture_output=True, text=True)
+    lsblk_data = json.loads(result.stdout)
+
+    # Find the parent device of the partition with mountpoint
+    for device in lsblk_data['blockdevices']:
+        if 'children' in device:
+            for child in device['children']:
+                if 'mountpoints' in child and mount_path in child['mountpoints']:
+                    return '/dev/' + device['name']
+    return None
+
+
+def device_info(device):
+    gb_size = int((device.sectorSize * device.length) / (10**9))
+    return f'{device.path} ({device.model} - {gb_size} GB)'
 
 
 def commit(disk):
@@ -205,13 +242,13 @@ def install_system(partitionPath, label):
 
     # Copy kernel, initrd and init
     subprocess.run(
-        ['cp', '-av', SYSTEM_TOP_LEVEL + '/kernel', '/mnt/system/kernel'],
+        ['cp', '-av', SYSTEM_IMAGE + '/kernel', '/mnt/system/kernel'],
         check=True)
     subprocess.run(
-        ['cp', '-av', SYSTEM_TOP_LEVEL + '/initrd', '/mnt/system/initrd'],
+        ['cp', '-av', SYSTEM_IMAGE + '/initrd', '/mnt/system/initrd'],
         check=True)
     subprocess.run(
-        ['cp', '-av', SYSTEM_TOP_LEVEL + '/init', '/mnt/system/init'],
+        ['cp', '-av', SYSTEM_IMAGE + '/init', '/mnt/system/init'],
         check=True)
 
     # Unmount system partition
@@ -249,11 +286,11 @@ def _suppress_unless_fails(completed_process):
 # from http://code.activestate.com/recipes/577058/
 def _query_continue(question, default=False):
     valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
-    if default == None:
+    if default is None:
         prompt = " [y/n] "
-    elif default == True:
+    elif default is True:
         prompt = " [Y/n] "
-    elif default == False:
+    elif default is False:
         prompt = " [y/N] "
     else:
         raise ValueError("invalid default answer: '%s'" % default)
@@ -269,9 +306,9 @@ def _query_continue(question, default=False):
 
 
 def _ensure_machine_id(passed_machine_id, device):
-    if passed_machine_id == None:
+    if passed_machine_id is None:
         previous_machine_id = _get_grubenv_entry('machine_id', device)
-        if previous_machine_id == None:
+        if previous_machine_id is None:
             return uuid.uuid4()
         else:
             return uuid.UUID(previous_machine_id)
@@ -298,7 +335,7 @@ def _get_grubenv_entry(entry_name, device):
             universal_newlines=True)
         entry_match = re.search("^" + entry_name + "=(.+)$", grub_list.stdout,
                                 re.MULTILINE)
-        if entry_match == None:
+        if entry_match is None:
             return None
         else:
             return entry_match.group(1)
@@ -310,13 +347,8 @@ def _get_grubenv_entry(entry_name, device):
             stderr=subprocess.DEVNULL)
 
 
-def _device_size_in_gb(device):
-    return (device.sectorSize * device.length) / (10**9)
-
-
 def confirm(device, machine_id, no_confirm):
-    print('\n\nInstalling PlayOS ({}) to {} ({} - {:n}GB)'.format(
-        VERSION, device.path, device.model, _device_size_in_gb(device)))
+    print('\n\nInstalling PlayOS ({}) to {}'.format(VERSION, device_info(device)))
     print('  Machine ID: {}'.format(machine_id.hex))
     print('  Update URL: {}'.format(PLAYOS_UPDATE_URL))
     print('  Kiosk URL: {}\n'.format(PLAYOS_KIOSK_URL))
@@ -326,6 +358,9 @@ def confirm(device, machine_id, no_confirm):
 def _main(opts):
     # Detect device to install to
     device = find_device(opts.device)
+    if device is None:
+        print('\nNo suitable device to install on found.')
+        exit(1)
 
     # Ensure machine-id exists and is valid
     machine_id = _ensure_machine_id(opts.machine_id, device)
@@ -349,7 +384,7 @@ def _main(opts):
         if opts.reboot:
             subprocess.run(['reboot'])
         else:
-            print("Done. Please remove install medium and reboot.")
+            print('\nDone. Please remove install medium and reboot.')
 
         exit(0)
 

@@ -1,22 +1,16 @@
 let
-  pkgs = import ../../pkgs {
-    version = "1.0.0";
-    updateUrl = "http://localhost/";
-    kioskUrl = "http://localhost/";
-  };
+  pkgs = import ../../pkgs { };
 in
 pkgs.nixosTest {
   name = "rauc statusfile recovery";
 
   nodes = {
     client = { config, pkgs, ... }: {
-      imports = [ ../../system/rauc ];
+      imports = [ ../../base/self-update ];
       config = {
-        playos.updateCert = pkgs.writeText "dummy.pem"  "";
-      };
-      options = with pkgs.lib; {
-        playos.updateCert = mkOption {
-          type = types.package;
+        playos.selfUpdate = {
+          enable = true;
+          updateCert = pkgs.writeText "dummy.pem"  "";
         };
       };
     };

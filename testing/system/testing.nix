@@ -8,22 +8,24 @@
   ];
 
   config = {
-    systemPartition = lib.mkForce {
-      device = "system";
-      fsType = "9p";
-      options = [ "trans=virtio" "version=9p2000.L" "cache=loose" ];
-    };
-
-    volatileRoot.persistentDataPartition = lib.mkForce {
+    fileSystems."/boot" = {
       device = "tmpfs";
       fsType = "tmpfs";
       options = [ "mode=0755" ];
     };
+    playos.storage = {
+      systemPartition = {
+        enable = true;
+        device = "system";
+        fsType = "9p";
+        options = [ "trans=virtio" "version=9p2000.L" "cache=loose" ];
+      };
 
-    fileSystems."/boot" = lib.mkForce {
-      device = "tmpfs";
-      fsType = "tmpfs";
-      options = [ "mode=0755" ];
+      persistentDataPartition = {
+        device = "tmpfs";
+        fsType = "tmpfs";
+        options = [ "mode=0755" ];
+      };
     };
 
     networking.hostName = lib.mkForce "playos-test";

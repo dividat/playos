@@ -1,11 +1,11 @@
 open Info
 open Tyxml.Html
 
-let remote_management_form action button_label =
+let remote_maintenance_form action button_label =
   form
-    ~a:[ a_action ("/remote-management/" ^ action)
+    ~a:[ a_action ("/remote-maintenance/" ^ action)
     ; a_method `Post
-    ; a_class [ "d-Info__RemoteManagementForm" ]
+    ; a_class [ "d-Info__RemoteMaintenanceForm" ]
     ; Unsafe.string_attrib "is" "disable-after-submit"
     ]
     [ input
@@ -16,20 +16,20 @@ let remote_management_form action button_label =
         ()
     ]
 
-let remote_management address =
+let remote_maintenance address =
   match address with
   | Some address ->
       [ span
-          ~a:[ a_class [ "d-Info__RemoteManagementAddress" ] ]
+          ~a:[ a_class [ "d-Info__RemoteMaintenanceAddress" ] ]
           [ txt address ]
-      ; remote_management_form "disable" "Disable"
+      ; remote_maintenance_form "disable" "Disable"
       ]
   | None ->
       [ div
           ~a:[ a_class [ "d-Note" ] ]
-          [ txt "Enabling remote management allows Dividat to access this computer at a distance. For this purpose the computer's public IP address is shared with ZeroTier, a US-based company providing an overlay network."
+          [ txt "Enabling remote maintenance allows Dividat to access this computer at a distance. For this purpose the computer's public IP address is shared with ZeroTier, a US-based company providing an overlay network."
           ]
-      ; remote_management_form "enable" "Enable"
+      ; remote_maintenance_form "enable" "Enable"
       ]
 
 let html server_info =
@@ -53,7 +53,7 @@ let html server_info =
           ; Definition.term [ txt "Local time" ]
           ; Definition.description [ txt server_info.local_time ]
 
-          ; Definition.term [ txt "Remote management" ]
-          ; Definition.description (remote_management server_info.zerotier_address)
+          ; Definition.term [ txt "Remote maintenance" ]
+          ; Definition.description (remote_maintenance server_info.zerotier_address)
           ]
       ])
