@@ -1,5 +1,7 @@
 # [UNRELEASED]
 
+# [2023.9.0-VALIDATION] - 2023-09-11
+
 ## Changed
 
 - os: Make Full HD the default screen resolution
