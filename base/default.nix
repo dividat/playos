@@ -37,15 +37,20 @@ with lib;
     # disable installation of bootloader
     boot.loader.grub.enable = false;
 
-    # disable installation of inaccessible documentation
-    documentation.enable = false;
+    # disable inaccessible documentation
+    documentation = {
+      enable = false;
+      doc.enable = false;
+      info.enable = false;
+      man.enable = false;
+      nixos.enable = false;
+    };
 
     playos = { inherit version kioskUrl; };
 
     # 'Welcome Screen'
     services.getty = {
       greetingLine = greeting "${fullProductName} (${version})";
-      helpLine = "";
     };
 
     # Start controller
