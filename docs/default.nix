@@ -11,14 +11,18 @@ stdenv.mkDerivation {
 
   buildInputs =
     let
-      weasyprint = python39Packages.weasyprint.overrideAttrs {
-        makeWrapperArgs = [ "--set FONTCONFIG_FILE ${fontsConf}" ];
-      };
+      # Workaround to allow setting custom fontconfig file.
+      # Should be fixed in next version of Nixpkgs, so the regular package
+      # can again be used (https://github.com/NixOS/nixpkgs/pull/254239).
+      weasyprint = python39Packages.weasyprint.overrideAttrs (o: {
+        makeWrapperArgs = [ "--set-default FONTCONFIG_FILE ${o.FONTCONFIG_FILE}" ];
+      });
     in
     [ pandoc weasyprint ];
 
   installPhase = ''
     DATE=$(date -I)
+    export FONTCONFIG_FILE="${fontsConf}"
 
     mkdir -p $out
 
