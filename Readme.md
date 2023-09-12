@@ -19,7 +19,7 @@ The application layer may be defined in a single Nix file.
 
 This repository contains the application layer for running the Dividat Play web app and supporting system services in a fullscreen kiosk.
 
-See the [documentation](docs/arch) for more information.
+See the [documentation](docs/arch) and [user manual](docs/user-manual) for more information.
 
 ## Quick start
 
