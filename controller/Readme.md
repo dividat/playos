@@ -16,6 +16,7 @@ PlayOS controller is an OCaml application that manages various system tasks for 
 
 ## Prerequisites
 Since PlayOS uses `Connman` for managing networks, it must be configured on your system.
+The following suggestion for setting up `Connman` assumes you are on NixOS.
 Replace your NetworkManager config with the following (remember to fill in `<your-host-name>`):
 
 ```nix
