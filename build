@@ -34,7 +34,6 @@ QEMU Shortcuts:
 
 VM shortcuts:
 Switch to QEMU monitor (ctrl-alt-2), activate shortcut via 'sendkey <some-shortcut>', then switch back to QEMU display (ctrl-alt-1).
-- TTY: ctrl-alt-f1
 - Status console: ctrl-alt-f8
 - Graphical UI: ctrl-alt-f7
 - Toggle controller: ctrl-shift-f12
