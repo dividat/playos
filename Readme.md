@@ -73,7 +73,7 @@ nix-build --arg buildInstaller false --arg buildBundle false --arg buildDisk fal
 ```
 
 Flash the iso in `./result/` to a USB stick and boot from this stick on the PlayOS computer.
-Unfortunately testing this way is currently a lengthy process and we would like to setup a workflow with a tighter feedback loop in the future.
+Building a complete system like this is a lengthy process, so it is a good idea to test at the component level (controller, kiosk) first, where possible. 
 
 ### Controller testing
 
