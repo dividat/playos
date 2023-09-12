@@ -9,7 +9,7 @@
 , pv
 , closureInfo
 
-, systemToplevel
+, systemImage
 , rescueSystem
 , grubCfg
 , version
@@ -17,7 +17,7 @@
 , kioskUrl
 }:
 let
-  systemClosureInfo = closureInfo { rootPaths = [ systemToplevel ]; };
+  systemClosureInfo = closureInfo { rootPaths = [ systemImage ]; };
 
   python = python39.withPackages(ps: with ps; [pyparted]);
 in
@@ -26,7 +26,7 @@ stdenv.mkDerivation {
 
   src = substituteAll {
     src = ./install-playos.py;
-    inherit grubCfg systemToplevel rescueSystem systemClosureInfo version updateUrl kioskUrl;
+    inherit grubCfg systemImage rescueSystem systemClosureInfo version updateUrl kioskUrl;
     inherit python;
   };
 

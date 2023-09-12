@@ -3,7 +3,7 @@
 , rauc
 , version
 
-, systemToplevel
+, systemImage
 , closureInfo
 }:
 
@@ -12,7 +12,7 @@ let
   testingKey = ../pki/dummy/key.pem;
   testingCert = ../pki/dummy/cert.pem;
 
-  systemClosureInfo = closureInfo { rootPaths = [ systemToplevel ]; };
+  systemClosureInfo = closureInfo { rootPaths = [ systemImage ]; };
 
   # TODO: Create tar ball used for RAUC bundle in one derivation. This will reduce disk space usage as the tarball alone is not (unnecessarily) stored in the nix store.
   systemTarball = (importFromNixos "lib/make-system-tarball.nix") {
@@ -22,21 +22,21 @@ let
 
     contents = [
       {
-        source = systemToplevel + "/initrd";
+        source = systemImage + "/initrd";
         target = "/initrd";
       }
       {
-        source = systemToplevel + "/kernel";
+        source = systemImage + "/kernel";
         target = "/kernel";
       }
       {
-        source = systemToplevel + "/init" ;
+        source = systemImage + "/init" ;
         target = "/init";
       }
     ];
 
     storeContents = [{
-        object = systemToplevel;
+        object = systemImage;
         symlink = "/run/current-system";
       }];
   } + "/tarball/system.tar.xz";
@@ -58,9 +58,9 @@ stdenv.mkDerivation {
     done
 
     # copy initrd, kernel and init
-    cp -a "${systemToplevel}/initrd" initrd
-    cp -a "${systemToplevel}/kernel" kernel
-    cp -a "${systemToplevel}/init" init
+    cp -a "${systemImage}/initrd" initrd
+    cp -a "${systemImage}/kernel" kernel
+    cp -a "${systemImage}/init" init
 
     mkdir -p ../rauc-bundle
     time tar --sort=name --mtime='@1' --owner=0 --group=0 --numeric-owner -c * | pixz > ../rauc-bundle/system.tar.xz

@@ -30,7 +30,7 @@ class requestHandler(BaseHTTPRequestHandler):
             redirectTo(self, f'http://{host}/portal')
 
         elif isAuthorized:
-            textHtml(self, 'Success')
+            textHtml(self, 'Open Sesame')
 
         else:
             redirectTo(self, f'http://{host}/portal')

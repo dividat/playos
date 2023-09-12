@@ -1,3 +1,19 @@
+# [2023.9.0] - 2023-09-12
+
+# [2023.9.0-VALIDATION] - 2023-09-11
+
+## Changed
+
+- os: Make Full HD the default screen resolution
+- os: Widen rules for captive portal detection
+- os: Split system definition into base and application layers
+- os: Make build outputs and displayed system name configurable through application layer
+- os: Change installer script to exclude installer medium from installation targets
+- os: Include live system ISO in deployed outputs
+- os: Update nixpkgs channel to 23.05
+- status screen: Display persistent storage usage statistics
+- controller: Allow opening captive portal when settings are open
+
 # [2023.2.0] - 2023-03-06
 
 # [2023.2.0-VALIDATION] - 2023-02-27

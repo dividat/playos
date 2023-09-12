@@ -1,4 +1,4 @@
-{ pkgs, version, updateUrl, kioskUrl }:
+{ pkgs, version, bundleName, updateUrl, kioskUrl }:
 
 with pkgs;
 
@@ -18,12 +18,20 @@ ocamlPackages.buildDunePackage rec {
       -e "s,@PLAYOS_UPDATE_URL@,${updateUrl},g" \
       -e "s,@PLAYOS_KIOSK_URL@,${kioskUrl},g" \
       ./server/info.ml
+
+    sed -i \
+      -e "s,@PLAYOS_BUNDLE_NAME@,${bundleName},g" \
+      ./server/update.ml
   '';
 
   useDune2 = true;
 
-  buildInputs = with ocamlPackages; [
+  nativeBuildInputs = [
     discount # Transform Markdown to HTML
+    ocamlPackages.obus
+  ];
+
+  buildInputs = with ocamlPackages; [
     nodejs
     utop
   ];

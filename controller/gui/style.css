@@ -155,11 +155,11 @@ html {
 
 /* Info */
 
-.d-Info__RemoteManagementForm {
+.d-Info__RemoteMaintenanceForm {
     display: inline;
 }
 
-.d-Info__RemoteManagementAddress {
+.d-Info__RemoteMaintenanceAddress {
     margin-right: var(--spacing-dog);
 }
 
