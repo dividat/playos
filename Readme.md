@@ -45,7 +45,7 @@ A virtual machine (with test instrumentation) can be started without any of the 
 
 ## Testing
 
-### Virtual machine
+### QEMU VM
 
 Most changes to system configuration and/or the contoller can be tested in a virtual machine.
 To create and run a VM, run:
@@ -64,15 +64,30 @@ See the output of `./result/bin/run-in-vm --help` for more information.
 
 The default user-mode network stack is used to create a virtual Ethernet connection with bridged Internet access for the guest. If you find that the guest has a dysfunctional Internet connection, check your host's firewall settings. If using ConnMan, restart ConnMan service and try again.
 
+
+### VirtualBox VM
+
+PlayOS can also be tested on a VM like VirtualBox, which can simulate a system more fully, including the installer, Grub and A/B partitions.
+Guidance for setting this up can be found [here](./docs/arch/Readme.org#installation-on-virtualbox).
+
 ### Testing on PlayOS hardware
 
-Changes such as NixOS upgrades, or to anything else that directly interacts with system hardware may necessitate testing on an actual machine. To do so, build a live system:
+Changes such as NixOS upgrades, or to anything else that directly interacts with system hardware may necessitate testing on an actual machine.
+This can be done via booting from a live system or performing a complete installation.
+
+To build a live system:
 
 ```bash
 nix-build --arg buildInstaller false --arg buildBundle false --arg buildDisk false
 ```
 
-Flash the iso in `./result/` to a USB stick and boot from this stick on the PlayOS computer.
+To build an installer:
+
+```bash
+nix-build --arg buildLive false --arg buildBundle false --arg buildDisk false
+```
+
+Flash the iso in `./result/` to a USB stick and boot or install PlayOS.
 Building a complete system like this is a lengthy process, so it is a good idea to test at the component level (controller, kiosk) first, where possible. 
 
 ### Controller testing
