@@ -5,7 +5,7 @@
 , e2fsprogs
 , dosfstools
 , utillinux
-, python39
+, python3
 , pv
 , closureInfo
 
@@ -19,7 +19,7 @@
 let
   systemClosureInfo = closureInfo { rootPaths = [ systemImage ]; };
 
-  python = python39.withPackages(ps: with ps; [pyparted]);
+  python = python3.withPackages(ps: with ps; [pyparted]);
 in
 stdenv.mkDerivation {
   name = "install-playos-${version}";

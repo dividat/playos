@@ -1,4 +1,4 @@
-{ stdenv, makeFontsConf, pandoc, python39Packages, ibm-plex, version }:
+{ stdenv, makeFontsConf, pandoc, python3Packages, ibm-plex, version }:
 let
   fontsConf = makeFontsConf {
     fontDirectories = [ ibm-plex ];
@@ -14,7 +14,7 @@ stdenv.mkDerivation {
       # Workaround to allow setting custom fontconfig file.
       # Should be fixed in next version of Nixpkgs, so the regular package
       # can again be used (https://github.com/NixOS/nixpkgs/pull/254239).
-      weasyprint = python39Packages.weasyprint.overrideAttrs (o: {
+      weasyprint = python3Packages.weasyprint.overrideAttrs (o: {
         makeWrapperArgs = [ "--set-default FONTCONFIG_FILE ${o.FONTCONFIG_FILE}" ];
       });
     in
