@@ -32,8 +32,8 @@ QEMU Shortcuts:
 - Grab/release cursor: ctrl-alt-g
 - Quit: ctrl-alt-q
 
-VM shortcuts:
-Switch to QEMU monitor (ctrl-alt-2), activate shortcut via 'sendkey <some-shortcut>', then switch back to QEMU display (ctrl-alt-1).
+PlayOS shortcuts:
+To sent shortcuts to the VM switch to QEMU monitor (ctrl-alt-2), activate shortcut via 'sendkey <some-shortcut>', then switch back to QEMU display (ctrl-alt-1).
 - Status console: ctrl-alt-f8
 - Graphical UI: ctrl-alt-f7
 - Toggle controller: ctrl-shift-f12
