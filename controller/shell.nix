@@ -8,8 +8,10 @@ let
     kioskUrl = "https://dev-play.dividat.com/";
   };
 in
-  playos-controller.overrideAttrs(oldAttrs: {
-    buildInputs = oldAttrs.buildInputs ++ (with pkgs; [
-      python37Packages.pywatchman
-    ]);
-  })
+pkgs.mkShell {
+  packages =
+    playos-controller.buildInputs
+      ++ playos-controller.nativeBuildInputs
+      ++ playos-controller.propagatedBuildInputs
+      ++ [ pkgs.watchexec ];
+}
