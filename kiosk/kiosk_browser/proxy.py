@@ -80,27 +80,24 @@ def parse_url(url):
         logging.warn(f"Hostname or port missing in proxy url")
         return None
 
-def extract_manual_proxy(config):
-    """Extract manual proxy from dbus configuration
+def has_service_state_in(service, states: list[str]):
+    """Check that service has its state in the given list."""
+    return len(service) >= 2 and 'State' in service[1] and service[1]['State'] in states
 
-    Example configuration:
-
-    dbus.Dictionary({dbus.String('Servers'): dbus.Array([dbus.String('http://localhost:1234')], signature=dbus.Signature('s'), variant_level=1), dbus.String('Excludes'): dbus.Array([], signature=dbus.Signature('s'), variant_level=1), dbus.String('Method'): dbus.String('manual', variant_level=1)}, signature=dbus.Signature('sv'), variant_level=1)"""
-
-    if 'Method' in config:
-        method = config['Method']
-        if method == 'direct':
-            return None
-        elif method == 'manual':
-            if 'Servers' in config:
-                servers = config['Servers']
-                if len(servers) >= 1:
+def extract_manual_proxy(service):
+    """Extract manual proxy from service."""
+    if len(service) >= 2:
+        config = service[1]
+        if 'Proxy' in config:
+            proxy = config['Proxy']
+            if 'Method' in proxy and 'Servers' in proxy:
+                method = proxy['Method']
+                servers = proxy['Servers']
+                if method == 'manual' and len(servers) >= 1:
                     return parse_url(servers[0])
-    else:
-        return None
 
 def get_current_proxy(bus):
-    """Get current proxy from dbus
+    """Get current proxy from dbus.
 
     Return the proxy of a connected service preferentially, or of a ready
     service.
@@ -118,12 +115,10 @@ def get_current_proxy(bus):
 
         # The service with the default route will always be sorted at the top of
         # the list. (From connman doc/overview-api.txt)
-        default_service = find(
-            lambda s: s[1]['State'] == 'online' or s[1]['State'] == 'ready',
-            services)
+        default_service = find(lambda s: has_service_state_in(s, ['online', 'ready']), services)
 
         if default_service:
-            return extract_manual_proxy(default_service[1]['Proxy'])
+            return extract_manual_proxy(default_service)
 
     except dbus.exceptions.DBusException:
         return None
