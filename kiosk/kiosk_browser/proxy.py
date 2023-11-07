@@ -52,23 +52,29 @@ def get_current_proxy(bus):
 
     Return the proxy of a connected service preferentially, or of a ready
     service.
+
+    Return None if Connman is not installed (DBusException).
     """
 
-    client = dbus.Interface(
-        bus.get_object('net.connman', '/'),
-        'net.connman.Manager')
+    try:
+        client = dbus.Interface(
+            bus.get_object('net.connman', '/'),
+            'net.connman.Manager')
 
-    # List services, each service is a (id, properties) struct
-    services = client.GetServices()
+        # List services, each service is a (id, properties) struct
+        services = client.GetServices()
 
-    # The service with the default route will always be sorted at the top of
-    # the list. (From connman doc/overview-api.txt)
-    default_service = find(
-        lambda s: s[1]['State'] == 'online' or s[1]['State'] == 'ready',
-        services)
+        # The service with the default route will always be sorted at the top of
+        # the list. (From connman doc/overview-api.txt)
+        default_service = find(
+            lambda s: s[1]['State'] == 'online' or s[1]['State'] == 'ready',
+            services)
 
-    if default_service:
-        return extract_manual_proxy(default_service[1]['Proxy'])
+        if default_service:
+            return extract_manual_proxy(default_service[1]['Proxy'])
+
+    except dbus.exceptions.DBusException:
+        return None
 
 def find(f, xs):
     return next((x for x in xs if f(x)), None)
