@@ -1,4 +1,56 @@
-"""Monitor proxy changes and automatically apply changes in Qt application"""
+"""Monitor proxy changes and automatically apply changes in Qt application.
+
+A ConnMan service, given from Dbus, has the following type:
+
+type service = [ path, service_config ]
+
+type service_config = dict {
+  'Type': str,
+  'Security': list[str],
+  'State': str,
+  'Strength': int,
+  'Favorite': bool,
+  'Immutable': bool,
+  'AutoConnect': bool,
+  'Name': str,
+  'Ethernet': dict({ 'Method': str }),
+  'Interface': str,
+  'Address': str,
+  'MTU': int,
+  'IPv4': dict({ 'Method': str, 'Address': str, 'Netmask': str, 'Gateway': str }),
+  'IPv4.Configuration': dict({ 'Method': str }),
+  'IPv6': dict({ 'Method': str, 'Address': str, 'PrefixLength': int, 'Privacy': str }),
+  'IPv6.Configuration': dict({ 'Method': str, 'Privacy': str }),
+  'Nameservers': list[str],
+  'Nameservers.Configuration': list,
+  'Timeservers': list,
+  'Timeservers.Configuration': list,
+  'Domains': list,
+  'Domains.Configuration': list,
+  'Proxy': proxy,
+  'Proxy.Configuration': proxy,
+  'mDNS': bool,
+  'mDNS.Configuration': bool,
+  'Provider': dict,
+}
+
+type proxy = direct | auto | manual
+
+type direct = dict({
+    'Method': 'Direct'
+})
+
+type auto = dict({
+    'Method': 'Auto',
+    'URL': str
+})
+
+type manual = dict({
+  'Method': 'Manual',
+  'Servers': list[str],
+  'Exclude': list[str]
+})
+"""
 
 import collections
 import dbus
