@@ -24,6 +24,7 @@ python3Packages.buildPythonApplication rec {
     requests
     dbus-python
     pygobject3
+    pytest
   ];
 
   postInstall = ''

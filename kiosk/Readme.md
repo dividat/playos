@@ -12,6 +12,10 @@ Then, start the kiosk browser with, for example:
 bin/kiosk-browser http://localhost:8080/play.html http://localhost:3333
 ```
 
+## Testing
+
+        bin/test
+
 ## Developer tools
 
 Run with `QTWEBENGINE_REMOTE_DEBUGGING` equals to a specific port:

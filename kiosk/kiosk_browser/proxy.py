@@ -117,6 +117,8 @@ def get_current_proxy(bus):
         # the list. (From connman doc/overview-api.txt)
         default_service = find(lambda s: has_service_state_in(s, ['online', 'ready']), services)
 
+        print(default_service)
+
         if default_service:
             return extract_manual_proxy(default_service)
 
