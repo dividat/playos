@@ -43,11 +43,29 @@ For example: `nix build --arg buildInstaller false --arg buildBundle false` will
 
 A virtual machine (with test instrumentation) can be started without any of the above builds.
 
-## Testing
+## Components
+
+### Controller
+
+The [controller](controller/) service orchestrates the system's self-update and acts as a configuration interface for the options exposed to the user. It may be run directly on a Linux host for development purposes.
+
+### Kiosk
+
+The [kiosk](kiosk/) browser is used in the default configuration of PlayOS to run any web application in a full screen kiosk. It can be run directly on most hosts for development purposes.
+
+
+## System Testing
+
+To test integrated portions of the PlayOS system, there are several options/levels available:
+
+- Running a single system partition with QEMU (fast, partial, isolated)
+- Running a full system inside a virtual machine such as VirtualBox (slow, simulated full, isolated)
+- Running a single system partition from a USB stick on a physical machine (medium fast, partial, isolated)
+- Running a full system on a physical machine (slow, full, isolated)
 
 ### QEMU VM
 
-Most changes to system configuration and/or the contoller can be tested in a virtual machine.
+Most changes to system configuration and/or the controller can be tested in a virtual machine.
 To create and run a VM, run:
 
 ```bash
@@ -62,38 +80,31 @@ See the output of `./result/bin/run-in-vm --help` for more information.
 
 #### Guest networking
 
-The default user-mode network stack is used to create a virtual Ethernet connection with bridged Internet access for the guest. If you find that the guest has a dysfunctional Internet connection, check your host's firewall settings. If using ConnMan, restart ConnMan service and try again.
-
+The default user-mode network stack is used to create a virtual Ethernet connection with bridged Internet access for the guest. If you find that the guest has a dysfunctional Internet connection, check your host's firewall settings. If using ConnMan on the host, restart the ConnMan service and try again.
 
 ### VirtualBox VM
 
-PlayOS can also be tested on a VM like VirtualBox, which can simulate a system more fully, including the installer, Grub and A/B partitions.
-Guidance for setting this up can be found [here](./docs/arch/Readme.org#installation-on-virtualbox).
+PlayOS can also be tested on a VM like VirtualBox, which can simulate a system more fully, including the installer, Grub and A/B partitions. Guidance for setting this up can be found [here](./docs/arch/Readme.org#installation-on-virtualbox).
 
 ### Testing on PlayOS hardware
 
-Changes such as NixOS upgrades, or to anything else that directly interacts with system hardware may necessitate testing on an actual machine.
-This can be done via booting from a live system or performing a complete installation.
+Changes such as NixOS upgrades, or to anything else that directly interacts with system hardware may necessitate testing on physical hardware. This can be done by booting from a live system or performing a complete installation.
 
-To build a live system:
+To build only a live system:
 
 ```bash
 nix-build --arg buildInstaller false --arg buildBundle false --arg buildDisk false
 ```
 
-To build an installer:
+To build only an installer:
 
 ```bash
 nix-build --arg buildLive false --arg buildBundle false --arg buildDisk false
 ```
 
-Flash the iso in `./result/` to a USB stick and boot or install PlayOS.
-Building a complete system like this is a lengthy process, so it is a good idea to test at the component level (controller, kiosk) first, where possible. 
+Flash the ISO in `./result/` to a USB stick and boot or install PlayOS.
 
-### Controller testing
-
-When making changes to the controller, it's possible to run and test it directly on your machine, without a VM or a live system. See the Controller's [Readme](controller/Readme.md) for details.
-
+Building a complete system takes time, so it is a good idea to test at the component or QEMU VM level first, where possible.
 
 ### Automated Testing
 
