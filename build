@@ -33,10 +33,11 @@ QEMU Shortcuts:
 - Quit: ctrl-alt-q
 
 PlayOS shortcuts:
-To sent shortcuts to the VM switch to QEMU monitor (ctrl-alt-2), activate shortcut via 'sendkey <some-shortcut>', then switch back to QEMU display (ctrl-alt-1).
-- Status console: ctrl-alt-f8
-- Graphical UI: ctrl-alt-f7
 - Toggle controller: ctrl-shift-f12
+
+You can switch virtual consoles in the guest via QEMU monitor (ctrl-alt-2), sending a key combination via 'sendkey <key-comb>, and returning to QEMU display (ctrl-alt-1).
+- Status console: ctrl-alt-f8
+- Graphical system: ctrl-alt-f7
 "
 
 elif [ "$TARGET" == "develop" ]; then
