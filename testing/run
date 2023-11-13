@@ -9,7 +9,7 @@ for TEST_DEF in $(ls "$INTEGRATION_TEST_DIR"/*.nix); do
   nix-build "$TEST_DEF"
 done
 
-# Kiosw browser
+# Kiosk browser
 
 pushd "$(dirname "$(realpath "$0")")/../kiosk"
 nix-shell --run bin/test
