@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
+# Integration tests
+
 INTEGRATION_TEST_DIR="$(dirname "$(realpath "$0")")/integration"
 
 for TEST_DEF in $(ls "$INTEGRATION_TEST_DIR"/*.nix); do
   nix-build "$TEST_DEF"
 done
+
+# Kiosk browser
+
+pushd "$(dirname "$(realpath "$0")")/../kiosk"
+nix-shell --run bin/test
+popd

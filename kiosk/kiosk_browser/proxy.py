@@ -1,4 +1,5 @@
-"""Monitor proxy changes and automatically apply changes in Qt application"""
+"""Monitor proxy changes and automatically apply changes in Qt application.
+"""
 
 import collections
 import dbus
@@ -6,49 +7,72 @@ import logging
 import threading
 import urllib
 from PyQt5.QtNetwork import QNetworkProxy
+from dataclasses import dataclass
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 
-ProxyConfig = collections.namedtuple('ProxyConfig', ['hostname', 'port', 'username', 'password'])
+@dataclass
+class Credentials:
+    username: str
+    password: str
 
-def parse_url(url):
+@dataclass
+class ProxyConf:
+    hostname: str
+    port: int
+    credentials: Credentials | None
+
+@dataclass
+class Service:
+    state: str
+    proxy: ProxyConf | None
+
+def parse_service(service: dbus.Struct) -> Service | None:
+    if len(service) >= 2 and 'State' in service[1]:
+        return Service(service[1]['State'], extract_manual_proxy(service[1]))
+    else:
+        return None
+
+def extract_manual_proxy(service_conf: dbus.Dictionary) -> ProxyConf | None:
+    if 'Proxy' in service_conf:
+        proxy = service_conf['Proxy']
+        if 'Method' in proxy and 'Servers' in proxy:
+            method = proxy['Method']
+            servers = proxy['Servers']
+            if method == 'manual' and len(servers) >= 1:
+                return parse_proxy_url(servers[0])
+            else:
+                return None
+        else:
+            return None
+    else:
+        return None
+
+def parse_proxy_url(url: str) -> ProxyConf | None:
     if url.startswith('http://'):
         parsed = urllib.parse.urlparse(url)
     else:
         parsed = urllib.parse.urlparse(f'http://{url}')
 
     if parsed.hostname != None and parsed.port != None:
-        return ProxyConfig(
-            parsed.hostname,
-            parsed.port,
-            (urllib.parse.unquote(parsed.username) if parsed.username != None else None),
-            (urllib.parse.unquote(parsed.password) if parsed.password != None else None)
-        )
+        assert isinstance(parsed.hostname, str)
+        assert isinstance(parsed.port, int)
+
+        if parsed.username != None and parsed.password != None:
+            assert isinstance(parsed.username, str)
+            assert isinstance(parsed.password, str)
+
+            username = urllib.parse.unquote(parsed.username)
+            password = urllib.parse.unquote(parsed.password)
+            return ProxyConf(parsed.hostname, parsed.port, Credentials(username, password))
+        else:
+            return ProxyConf(parsed.hostname, parsed.port, None)
     else:
-        logging.warn(f"Hostname or port missing in proxy url")
+        logging.warning(f"Hostname or port missing in proxy url")
         return None
 
-def extract_manual_proxy(config):
-    """Extract manual proxy from dbus configuration
-
-    Example configuration:
-
-    dbus.Dictionary({dbus.String('Servers'): dbus.Array([dbus.String('http://localhost:1234')], signature=dbus.Signature('s'), variant_level=1), dbus.String('Excludes'): dbus.Array([], signature=dbus.Signature('s'), variant_level=1), dbus.String('Method'): dbus.String('manual', variant_level=1)}, signature=dbus.Signature('sv'), variant_level=1)"""
-
-    if 'Method' in config:
-        method = config['Method']
-        if method == 'direct':
-            return None
-        elif method == 'manual':
-            if 'Servers' in config:
-                servers = config['Servers']
-                if len(servers) >= 1:
-                    return parse_url(servers[0])
-    else:
-        return None
-
-def get_current_proxy(bus):
-    """Get current proxy from dbus
+def get_current_proxy(bus) -> ProxyConf | None:
+    """Get current proxy from dbus.
 
     Return the proxy of a connected service preferentially, or of a ready
     service.
@@ -62,16 +86,16 @@ def get_current_proxy(bus):
             'net.connman.Manager')
 
         # List services, each service is a (id, properties) struct
-        services = client.GetServices()
+        services = [parse_service(s) for s in client.GetServices()]
 
         # The service with the default route will always be sorted at the top of
         # the list. (From connman doc/overview-api.txt)
-        default_service = find(
-            lambda s: s[1]['State'] == 'online' or s[1]['State'] == 'ready',
-            services)
+        default_service = find(lambda s: s.state in ['online', 'ready'], services)
 
         if default_service:
-            return extract_manual_proxy(default_service[1]['Proxy'])
+            return default_service.proxy
+        else:
+            return None
 
     except dbus.exceptions.DBusException:
         return None

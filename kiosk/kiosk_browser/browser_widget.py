@@ -101,10 +101,10 @@ class BrowserWidget(QtWidgets.QWidget):
 
     def _proxy_auth(self, get_current_proxy, url, auth, proxyHost):
         proxy = get_current_proxy()
-        if proxy is not None and proxy.username is not None and proxy.password is not None:
+        if proxy is not None and proxy.credentials is not None:
             logging.info("Authenticating proxy")
-            auth.setUser(proxy.username)
-            auth.setPassword(proxy.password)
+            auth.setUser(proxy.credentials.username)
+            auth.setPassword(proxy.credentials.password)
         else:
             logging.info("Proxy authentication request ignored because credentials are not provided.")
 

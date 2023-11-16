@@ -17,13 +17,15 @@ python3Packages.buildPythonApplication rec {
 
   doCheck = false;
 
-  nativeBuildInputs = [ qt5.wrapQtAppsHook ];
+  nativeBuildInputs = [ qt5.wrapQtAppsHook mypy ];
 
   propagatedBuildInputs = with python3Packages; [
-    pyqtwebengine
-    requests
     dbus-python
     pygobject3
+    pyqtwebengine
+    pytest
+    requests
+    types-requests
   ];
 
   postInstall = ''
