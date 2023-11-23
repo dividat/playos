@@ -16,9 +16,9 @@ PlayOS controller is an OCaml application that manages various system tasks for 
 
 ## Prerequisites
 
-Since the controller uses `Connman` for managing networks, it must be configured on your host if you want to run thecontroller directly.
+Since the controller uses `Connman` for managing networks, it must be configured on your host if you want to run the controller directly.
 
-You should be able to build an run the controller on any Linux system, using the Nix package manager.
+You should be able to build and run the controller on any Linux system, using the Nix package manager.
 
 If you are on NixOS, a minimal setup can be achieved as follows (remember to fill in `<your-host-name>`):
 
