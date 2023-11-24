@@ -14,9 +14,34 @@ PlayOS controller is an OCaml application that manages various system tasks for 
 - `server/`: main application code
 - `bin/`: binaries to start a dev server
 
+## Prerequisites
+
+Since the controller uses `Connman` for managing networks, it must be configured on your host if you want to run the controller directly.
+
+You should be able to build and run the controller on any Linux system, using the Nix package manager.
+
+If you are on NixOS, a minimal setup can be achieved as follows (remember to fill in `<your-host-name>`):
+
+```nix
+{ pkgs, config, ... }:
+{
+  networking = {
+    hostName = <your-hostname>;
+    wireless.enable = true;
+    networkmanager.enable = false;
+  };
+
+  services.connman = {
+    enable = true;
+    networkInterfaceBlacklist = [ "vboxnet" "zt" ];
+  };
+}
+```
+
+Note the `networkmanager.enable = false` and check for any conflicting existing configuration.
+
 ## Quick start
 
-Prerequisites: `connman` must be running on your system.
 
 Run `nix-shell` to create a suitable development environment.
 

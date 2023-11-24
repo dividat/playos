@@ -25,12 +25,20 @@ if [ "$TARGET" == "vm" ]; then
     --arg buildLive false \
     --arg buildDisk false)
 
-  echo
-  echo "Run ./result/bin/run-in-vm to start a VM."
-  echo
-  echo "- unfocus: ctrl-alt-g"
-  echo "- quit: ctrl-alt-q"
-  echo "- tty: ctrl-alt-2, sendkey ctrl-alt-f1, ctrl-alt-1"
+echo -e "
+Run ./result/bin/run-in-vm to start a VM.
+
+QEMU Shortcuts:
+- Grab/release cursor: ctrl-alt-g
+- Quit: ctrl-alt-q
+
+PlayOS shortcuts:
+- Toggle controller: ctrl-shift-f12
+
+You can switch virtual consoles in the guest via QEMU monitor (ctrl-alt-2), sending a key combination via 'sendkey <key-comb>, and returning to QEMU display (ctrl-alt-1).
+- Status console: ctrl-alt-f8
+- Graphical system: ctrl-alt-f7
+"
 
 elif [ "$TARGET" == "develop" ]; then
 

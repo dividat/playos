@@ -19,7 +19,7 @@ The application layer may be defined in a single Nix file.
 
 This repository contains the application layer for running the Dividat Play web app and supporting system services in a fullscreen kiosk.
 
-See the [documentation](docs/arch) for more information.
+See the [documentation](docs/arch) and [user manual](docs/user-manual) for more information.
 
 ## Quick start
 
@@ -43,24 +43,70 @@ For example: `nix build --arg buildInstaller false --arg buildBundle false` will
 
 A virtual machine (with test instrumentation) can be started without any of the above builds.
 
-### Virtual machine
+## Components
 
-A helper is available to quickly start a virtual machine:
+### Controller
 
-```
+The [controller](controller/) service orchestrates the system's self-update and acts as a configuration interface for the options exposed to the user. It may be run directly on a Linux host for development purposes.
+
+### Kiosk
+
+The [kiosk](kiosk/) browser is used in the default configuration of PlayOS to run any web application in a full screen kiosk. It can be run directly on most hosts for development purposes.
+
+
+## System Testing
+
+To test integrated portions of the PlayOS system, there are several options/levels available:
+
+- Running a single system partition with QEMU (fast, partial, isolated)
+- Running a full system inside a virtual machine such as VirtualBox (slow, simulated full, isolated)
+- Running a single system partition from a USB stick on a physical machine (medium fast, partial, isolated)
+- Running a full system on a physical machine (slow, full, isolated)
+
+### QEMU VM
+
+Most changes to system configuration and/or the controller can be tested in a virtual machine.
+To create and run a VM, run:
+
+```bash
 ./build vm
+./result/bin/run-in-vm
 ```
 
 In order to get the vm system journal, look at the output of `run-in-vm`
 for a command starting with `socat`.
 
-See the output of `run-in-vm --help` for more information.
+See the output of `./result/bin/run-in-vm --help` for more information.
 
 #### Guest networking
 
-The default user-mode network stack is used to create a virtual Ethernet connection with bridged Internet access for the guest. If you find that the guest has a dysfunctional Internet connection, check your host's firewall settings. If using ConnMan, restart ConnMan service and try again.
+The default user-mode network stack is used to create a virtual Ethernet connection with bridged Internet access for the guest. If you find that the guest has a dysfunctional Internet connection, check your host's firewall settings. If using ConnMan on the host, restart the ConnMan service and try again.
 
-## Testing
+### VirtualBox VM
+
+PlayOS can also be tested on a VM like VirtualBox, which can simulate a system more fully, including the installer, Grub and A/B partitions. Guidance for setting this up can be found [here](./docs/arch/Readme.org#installation-on-virtualbox).
+
+### Testing on PlayOS hardware
+
+Changes such as NixOS upgrades, or to anything else that directly interacts with system hardware may necessitate testing on physical hardware. This can be done by booting from a live system or performing a complete installation.
+
+To build only a live system:
+
+```bash
+nix-build --arg buildInstaller false --arg buildBundle false --arg buildDisk false
+```
+
+To build only an installer:
+
+```bash
+nix-build --arg buildLive false --arg buildBundle false --arg buildDisk false
+```
+
+Flash the ISO in `./result/` to a USB stick and boot or install PlayOS.
+
+Building a complete system takes time, so it is a good idea to test at the component or QEMU VM level first, where possible.
+
+### Automated Testing
 
 Subcomponent tests using the [NixOS test framework](https://nixos.org/manual/nixos/stable/index.html#sec-nixos-tests) may be added to `test/integration`.
 
