@@ -12,7 +12,7 @@ reload_on_network_error_after = 5000 # ms
 Webview loading status
 """
 class Status(Enum):
-    INITIAL_LOADING = auto()
+    LOADING = auto()
     NETWORK_ERROR = auto()
     LOADED = auto()
 
@@ -20,6 +20,7 @@ class BrowserWidget(QtWidgets.QWidget):
 
     def __init__(self, url, get_current_proxy, parent):
         QtWidgets.QWidget.__init__(self, parent)
+        self.setStyleSheet(f"background-color: white;")
 
         self._url = url
 
@@ -54,16 +55,8 @@ class BrowserWidget(QtWidgets.QWidget):
 
         # Load url
         self._webview.setUrl(url)
-        self._view(Status.INITIAL_LOADING)
+        self._view(Status.LOADING)
         self._webview.loadFinished.connect(self._load_finished)
-
-        # Stretch the view
-        policy = QtWidgets.QSizePolicy()
-        policy.setVerticalStretch(1)
-        policy.setHorizontalStretch(1)
-        policy.setVerticalPolicy(QtWidgets.QSizePolicy.Preferred)
-        policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Preferred)
-        self.setSizePolicy(policy)
 
         # Shortcut to manually reload
         self.reload_shortcut = QtWidgets.QShortcut('CTRL+R', self)
@@ -74,21 +67,22 @@ class BrowserWidget(QtWidgets.QWidget):
         self._reload_timer.setSingleShot(True)
         self._reload_timer.timeout.connect(self._webview.reload)
 
-    def show_overlay(self):
-        """ Hide browser widget by showing an overlay instead.
-        """
-        self._webview.setHtml("<style>html { background-color: rgba(0, 0, 0, 0.4); }</style>")
-
     def reload(self):
         """ Show kiosk browser loading URL.
         """
 
         self._webview.setUrl(self._url)
-        self._view(Status.INITIAL_LOADING)
+        self._view(Status.LOADING)
 
-        # Stop reload timer if it is on going
         if self._reload_timer.isActive():
             self._reload_timer.stop()
+
+    def load(self, url: str):
+        """ Load specific URL.
+        """
+
+        self._url = url
+        self.reload()
 
     # Private
 
@@ -109,7 +103,7 @@ class BrowserWidget(QtWidgets.QWidget):
             logging.info("Proxy authentication request ignored because credentials are not provided.")
 
     def _view(self, status):
-        if status == Status.INITIAL_LOADING:
+        if status == Status.LOADING:
             self._loading_page.show()
             self._network_error_page.hide()
             self._webview.hide()

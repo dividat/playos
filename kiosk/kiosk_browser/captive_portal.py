@@ -11,6 +11,7 @@ import logging
 from enum import Enum, auto
 from http import HTTPStatus
 from PyQt5 import QtWidgets
+from typing import Callable
 
 check_connection_url = 'http://captive.dividat.com/'
 
@@ -96,22 +97,42 @@ class CaptivePortal():
 
             sleep(self._status)
 
-def open_message(on_open):
-    """ Invite the user to open Network Login Page.
+class OpenMessage(QtWidgets.QWidget):
+    """ Message inviting the user to open a captive portal.
+
+    Can be hidden and showed, keeping its position in the tree.
     """
 
-    label = QtWidgets.QLabel('You must log in to this network before you can access the Internet.')
+    def __init__(
+            self,
+            on_open: Callable[[], None],
+            parent: QtWidgets.QWidget):
 
-    button = QtWidgets.QPushButton('Open Network Login Page')
-    button.clicked.connect(on_open)
+        QtWidgets.QWidget.__init__(self, parent)
 
-    layout = QtWidgets.QHBoxLayout()
-    layout.addWidget(label)
-    layout.addStretch(1)
-    layout.addWidget(button)
+        label = QtWidgets.QLabel('You must log in to this network before you can access the Internet.')
 
-    widget = QtWidgets.QWidget()
-    widget.setLayout(layout)
-    widget.setStyleSheet("background-color: #e0e0e0;")
+        button = QtWidgets.QPushButton('Open Network Login Page')
+        button.clicked.connect(on_open)
 
-    return widget
+        message_layout = QtWidgets.QHBoxLayout()
+        message_layout.addWidget(label)
+        message_layout.addStretch(1)
+        message_layout.addWidget(button)
+
+        self._message_widget = QtWidgets.QWidget()
+        self._message_widget.setLayout(message_layout)
+        self._message_widget.setStyleSheet("background-color: #e0e0e0;")
+
+        self._layout = QtWidgets.QHBoxLayout()
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self._layout)
+
+    def show(self):
+        self._layout.addWidget(self._message_widget)
+
+    def hide(self):
+        self._message_widget.setParent(None)
+
+    def is_open(self):
+        return self._message_widget.parentWidget() != None
