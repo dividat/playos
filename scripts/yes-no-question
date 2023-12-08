@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+QUESTION="$1"
+
+while true; do
+
+  printf "$QUESTION [y/n] "
+  read ANSWER
+
+  if [ "$ANSWER" == "y" ]; then
+
+    exit 0
+
+  elif [ "$ANSWER" == "n" ]; then
+
+    exit 1
+
+  fi
+
+done

@@ -69,7 +69,7 @@ Most changes to system configuration and/or the controller can be tested in a vi
 To create and run a VM, run:
 
 ```bash
-./build # vm target
+./build vm
 ./result/bin/run-in-vm
 ```
 
@@ -131,7 +131,7 @@ Commonly used update and deploy URLs (channels) can be used with shortcuts defin
 To release an update to the `develop` channel:
 
 ```
-./build # develop target
+./build develop
 ./result/bin/deploy-update --key PATH_TO_KEY.pem
 ```
 

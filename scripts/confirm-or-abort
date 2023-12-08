@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd $(dirname "$0")
+
+if [ -n "${1:-}" ]; then
+
+  QUESTION="$1"
+
+else
+
+  QUESTION="Confirm?"
+
+fi
+
+./yes-no-question "$QUESTION" || (echo "Aborting." && exit 1)
