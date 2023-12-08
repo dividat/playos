@@ -1,0 +1,11 @@
+#! /usr/bin/env bash
+set -euo pipefail
+
+echo "On branch:"
+echo
+echo "    $(git rev-parse --abbrev-ref HEAD)"
+echo
+echo "With last commit:"
+echo
+echo "    $(git log -1 --pretty="%h %s")"
+echo
