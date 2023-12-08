@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+# option-prompt "Select a fruit" apple orange banana
+#
+# Keeps prompting for input until a known option is entered.
+# Prints the prompt to stderr, the selected option to stdout.
+
+set -euo pipefail
+
+PROMPT="$1"
+shift
+
+OPTIONS=( "$@" )
+OPTIONS_LIST=$(IFS="¶"; echo "${OPTIONS[*]}" | sed 's|¶| / |g')
+
+while true; do
+
+  printf "$PROMPT [ $OPTIONS_LIST ] " >&2
+  read ANSWER
+
+  for OPTION in "${OPTIONS[@]}"; do
+    if [ "$ANSWER" == "$OPTION" ]; then
+      echo "$OPTION"
+      exit 0
+    fi
+  done
+
+done
