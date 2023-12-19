@@ -61,6 +61,9 @@ class BrowserWidget(QtWidgets.QWidget):
         # Shortcut to manually reload
         self.reload_shortcut = QtWidgets.QShortcut('CTRL+R', self)
         self.reload_shortcut.activated.connect(self.reload)
+        # Shortcut to perform a hard refresh
+        self.hard_refresh_shortcut = QtWidgets.QShortcut('CTRL+SHIFT+R', self)
+        self.hard_refresh_shortcut.activated.connect(self.hard_refresh)
 
         # Prepare reload timer
         self._reload_timer = QtCore.QTimer(self)
@@ -76,6 +79,18 @@ class BrowserWidget(QtWidgets.QWidget):
 
         if self._reload_timer.isActive():
             self._reload_timer.stop()
+
+    def hard_refresh(self):
+        """ Clear cache, then reload.
+
+        Does not affect cookies or localstorage contents.
+
+        NOTE This clears the entire HTTP cache, assumed to be OK as the kiosk targets a specific page.
+        """
+        logging.info(f"Clearing HTTP cache (hard refresh)")
+        QtWebEngineWidgets.QWebEngineProfile.defaultProfile().clearHttpCache()
+
+        self.reload()
 
     def load(self, url: str):
         """ Load specific URL.
