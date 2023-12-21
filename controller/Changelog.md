@@ -1,5 +1,9 @@
 # [UNRELEASED]
 
+## Added
+
+- os: Added localization options for Polish and Czech
+
 # [2023.9.0] - 2023-09-12
 
 # [2023.9.0-VALIDATION] - 2023-09-11

@@ -101,19 +101,22 @@ module LocalizationGui = struct
     in
     let%lwt current_lang = Locale.get_lang () in
     let langs =
-      [ "nl_NL.UTF-8", "Dutch"
+      [ "cs_CZ.UTF-8", "Czech"
+      ; "nl_NL.UTF-8", "Dutch"
       ; "en_UK.UTF-8", "English (UK)"
       ; "en_US.UTF-8", "English (US)"
       ; "fi_FI.UTF-8", "Finnish"
       ; "fr_FR.UTF-8", "French"
       ; "de_DE.UTF-8", "German"
       ; "it_IT.UTF-8", "Italian"
+      ; "pl_PL.UTF-8", "Polish"
       ; "es_ES.UTF-8", "Spanish"
       ]
     in
     let%lwt current_keymap = Locale.get_keymap () in
     let keymaps =
-      [ "nl", "Dutch"
+      [ "cz", "Czech"
+      ; "nl", "Dutch"
       ; "gb", "English (UK)"
       ; "us", "English (US)"
       ; "fi", "Finnish"
@@ -121,6 +124,7 @@ module LocalizationGui = struct
       ; "de", "German"
       ; "ch", "German (Switzerland)"
       ; "it", "Italian"
+      ; "pl", "Polish"
       ; "es", "Spanish"
       ]
     in
