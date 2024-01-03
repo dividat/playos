@@ -59,11 +59,11 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.loadFinished.connect(self._load_finished)
 
         # Shortcut to manually reload
-        self.reload_shortcut = QtWidgets.QShortcut('CTRL+R', self)
-        self.reload_shortcut.activated.connect(self.reload)
+        self._reload_shortcut = QtWidgets.QShortcut('CTRL+R', self)
+        self._reload_shortcut.activated.connect(self.reload)
         # Shortcut to perform a hard refresh
-        self.hard_refresh_shortcut = QtWidgets.QShortcut('CTRL+SHIFT+R', self)
-        self.hard_refresh_shortcut.activated.connect(self.hard_refresh)
+        self._hard_refresh_shortcut = QtWidgets.QShortcut('CTRL+SHIFT+R', self)
+        self._hard_refresh_shortcut.activated.connect(self._hard_refresh)
 
         # Prepare reload timer
         self._reload_timer = QtCore.QTimer(self)
@@ -80,18 +80,6 @@ class BrowserWidget(QtWidgets.QWidget):
         if self._reload_timer.isActive():
             self._reload_timer.stop()
 
-    def hard_refresh(self):
-        """ Clear cache, then reload.
-
-        Does not affect cookies or localstorage contents.
-
-        NOTE This clears the entire HTTP cache, assumed to be OK as the kiosk targets a specific page.
-        """
-        logging.info(f"Clearing HTTP cache (hard refresh)")
-        QtWebEngineWidgets.QWebEngineProfile.defaultProfile().clearHttpCache()
-
-        self.reload()
-
     def load(self, url: str):
         """ Load specific URL.
         """
@@ -107,6 +95,18 @@ class BrowserWidget(QtWidgets.QWidget):
         if not success:
             self._view(Status.NETWORK_ERROR)
             self._reload_timer.start(reload_on_network_error_after)
+
+    def _hard_refresh(self):
+        """ Clear cache, then reload.
+
+        Does not affect cookies or localstorage contents.
+
+        NOTE This clears the entire HTTP cache, assumed to be OK as the kiosk targets a specific page.
+        """
+        logging.info(f"Clearing HTTP cache (hard refresh)")
+        self._webview.page().profile().clearHttpCache()
+
+        self.reload()
 
     def _proxy_auth(self, get_current_proxy, url, auth, proxyHost):
         proxy = get_current_proxy()
