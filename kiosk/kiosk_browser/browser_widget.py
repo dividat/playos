@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtWidgets, QtWebEngineWidgets, QtGui, QtSvg
 from enum import Enum, auto
 import logging
 import re
+import time
 
 from kiosk_browser import system
 
@@ -106,6 +107,11 @@ class BrowserWidget(QtWidgets.QWidget):
         logging.info(f"Clearing HTTP cache (hard refresh)")
         self._webview.page().profile().clearHttpCache()
 
+        # Sleep before triggering reload to avoid a possible race condition.
+        # Future Qt versions may provide a signal on `QWebEngineProfile` to
+        # allow to queue the reload on clear-cache completion instead.
+        # https://bugreports.qt.io/browse/QTBUG-111541
+        time.sleep(0.25)
         self.reload()
 
     def _proxy_auth(self, get_current_proxy, url, auth, proxyHost):
