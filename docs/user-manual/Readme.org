@@ -131,6 +131,10 @@ View what has been added, changed and fixed with each version.
 
 A status screen providing a brief status report about various components of the system is available on ~tty8~. It can be accessed using the key combination ~Ctrl-Alt-F8~. To get back from the status screen to the graphical interface, use ~Ctrl-Alt-F7~.
 
+** Clearing kiosk browser cache
+
+At times network issues may cause corrupted media resources to end up in the kiosk browser's cache. In this case it may be helpful to clear this cache to force all resources being downloaded again. A hard refresh can be triggered using ~Ctrl-Shift-R~, which clears the cache and then reloads the kiosk application. The hard refresh does not affect user sessions or preferences, so it can be performed without the user having to log in again.
+
 ** Wiping user data
 
 Certain user data such as Play login credentials, wireless settings are stored persistently on the computer's disk.

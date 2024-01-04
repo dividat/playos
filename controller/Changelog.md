@@ -2,6 +2,7 @@
 
 ## Added
 
+- kiosk: Add a key combination to perform hard refresh (Ctrl-Shift-R)
 - os: Added localization options for Polish and Czech
 
 # [2023.9.0] - 2023-09-12
