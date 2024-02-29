@@ -136,6 +136,7 @@ class BrowserWidget(QtWidgets.QWidget):
             self._loading_page.hide()
             self._network_error_page.hide()
             self._webview.show()
+            self._webview.setFocus()
 
 def user_agent_with_system(user_agent, system_name, system_version):
     """Inject a specific system into a user agent string"""
