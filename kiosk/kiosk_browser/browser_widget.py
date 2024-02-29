@@ -95,6 +95,7 @@ class BrowserWidget(QtWidgets.QWidget):
     def _load_finished(self, success):
         if success:
             self._view(Status.LOADED)
+            self._webview.setFocus()
         if not success:
             self._view(Status.NETWORK_ERROR)
             self._reload_timer.start(reload_on_network_error_after)
