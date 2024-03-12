@@ -5,6 +5,12 @@
 - kiosk: Add a key combination to perform hard refresh (Ctrl-Shift-R)
 - os: Added localization options for Polish and Czech
 
+# [2023.9.1-VALIDATION] - 2024-03-12
+
+## Changed
+
+- kiosk: Automatically give keyboard focus to active web views
+
 # [2023.9.0] - 2023-09-12
 
 # [2023.9.0-VALIDATION] - 2023-09-11
