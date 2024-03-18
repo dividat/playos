@@ -8,7 +8,7 @@ type t = OBus_peer.Private.t
 (* Timezone Configuration *)
 
 let get_configured_timezone () =
-  Util.read_from_file log_src "/var/lib/gui-localization/timezone"
+  (fun () -> Util.read_from_file log_src "/var/lib/gui-localization/timezone")
   |> Lwt_result.catch
   >|= Base.Result.ok
 

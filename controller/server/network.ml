@@ -4,33 +4,35 @@ open Sexplib.Std
 let log_src = Logs.Src.create "network"
 
 let enable_and_scan_wifi_devices ~connman =
-  begin
-    let open Connman in
-    (* Get all available technolgies *)
-    let%lwt technologies = Manager.get_technologies connman in
+  Lwt_result.catch
+    (fun () ->
+      begin
+        let open Connman in
+        (* Get all available technolgies *)
+        let%lwt technologies = Manager.get_technologies connman in
 
-    (* enable all wifi devices *)
-    let%lwt () =
-      technologies
-      |> List.filter (fun (t:Technology.t) ->
-          t.type' = Technology.Wifi && not t.powered)
-      |> List.map (Technology.enable)
-      |> Lwt.join
-    in
+        (* enable all wifi devices *)
+        let%lwt () =
+          technologies
+          |> List.filter (fun (t:Technology.t) ->
+              t.type' = Technology.Wifi && not t.powered)
+          |> List.map (Technology.enable)
+          |> Lwt.join
+        in
 
-    (* and start a scan. *)
-    let%lwt () =
-      technologies
-      |> List.filter (fun (t:Technology.t) -> t.type' = Technology.Wifi)
-      |> List.map (Technology.scan)
-      |> Lwt.join
-    in
+        (* and start a scan. *)
+        let%lwt () =
+          technologies
+          |> List.filter (fun (t:Technology.t) -> t.type' = Technology.Wifi)
+          |> List.map (Technology.scan)
+          |> Lwt.join
+        in
 
-    return_unit
-  end
-  (* Add a timeout to scan *)
-  |> (fun p -> [p; Lwt_unix.timeout 30.0] |> Lwt.pick)
-  |> Lwt_result.catch
+        return_unit
+      end
+      (* Add a timeout to scan *)
+      |> (fun p -> [p; Lwt_unix.timeout 30.0] |> Lwt.pick)
+    )
 
 
 let init ~connman =
