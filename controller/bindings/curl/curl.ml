@@ -98,7 +98,7 @@ let request ?proxy ?(headers = []) ?data ?(options = []) url =
       ; Base.List.to_array options
       ])
   in
-  match%lwt (try exec cmd with exn -> Lwt.fail exn) |> Lwt_result.catch with
+  match%lwt Lwt_result.catch (fun () -> exec cmd) with
   | Ok (Unix.WEXITED 0, stdout, _) ->
     (match parse_status_code_and_body stdout with
     | Some (code, body) ->

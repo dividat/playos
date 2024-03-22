@@ -1,9 +1,9 @@
-{stdenv, fetchurl, autoreconfHook, dbus, glib, curl, json-glib, pkgconfig, makeWrapper, grub2, utillinux, squashfsTools, e2fsprogs, gnutar, xz, ...}:
+{stdenv, fetchurl, autoreconfHook, dbus, glib, curl, json-glib, pkg-config, makeWrapper, grub2, utillinux, squashfsTools, e2fsprogs, gnutar, xz, ...}:
 stdenv.mkDerivation rec {
   name = "rauc-${version}";
   version = "1.2";
 
-  buildInputs = [ autoreconfHook glib curl json-glib pkgconfig makeWrapper dbus ];
+  buildInputs = [ autoreconfHook glib curl json-glib pkg-config makeWrapper dbus ];
 
   src = fetchurl {
     url = "https://github.com/rauc/rauc/releases/download/v${version}/rauc-${version}.tar.xz";

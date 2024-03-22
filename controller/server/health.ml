@@ -46,9 +46,11 @@ let rec run ~systemd ~rauc ~set_state =
     (* Mark currently booted slot as "good" *)
     begin
       match%lwt
-        Rauc.get_booted_slot rauc
-        >>= Rauc.mark_good rauc
-        |> Lwt_result.catch
+        Lwt_result.catch
+          (fun () ->
+            Rauc.get_booted_slot rauc
+            >>= Rauc.mark_good rauc
+          )
       with
       | Ok () -> set Good
       | Error exn -> set (Bad ("Failed to mark system good: " ^ (Printexc.to_string exn)))

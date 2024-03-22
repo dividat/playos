@@ -16,9 +16,9 @@ in buildGoModule rec {
     sha256 = "sha256-OLSd+q5oe5Fd7GtKsJkkpTiEndpt/x1X0xdzGzZ7Zpg=";
   };
 
-  vendorSha256 = "sha256-oL7upl231aWbkBfybmP5fSTySFJkEI3vGKaWJu+Q30Q=";
+  vendorHash = "sha256-oL7upl231aWbkBfybmP5fSTySFJkEI3vGKaWJu+Q30Q=";
 
-  nativeBuildInputs = with pkgs; [ pkgconfig pcsclite ];
+  nativeBuildInputs = with pkgs; [ pkg-config pcsclite ];
   buildInputs = with pkgs; [ pcsclite ];
 
   ldflags = [
