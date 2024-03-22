@@ -5,6 +5,7 @@
 - kiosk: Add a key combination to perform hard refresh (Ctrl-Shift-R)
 - os: Added localization options for Polish and Czech
 - controller: Add licensing page in System Settings
+- status screen: Display MAC addresses in text and QR code
 
 ## Changed
 

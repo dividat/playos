@@ -10,6 +10,8 @@ let
       while :; do
         screen=$(xrandr --current | grep '*' | awk '{print $1}')
         networkCount=$(connmanctl services | grep wifi | wc -l)
+        ethernetMacs=$(cat /sys/class/net/e*/address 2>/dev/null | grep -v '^$' | awk '{print "Ethernet " $0}' | tr '\n' '  ')
+        wlanMacs=$(cat /sys/class/net/wl*/address 2>/dev/null | grep -v '^$' | awk '{print "WLAN " $0}' | tr '\n' '  ')
         rfid=$(opensc-tool --list-readers | pr -T -o 2)
         dataDiskFree=$(df -h /mnt/data | pr -T -o 2)
         controller=$(systemctl is-active playos-controller)
@@ -23,8 +25,11 @@ let
           "Persistent storage:" \
           "$dataDiskFree" \
           "Controller: $controller" \
-          "Updated at: $time" \
+          "Network interfaces: $ethernetMacs  $wlanMacs" \
           > ${ttyPath}
+        qrencode -m 2 -t utf8 <<< "$ethernetMacs  $wlanMacs" \
+          > ${ttyPath}
+        printf "\n%s" "Updated at: $time" > ${ttyPath}
         sleep 5
       done
     '';
@@ -43,6 +48,7 @@ in
         xorg.xrandr
         opensc
         coreutils
+        qrencode
       ];
       description = "PlayOS status";
       wantedBy = [ "multi-user.target" ];
