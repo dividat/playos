@@ -5,6 +5,10 @@
 - kiosk: Add a key combination to perform hard refresh (Ctrl-Shift-R)
 - os: Added localization options for Polish and Czech
 
+## Changed
+
+- os: Ignore suspend and hibernation key presses, but interpret as poweroff when long-pressed
+
 # [2023.9.1] - 2024-03-15
 
 # [2023.9.1-VALIDATION] - 2024-03-12

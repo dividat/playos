@@ -118,6 +118,18 @@ rec {
         };
       };
 
+      # Ignore system control keys that do not make sense for kiosk applications
+      services.logind.extraConfig = ''
+        HandleSuspendKey=ignore
+        HandleRebootKey=ignore
+        HandleHibernateKey=ignore
+        HandlePowerKey=poweroff
+        HandlePowerKeyLongPress=poweroff
+        HandleRebootKeyLongPress=poweroff
+        HandleSuspendKeyLongPress=poweroff
+        HandleHibernateKeyLongPress=poweroff
+      '';
+
       # Driver service
       systemd.services."dividat-driver" = {
         description = "Dividat Driver";
