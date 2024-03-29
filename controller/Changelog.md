@@ -9,6 +9,8 @@
 
 - os: Update nixpkgs channel to 23.11
 - os: Set noexec for volatile root and persistent storage mounts
+- os: Restrict remote maintenance to the ZeroTier network
+- os: Limit permitted SSH modes and forwarding options
 
 ## Removed
 
