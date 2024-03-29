@@ -3,15 +3,19 @@ let
   cfg = config.playos.remoteMaintenance;
 in
 {
+  imports = [
+    (lib.mkRemovedOptionModule [ "playos" "remoteMaintenance" "networks" ] "A single network is now expected to be set via `playos.remoteMaintenance.network`.")
+  ];
+
   options = {
     playos.remoteMaintenance = with lib; {
       enable = mkEnableOption "Remote maintenance";
 
-      networks = mkOption {
-        default = [];
-        example = [];
-        type = types.listOf types.str;
-        description = "ZeroTier networks to join";
+      network = mkOption {
+        default = null;
+        example = "d5e04297a16fa690";
+        type = types.str;
+        description = "ZeroTier network to join";
       };
 
       authorizedKeys = mkOption {
@@ -32,9 +36,10 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # Configure ZeroTier to connect to maintenance network
     services.zerotierone = {
       enable = true;
-      joinNetworks = cfg.networks;
+      joinNetworks = [ cfg.network ];
     };
 
     # If opt-in is enabled, prevent ZeroTier from running on startup
