@@ -59,6 +59,15 @@ in
 
       # Do not add general firewall exception
       openFirewall = false;
+
+      # Restrict forwarding
+      extraConfig = ''
+        AllowTcpForwarding local
+        X11Forwarding no
+        AllowAgentForwarding no
+        AllowStreamLocalForwarding no
+      '';
+
     };
     # Only on the ZeroTier maintenance interface
     networking.firewall.interfaces."${maintenanceInterface}".allowedTCPPorts = [ 22 ];
