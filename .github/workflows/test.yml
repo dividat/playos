@@ -3,7 +3,34 @@ on:
   pull_request:
   push:
 jobs:
-  tests:
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      integration_tests: ${{ steps.set-matrix.outputs.integration_tests }}
+    steps:
+    - uses: actions/checkout@v3
+    - id: set-matrix
+      run: |
+        FILES=$(find testing/integration -name '*.nix' -printf '"%p",')
+        FILES_JSON="[${FILES%,}]"
+        echo "::set-output name=integration_tests::${FILES_JSON}"
+
+  integration-tests:
+    needs: prepare-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        file: ${{fromJson(needs.prepare-matrix.outputs.integration_tests)}}
+    steps:
+    - uses: actions/checkout@v3
+    - uses: cachix/install-nix-action@v18
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+        extra_nix_config: |
+          system-features = nixos-test benchmark big-parallel kvm
+    - run: NIXPKGS_ALLOW_UNFREE=1 nix-build ${{ matrix.file }}
+
+  kiosk-tests:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -12,4 +39,15 @@ jobs:
         nix_path: nixpkgs=channel:nixos-unstable
         extra_nix_config: |
           system-features = nixos-test benchmark big-parallel kvm
-    - run: testing/run
+    - run: cd kiosk && nix-shell --run bin/test
+
+  build-vm:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: cachix/install-nix-action@v18
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+        extra_nix_config: |
+          system-features = nixos-test benchmark big-parallel kvm
+    - run: NIXPKGS_ALLOW_UNFREE=1 ./build vm
