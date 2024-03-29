@@ -45,27 +45,28 @@ let get_latest_version ~proxy url =
 
 (** Get version information *)
 let get_version_info ~proxy url rauc =
-  (
-    let%lwt latest = get_latest_version ~proxy url in
-    let%lwt rauc_status = Rauc.get_status rauc in
+  Lwt_result.catch
+    (fun () ->
+      let%lwt latest = get_latest_version ~proxy url in
+      let%lwt rauc_status = Rauc.get_status rauc in
 
-    let system_a_version = rauc_status.a.version |> semver_of_string in
-    let system_b_version = rauc_status.b.version |> semver_of_string in
+      let system_a_version = rauc_status.a.version |> semver_of_string in
+      let system_b_version = rauc_status.b.version |> semver_of_string in
 
-    match%lwt Rauc.get_booted_slot rauc with
-    | SystemA ->
-      { latest = latest
-      ; booted = system_a_version
-      ; inactive = system_b_version
-      }
-      |> return
-    | SystemB ->
-      { latest = latest
-      ; booted = system_b_version
-      ; inactive = system_a_version
-      }
-      |> return
-  ) |> Lwt_result.catch
+      match%lwt Rauc.get_booted_slot rauc with
+      | SystemA ->
+        { latest = latest
+        ; booted = system_a_version
+        ; inactive = system_b_version
+        }
+        |> return
+      | SystemB ->
+        { latest = latest
+        ; booted = system_b_version
+        ; inactive = system_a_version
+        }
+        |> return
+    )
 
 let bundle_file_name version =
   Format.sprintf "%s-%s.raucb" bundle_name version
@@ -193,7 +194,7 @@ let rec run ~connman ~update_url ~rauc ~set_state =
   | Downloading {url; version} ->
     (* download latest version *)
     let%lwt proxy = get_proxy_uri connman in
-    (match%lwt download ?proxy (Uri.of_string url) version |> Lwt_result.catch with
+    (match%lwt Lwt_result.catch (fun () -> download ?proxy (Uri.of_string url) version) with
      | Ok bundle_path ->
        Installing bundle_path
        |> set
@@ -214,7 +215,7 @@ let rec run ~connman ~update_url ~rauc ~set_state =
 
   | Installing bundle_path ->
     (* install bundle via RAUC *)
-    (match%lwt Rauc.install rauc bundle_path |> Lwt_result.catch with
+    (match%lwt Lwt_result.catch (fun () -> Rauc.install rauc bundle_path) with
      | Ok () ->
        let%lwt () =
          Logs_lwt.info (fun m -> m "succesfully installed update (%s)" bundle_path)

@@ -19,19 +19,21 @@ type status = {
 }
 
 let get_status () =
-  (let%lwt authtoken = get_authtoken () in
-  match%lwt
-    Curl.request
-      ~headers:[("X-ZT1-Auth", authtoken)]
-      (Uri.with_path base_url "status")
-  with
-  | RequestSuccess (_, body) ->
-      let open Ezjsonm in
-      from_string body
-      |> get_dict
-      |> List.assoc "address"
-      |> get_string
-      |> fun address -> return {address}
-  | RequestFailure error ->
-      Lwt.fail_with (Curl.pretty_print_error error))
-  |> Lwt_result.catch
+  Lwt_result.catch
+    (fun () ->
+      let%lwt authtoken = get_authtoken () in
+      match%lwt
+        Curl.request
+          ~headers:[("X-ZT1-Auth", authtoken)]
+          (Uri.with_path base_url "status")
+      with
+      | RequestSuccess (_, body) ->
+          let open Ezjsonm in
+          from_string body
+          |> get_dict
+          |> List.assoc "address"
+          |> get_string
+          |> fun address -> return {address}
+      | RequestFailure error ->
+          Lwt.fail_with (Curl.pretty_print_error error)
+    )
