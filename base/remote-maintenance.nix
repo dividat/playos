@@ -1,6 +1,7 @@
 {config, pkgs, lib, ... }:
 let
   cfg = config.playos.remoteMaintenance;
+  maintenanceInterface = "ztmntnc";
 in
 {
   imports = [
@@ -41,9 +42,12 @@ in
       enable = true;
       joinNetworks = [ cfg.network ];
     };
-
     # If opt-in is enabled, prevent ZeroTier from running on startup
     systemd.services.zerotierone.wantedBy = lib.mkIf cfg.requireOptIn (lib.mkForce []);
+    # Create devicemap to set known interface name
+    systemd.services.zerotierone.preStart = lib.mkAfter ''
+      echo "${cfg.network}=${maintenanceInterface}" > /var/lib/zerotier-one/devicemap
+    '';
 
     # Allow remote access via OpenSSH
     services.openssh = {
@@ -52,9 +56,13 @@ in
       # Restrict authentication to authorized keys
       settings.PasswordAuthentication = false;
       settings.KbdInteractiveAuthentication = false;
-    };
 
-    # only with these special keys:
+      # Do not add general firewall exception
+      openFirewall = false;
+    };
+    # Only on the ZeroTier maintenance interface
+    networking.firewall.interfaces."${maintenanceInterface}".allowedTCPPorts = [ 22 ];
+    # Only with the specified authorized keys
     users.users.root.openssh.authorizedKeys.keys = cfg.authorizedKeys;
     
   };
