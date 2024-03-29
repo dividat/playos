@@ -32,9 +32,12 @@ pkgs.nixosTest {
   testScript = ''
     def is_zt_operational(node):
         node.wait_for_unit('zerotierone.service')
+        # Wait a moment for the service to come up
+        node.succeed('sleep 1')
         # Config folder created
         node.succeed('ls /var/lib/zerotier-one/')
         # Interface created with fixed name
+        node.wait_for_unit('sys-devices-virtual-net-ztmntnc.device')
         node.succeed('ip link show ztmntnc')
         # Firewall is configured for SSH on ZT interface
         node.succeed('iptables -nvL | grep ztmntnc | grep "tcp dpt:22"')
@@ -49,7 +52,7 @@ pkgs.nixosTest {
 
     # Auto-connected makes ZT operational on its own
     autoConnected.start()
-    autoConnected.wait_for_unit('zerotierone.service')
+    defaultConnectionSetting.wait_for_unit('multi-user.target')
     is_zt_operational(autoConnected)
   '';
 }
