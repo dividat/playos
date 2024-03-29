@@ -6,7 +6,7 @@ set -euxo pipefail
 INTEGRATION_TEST_DIR="$(dirname "$(realpath "$0")")/integration"
 
 for TEST_DEF in $(ls "$INTEGRATION_TEST_DIR"/*.nix); do
-  nix-build "$TEST_DEF"
+  NIXPKGS_ALLOW_UNFREE=1 nix-build "$TEST_DEF"
 done
 
 # Kiosk browser
