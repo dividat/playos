@@ -28,6 +28,7 @@ jobs:
         nix_path: nixpkgs=channel:nixos-unstable
         extra_nix_config: |
           system-features = nixos-test benchmark big-parallel kvm
+    - uses: DeterminateSystems/magic-nix-cache-action@v4
     - run: NIXPKGS_ALLOW_UNFREE=1 nix-build ${{ matrix.file }}
 
   kiosk-tests:
@@ -39,6 +40,7 @@ jobs:
         nix_path: nixpkgs=channel:nixos-unstable
         extra_nix_config: |
           system-features = nixos-test benchmark big-parallel kvm
+    - uses: DeterminateSystems/magic-nix-cache-action@v4
     - run: cd kiosk && nix-shell --run bin/test
 
   build-vm:
@@ -50,4 +52,5 @@ jobs:
         nix_path: nixpkgs=channel:nixos-unstable
         extra_nix_config: |
           system-features = nixos-test benchmark big-parallel kvm
+    - uses: DeterminateSystems/magic-nix-cache-action@v4
     - run: NIXPKGS_ALLOW_UNFREE=1 ./build vm
