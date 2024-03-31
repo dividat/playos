@@ -32,13 +32,10 @@ pkgs.nixosTest {
   testScript = ''
     def is_zt_operational(node):
         node.wait_for_unit('zerotierone.service')
-        # Wait a moment for the service to come up
-        node.succeed('sleep 1')
-        # Config folder created
-        node.succeed('ls /var/lib/zerotier-one/')
-        # Interface created with fixed name
-        node.wait_for_unit('sys-devices-virtual-net-ztmntnc.device')
-        node.succeed('ip link show ztmntnc')
+        # Config folder created after service started up
+        node.wait_until_succeeds('ls /var/lib/zerotier-one/', timeout=5)
+        # Interface created with fixed name, this may take several seconds on the test VM
+        node.wait_until_succeeds('ip link show ztmntnc', timeout=20)
         # Firewall is configured for SSH on ZT interface
         node.succeed('iptables -nvL | grep ztmntnc | grep "tcp dpt:22"')
 
