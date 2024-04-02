@@ -25,35 +25,6 @@ rec {
     ];
 
     module = { config, lib, pkgs, ... }:
-    let
-      selectDisplay = pkgs.writeShellScriptBin "select-display" ''
-        # Discover connected displays
-        scaling_pref=$(cat /var/lib/gui-localization/screen-scaling 2>/dev/null || echo "default")
-        connected_outputs=$(${pkgs.xorg.xrandr}/bin/xrandr | ${pkgs.gnugrep}/bin/grep ' connected' | ${pkgs.gawk}/bin/awk '{ print $1 }')
-        if [ -z "$connected_outputs" ]; then
-          echo "No connected outputs found. Trying to apply xrandr globally."
-          case "$scaling_pref" in
-            "default" | "full-hd")
-              ${pkgs.xorg.xrandr}/bin/xrandr --size 1920x1080;;
-            "native")
-              ${pkgs.xorg.xrandr}/bin/xrandr --auto;;
-            *)
-              echo "Unknown scaling preference '$scaling_pref'. Ignoring.";;
-          esac
-        else
-          for output in $connected_outputs; do
-            case "$scaling_pref" in
-              "default" | "full-hd")
-                ${pkgs.xorg.xrandr}/bin/xrandr --output $output --mode 1920x1080;;
-              "native")
-                ${pkgs.xorg.xrandr}/bin/xrandr --output $output --auto;;
-              *)
-                echo "Unknown scaling preference '$scaling_pref'. Ignoring.";;
-            esac
-          done
-        fi
-      '';
-    in
     {
 
       imports = [ ./application/playos-status.nix ];
@@ -75,7 +46,13 @@ rec {
       };
 
       # System-wide packages
-      environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme ];
+      environment.systemPackages = with pkgs; [
+        breeze-contrast-cursor-theme
+
+        gnugrep
+        gawk
+        xorg.xrandr
+      ];
 
       # Kiosk session
       services.xserver = let sessionName = "kiosk-browser";
@@ -101,7 +78,7 @@ rec {
               fi
 
               # Set preferred screen resolution
-              ${selectDisplay}/bin/select-display
+              ${./application/select-display.sh} > /home/play/select-display-output
 
               # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-5/qtwebengine-debugging.html)
               export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
@@ -146,10 +123,27 @@ rec {
         wantedBy = [ "multi-user.target" ];
       };
 
-      # Video
+      # Monitor hotplugging
       services.udev.extraRules = ''
-        ACTION=="change", SUBSYSTEM=="drm", ENV{DISPLAY}=":0", ENV{XAUTHORITY}="/home/play/.Xauthority", RUN+="${selectDisplay}/bin/select-display"
+        ACTION=="change", SUBSYSTEM=="drm", RUN+="${pkgs.systemd}/bin/systemctl restart select-display.service"
       '';
+      systemd.services."select-display" = {
+        description = "Select best display to output to";
+        serviceConfig.Type = "oneshot";
+        serviceConfig.ExecStart = "${pkgs.bash}/bin/bash ${./application/select-display.sh}";
+        serviceConfig.User = "play";
+        serviceConfig.After = "multi-user.target";
+        environment = {
+          XAUTHORITY = "${config.users.users.play.home}/.Xauthority";
+          DISPLAY = ":0";
+        };
+        path = with pkgs; [
+          gnugrep
+          gawk
+          xorg.xrandr
+        ];
+        wantedBy = [ "multi-user.target" ];
+      };
 
       # Audio
       sound.enable = true;
