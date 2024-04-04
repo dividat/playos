@@ -8,6 +8,11 @@
 ## Changed
 
 - os: Update nixpkgs channel to 23.11
+- os: Set noexec for volatile root and persistent storage mounts
+
+## Removed
+
+- os: Remove unnecessary administration capabilities for hardening
 
 # [2023.9.1] - 2024-03-15
 

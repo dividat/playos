@@ -44,17 +44,18 @@ with lib;
       (lib.mapAttrs
       (n: config: {
         device = "/mnt/data${n}";
-        options = [ "bind" ];
+        options = [ "bind" "noexec" ];
       })
       cfg.persistentFolders) //
       {
         # Force to override if other root has been configured
         "/" = mkForce {
           fsType = "tmpfs";
-          options = [ "mode=0755" ];
+          options = [ "mode=0755" "noexec" ];
         };
         "/mnt/data" = {
-          inherit (cfg.persistentDataPartition) device fsType options;
+          inherit (cfg.persistentDataPartition) device fsType;
+	  options = cfg.persistentDataPartition.options ++ [ "noexec" ];
           # mount during stage-1, so that directories can be initialized
           neededForBoot = true;
         };
