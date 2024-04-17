@@ -34,7 +34,7 @@ let html =
         [ p
           ~a:[ a_class [ "d-Paragraph" ] ]
           [ txt "Source code is available at "
-          ; a
+          ; span (* Using span as we don’t intend the user to leave the current page *)
             ~a:[ a_class [ "d-Licensing__Link" ] ]
             [ txt "https://github.com/dividat/playos" ]
           ; txt ", with instructions to build and modify the software."
