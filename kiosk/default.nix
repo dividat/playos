@@ -45,7 +45,6 @@ python3Packages.buildPythonApplication rec {
     export PYTHONPATH=./:$PYTHONPATH
 
     # Setup Qt environment
-    export QT_QPA_PLATFORM=wayland
     bashdir=$(mktemp -d)
     makeWrapper "$(type -p bash)" "$bashdir/bash" "''${qtWrapperArgs[@]}"
     exec "$bashdir/bash"
