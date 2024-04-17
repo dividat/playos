@@ -36,7 +36,7 @@ let html =
           [ txt "Source code is available at "
           ; a
             ~a:[ a_class [ "d-Licensing__Link" ] ]
-            [ txt "http://github.com/dividat/playos" ]
+            [ txt "https://github.com/dividat/playos" ]
           ; txt ", with instructions to build and modify the software."
           ]
         ]
