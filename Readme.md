@@ -166,4 +166,4 @@ here as well as in the relevant subdirectories.
 
 - [nixpkgs](https://github.com/NixOS/nixpkgs) ([MIT License](./controller/licenses/NIXPKGS))
 - [Feather](https://feathericons.com/) ([MIT License](./controller/licenses/FEATHER))
-- [Qt6](https://www.qt.io/product/qt6) ([LGPLv3 License](./controller/licenses/QT6)) – apply changes in [kiosk/default.nix](./kiosk/default.nix))
+- [Qt6](https://www.qt.io/product/qt6) ([LGPLv3 License](./controller/licenses/QT6)) – apply changes in [kiosk/default.nix](./kiosk/default.nix)
