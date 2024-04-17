@@ -4,6 +4,7 @@ type page =
   | Localization
   | SystemStatus
   | Changelog
+  | Licensing
   | Shutdown
 
 val html :

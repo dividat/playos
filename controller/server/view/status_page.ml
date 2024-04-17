@@ -12,10 +12,10 @@ type params =
   }
 
 let html { health; update; rauc } =
-  Page.html 
-    ~current_page:Page.SystemStatus 
-    ~header:(Page.header_title 
-      ~icon:Icon.screen 
+  Page.html
+    ~current_page:Page.SystemStatus
+    ~header:(Page.header_title
+      ~icon:Icon.screen
       [ txt "System Statu"
       ; a
           ~a:[ a_class [ "d-HiddenLink" ]

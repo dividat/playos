@@ -32,7 +32,6 @@ python3Packages.buildPythonApplication rec {
     pytest
     qt6.full
     qt6.qtbase
-    qt6.qtbase
     requests
     types-requests
   ];
