@@ -157,57 +157,13 @@ The following [dev tools](dev-tools/Readme.md) are available:
 
 ## Attribution and Licensing
 
-Most code in this repository is authored by the Dividat AG and the project contributors. This code is licensed under an MIT license.
+Most code in this repository is authored by the Dividat AG and the project
+contributors. This code is licensed under [the MIT license](./LICENSE).
 
-Some source files in this project are portions of other open-source project and may be released under different licenses. The applicable licenses are stated here as well as in the relevant subdirectories.
+Some source files in this project are portions of other open-source project and
+may be released under different licenses. The applicable licenses are stated
+here as well as in the relevant subdirectories.
 
-### [nixpkgs](https://github.com/NixOS/nixpkgs)
-
-```
-Copyright (c) 2003-2018 Eelco Dolstra and the Nixpkgs/NixOS contributors
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-```
-
-### [Feather](https://feathericons.com/)
-
-```
-The MIT License (MIT)
-
-Copyright (c) 2013-2017 Cole Bemis
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+- [nixpkgs](https://github.com/NixOS/nixpkgs) ([MIT License](./controller/licenses/NIXPKGS))
+- [Feather](https://feathericons.com/) ([MIT License](./controller/licenses/FEATHER)) – used in the [controller](./controller/Readme.md)
+- [Qt6](https://www.qt.io/product/qt6) ([LGPLv3 License](./controller/licenses/QT6)) – used in the [kiosk](./kiosk/Readme.md)

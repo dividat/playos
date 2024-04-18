@@ -4,6 +4,7 @@
 
 - kiosk: Add a key combination to perform hard refresh (Ctrl-Shift-R)
 - os: Added localization options for Polish and Czech
+- controller: Add licensing page in System Settings
 
 ## Changed
 
@@ -11,6 +12,7 @@
 - os: Set noexec for volatile root and persistent storage mounts
 - os: Restrict remote maintenance to the ZeroTier network
 - os: Limit permitted SSH modes and forwarding options
+- kiosk: Migrate to Qt6
 
 ## Removed
 

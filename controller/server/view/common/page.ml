@@ -6,6 +6,7 @@ type page =
   | Localization
   | SystemStatus
   | Changelog
+  | Licensing
   | Shutdown
 
 let menu_link page =
@@ -15,6 +16,7 @@ let menu_link page =
   | Localization -> "/localization"
   | SystemStatus -> "/status"
   | Changelog -> "/changelog"
+  | Licensing -> "/licensing"
   | Shutdown -> "/shutdown"
 
 let menu_icon page =
@@ -24,6 +26,7 @@ let menu_icon page =
   | Localization -> Icon.letter
   | SystemStatus -> Icon.screen
   | Changelog -> Icon.document
+  | Licensing -> Icon.copyright
   | Shutdown -> Icon.power
 
 let menu_label page =
@@ -33,6 +36,7 @@ let menu_label page =
   | Localization -> "Localization & Display"
   | SystemStatus -> "System Status"
   | Changelog -> "Changelog"
+  | Licensing -> "Licensing"
   | Shutdown -> "Shutdown"
 
 let menu_item current_page page =
@@ -41,15 +45,15 @@ let menu_item current_page page =
       (if current_page = Some page then [ "d-Menu__Item--Active" ] else [])
   in
   a
-    ~a:[ a_href (menu_link page) 
-    ; a_class class_ 
+    ~a:[ a_href (menu_link page)
+    ; a_class class_
     ]
     [ menu_icon page
     ; txt (menu_label page)
     ]
 
 let html ?current_page ?header content =
-  let header = 
+  let header =
     match header with
     | Some header -> [ Tyxml.Html.header ~a:[ a_class [ "d-Layout__Header" ] ] [ header ] ]
     | None -> []
@@ -68,13 +72,13 @@ let html ?current_page ?header content =
       (( aside
           ~a:[ a_class [ "d-Layout__Aside" ] ]
           [ nav
-              ([ Info; Network; Localization; SystemStatus; Changelog ]
+              ([ Info; Network; Localization; SystemStatus; Changelog; Licensing ]
                 |> List.concat_map (fun page -> [ menu_item current_page page; txt " " ]))
           ; div
               ~a: [ a_class [ "d-Layout__Shutdown" ] ]
               [ menu_item current_page Shutdown ]
-          ]) 
-      :: header 
+          ])
+      :: header
       @ [ main
               ~a:[ a_class [ "d-Layout__Main" ] ]
               [ content ]
@@ -93,7 +97,7 @@ let header_title ?back_url ?icon ?right_action content =
     | Some icon -> [ span ~a: [ a_class [ "d-Header__Icon" ] ] [ icon ] ]
     | None -> []
   in
-  let right_action = 
+  let right_action =
     match right_action with
     | Some right_action -> [ right_action ]
     | None -> []

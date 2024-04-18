@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt6 import QtWidgets, QtCore, QtGui
 
 from kiosk_browser import browser_widget, captive_portal, dialogable_widget, proxy as proxy_module
 
@@ -23,8 +23,8 @@ class MainWidget(QtWidgets.QWidget):
         self._dialogable_browser = dialogable_widget.DialogableWidget(
             parent = self,
             inner_widget = browser_widget.BrowserWidget(
-                url = kiosk_url, 
-                get_current_proxy = proxy.get_current, 
+                url = kiosk_url,
+                get_current_proxy = proxy.get_current,
                 parent = self),
             on_close = self._close_dialog)
 
@@ -44,7 +44,7 @@ class MainWidget(QtWidgets.QWidget):
         self.setLayout(self._layout)
 
         # Shortcuts
-        QtWidgets.QShortcut(toggle_settings_key, self).activated.connect(self._toggle_settings)
+        QtGui.QShortcut(toggle_settings_key, self).activated.connect(self._toggle_settings)
 
     # Private
 
