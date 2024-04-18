@@ -165,5 +165,5 @@ may be released under different licenses. The applicable licenses are stated
 here as well as in the relevant subdirectories.
 
 - [nixpkgs](https://github.com/NixOS/nixpkgs) ([MIT License](./controller/licenses/NIXPKGS))
-- [Feather](https://feathericons.com/) ([MIT License](./controller/licenses/FEATHER))
-- [Qt6](https://www.qt.io/product/qt6) ([LGPLv3 License](./controller/licenses/QT6)) – can be updated in [kiosk/default.nix](./kiosk/default.nix)
+- [Feather](https://feathericons.com/) ([MIT License](./controller/licenses/FEATHER)) – used in the [controller](./controller/Readme.md)
+- [Qt6](https://www.qt.io/product/qt6) ([LGPLv3 License](./controller/licenses/QT6)) – used in the [kiosk](./kiosk/Readme.md)
