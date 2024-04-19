@@ -26,7 +26,10 @@ rec {
 
     module = { config, lib, pkgs, ... }: {
 
-      imports = [ ./application/playos-status.nix ];
+      imports = [
+        ./application/playos-status.nix
+        ./application/power-management/default.nix
+      ];
 
       # Kiosk runs as a non-privileged user
       users.users.play = {
@@ -117,18 +120,6 @@ rec {
           '';
         };
       };
-
-      # Ignore system control keys that do not make sense for kiosk applications
-      services.logind.extraConfig = ''
-        HandleSuspendKey=ignore
-        HandleRebootKey=ignore
-        HandleHibernateKey=ignore
-        HandlePowerKey=poweroff
-        HandlePowerKeyLongPress=poweroff
-        HandleRebootKeyLongPress=poweroff
-        HandleSuspendKeyLongPress=poweroff
-        HandleHibernateKeyLongPress=poweroff
-      '';
 
       # Driver service
       systemd.services."dividat-driver" = {
