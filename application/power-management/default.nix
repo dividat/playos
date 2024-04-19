@@ -2,6 +2,9 @@
 
 let
 
+  user = "power-button-shutdown";
+  group = "power-button-shutdown";
+
   power-button-shutdown = pkgs.stdenv.mkDerivation {
     name = "power-button-shutdown";
     propagatedBuildInputs = [
@@ -15,34 +18,62 @@ let
 
 in {
 
-  # Ignore system control keys that do not make sense for kiosk applications
+  # Ignore system control keys that do not make sense for kiosk applications.
+  # Ignore power key as well, but set up a systemd service shutting down the
+  # computer on Power Button key press.
   services.logind.extraConfig = ''
-    HandleSuspendKey=ignore
-    HandleRebootKey=ignore
-    HandleHibernateKey=ignore
     HandlePowerKey=ignore
+    HandleRebootKey=ignore
+    HandleSuspendKey=ignore
+    HandleHibernateKey=ignore
     HandlePowerKeyLongPress=poweroff
     HandleRebootKeyLongPress=poweroff
     HandleSuspendKeyLongPress=poweroff
     HandleHibernateKeyLongPress=poweroff
   '';
 
+  users = {
+    users.${user} = {
+      description = "User executing power-button-shutdown.service";
+      group = group;
+      createHome = false;
+      isSystemUser = true;
+    };
+    groups.${group} = {};
+  };
+
   hardware.uinput.enable = lib.mkDefault true;
+
+  # Allow user of power-button-shutdown.service to shutdown the service
+  security.polkit = {
+    enable = true;
+    extraConfig = ''
+      polkit.addRule(function(action, subject) {
+        if (subject.user == "${user}" &&
+          subject.isInGroup("${group}") &&
+          action.id == "org.freedesktop.systemd1.manage-units" &&
+          action.lookup("unit") == "poweroff.target" &&
+          action.lookup("verb") == "start") {
+          return polkit.Result.YES;
+        }
+      })
+    '';
+  };
 
   systemd.services.power-button-shutdown = {
     enable = true;
-    description = "Detect power off key press, by power button device only, then shutdown computer";
+    description = "Detect Power Button key presses, by Power Button device only and not remote controls, then shutdown computer";
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       ExecStart = "${power-button-shutdown}/bin/power-button-shutdown";
       Restart = "always";
 
-      # Access to input devices without being root
-      # DynamicUser = true; # Currently prevent to shutdown the system
+      User = user;
+      Group = group;
       SupplementaryGroups = with config.users.groups; [ input.name uinput.name ];
 
-      # Hardening, see https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/hardware/kanata.nix#L117
-      # Not using DeviceAllow and DevicePolicy, as I couldn’t get access to device list with that.
+      # Hardening, see https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/hardware/kanata.nix#L117 for inspiration.
+      # Not using DeviceAllow and DevicePolicy, as this prevent listing devices otherwise.
       CapabilityBoundingSet = [ "" ];
       IPAddressDeny = [ "any" ];
       LockPersonality = true;
