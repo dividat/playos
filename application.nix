@@ -132,7 +132,10 @@ rec {
       # Driver service
       systemd.services."dividat-driver" = {
         description = "Dividat Driver";
-        serviceConfig.ExecStart = "${pkgs.dividat-driver}/bin/dividat-driver";
+        # Run driver with permissible origin limited to the origin of the kiosk URL
+        serviceConfig.ExecStart = ''
+          ${pkgs.dividat-driver}/bin/dividat-driver --permissible-origin $(echo "${config.playos.kioskUrl}" | grep -oP '^[^:]+://[^/]+')
+        '';
         serviceConfig.User = "play";
         wantedBy = [ "multi-user.target" ];
       };
