@@ -12,6 +12,7 @@
 - os: Set noexec for volatile root and persistent storage mounts
 - os: Restrict remote maintenance to the ZeroTier network
 - os: Limit permitted SSH modes and forwarding options
+- driver: Upgrade to add support for Senso firmware updates via app
 - kiosk: Migrate to Qt6
 
 ## Removed
