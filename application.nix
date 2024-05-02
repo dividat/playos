@@ -26,7 +26,10 @@ rec {
 
     module = { config, lib, pkgs, ... }: {
 
-      imports = [ ./application/playos-status.nix ];
+      imports = [
+        ./application/playos-status.nix
+        ./application/power-management/default.nix
+      ];
 
       # Kiosk runs as a non-privileged user
       users.users.play = {
