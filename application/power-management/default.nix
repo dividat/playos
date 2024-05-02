@@ -42,8 +42,6 @@ in {
     groups.${group} = {};
   };
 
-  hardware.uinput.enable = lib.mkDefault true;
-
   # Allow user of power-button-shutdown.service to shutdown the service
   security.polkit = {
     enable = true;
@@ -70,7 +68,7 @@ in {
 
       User = user;
       Group = group;
-      SupplementaryGroups = with config.users.groups; [ input.name uinput.name ];
+      SupplementaryGroups = with config.users.groups; [ input.name ];
 
       # Hardening, see https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/hardware/kanata.nix#L117 for inspiration.
       # Not using DeviceAllow and DevicePolicy, as this prevent listing devices otherwise.
