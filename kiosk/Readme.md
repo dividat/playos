@@ -28,3 +28,9 @@ Then, point a Chromium-based browser to `http://127.0.0.1:3355`.
 
 Additional documentation is available at:
 https://doc.qt.io/qt-6/qtwebengine-debugging.html
+
+## Supported platforms
+
+The kiosk is written with use within PlayOS in mind (implying connman and DBus as part of the system). To allow for testing web pages in the kiosk on developer machines, macOS is also supported, with the following limitations:
+
+- No proxy server support

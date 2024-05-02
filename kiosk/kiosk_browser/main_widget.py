@@ -14,7 +14,7 @@ class MainWidget(QtWidgets.QWidget):
         super(MainWidget, self).__init__()
 
         # Proxy
-        proxy = proxy_module.Proxy()
+        proxy = proxy_module.init()
         proxy.start_monitoring_daemon()
 
         # Browser widget
