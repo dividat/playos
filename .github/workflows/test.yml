@@ -43,6 +43,21 @@ jobs:
     - uses: DeterminateSystems/magic-nix-cache-action@v4
     - run: cd kiosk && nix-shell --run bin/test
 
+  kiosk-platform-smoke-test:
+    # While the smoke test should run on other platforms, it does not currently
+    # run on GitHub's Ubuntu runners, as they don't support GUI applications.
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - uses: cachix/install-nix-action@v18
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+    - name: Smoke Test
+      run: cd kiosk && nix-shell --run "python test/platform-smoke.py"
+
   build-vm:
     runs-on: ubuntu-latest
     steps:
