@@ -125,7 +125,7 @@ rec {
         # Allow use of TFTP client for Senso firmware update
         connectionTrackingModules = [ "tftp" ];
         extraCommands = ''
-          iptables -t raw -A OUTPUT -p udp --dport 69 -j CT --helper tftp
+          iptables --table raw --append OUTPUT --protocol udp --dport 69 --jump CT --helper tftp
         '';
       };
 
