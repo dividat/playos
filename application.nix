@@ -121,10 +121,24 @@ rec {
         };
       };
 
+      # Firewall configuration
+      networking.firewall = {
+        enable = true;
+
+        # Allow use of TFTP client for Senso firmware update
+        connectionTrackingModules = [ "tftp" ];
+        extraCommands = ''
+          iptables --table raw --append OUTPUT --protocol udp --dport 69 --jump CT --helper tftp
+        '';
+      };
+
       # Driver service
       systemd.services."dividat-driver" = {
         description = "Dividat Driver";
-        serviceConfig.ExecStart = "${pkgs.dividat-driver}/bin/dividat-driver";
+        # Run driver with permissible origin limited to the origin of the kiosk URL
+        serviceConfig.ExecStart = ''
+          ${pkgs.dividat-driver}/bin/dividat-driver --permissible-origin $(echo "${config.playos.kioskUrl}" | grep -oP '^[^:]+://[^/]+')
+        '';
         serviceConfig.User = "play";
         wantedBy = [ "multi-user.target" ];
       };
