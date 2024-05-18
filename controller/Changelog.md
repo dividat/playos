@@ -12,16 +12,13 @@
 - os: Set noexec for volatile root and persistent storage mounts
 - os: Restrict remote maintenance to the ZeroTier network
 - os: Limit permitted SSH modes and forwarding options
+- os: Ignore suspend and hibernation key presses, but interpret as poweroff when long-pressed
 - driver: Upgrade to add support for Senso firmware updates via app
 - kiosk: Migrate to Qt6
 
 ## Removed
 
 - os: Remove unnecessary administration capabilities for hardening
-
-## Changed
-
-- os: Ignore suspend and hibernation key presses, but interpret as poweroff when long-pressed
 
 # [2023.9.1] - 2024-03-15
 
