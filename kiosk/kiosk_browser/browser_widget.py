@@ -78,6 +78,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.setUrl(self._url)
         self._view(Status.LOADING)
 
+        # If reload_timer is ongoing, stop it, as we’re already reloading
         if self._reload_timer.isActive():
             self._reload_timer.stop()
 
@@ -107,12 +108,12 @@ class BrowserWidget(QtWidgets.QWidget):
         logging.info(f"Clearing HTTP cache (hard refresh)")
         self._webview.page().profile().clearHttpCache()
 
-        # Sleep before triggering reload to avoid a possible race condition.
-        # Future Qt versions may provide a signal on `QWebEngineProfile` to
-        # allow to queue the reload on clear-cache completion instead.
+        # Wait before triggering reload to avoid a possible race condition:
         # https://bugreports.qt.io/browse/QTBUG-111541
-        time.sleep(0.25)
-        self.reload()
+        # Version 6.7 of Qt will provide a signal once the cache has been cleared:
+        # https://doc.qt.io/qt-6/qwebengineprofile.html#clearHttpCacheCompleted
+        self._view(Status.LOADING)
+        self._reload_timer.start(250)
 
     def _proxy_auth(self, get_current_proxy, url, auth, proxyHost):
         proxy = get_current_proxy()
