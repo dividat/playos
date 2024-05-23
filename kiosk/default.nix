@@ -1,4 +1,4 @@
-{ pkgs, system_name, system_version }:
+{ pkgs, system_name, system_version, additional_inputs ? [] }:
 
 with pkgs;
 
@@ -30,11 +30,10 @@ python3Packages.buildPythonApplication rec {
     pygobject3
     pyqt6-webengine
     pytest
-    qt6.full
     qt6.qtbase
     requests
     types-requests
-  ];
+  ] ++ additional_inputs;
 
   postInstall = ''
     cp -r images/ $out/images
