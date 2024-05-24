@@ -25,9 +25,11 @@ let
           "Persistent storage:" \
           "$dataDiskFree" \
           "Controller: $controller" \
-          "Network interfaces: $ethernetMacs  $wlanMacs" \
+          "Network interfaces:" \
+          "  $ethernetMacs  $wlanMacs" \
           > ${ttyPath}
         qrencode -m 2 -t utf8 <<< "$ethernetMacs  $wlanMacs" \
+          | pr -T -o 2 \
           > ${ttyPath}
         printf "\n%s" "Updated at: $time" > ${ttyPath}
         sleep 5
