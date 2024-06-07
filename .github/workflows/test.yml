@@ -56,7 +56,7 @@ jobs:
       with:
         nix_path: nixpkgs=channel:nixos-unstable
     - name: Smoke Test
-      run: cd kiosk && nix-shell --run "python test/platform-smoke.py"
+      run: cd kiosk && nix-shell ./macos/shell.nix --run "python test/platform-smoke.py"
 
   build-vm:
     runs-on: ubuntu-latest
