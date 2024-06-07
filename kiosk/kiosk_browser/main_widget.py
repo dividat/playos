@@ -1,6 +1,7 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
 
 from kiosk_browser import browser_widget, captive_portal, dialogable_widget
+from system import System
 import platform
 
 class MainWidget(QtWidgets.QWidget):
@@ -16,8 +17,12 @@ class MainWidget(QtWidgets.QWidget):
 
         if platform.system() in ['Linux']:
             from dbus_proxy import DBusProxy as Proxy
+            system = System()
         else:
             from proxy import Proxy
+            import os
+            system = System(name = "PlayOS",
+                            version = os.getenv("PLAYOS_VERSION","1.0.0-dev"))
 
         # Proxy
         proxy = Proxy()
@@ -31,7 +36,8 @@ class MainWidget(QtWidgets.QWidget):
             inner_widget = browser_widget.BrowserWidget(
                 url = kiosk_url,
                 get_current_proxy = proxy.get_current,
-                parent = self),
+                parent = self,
+                system = system),
             on_close = self._close_dialog)
 
         # Captive portal

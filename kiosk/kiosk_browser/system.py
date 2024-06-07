@@ -1,2 +1,7 @@
-NAME = "@system_name@"
-VERSION = "@system_version@"
+from dataclasses import dataclass
+
+@dataclass 
+class System:
+    name: str = "@system_name@"
+    version: str = "@system_version@"
+
