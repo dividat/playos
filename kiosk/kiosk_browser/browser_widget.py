@@ -3,7 +3,7 @@ from enum import Enum, auto
 import logging
 import re
 import time
-from system import System
+from kiosk_browser.system import System
 
 # Config
 reload_on_network_error_after = 5000 # ms
@@ -142,15 +142,16 @@ def user_agent_with_system(user_agent: str, system: System):
     pattern = re.compile('(Mozilla/5.0) \(([^\)]*)\)(.*)')
     m = pattern.match(user_agent)
 
-    if m == None:
-        return f"{system.name}/{system.version} {user_agent}"
-    else:
-        if not m.group(2):
-            system_detail = f"{system.name} {system.version}"
-        else:
-            system_detail = f"{m.group(2)}; {system.name} {system.version}"
+    match m:
+        case None:
+            return f"{system.name}/{system.version} {user_agent}"
+        case m:
+            if not m.group(2):
+                system_detail = f"{system.name} {system.version}"
+            else:
+                system_detail = f"{m.group(2)}; {system.name} {system.version}"
 
-        return f"{m.group(1)} ({system_detail}){m.group(3)}"
+            return f"{m.group(1)} ({system_detail}){m.group(3)}"
 
 def loading_page(parent):
     """ Show a loader in the middle of a blank page.

@@ -21,7 +21,7 @@ pkgs.mkShell {
     poetry install --no-root
     cd ..
 
-    export PYTHONPATH="$PWD:$PWD/kiosk_browser:$PYTHONPATH"
+    export PYTHONPATH="$PWD:$PYTHONPATH"
     export PLAYOS_VERSION="${application.version}"
     echo "Ready"
   '';

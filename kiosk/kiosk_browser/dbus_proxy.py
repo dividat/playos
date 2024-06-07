@@ -10,7 +10,7 @@ from PyQt6.QtNetwork import QNetworkProxy
 from dataclasses import dataclass
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
-from proxy import Proxy, ProxyConf, Credentials
+from kiosk_browser.proxy import Proxy, ProxyConf, Credentials
 
 @dataclass
 class Service:
