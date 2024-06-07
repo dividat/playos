@@ -1,6 +1,7 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
 
-from kiosk_browser import browser_widget, captive_portal, dialogable_widget, dbus_proxy as proxy_module
+from kiosk_browser import browser_widget, captive_portal, dialogable_widget
+import platform
 
 class MainWidget(QtWidgets.QWidget):
     """ Show website at kiosk_url.
@@ -13,8 +14,13 @@ class MainWidget(QtWidgets.QWidget):
     def __init__(self, kiosk_url: str, settings_url: str, toggle_settings_key: str):
         super(MainWidget, self).__init__()
 
+        if platform.system() in ['Linux']:
+            from dbus_proxy import DBusProxy as Proxy
+        else:
+            from proxy import Proxy
+
         # Proxy
-        proxy = proxy_module.init()
+        proxy = Proxy()
         proxy.start_monitoring_daemon()
 
         # Browser widget

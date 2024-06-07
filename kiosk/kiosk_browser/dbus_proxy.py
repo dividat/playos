@@ -4,24 +4,13 @@
 import collections
 import dbus
 import logging
-import platform
 import threading
 import urllib
 from PyQt6.QtNetwork import QNetworkProxy
 from dataclasses import dataclass
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
-
-@dataclass
-class Credentials:
-    username: str
-    password: str
-
-@dataclass
-class ProxyConf:
-    hostname: str
-    port: int
-    credentials: Credentials | None
+from proxy import Proxy, ProxyConf, Credentials
 
 @dataclass
 class Service:
@@ -116,34 +105,7 @@ def set_no_proxy_in_qt_app():
     logging.info(f"Set no proxy in Qt application")
     QNetworkProxy.setApplicationProxy(QNetworkProxy())
 
-def init():
-    """Initialize a suitable Proxy instance for the current platform."""
-    if platform.system() in ['Linux']:
-        return DBusProxy()
-    else:
-        return Proxy()
 
-class Proxy:
-    """Base class for proxy querying.
-
-    The base class does not know how to query for proxy information and may be used as a fallback that always reports that no proxy is configured.
-    """
-    _proxy: ProxyConf | None
-
-    # For the base class, this is a pass, not knowing how to monitor in the general case.
-    def start_monitoring_daemon(self) -> None:
-        """Start a daemon monitoring for proxy changes.
-
-        In the base class, no monitoring method is known, and starting a daemon is skipped.
-        """
-        pass
-
-    def get_current(self) -> ProxyConf | None:
-        """Get the currently configured proxy.
-
-        This is always `None` in the base class.
-        """
-        return self._proxy
 
 class DBusProxy(Proxy):
     """A Proxy class for DBus/Linux systems.
