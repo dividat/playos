@@ -4,7 +4,10 @@ Cycle between two urls in a full screen, locked down browser based on [QtWebEngi
 
 ## Development
 
-Run `nix-shell` to create a suitable development environment.
+### Setup environment
+
+- On Linux: `nix-shell`
+- On macOS: `nix-shell ./macos/shell.nix` 
 
 Then, start the kiosk browser with, for example:
 
