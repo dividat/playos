@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
 
-from kiosk_browser import browser_widget, captive_portal, dialogable_widget, proxy as proxy_module
+from kiosk_browser import browser_widget, captive_portal, dialogable_widget, dbus_proxy as proxy_module
 
 class MainWidget(QtWidgets.QWidget):
     """ Show website at kiosk_url.
