@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
 
-from kiosk_browser import browser_widget, captive_portal, dbus_proxy, dialogable_widget
+from kiosk_browser import browser_widget, captive_portal, dialogable_widget
 from kiosk_browser.system import System
 import platform
 
