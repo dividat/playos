@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
 
-from kiosk_browser import browser_widget, captive_portal, dialogable_widget, proxy as proxy_module
+from kiosk_browser import browser_widget, captive_portal, dialogable_widget, system as system_module
 
 class MainWidget(QtWidgets.QWidget):
     """ Show website at kiosk_url.
@@ -13,8 +13,9 @@ class MainWidget(QtWidgets.QWidget):
     def __init__(self, kiosk_url: str, settings_url: str, toggle_settings_key: str):
         super(MainWidget, self).__init__()
 
+        (system, proxy) = system_module.infer()
+
         # Proxy
-        proxy = proxy_module.Proxy()
         proxy.start_monitoring_daemon()
 
         # Browser widget
@@ -25,7 +26,8 @@ class MainWidget(QtWidgets.QWidget):
             inner_widget = browser_widget.BrowserWidget(
                 url = kiosk_url,
                 get_current_proxy = proxy.get_current,
-                parent = self),
+                parent = self,
+                system = system),
             on_close = self._close_dialog)
 
         # Captive portal

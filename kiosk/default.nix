@@ -42,10 +42,5 @@ python3Packages.buildPythonApplication rec {
   shellHook = ''
     # Give access to kiosk_browser module
     export PYTHONPATH=./:$PYTHONPATH
-
-    # Setup Qt environment
-    bashdir=$(mktemp -d)
-    makeWrapper "$(type -p bash)" "$bashdir/bash" "''${qtWrapperArgs[@]}"
-    exec "$bashdir/bash"
   '';
 }

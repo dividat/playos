@@ -4,7 +4,10 @@ Cycle between two urls in a full screen, locked down browser based on [QtWebEngi
 
 ## Development
 
-Run `nix-shell` to create a suitable development environment.
+### Setup environment
+
+- On Linux: `nix-shell`
+- On macOS: `nix-shell ./macos/shell.nix` 
 
 Then, start the kiosk browser with, for example:
 
@@ -28,3 +31,9 @@ Then, point a Chromium-based browser to `http://127.0.0.1:3355`.
 
 Additional documentation is available at:
 https://doc.qt.io/qt-6/qtwebengine-debugging.html
+
+## Supported platforms
+
+The kiosk is written with use within PlayOS in mind (implying connman and DBus as part of the system). To allow for testing web pages in the kiosk on developer machines, macOS is also supported, with the following limitations:
+
+- No proxy server support

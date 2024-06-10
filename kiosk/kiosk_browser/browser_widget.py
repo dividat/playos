@@ -3,8 +3,7 @@ from enum import Enum, auto
 import logging
 import re
 import time
-
-from kiosk_browser import system
+from kiosk_browser.system import System
 
 # Config
 reload_on_network_error_after = 5000 # ms
@@ -19,7 +18,7 @@ class Status(Enum):
 
 class BrowserWidget(QtWidgets.QWidget):
 
-    def __init__(self, url, get_current_proxy, parent):
+    def __init__(self, url, get_current_proxy, parent, system: System):
         QtWidgets.QWidget.__init__(self, parent)
         self.setStyleSheet(f"background-color: white;")
 
@@ -47,8 +46,7 @@ class BrowserWidget(QtWidgets.QWidget):
         # Override user agent
         self._webview.page().profile().setHttpUserAgent(user_agent_with_system(
             user_agent = self._webview.page().profile().httpUserAgent(),
-            system_name = system.NAME,
-            system_version = system.VERSION
+            system = system,
         ))
 
         # Allow sound playback without user gesture
@@ -141,20 +139,21 @@ class BrowserWidget(QtWidgets.QWidget):
             self._webview.clearFocus()
             self._webview.setFocus()
 
-def user_agent_with_system(user_agent, system_name, system_version):
+def user_agent_with_system(user_agent: str, system: System):
     """Inject a specific system into a user agent string"""
     pattern = re.compile('(Mozilla/5.0) \(([^\)]*)\)(.*)')
     m = pattern.match(user_agent)
 
-    if m == None:
-        return f"{system_name}/{system_version} {user_agent}"
-    else:
-        if not m.group(2):
-            system_detail = f"{system_name} {system_version}"
-        else:
-            system_detail = f"{m.group(2)}; {system_name} {system_version}"
+    match m:
+        case None:
+            return f"{system.name}/{system.version} {user_agent}"
+        case m:
+            if not m.group(2):
+                system_detail = f"{system.name} {system.version}"
+            else:
+                system_detail = f"{m.group(2)}; {system.name} {system.version}"
 
-        return f"{m.group(1)} ({system_detail}){m.group(3)}"
+            return f"{m.group(1)} ({system_detail}){m.group(3)}"
 
 def loading_page(parent):
     """ Show a loader in the middle of a blank page.
