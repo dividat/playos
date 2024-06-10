@@ -1,8 +1,6 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
 
-from kiosk_browser import browser_widget, captive_portal, dialogable_widget
-from kiosk_browser.system import System
-import platform
+from kiosk_browser import browser_widget, captive_portal, dialogable_widget, system as system_module
 
 class MainWidget(QtWidgets.QWidget):
     """ Show website at kiosk_url.
@@ -15,17 +13,9 @@ class MainWidget(QtWidgets.QWidget):
     def __init__(self, kiosk_url: str, settings_url: str, toggle_settings_key: str):
         super(MainWidget, self).__init__()
 
-        if platform.system() in ['Darwin']:
-            from kiosk_browser.proxy import Proxy
-            import os
-            system = System(name = "PlayOS",
-                            version = os.getenv("PLAYOS_VERSION","1.0.0-dev"))
-        else:
-            from kiosk_browser.dbus_proxy import DBusProxy as Proxy
-            system = System()
+        (system, proxy) = system_module.infer()
 
         # Proxy
-        proxy = Proxy()
         proxy.start_monitoring_daemon()
 
         # Browser widget
