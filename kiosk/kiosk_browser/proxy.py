@@ -105,7 +105,7 @@ def find(f, xs):
 
 def set_proxy_in_qt_app(hostname, port):
     network_proxy = QNetworkProxy()
-    network_proxy.setType(QNetworkProxy.HttpProxy)
+    network_proxy.setType(QNetworkProxy.ProxyType.HttpProxy)
     network_proxy.setHostName(hostname)
     network_proxy.setPort(port)
     QNetworkProxy.setApplicationProxy(network_proxy)
