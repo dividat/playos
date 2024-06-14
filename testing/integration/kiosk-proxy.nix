@@ -64,6 +64,7 @@ pkgs.nixosTest {
       # configured in the Qt framework.
 
       if "Set proxy to theproxy:${toString proxyPort}" not in kiosk_result[1]:
+        print(kiosk_result[1])
         raise AssertionError("Expected kiosk logs to contain info about configured proxy.")
   '';
 
