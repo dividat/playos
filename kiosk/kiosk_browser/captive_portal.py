@@ -10,7 +10,7 @@ import time
 import logging
 from enum import Enum, auto
 from http import HTTPStatus
-from PyQt6 import QtWidgets
+from PyQt5 import QtWidgets
 from typing import Callable
 
 check_connection_url = 'http://captive.dividat.com/'

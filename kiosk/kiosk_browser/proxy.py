@@ -6,7 +6,7 @@ import dbus
 import logging
 import threading
 import urllib
-from PyQt6.QtNetwork import QNetworkProxy
+from PyQt5.QtNetwork import QNetworkProxy
 from dataclasses import dataclass
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib

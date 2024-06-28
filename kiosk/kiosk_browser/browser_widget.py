@@ -1,4 +1,4 @@
-from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
+from PyQt5 import QtCore, QtWidgets, QtWebEngineWidgets, QtGui, QtSvg
 from enum import Enum, auto
 import logging
 import re
@@ -52,7 +52,7 @@ class BrowserWidget(QtWidgets.QWidget):
         ))
 
         # Allow sound playback without user gesture
-        self._webview.page().settings().setAttribute(QtWebEngineCore.QWebEngineSettings.WebAttribute.PlaybackRequiresUserGesture, False)
+        self._webview.page().settings().setAttribute(QtWebEngineWidgets.QWebEngineSettings.PlaybackRequiresUserGesture, False)
 
         # Load url
         self._webview.setUrl(url)
@@ -60,10 +60,10 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.loadFinished.connect(self._load_finished)
 
         # Shortcut to manually reload
-        self._reload_shortcut = QtGui.QShortcut('CTRL+R', self)
+        self._reload_shortcut = QtWidgets.QShortcut('CTRL+R', self)
         self._reload_shortcut.activated.connect(self.reload)
         # Shortcut to perform a hard refresh
-        self._hard_refresh_shortcut = QtGui.QShortcut('CTRL+SHIFT+R', self)
+        self._hard_refresh_shortcut = QtWidgets.QShortcut('CTRL+SHIFT+R', self)
         self._hard_refresh_shortcut.activated.connect(self._hard_refresh)
 
         # Prepare reload timer
@@ -181,8 +181,8 @@ def network_error_page(parent):
     paragraph_1 = paragraph("Please ensure the Internet connection to this device is active.", parent)
     paragraph_2 = paragraph("If the problem persists, contact Senso Service.", parent)
 
-    logo = QtSvgWidgets.QSvgWidget("images/dividat-logo.svg", parent)
-    logo.renderer().setAspectRatioMode(QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+    logo = QtSvg.QSvgWidget("images/dividat-logo.svg", parent)
+    logo.renderer().setAspectRatioMode(QtCore.Qt.KeepAspectRatio)
     logo.setFixedHeight(30)
 
     layout = QtWidgets.QVBoxLayout()

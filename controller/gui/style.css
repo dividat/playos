@@ -318,16 +318,6 @@ html {
     margin-top: 2rem;
 }
 
-/* Licensing */
-
-.d-Licensing__Link {
-    text-decoration: underline;
-}
-
-.d-Licensing__Details {
-    margin-bottom: var(--spacing-dog);
-}
-
 /* Form */
 
 :root {

@@ -1,8 +1,8 @@
 import sys
 import logging
-from PyQt6.QtCore import Qt, QUrl
-from PyQt6.QtGui import QKeySequence
-from PyQt6.QtWidgets import QApplication
+from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QApplication
 
 from kiosk_browser import main_widget
 
@@ -18,12 +18,12 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
         toggle_settings_key = QKeySequence(toggle_settings_key)
     )
 
-    mainWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
+    mainWidget.setContextMenuPolicy(Qt.NoContextMenu)
 
     if fullscreen:
         set_fullscreen(app, mainWidget)
 
-    app.exec()
+    app.exec_()
 
 def parseUrl(url):
     parsed_url = QUrl(url)
