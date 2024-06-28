@@ -104,16 +104,16 @@ def find(f, xs):
     return next((x for x in xs if f(x)), None)
 
 def set_proxy_in_qt_app(hostname, port):
-    logging.info(f"Set proxy to {hostname}:{port} in Qt application")
     network_proxy = QNetworkProxy()
-    network_proxy.setType(QNetworkProxy.HttpProxy)
+    network_proxy.setType(QNetworkProxy.ProxyType.HttpProxy)
     network_proxy.setHostName(hostname)
     network_proxy.setPort(port)
     QNetworkProxy.setApplicationProxy(network_proxy)
+    logging.info(f"Set proxy to {hostname}:{port} in Qt application")
 
 def set_no_proxy_in_qt_app():
-    logging.info(f"Set no proxy in Qt application")
     QNetworkProxy.setApplicationProxy(QNetworkProxy())
+    logging.info(f"Set no proxy in Qt application")
 
 class Proxy():
 
