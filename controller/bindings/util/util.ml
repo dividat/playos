@@ -1,12 +1,5 @@
 open Lwt
 
-(* Require the resource directory to be at a directory fixed to the binary
- * location. This is not optimal, but works for the moment. *)
-let resource_path end_path =
-  let open Fpath in
-  (Sys.argv.(0) |> v |> parent) / ".." / "share" // end_path
-  |> to_string
-
 let read_from_file log_src path =
   let%lwt exists = Lwt_unix.file_exists path in
   if exists then

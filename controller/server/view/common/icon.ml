@@ -1,10 +1,10 @@
 open Tyxml.Svg
 
-(* Helpers *)
+(* Helpers *) 
 
 let svg ?a ?stroke_width content =
-  Tyxml.Html.svg
-    ~a:([ a_viewBox (0., 0., 24., 24.)
+  Tyxml.Html.svg 
+    ~a:([ a_viewBox (0., 0., 24., 24.) 
     ; a_width (24., None)
     ; a_height (24., None)
     ; a_fill `None
@@ -16,31 +16,31 @@ let svg ?a ?stroke_width content =
     content
 
 let line (x1, y1) (x2, y2) =
-  Tyxml.Svg.line
-    ~a:[ a_x1 (x1, None)
-    ; a_y1 (y1, None)
-    ; a_x2 (x2, None)
-    ; a_y2 (y2, None)
-    ]
+  Tyxml.Svg.line 
+    ~a:[ a_x1 (x1, None) 
+    ; a_y1 (y1, None) 
+    ; a_x2 (x2, None) 
+    ; a_y2 (y2, None) 
+    ] 
     []
 
 let circle (x, y) r =
-  Tyxml.Svg.circle
-    ~a:[ a_cx (x, None)
-    ; a_cy (y, None)
-    ; a_r (r, None)
+  Tyxml.Svg.circle 
+    ~a:[ a_cx (x, None) 
+    ; a_cy (y, None) 
+    ; a_r (r, None) 
     ]
     []
 
 let rect ?rx ?fill (x1, y1) (x2, y2) =
-    Tyxml.Svg.rect
-      ~a:[ a_x (x1, None)
-      ; a_y (y1, None)
-      ; a_width (x2 -. x1, None)
-      ; a_height (y2 -. y1, None)
-      ; a_rx (Option.value ~default:0. rx, None)
+    Tyxml.Svg.rect 
+      ~a:[ a_x (x1, None) 
+      ; a_y (y1, None) 
+      ; a_width (x2 -. x1, None) 
+      ; a_height (y2 -. y1, None) 
+      ; a_rx (Option.value ~default:0. rx, None) 
       ; a_fill (`Color (Option.value ~default:"transparent" fill, None))
-      ]
+      ] 
       []
 
 (* Icons *)
@@ -60,7 +60,7 @@ let wifi ?strength () =
     else if strength < 75 then "Medium"
     else "Strong"
   in
-  svg
+  svg 
     ~a:[ a_class [ "d-WifiSignal--" ^ modifier ] ]
     [ path ~a:[ a_class [ "d-WifiSignal__Wave--Outer" ] ; a_d "M1.42 9a16 16 0 0 1 21.16 0" ] []
     ; path ~a:[ a_class [ "d-WifiSignal__Wave--Middle" ] ; a_d "M5 12.55a11 11 0 0 1 14.08 0" ] []
@@ -68,7 +68,7 @@ let wifi ?strength () =
     ; line (12., 20.) (12., 20.)
     ]
 
-let ethernet =
+let ethernet = 
   svg
     [ path ~a: [ a_d "M2 2 H22 V18 H18 V22 H6 V18 H2 Z" ] []
     ; line (6., 6.) (6., 10.)
@@ -90,14 +90,14 @@ let power =
     ; line (12., 2.) (12., 12.)
     ]
 
-let screen =
+let screen = 
   svg
     [ rect ~rx:2. (2.5, 2.) (21.5, 16.)
     ; line (12., 16.) (12., 22.)
     ; line (8., 22.) (16., 22.)
     ]
 
-let document =
+let document = 
   svg
     [ rect ~rx:1. (4., 2.) (20., 22.)
     ; line (8., 8.) (16., 8.)
@@ -112,30 +112,17 @@ let arrow_left =
     ; line (2., 12.) (12., 2.)
     ]
 
-let letter =
+let letter = 
   svg ~stroke_width:1.
     [ rect ~rx:1. ~fill:"black" (2., 2.) (22., 22.)
-    ; text
-        ~a:[ a_fill (`Color ("white", None))
-        ; a_stroke (`Color ("white", None))
+    ; text 
+        ~a:[ a_fill (`Color ("white", None)) 
+        ; a_stroke (`Color ("white", None)) 
         ; a_font_size "16"
         ; Unsafe.string_attrib "x" "50%"
         ; Unsafe.string_attrib "y" "55%"
         ; a_dominant_baseline `Middle
         ; a_text_anchor `Middle
-        ]
-        [ txt "A" ]
-    ]
-
-let copyright =
-  svg
-    [ circle (12., 12.) 10.
-    ; text
-        ~a:[ a_font_size "10"
-        ; Unsafe.string_attrib "x" "50%"
-        ; Unsafe.string_attrib "y" "55%"
-        ; a_dominant_baseline `Middle
-        ; a_text_anchor `Middle
-        ]
-        [ txt "C" ]
+        ] 
+        [ txt "A" ] 
     ]

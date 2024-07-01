@@ -4,7 +4,6 @@
 
 - kiosk: Add a key combination to perform hard refresh (Ctrl-Shift-R)
 - os: Added localization options for Polish and Czech
-- controller: Add licensing page in System Settings
 - status screen: Display MAC addresses in text and QR code
 
 ## Changed
@@ -15,7 +14,6 @@
 - os: Limit permitted SSH modes and forwarding options
 - os: Ignore suspend and hibernation key presses, but interpret as poweroff when long-pressed
 - driver: Upgrade to add support for Senso firmware updates via app
-- kiosk: Migrate to Qt6
 
 ## Removed
 

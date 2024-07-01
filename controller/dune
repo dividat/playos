@@ -2,10 +2,6 @@
  (section share_root)
  (files
   (Changelog.html as Changelog.html)
-  (licenses/PLAYOS as licenses/PLAYOS)
-  (licenses/NIXPKGS as licenses/NIXPKGS)
-  (licenses/FEATHER as licenses/FEATHER)
-  (licenses/QT6 as licenses/QT6)
   (gui/reset.css as static/reset.css)
   (gui/style.css as static/style.css)
   (gui/client.js as static/client.js)))

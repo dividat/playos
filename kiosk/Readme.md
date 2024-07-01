@@ -1,6 +1,6 @@
 # PlayOS Kiosk Browser
 
-Cycle between two urls in a full screen, locked down browser based on [QtWebEngine](https://doc.qt.io/qt-6/qtwebengine-index.html). Allow login to captive portals.
+Cycle between two urls in a full screen, locked down browser based on [QtWebEngine](http://doc.qt.io/qt-5/qtwebengine-index.html). Allow login to captive portals.
 
 ## Development
 
@@ -27,4 +27,4 @@ QTWEBENGINE_REMOTE_DEBUGGING=3355 bin/kiosk-browser …
 Then, point a Chromium-based browser to `http://127.0.0.1:3355`.
 
 Additional documentation is available at:
-https://doc.qt.io/qt-6/qtwebengine-debugging.html
+https://doc.qt.io/qt-5/qtwebengine-debugging.html

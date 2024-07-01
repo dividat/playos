@@ -1,4 +1,4 @@
-from PyQt6 import QtWidgets, QtCore, QtGui
+from PyQt5 import QtWidgets, QtCore, QtGui
 from typing import Callable
 
 overlay_color: str = '#888888'
@@ -30,8 +30,8 @@ class DialogableWidget(QtWidgets.QWidget):
         policy = QtWidgets.QSizePolicy()
         policy.setVerticalStretch(1)
         policy.setHorizontalStretch(1)
-        policy.setVerticalPolicy(QtWidgets.QSizePolicy.Policy.Preferred)
-        policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Policy.Preferred)
+        policy.setVerticalPolicy(QtWidgets.QSizePolicy.Preferred)
+        policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Preferred)
         self.setSizePolicy(policy)
 
         # Layout
@@ -41,7 +41,7 @@ class DialogableWidget(QtWidgets.QWidget):
         self.setLayout(self._layout)
 
         # Shortcuts
-        QtGui.QShortcut('ESC', self).activated.connect(self._on_escape)
+        QtWidgets.QShortcut('ESC', self).activated.connect(self._on_escape)
 
     def inner_widget(self):
         return self._inner_widget
@@ -118,7 +118,7 @@ def title_line(
     """)
 
     button = QtWidgets.QPushButton("❌", dialog)
-    button.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
+    button.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
     button.setStyleSheet("""
         QPushButton {
             background-color: rgba(255, 255, 255, 0.2);

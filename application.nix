@@ -86,7 +86,7 @@ rec {
                   ;;
               esac
 
-              # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-6/qtwebengine-debugging.html)
+              # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-5/qtwebengine-debugging.html)
               export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
 
               ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \

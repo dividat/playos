@@ -6,9 +6,17 @@ open Sys
 
 let log_src = Logs.Src.create "gui"
 
+(* Require the resource directory to be at a directory fixed to the binary
+ * location. This is not optimal, but works for the moment. *)
+let resource_path end_path =
+  let open Fpath in
+  (Sys.argv.(0) |> v |> parent) / ".." / "share" // end_path
+  |> to_string
+
+
 (* Middleware that makes static content available *)
 let static () =
-  let static_dir = Util.resource_path (Fpath.v "static") in
+  let static_dir = resource_path (Fpath.v "static") in
   Logs.debug (fun m -> m "static content dir: %s" static_dir);
   Opium.Middleware.static ~local_path:static_dir ~uri_prefix:"/static" ()
 
@@ -212,7 +220,7 @@ module NetworkGui = struct
     let pp_proxy p =
       let uri = p |> Service.Proxy.to_uri ~include_userinfo:false |> Uri.to_string in
       match p.credentials with
-      | Some({ user; password }) ->
+      | Some({ user; password }) -> 
           let password_indication = if password = "" then "" else ", password: *****" in
           uri ^ " (user: " ^ user ^ password_indication ^ ")"
       | None -> uri
@@ -227,7 +235,7 @@ module NetworkGui = struct
       }))
 
   (** Internet status **)
-  let internet_status ~connman _ =
+  let internet_status ~connman _ = 
     let%lwt proxy = Manager.get_default_proxy connman in
     match%lwt Curl.request ?proxy:(Option.map (Service.Proxy.to_uri ~include_userinfo:true) proxy) (Uri.of_string "http://captive.dividat.com/") with
     | RequestSuccess (code, response) ->
@@ -273,10 +281,10 @@ module NetworkGui = struct
       let password_input =
         form_data |> List.assoc "proxy_password" |> List.hd |> non_empty
       in
-      let keep_password =
+      let keep_password = 
         form_data |> List.assoc_opt "keep_password" |> Option.is_some
       in
-      let password =
+      let password = 
         match (keep_password, current_proxy_opt) with
         | (true, Some ({ host; port; credentials = Some { user; password } })) ->
           if host_input = Some host && port_input = Some port && user_input = Some user then
@@ -484,16 +492,8 @@ module ChangelogGui = struct
   let build app =
     app
     |> get "/changelog" (fun _ ->
-        let%lwt changelog = Util.read_from_file log_src (Util.resource_path (Fpath.v "Changelog.html")) in
+        let%lwt changelog = Util.read_from_file log_src (resource_path (Fpath.v "Changelog.html")) in
         Lwt.return (page (Changelog_page.html changelog)))
-end
-
-module LicensingGui = struct
-  let build app =
-    app
-    |> get "/licensing" (fun _ ->
-        let%lwt p = Licensing_page.html in
-        Lwt.return (page p))
 end
 
 module RemoteMaintenanceGui = struct
@@ -544,7 +544,6 @@ let routes ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman app =
   |> LabelGui.build
   |> StatusGui.build ~health_s ~update_s ~rauc
   |> ChangelogGui.build
-  |> LicensingGui.build
   |> RemoteMaintenanceGui.build ~systemd
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
