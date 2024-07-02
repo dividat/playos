@@ -1,4 +1,4 @@
-# [UNRELEASED]
+# [2024.7.0-VALIDATION] - 2024-07-02
 
 ## Added
 
