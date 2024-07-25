@@ -112,10 +112,10 @@ let request ?proxy ?(headers = []) ?data ?(options = []) url =
   | Ok (Unix.WEXITED n, _, stderr) ->
     Lwt.return (RequestFailure (ProcessExit (n, stderr)))
 
-  | Ok (Unix.WSIGNALED signal, _, stderr) ->
+  | Ok (Unix.WSIGNALED signal, _, _stderr) ->
     Lwt.return (RequestFailure (ProcessKill signal))
 
-  | Ok (Unix.WSTOPPED signal, _, stderr) ->
+  | Ok (Unix.WSTOPPED signal, _, _stderr) ->
     Lwt.return (RequestFailure (ProcessStop signal))
 
   | Error (Unix.Unix_error (err, _, _)) ->

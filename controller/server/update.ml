@@ -1,5 +1,4 @@
 open Lwt
-open Sexplib.Std
 open Sexplib.Conv
 
 let log_src = Logs.Src.create "update"

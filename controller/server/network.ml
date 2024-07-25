@@ -1,7 +1,7 @@
 open Lwt
 open Sexplib.Std
 
-let log_src = Logs.Src.create "network"
+let _log_src = Logs.Src.create "network"
 
 let enable_and_scan_wifi_devices ~connman =
   Lwt_result.catch

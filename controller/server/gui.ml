@@ -2,7 +2,6 @@ open Lwt
 open Sexplib.Std
 open Opium_kernel.Rock
 open Opium.App
-open Sys
 
 let log_src = Logs.Src.create "gui"
 
@@ -70,7 +69,7 @@ end
 
 (** Localization GUI *)
 module LocalizationGui = struct
-  let overview req =
+  let overview _req =
     let%lwt td_daemon = Timedate.daemon () in
     let%lwt current_timezone = Timedate.get_configured_timezone () in
     let%lwt all_timezones = Timedate.get_available_timezones td_daemon in
@@ -140,7 +139,7 @@ module LocalizationGui = struct
       }))
 
   let set_timezone req =
-    let%lwt td_daemon = Timedate.daemon () in
+    let%lwt _td_daemon = Timedate.daemon () in
     let%lwt form_data =
       urlencoded_pairs_of_body req
     in
@@ -207,9 +206,8 @@ end
 module NetworkGui = struct
 
   open Connman
-  open Network
 
-  let overview ~(connman:Manager.t) req =
+  let overview ~(connman:Manager.t) _req =
 
     let%lwt all_services = Manager.get_services connman in
 
@@ -240,11 +238,11 @@ module NetworkGui = struct
     match%lwt Curl.request ?proxy:(Option.map (Service.Proxy.to_uri ~include_userinfo:true) proxy) (Uri.of_string "http://captive.dividat.com/") with
     | RequestSuccess (code, response) ->
       `String response
-        |> respond ?code:(Some (Cohttp.Code.(`Code code)))
+        |> respond ?code:(Some (`Code code))
         |> Lwt.return
     | RequestFailure err ->
       `String (Format.sprintf "Error reaching captive portal: %s" (Curl.pretty_print_error err))
-        |> respond ?code:(Some Cohttp.Code.(`Service_unavailable))
+        |> respond ?code:(Some `Service_unavailable)
         |> Lwt.return
 
   (** Helper to find a service by id *)
@@ -323,8 +321,6 @@ module NetworkGui = struct
         in
     match form_data |> List.assoc_opt "static_ip_enabled" with
     | None ->
-        let open Cohttp in
-        let open Cohttp_lwt_unix in
         let%lwt () = Logs_lwt.err ~src:log_src
           (fun m -> m "disabling static ip %s" (get_prop "static_ip_address"))
         in
@@ -426,7 +422,7 @@ module LabelGui = struct
            )
        } : Label_printer.label)
 
-  let overview req =
+  let overview _req =
     let%lwt label = make_label () in
     Lwt.return (page (Label_page.html label))
 
@@ -458,7 +454,7 @@ end
 module StatusGui = struct
   let build ~health_s ~update_s ~rauc app =
     app
-    |> get "/status" (fun req ->
+    |> get "/status" (fun _req ->
         let%lwt rauc =
           match update_s |> Lwt_react.S.value with
           (* RAUC status is not meaningful while installing

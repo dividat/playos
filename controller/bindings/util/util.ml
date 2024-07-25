@@ -9,7 +9,7 @@ let read_from_file log_src path =
       let%lwt () = Lwt_io.close in_chan in
       return contents
     with
-    | (Unix.Unix_error (err, fn, _)) as exn ->
+    | (Unix.Unix_error (err, _fn, _)) as exn ->
       let%lwt () = Logs_lwt.err ~src:log_src
         (fun m -> m "failed to read from %s: %s" path (Unix.error_message err))
       in
@@ -27,12 +27,12 @@ let write_to_file log_src path str =
     let%lwt fd =
       Lwt_unix.openfile path [ O_WRONLY; O_CREAT; O_TRUNC ] 0o755
     in
-    let%lwt bytes_written =
+    let%lwt _bytes_written =
       Lwt_unix.write_string fd str 0 (String.length str)
     in
     Lwt_unix.close fd
   with
-  | (Unix.Unix_error (err, fn, _)) as exn ->
+  | (Unix.Unix_error (err, _fn, _)) as exn ->
     let%lwt () = Logs_lwt.err ~src:log_src
       (fun m -> m "failed to write to %s: %s" path (Unix.error_message err))
     in

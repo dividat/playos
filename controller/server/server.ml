@@ -1,5 +1,4 @@
 open Lwt
-open Sexplib.Std
 
 let shutdown () =
   match%lwt
