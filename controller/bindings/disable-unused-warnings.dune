@@ -1,0 +1,4 @@
+; obus generates bindings that contains a lot of unused variables/bindings
+; and dune treats these as errors, so we disable them here
+(env (dev (flags :standard -w -27-32-33)))
+

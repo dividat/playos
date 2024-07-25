@@ -1,3 +1,5 @@
+(include ../disable-unused-warnings.dune)
+
 (library
  (name systemd)
  (modules systemd systemd_interfaces)
