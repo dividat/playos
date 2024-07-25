@@ -315,7 +315,7 @@ module NetworkGui = struct
         fail_with "A host and port are required to configure a proxy server"
 
   (** Set static IP configuration on a service *)
-  let update_static_ip ~(connman: Connman.Manager.t) service form_data =
+  let update_static_ip service form_data =
         let get_prop s =
           form_data
           |> List.assoc s
@@ -362,7 +362,7 @@ module NetworkGui = struct
     let%lwt service = with_service ~connman (param req "id") in
 
     (* Static IP *)
-    let%lwt () = update_static_ip ~connman service form_data in
+    let%lwt () = update_static_ip service form_data in
 
     (* Proxy *)
     let%lwt current_proxy = Manager.get_default_proxy connman in
