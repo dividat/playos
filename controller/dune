@@ -5,3 +5,7 @@
   (gui/reset.css as static/reset.css)
   (gui/style.css as static/style.css)
   (gui/client.js as static/client.js)))
+
+; disable missing-record-field-pattern warnings (partial matching),
+; because they are kind of useless
+(env (dev (flags :standard -w -9)))
