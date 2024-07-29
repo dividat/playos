@@ -107,7 +107,7 @@ def run_disk(disk, qemu_opts=DEFAULT_QEMU_OPTS):
 
 def _qemu(opts):
     try:
-        print("Staring QEMU:")
+        print("Starting QEMU:")
         print('\t' + ' '.join([QEMU_SYSTEM_X86_64] + opts))
         subprocess.run([QEMU_SYSTEM_X86_64] + opts, check=True)
     except KeyboardInterrupt:
