@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET="${1:-default}"
+usage() {
+  echo "Usage: $0 {vm|develop|validation|master|stuck|lab-key|shed-key|all}"
+  exit 1
+}
+
+if [ $# -eq 0 ]; then
+  usage
+fi
+TARGET="$1"
 
 # Allow unfree packages, required for zerotier using a BSL 1.1 licence
 # See https://nixos.wiki/wiki/FAQ/How_can_I_install_a_proprietary_or_unfree_package%3F
@@ -106,7 +114,7 @@ elif [ "$TARGET" == "shed-key" ]; then
     --arg buildBundle false \
     --arg buildDisk false)
 
-elif [ "$TARGET" == "default" ]; then
+elif [ "$TARGET" == "all" ]; then
 
   (set -x; nix-build)
 
@@ -115,6 +123,6 @@ else
   echo
   echo "I do not know how to build '$TARGET'."
   echo "Aborting."
-  exit 1
+  usage
 
 fi

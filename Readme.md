@@ -21,18 +21,28 @@ This repository contains the application layer for running the Dividat Play web 
 
 See the [documentation](docs/arch) and [user manual](docs/user-manual) for more information.
 
-## Quick start
+## Building the system
 
-Running `nix build` will create following (in `result/`):
+### Quick start
+
+The quickest way to see the system in action is to [use the QEMU VM](#qemu-vm).
+
+You can perform all common build variants using the `build` script. Run `./build` without parameters for a list of build variants.
+
+### Full build
+
+Running `./build all` (equivalently `nix-build`) creates all of the following (in `result/`):
 
 - `bin/`: Tools
 - `playos-VERSION-UNSIGNED.raucb`: RAUC bundle that can be used to update systems. Note that it is signed with a dummy development key. Real deployments would resign the bundle with `rauc resign`.
 - `playos-installer-VERSION.iso`: Bootable ISO image that can install the system.
 - `disk.img`: Preinstalled disk with bootloader, system partitions A/B and data partitions for testing (but without test instrumentation).
 
+Note that a full build takes a long time.
+
 ### Choose what to build
 
-For quicker development cycles you may pass following arguments to the build:
+The following arguments may be used to control the build outputs:
 
 - `buildInstaller`: Should the installer ISO image be built.
 - `buildBundle`: Should the RAUC bundle be built.
@@ -40,19 +50,6 @@ For quicker development cycles you may pass following arguments to the build:
 - `buildLive`: Should the PlayOS live system image be built.
 
 For example: `nix build --arg buildInstaller false --arg buildBundle false` will only build the system toplevels and the preinstalled disk image.
-
-A virtual machine (with test instrumentation) can be started without any of the above builds.
-
-## Components
-
-### Controller
-
-The [controller](controller/) service orchestrates the system's self-update and acts as a configuration interface for the options exposed to the user. It may be run directly on a Linux host for development purposes.
-
-### Kiosk
-
-The [kiosk](kiosk/) browser is used in the default configuration of PlayOS to run any web application in a full screen kiosk. It can be run directly on most hosts for development purposes.
-
 
 ## System Testing
 
@@ -138,6 +135,16 @@ To release an update to the `develop` channel:
 ### Key switch
 
 When switching key pairs on a channel, the new certficiate must be built into the bundle, which must then be signed with the old key. For this purpose, the `--override-cert` option of the deploy script is needed to provide RAUC with a certificate matching the new key.
+
+## Components
+
+### Controller
+
+The [controller](controller/) service orchestrates the system's self-update and acts as a configuration interface for the options exposed to the user. It may be run directly on a Linux host for development purposes.
+
+### Kiosk
+
+The [kiosk](kiosk/) browser is used in the default configuration of PlayOS to run any web application in a full screen kiosk. It can be run directly on most hosts for development purposes.
 
 ## Change Log
 
