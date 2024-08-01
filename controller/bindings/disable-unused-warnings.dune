@@ -1,4 +1,6 @@
-; obus generates bindings that contains a lot of unused variables/bindings
-; and dune treats these as errors, so we disable them here
+; OBus generates bindings that contains a lot of unused variables/bindings
+; and dune treats these as errors, so we disable them here.
+; Refer to ocamlc man pages or `ocamlc -warn-help` for descriptions of
+; the warning numbers.
 (env (dev (flags :standard -w -27-32-33)))
 
