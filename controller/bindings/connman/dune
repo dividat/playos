@@ -1,3 +1,5 @@
+(include ../disable-unused-warnings.dune)
+
 (library
  (name connman)
  (modules connman connman_interfaces)

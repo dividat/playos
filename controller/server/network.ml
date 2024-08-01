@@ -36,7 +36,8 @@ let enable_and_scan_wifi_devices ~connman =
 
 
 let init ~connman =
-  let%lwt () = Logs_lwt.info (fun m -> m "initializing network connections") in
+  let%lwt () = Logs_lwt.info ~src:log_src
+    (fun m -> m "initializing network connections") in
 
   match%lwt enable_and_scan_wifi_devices ~connman with
 
@@ -44,7 +45,7 @@ let init ~connman =
     Lwt_result.return ()
 
   | Error exn ->
-    let%lwt () = Logs_lwt.warn
+    let%lwt () = Logs_lwt.warn ~src:log_src
         (fun m -> m "enabling and scanning wifi failed: %s, %s"
             (OBus_error.name exn)
             (Printexc.to_string exn))

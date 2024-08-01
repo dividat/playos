@@ -5,3 +5,8 @@
   (gui/reset.css as static/reset.css)
   (gui/style.css as static/style.css)
   (gui/client.js as static/client.js)))
+
+; Disable missing-record-field-pattern warnings (partial matching),
+; because they are kind of useless.
+; See https://ocaml.org/manual/4.14/comp.html#ss:warn9 for details.
+(env (dev (flags :standard -w -9)))
