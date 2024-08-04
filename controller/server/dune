@@ -3,14 +3,27 @@
 (executable
  (name server)
  (public_name playos-controller)
- (modules server update info gui health
+ (modules server info gui health
    info_page localization_page status_page error_page
    network_list_page network_details_page changelog_page
    licensing_page page definition icon)
- (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
+ (libraries update lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium tyxml rauc zerotier connman locale network timedate systemd
   semver2 fieldslib screen_settings util ppx_protocol_conv_jsonm)
  (preprocess (pps lwt_ppx ppx_sexp_conv ppx_protocol_conv)))
+
+(library
+ (name update)
+ (modules update)
+ (libraries update_deps lwt connman rauc curl semver2)
+ (preprocess (pps lwt_ppx ppx_sexp_conv)))
+
+;; TODO: can I keep `update_deps` as a (sub)module of `update` library?
+(library
+ (name update_deps)
+ (modules update_deps)
+ (modules_without_implementation update_deps)
+ (libraries lwt connman rauc curl semver2))
 
 (library
  (name logging)
