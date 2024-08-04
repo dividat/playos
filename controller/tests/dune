@@ -1,0 +1,8 @@
+(test
+ (name update_tests)
+ (libraries update alcotest alcotest-lwt)
+ (modules update_tests)
+ (preprocess (pps lwt_ppx ppx_sexp_conv))
+)
+
+(env (dev (flags :standard -warn-error -A -w -8-27-32-33)))

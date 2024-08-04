@@ -46,5 +46,7 @@ ocamlPackages.buildDunePackage rec {
     fieldslib
     ppx_protocol_conv
     ppx_protocol_conv_jsonm
+    alcotest
+    alcotest-lwt
   ];
 }
