@@ -49,5 +49,7 @@ ocamlPackages.buildDunePackage rec {
     ezjsonm
     containers
     fieldslib
+    alcotest
+    alcotest-lwt
   ];
 }
