@@ -275,26 +275,6 @@ let get_proxy_uri connman =
   Connman.Manager.get_default_proxy connman
     >|= Option.map (Connman.Service.Proxy.to_uri ~include_userinfo:true)
 
-module type OBusPeerRef = sig
-    val peer: OBus_peer.Private.t
-end
-
-module RaucOBus(OBusRef: OBusPeerRef): RaucInterface = struct
-    let t = OBusRef.peer
-
-    let get_status : Rauc.status Lwt.t =
-        Rauc.get_status t
-
-    let get_booted_slot : Rauc.Slot.t Lwt.t =
-        Rauc.get_booted_slot t
-
-    let get_primary : Rauc.Slot.t option Lwt.t =
-        Rauc.get_primary t
-
-    let install : string -> unit Lwt.t =
-        Rauc.install t
-end
-
 let build_deps ~connman ~(rauc : Rauc.t) ~(update_url : string) :
     (module UpdateServiceDeps) Lwt.t =
 
@@ -303,10 +283,7 @@ let build_deps ~connman ~(rauc : Rauc.t) ~(update_url : string) :
     let update_url = update_url
   end in
 
-  let module OBusRef = struct
-    let peer = rauc
-  end in
-  let module RaucI = RaucOBus (OBusRef) in
+  let raucI = Rauc_service.build_module rauc in
 
   let%lwt proxy = get_proxy_uri connman in
 
@@ -317,7 +294,7 @@ let build_deps ~connman ~(rauc : Rauc.t) ~(update_url : string) :
   let module Deps = struct
     module CurlI = CurlWrap
     module ConfigI = ConfigI
-    module RaucI = RaucI
+    module RaucI = (val raucI)
   end in
 
   Lwt.return (module Deps : UpdateServiceDeps)
