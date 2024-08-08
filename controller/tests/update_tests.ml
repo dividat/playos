@@ -22,7 +22,7 @@ module TestConfig : ConfigInterface = struct
   let update_url = "https://localhost:9999/"
 end
 
-module TestRauc : RaucInterface = struct
+module TestRauc : Rauc_service.RaucServiceIntf = struct
   let get_status : Rauc.status Lwt.t =
     let some_status : Rauc.Slot.status =
       {
@@ -41,6 +41,8 @@ module TestRauc : RaucInterface = struct
 
   let get_booted_slot : Rauc.Slot.t Lwt.t = Lwt.return Rauc.Slot.SystemA
   let install (_ : string) : unit Lwt.t = Lwt.return ()
+
+  let mark_good _ = failwith "Not implemented"
 end
 
 module TestUpdateServiceDeps = struct
