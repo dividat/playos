@@ -1,5 +1,4 @@
 open Update
-open Update_deps
 open Lwt
 
 let current_version = "10.0.1"
@@ -16,11 +15,11 @@ module TestCurl = struct
     Curl.RequestSuccess (200, next_version) |> Lwt.return
 end
 
-module TestConfig : ConfigInterface = struct
-  let error_backoff_duration = 0.01
-  let check_for_updates_interval = 0.05
-  let update_url = "https://localhost:9999/"
-end
+let test_config : config = {
+  error_backoff_duration = 0.01;
+  check_for_updates_interval = 0.05;
+  update_url = "https://localhost:9999/";
+}
 
 module TestRauc : Rauc_service.RaucServiceIntf = struct
   let get_status : Rauc.status Lwt.t =
@@ -47,8 +46,8 @@ end
 
 module TestUpdateServiceDeps = struct
   module CurlI = TestCurl
-  module ConfigI = TestConfig
   module RaucI = TestRauc
+  let config = test_config
 end
 
 module TestUpdateService = UpdateService (TestUpdateServiceDeps)
@@ -110,7 +109,7 @@ let happy_flow_test () =
     "@PLAYOS_BUNDLE_NAME@-" ^ next_version ^ ".raucb"
   in
   let expected_url =
-    TestConfig.update_url ^ next_version ^ "/" ^ expected_bundle_name
+    test_config.update_url ^ next_version ^ "/" ^ expected_bundle_name
   in
 
   let expected_state_sequence =

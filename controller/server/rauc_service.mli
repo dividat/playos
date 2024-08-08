@@ -24,4 +24,3 @@ val init : unit -> (module RaucServiceIntf) Lwt.t
    `init` is called once at the top-level (server module) and then the
    module/interface is passed to dependencies (Update, Gui, Health) directly *)
 val build_module : Rauc.t -> (module RaucServiceIntf)
-

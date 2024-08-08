@@ -15,15 +15,14 @@
 (library
  (name update)
  (modules update)
- (libraries update_deps lwt connman rauc curl semver2)
+ (libraries curl_proxy rauc_service lwt connman rauc curl semver2)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 
-;; TODO: can I keep `update_deps` as a (sub)module of `update` library?
 (library
- (name update_deps)
- (modules update_deps)
- (modules_without_implementation update_deps)
- (libraries lwt rauc_service connman rauc curl semver2))
+ (name curl_proxy)
+ (modules curl_proxy)
+ (libraries lwt connman curl)
+ (preprocess (pps lwt_ppx ppx_sexp_conv)))
 
 (library
  (name rauc_service)
