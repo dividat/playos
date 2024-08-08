@@ -20,22 +20,8 @@ module type ConfigInterface = sig
     val update_url: string
 end
 
-module type RaucInterface = sig
-    (** [get_status rauc] returns current RAUC status *)
-    val get_status : Rauc.status Lwt.t
-
-    (** [get_booted_slot rauc] returns the currently booted slot *)
-    val get_booted_slot : Rauc.Slot.t Lwt.t
-
-    (** [get_primary rauc] returns current primary slot, if any *)
-    val get_primary : Rauc.Slot.t option Lwt.t
-
-    (** [install rauc source] install the bundle at path [source] *)
-    val install : string -> unit Lwt.t
-end
-
 module type UpdateServiceDeps = sig
     module CurlI: CurlProxyInterface
     module ConfigI: ConfigInterface
-    module RaucI: RaucInterface
+    module RaucI: Rauc_service.RaucServiceIntf
 end
