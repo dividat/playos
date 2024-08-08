@@ -1,8 +1,6 @@
 open Lwt
 open Sexplib.Conv
 
-open Update_deps
-
 let log_src = Logs.Src.create "update"
 
 let bundle_name =
@@ -40,6 +38,14 @@ type state =
   | ReinstallRequired
 [@@deriving sexp]
 
+type sleep_duration = float (* seconds *)
+
+type config = {
+    error_backoff_duration: sleep_duration;
+    check_for_updates_interval: sleep_duration;
+    update_url: string
+}
+
 (** Helper to parse semver from string or fail *)
 let semver_of_string string =
   let trimmed_string = String.trim string
@@ -62,14 +68,20 @@ let latest_download_url ~update_url version_string =
   Format.sprintf "%s%s/%s" update_url version_string (bundle_file_name version_string)
 
 
-module UpdateService(Deps : UpdateServiceDeps) = struct
+module type ServiceDeps = sig
+    module CurlI: Curl_proxy.CurlProxyInterface
+    module RaucI: Rauc_service.RaucServiceIntf
+    val config : config
+end
+
+module UpdateService(Deps : ServiceDeps) = struct
     open Deps
 
     let sleep_error_backoff =
-        Lwt_unix.sleep ConfigI.error_backoff_duration
+        Lwt_unix.sleep config.error_backoff_duration
 
     let sleep_update_check =
-        Lwt_unix.sleep ConfigI.check_for_updates_interval
+        Lwt_unix.sleep config.check_for_updates_interval
 
     (** Get latest version available at [url] *)
     let get_latest_version url =
@@ -127,7 +139,7 @@ module UpdateService(Deps : UpdateServiceDeps) = struct
       | GettingVersionInfo ->
         (* get version information and decide what to do *)
         begin
-          match%lwt get_version_info ConfigI.update_url with
+          match%lwt get_version_info config.update_url with
           | Ok version_info ->
 
             (* Compare latest available version to version booted. *)
@@ -164,7 +176,7 @@ module UpdateService(Deps : UpdateServiceDeps) = struct
             else if inactive_update_available then
               (* Booted system is not up to date and there is an update available for inactive system. *)
               let latest_version = version_info.latest |> snd in
-              let url = latest_download_url ~update_url:ConfigI.update_url latest_version in
+              let url = latest_download_url ~update_url:config.update_url latest_version in
               Downloading {url = url; version = latest_version}
               |> set
 
@@ -263,41 +275,26 @@ module UpdateService(Deps : UpdateServiceDeps) = struct
     end
 end
 
-(* Helpers for wrapping dependencies/interfaces *)
-(* TODO: could be moved to separate module *)
-
-module DefaultSleepConfig = struct
-    let error_backoff_duration = 30.0
-    let check_for_updates_interval = (1. *. 60. *. 60.)
-end
-
-let get_proxy_uri connman =
-  Connman.Manager.get_default_proxy connman
-    >|= Option.map (Connman.Service.Proxy.to_uri ~include_userinfo:true)
+let build_config update_url : config = {
+    update_url = update_url;
+    error_backoff_duration = 30.0;
+    check_for_updates_interval = (1. *. 60. *. 60.)
+}
 
 let build_deps ~connman ~(rauc : Rauc.t) ~(update_url : string) :
-    (module UpdateServiceDeps) Lwt.t =
+    (module ServiceDeps) Lwt.t =
 
-  let module ConfigI : ConfigInterface = struct
-    include DefaultSleepConfig
-    let update_url = update_url
-  end in
-
+  let config = build_config update_url in
   let raucI = Rauc_service.build_module rauc in
-
-  let%lwt proxy = get_proxy_uri connman in
-
-  let module CurlWrap : CurlProxyInterface = struct
-    let request = Curl.request ?proxy
-  end in
+  let%lwt curlI = Curl_proxy.init connman in
 
   let module Deps = struct
-    module CurlI = CurlWrap
-    module ConfigI = ConfigI
+    let config = config
     module RaucI = (val raucI)
+    module CurlI = (val curlI)
   end in
 
-  Lwt.return (module Deps : UpdateServiceDeps)
+  Lwt.return (module Deps : ServiceDeps)
 
 (* "legacy" entry point *)
 let start ~connman ~(rauc : Rauc.t) ~(update_url : string) =
@@ -306,8 +303,7 @@ let start ~connman ~(rauc : Rauc.t) ~(update_url : string) =
 
   let service = begin
       let%lwt deps = build_deps ~connman ~rauc ~update_url in
-      let module Deps = (val deps : UpdateServiceDeps) in
-      let module UpdateServiceI = UpdateService(Deps) in
+      let module UpdateServiceI = UpdateService(val deps) in
       UpdateServiceI.run ~set_state GettingVersionInfo
   end in
 
