@@ -1,18 +1,20 @@
 open Update
 open Lwt
+open Mocks
 
 let current_version = "10.0.1"
 let next_version = "10.0.2"
 
 module TestCurl = struct
-  (* Need to figure out a more generic way to make mock implementations for
-     tests, might need some PPX magic? *)
-  let calls = Queue.create ()
-  let clear = Queue.clear calls
+  let request_default :
+      (string * string) list option * string option * string list option * Uri.t ->
+      Curl.result Lwt.t =
+   fun _ -> failwith "Not defined"
+
+  module Mock = MakeMockFun (val to_fun_mod request_default)
 
   let request ?headers ?data ?options url =
-    Queue.push (headers, data, options, url) calls;
-    Curl.RequestSuccess (200, next_version) |> Lwt.return
+    Mock.run (headers, data, options, url)
 end
 
 let test_config : config = {
@@ -21,32 +23,9 @@ let test_config : config = {
   update_url = "https://localhost:9999/";
 }
 
-module TestRauc : Rauc_service.RaucServiceIntf = struct
-  let get_status : Rauc.status Lwt.t =
-    let some_status : Rauc.Slot.status =
-      {
-        device = "Device";
-        state = "Good";
-        class' = "class";
-        version = current_version;
-        installed_timestamp = "2023-01-01T00:00:00Z";
-      }
-    in
-    let full_status : Rauc.status = { a = some_status; b = some_status } in
-    full_status |> Lwt.return
-
-  let get_primary : Rauc.Slot.t option Lwt.t =
-    Some Rauc.Slot.SystemA |> Lwt.return
-
-  let get_booted_slot : Rauc.Slot.t Lwt.t = Lwt.return Rauc.Slot.SystemA
-  let install (_ : string) : unit Lwt.t = Lwt.return ()
-
-  let mark_good _ = failwith "Not implemented"
-end
-
 module TestUpdateServiceDeps = struct
   module CurlI = TestCurl
-  module RaucI = TestRauc
+  module RaucI = Fake_rauc
   let config = test_config
 end
 
@@ -59,7 +38,6 @@ type mock_update = unit -> unit
 type scenario_spec =
   | StateReached of Update.state
   | ActionDone of action_descr * action_check
-  (* TODO *)
   | UpdateMock of mock_update
 
 let statefmt (state : Update.state) : string =
@@ -103,7 +81,12 @@ let rec run_test_scenario expected_state_sequence cur_state =
     run_test_scenario expected_state_sequence next_state)
   else Lwt.return ()
 
+let reset_mocks () =
+    TestCurl.Mock.reset ()
+
 let happy_flow_test () =
+  (* TODO: move this to some test setup/teardown thing *)
+  let () = reset_mocks () in
   let init_state = GettingVersionInfo in
   let expected_bundle_name =
     "@PLAYOS_BUNDLE_NAME@-" ^ next_version ^ ".raucb"
@@ -113,6 +96,10 @@ let happy_flow_test () =
   in
 
   let expected_state_sequence =
+    let () =
+      TestCurl.Mock.update_f (fun _ ->
+          Curl.RequestSuccess (200, next_version) |> Lwt.return)
+    in
     Queue.of_seq
       (List.to_seq
          [
@@ -122,16 +109,16 @@ let happy_flow_test () =
                fun () ->
                  Alcotest.(check int)
                    "Curl was called once" 1
-                   (Queue.length TestCurl.calls);
-                 let _ = Queue.pop TestCurl.calls in
+                   (Queue.length TestCurl.Mock.calls);
+                 let _ = Queue.pop TestCurl.Mock.calls in
                  true );
            StateReached
              (Downloading { url = expected_url; version = next_version });
            ActionDone
              ( "curl was called",
                fun () ->
-                 match Queue.take_opt TestCurl.calls with
-                 | Some (_, _, _, url) ->
+                 match Queue.take_opt TestCurl.Mock.calls with
+                 | Some ((_, _, _, url), _) ->
                      Alcotest.(check string)
                        "Curl was called with the right parameters" expected_url
                        (Uri.to_string url);
