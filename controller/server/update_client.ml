@@ -11,54 +11,46 @@ module type CurlProxyInterface = sig
       -> Curl.result Lwt.t
 end
 
+(* unparsed semver version *)
 type version = string
+(* local filesystem path *)
 type bundle_path = string
-type version_pair = (Semver.t [@sexp.opaque]) * string
 
 module type UpdateClientIntf = sig
+    (* download bundle from specified url and save it as `version` *)
     val download : Uri.t -> version -> bundle_path Lwt.t
 
-    (** Get latest version available at [url] *)
-    val get_latest_version : unit -> version_pair Lwt.t
+    (* URL from which the specified version would be downloaded *)
+    val download_url : version -> Uri.t
+
+    (** Get latest version available *)
+    val get_latest_version : unit -> version Lwt.t
 
 end
 
-(* TODO: move to semver helpers or similar *)
-(** Helper to parse semver from string or fail *)
-let semver_of_string string =
-  let trimmed_string = String.trim string
-  in
-  match Semver.of_string trimmed_string with
-  | None ->
-    failwith
-      (Format.sprintf "could not parse version (version string: %s)" string)
-  | Some version ->
-    version, trimmed_string
-
-    
-let bundle_name =
-  "@PLAYOS_BUNDLE_NAME@"
+let bundle_name = Config.System.bundle_name
 
 let bundle_file_name version =
   Format.sprintf "%s-%s.raucb" bundle_name version
 
-(* TODO: FIX: this will produce an invalid URL if ~update_url is missing a
-   trailing slash *)
-(* TODO: Should probably be moved to config too *)
-let latest_download_url ~update_url version_string =
-  Format.sprintf "%s%s/%s" update_url version_string (bundle_file_name version_string)
-
 module UpdateClient (CurlI : CurlProxyInterface) = struct
-    let url = "UPDATE_URL_TO_SPECIFY"
+    let base_url = Config.System.update_url
 
-    (** Get latest version available at [url] *)
+    (* TODO: FIX: this will produce an invalid URL if ~update_url is missing a
+       trailing slash *)
+    (* TODO: Should probably be moved to config too *)
+    let download_url version_string =
+      Format.sprintf "%s%s/%s" base_url version_string (bundle_file_name version_string)
+      |>
+      Uri.of_string
+
+    (** Get latest version available *)
     let get_latest_version () =
-      match%lwt CurlI.request (Uri.of_string (url ^ "latest")) with
+      match%lwt CurlI.request (Uri.of_string (base_url ^ "latest")) with
       | RequestSuccess (_, body) ->
-          return (semver_of_string body)
+          return body
       | RequestFailure error ->
           Lwt.fail_with (Printf.sprintf "could not get latest version (%s)" (Curl.pretty_print_error error))
-
 
     (** download RAUC bundle *)
     let download url version =
@@ -97,4 +89,3 @@ let init connman =
   let curlI = build_module_curl proxy in
   Lwt.return @@ (module UpdateClient (val curlI : CurlProxyInterface) :
       UpdateClientIntf )
-

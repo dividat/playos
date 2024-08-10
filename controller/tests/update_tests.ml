@@ -11,7 +11,7 @@ let happy_flow_test () =
     "@PLAYOS_BUNDLE_NAME@-" ^ next_version ^ ".raucb"
   in
   let expected_url =
-    test_config.update_url ^ next_version ^ "/" ^ expected_bundle_name
+    Config.System.update_url ^ next_version ^ "/" ^ expected_bundle_name
   in
 
   let expected_state_sequence =
@@ -27,11 +27,14 @@ let happy_flow_test () =
       ActionDone
         ( "curl was called",
           fun () ->
-            Alcotest.(check int)
-              "Curl was called once" 1
-              (Queue.length TestCurl.Mock.calls);
-            let _ = Queue.pop TestCurl.Mock.calls in
-            Lwt.return true );
+            match Queue.take_opt TestCurl.Mock.calls with
+            | Some ((_, _, _, url), _) ->
+                Alcotest.(check string)
+                  "Curl was called with the right parameters"
+                  (Config.System.update_url ^ "latest")
+                  (Uri.to_string url);
+                Lwt.return true
+            | _ -> Alcotest.fail "Curl was not called" );
       StateReached (Downloading { url = expected_url; version = next_version });
       ActionDone
         ( "curl was called",
@@ -39,7 +42,8 @@ let happy_flow_test () =
             match Queue.take_opt TestCurl.Mock.calls with
             | Some ((_, _, _, url), _) ->
                 Alcotest.(check string)
-                  "Curl was called with the right parameters" expected_url
+                  "Curl was called with the right parameters"
+                  expected_url
                   (Uri.to_string url);
                 Lwt.return true
             | _ -> Alcotest.fail "Curl was not called" );

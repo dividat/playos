@@ -17,7 +17,6 @@ end
 let test_config : config = {
   error_backoff_duration = 0.01;
   check_for_updates_interval = 0.05;
-  update_url = "https://localhost:9999/";
 }
 
 module TestUpdateServiceDeps = struct
