@@ -26,9 +26,9 @@ let state : state = default_state
 (* TODO: is there a less-copy-paste based approach that avoids using full-blown
    objects? *)
 let reset_state () =
-    state.rauc_status <- default_state.rauc_status;
-    state.primary_slot <- default_state.primary_slot;
-    state.booted_slot <- default_state.booted_slot;
+    state.rauc_status <- { a = some_status; b = some_status };
+    state.primary_slot <- None;
+    state.booted_slot <- Slot.SystemA;
     ()
 
 let set_status slot status =
