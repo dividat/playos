@@ -96,12 +96,12 @@ module UpdateService(Deps : ServiceDeps) = struct
       Lwt_result.catch
         (fun () ->
           let%lwt latest = get_latest_version url in
-          let%lwt rauc_status = RaucI.get_status in
+          let%lwt rauc_status = RaucI.get_status () in
 
           let system_a_version = rauc_status.a.version |> semver_of_string in
           let system_b_version = rauc_status.b.version |> semver_of_string in
 
-          match%lwt RaucI.get_booted_slot with
+          match%lwt RaucI.get_booted_slot () with
           | SystemA ->
             { latest = latest
             ; booted = system_a_version
@@ -156,13 +156,13 @@ module UpdateService(Deps : ServiceDeps) = struct
             let inactive_update_available = inactive_version_compare > 0 in
 
             if booted_up_to_date || inactive_up_to_date then
-              match%lwt RaucI.get_primary with
+              match%lwt RaucI.get_primary () with
               | Some primary_slot ->
                 if booted_up_to_date then
                   (* Don't care if inactive can be updated. I.e. Only update the inactive partition once the booted partition is outdated. This results in always two versions being available on the machine. *)
                   UpToDate version_info |> set
                 else
-                  let%lwt booted_slot = RaucI.get_booted_slot in
+                  let%lwt booted_slot = RaucI.get_booted_slot () in
                   if booted_slot = primary_slot then
                     (* Inactive is up to date while booted is out of date, but booted was specifically selected for boot *)
                     OutOfDateVersionSelected |> set
