@@ -39,9 +39,7 @@ type sleep_duration = float (* seconds *)
 type config = {
     error_backoff_duration: sleep_duration;
     check_for_updates_interval: sleep_duration;
-    update_url: string
 }
-
 
 module type ServiceDeps = sig
     module ClientI: Update_client.UpdateClientIntf
@@ -49,8 +47,16 @@ module type ServiceDeps = sig
     val config : config
 end
 
-(* temp alias, TODO: move to separate module *)
-let semver_of_string = Update_client.semver_of_string
+(** Helper to parse semver from string or fail *)
+let semver_of_string string =
+  let trimmed_string = String.trim string
+  in
+  match Semver.of_string trimmed_string with
+  | None ->
+    failwith
+      (Format.sprintf "could not parse version (version string: %s)" string)
+  | Some version ->
+    version, trimmed_string
 
 module UpdateService(Deps : ServiceDeps) = struct
     open Deps
@@ -65,7 +71,7 @@ module UpdateService(Deps : ServiceDeps) = struct
     let get_version_info () =
       Lwt_result.catch
         (fun () ->
-          let%lwt latest = ClientI.get_latest_version () in
+          let%lwt latest = ClientI.get_latest_version () >|= semver_of_string in
           let%lwt rauc_status = RaucI.get_status () in
 
           let system_a_version = rauc_status.a.version |> semver_of_string in
@@ -131,7 +137,7 @@ module UpdateService(Deps : ServiceDeps) = struct
             else if inactive_update_available then
               (* Booted system is not up to date and there is an update available for inactive system. *)
               let latest_version = version_info.latest |> snd in
-              let url = Update_client.latest_download_url ~update_url:config.update_url latest_version in
+              let url = ClientI.download_url latest_version |> Uri.to_string in
               Downloading {url = url; version = latest_version}
               |> set
 
@@ -230,16 +236,15 @@ module UpdateService(Deps : ServiceDeps) = struct
     end
 end
 
-let build_config update_url : config = {
-    update_url = update_url;
+let default_config : config = {
     error_backoff_duration = 30.0;
     check_for_updates_interval = (1. *. 60. *. 60.)
 }
 
-let build_deps ~connman ~(rauc : Rauc.t) ~(update_url : string) :
+let build_deps ~connman ~(rauc : Rauc.t) :
     (module ServiceDeps) Lwt.t =
 
-  let config = build_config update_url in
+  let config = default_config in
   let raucI = Rauc_service.build_module rauc in
   let%lwt clientI = Update_client.init connman in
 
@@ -255,9 +260,11 @@ let build_deps ~connman ~(rauc : Rauc.t) ~(update_url : string) :
 let start ~connman ~(rauc : Rauc.t) ~(update_url : string) =
   let state_s, set_state = Lwt_react.S.create GettingVersionInfo in
   let () = Logs.info ~src:log_src (fun m -> m "update URL: %s" update_url) in
+  (* temporarily before sever.ml` is refactored *)
+  let () = assert (update_url == Config.System.update_url) in
 
   let service = begin
-      let%lwt deps = build_deps ~connman ~rauc ~update_url in
+      let%lwt deps = build_deps ~connman ~rauc in
       let module UpdateServiceI = UpdateService(val deps) in
       UpdateServiceI.run ~set_state GettingVersionInfo
   end in

@@ -34,9 +34,6 @@ type config = {
 
     (* time to sleep in seconds between checking for available updates *)
     check_for_updates_interval: sleep_duration;
-
-    (* where to fetch updates from *)
-    update_url: string
 }
 
 module type ServiceDeps = sig
