@@ -81,12 +81,17 @@ let rec run_test_scenario expected_state_sequence cur_state =
     run_test_scenario expected_state_sequence next_state)
   else Lwt.return ()
 
-let reset_mocks () =
+let reset_mocks () = begin
+    Fake_rauc.reset_state ();
     TestCurl.Mock.reset ()
+end
+
+let run_test_case scenario_gen =
+    let () = reset_mocks ()  in
+    let (scenario, init_state) = scenario_gen () in
+    run_test_scenario scenario init_state
 
 let happy_flow_test () =
-  (* TODO: move this to some test setup/teardown thing *)
-  let () = reset_mocks () in
   let init_state = GettingVersionInfo in
   let expected_bundle_name =
     "@PLAYOS_BUNDLE_NAME@-" ^ next_version ^ ".raucb"
@@ -145,7 +150,7 @@ let happy_flow_test () =
            StateReached GettingVersionInfo;
          ])
   in
-  run_test_scenario expected_state_sequence init_state
+  (expected_state_sequence, init_state)
 
 let setup_log () =
   Fmt_tty.setup_std_outputs ();
@@ -161,6 +166,6 @@ let () =
          ( "all",
            [
              Alcotest_lwt.test_case "Happy flow" `Quick (fun _ () ->
-                 happy_flow_test ());
+                 run_test_case happy_flow_test);
            ] );
        ]
