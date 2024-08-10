@@ -1,6 +1,6 @@
 (test
  (name update_tests)
- (libraries update alcotest alcotest-lwt)
+ (libraries update alcotest alcotest-lwt str)
  (modules update_tests mocks fake_rauc)
  (preprocess (pps lwt_ppx ppx_sexp_conv))
 )
