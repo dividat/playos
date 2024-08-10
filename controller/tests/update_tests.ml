@@ -131,7 +131,14 @@ let happy_flow_test () =
   in
   run_test_scenario expected_state_sequence init_state
 
+let setup_log () =
+  Fmt_tty.setup_std_outputs ();
+  Logs.set_level @@ Some Logs.Debug;
+  Logs.set_reporter (Logs_fmt.reporter ());
+  ()
+
 let () =
+  let () = setup_log () in
   Lwt_main.run
   @@ Alcotest_lwt.run "Basic tests"
        [
