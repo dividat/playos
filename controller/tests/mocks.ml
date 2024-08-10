@@ -13,7 +13,7 @@ module type MockFun = sig
   val run : args -> ret
   val reset : unit -> unit
   val calls : (args * result) Queue.t
-  val calls_clear : unit
+  val calls_clear : unit -> unit
   val was_called : unit -> bool
   val was_called_with : args -> bool
   val update_f : (args -> ret) -> unit
@@ -26,10 +26,10 @@ module MakeMockFun (F : Fun) :
   let calls = Queue.create ()
   let int_f = ref F.f
   let update_f f = int_f := f
-  let calls_clear = Queue.clear calls
+  let calls_clear () = Queue.clear calls
 
   let reset () =
-    calls_clear;
+    calls_clear ();
     int_f := F.f
 
   let run x =
