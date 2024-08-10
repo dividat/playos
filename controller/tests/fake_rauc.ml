@@ -9,31 +9,45 @@ let some_status : Rauc.Slot.status =
     installed_timestamp = "2023-01-01T00:00:00Z";
   }
 
-module State = struct
-  let rauc_status : Rauc.status ref = ref { a = some_status; b = some_status }
-  let primary_slot : Rauc.Slot.t option ref = ref None
-  let booted_slot = ref Slot.SystemA
-end
+type state = {
+    mutable rauc_status: Rauc.status;
+    mutable primary_slot: Slot.t option;
+    mutable booted_slot: Slot.t;
+}
 
-open State
+let default_state = {
+    rauc_status = { a = some_status; b = some_status };
+    primary_slot = None;
+    booted_slot = Slot.SystemA;
+}
+
+let state : state = default_state
+
+(* TODO: is there a less-copy-paste based approach that avoids using full-blown
+   objects? *)
+let reset_state () =
+    state.rauc_status <- default_state.rauc_status;
+    state.primary_slot <- default_state.primary_slot;
+    state.booted_slot <- default_state.booted_slot;
+    ()
 
 let set_status slot status =
   match slot with
-  | Slot.SystemA -> rauc_status := { !rauc_status with a = status }
-  | Slot.SystemB -> rauc_status := { !rauc_status with b = status }
+  | Slot.SystemA -> state.rauc_status <- { state.rauc_status with a = status }
+  | Slot.SystemB -> state.rauc_status <- { state.rauc_status with b = status }
 
-let get_status () = !rauc_status |> Lwt.return
+let get_status () = state.rauc_status |> Lwt.return
 
 let get_slot_status slot =
   match slot with
-  | Slot.SystemA -> !rauc_status.a
-  | Slot.SystemB -> !rauc_status.b
+  | Slot.SystemA -> state.rauc_status.a
+  | Slot.SystemB -> state.rauc_status.b
 
-let set_primary slot = primary_slot := Some slot
-let get_primary () = !primary_slot |> Lwt.return
+let set_primary slot = state.primary_slot <- Some slot
+let get_primary () = state.primary_slot |> Lwt.return
 
-let set_booted_slot slot = booted_slot := slot
-let get_booted_slot () = Lwt.return Slot.SystemA
+let set_booted_slot slot = state.booted_slot <- slot
+let get_booted_slot () = Lwt.return state.booted_slot
 
 let extract_version bundle_path =
     let regex_str = {|.*-\([0-9]+\.[0-9]+\.[0-9]+.*\)\.raucb|} in
