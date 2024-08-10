@@ -3,11 +3,7 @@ open Sexplib.Conv
 
 let log_src = Logs.Src.create "update"
 
-let bundle_name =
-  "@PLAYOS_BUNDLE_NAME@"
-
 (* Version handling *)
-
 
 (** Type containing version information *)
 type version_info =
@@ -46,33 +42,15 @@ type config = {
     update_url: string
 }
 
-(** Helper to parse semver from string or fail *)
-let semver_of_string string =
-  let trimmed_string = String.trim string
-  in
-  match Semver.of_string trimmed_string with
-  | None ->
-    failwith
-      (Format.sprintf "could not parse version (version string: %s)" string)
-  | Some version ->
-    version, trimmed_string
-
-
-let bundle_file_name version =
-  Format.sprintf "%s-%s.raucb" bundle_name version
-
-(* TODO: FIX: this will produce an invalid URL if ~update_url is missing a
-   trailing slash *)
-(* TODO: Should probably be moved to config too *)
-let latest_download_url ~update_url version_string =
-  Format.sprintf "%s%s/%s" update_url version_string (bundle_file_name version_string)
-
 
 module type ServiceDeps = sig
-    module CurlI: Curl_proxy.CurlProxyInterface
+    module ClientI: Update_client.UpdateClientIntf
     module RaucI: Rauc_service.RaucServiceIntf
     val config : config
 end
+
+(* temp alias, TODO: move to separate module *)
+let semver_of_string = Update_client.semver_of_string
 
 module UpdateService(Deps : ServiceDeps) = struct
     open Deps
@@ -83,19 +61,11 @@ module UpdateService(Deps : ServiceDeps) = struct
     let sleep_update_check =
         Lwt_unix.sleep config.check_for_updates_interval
 
-    (** Get latest version available at [url] *)
-    let get_latest_version url =
-      match%lwt CurlI.request (Uri.of_string (url ^ "latest")) with
-      | RequestSuccess (_, body) ->
-          return (semver_of_string body)
-      | RequestFailure error ->
-          Lwt.fail_with (Printf.sprintf "could not get latest version (%s)" (Curl.pretty_print_error error))
-
     (** Get version information *)
-    let get_version_info url =
+    let get_version_info () =
       Lwt_result.catch
         (fun () ->
-          let%lwt latest = get_latest_version url in
+          let%lwt latest = ClientI.get_latest_version () in
           let%lwt rauc_status = RaucI.get_status () in
 
           let system_a_version = rauc_status.a.version |> semver_of_string in
@@ -116,21 +86,6 @@ module UpdateService(Deps : ServiceDeps) = struct
             |> return
         )
 
-    (** download RAUC bundle *)
-    let download url version =
-      let bundle_path = Format.sprintf "/tmp/%s" (bundle_file_name version) in
-      let options =
-        [ "--continue-at"; "-" (* resume download *)
-        ; "--limit-rate"; "10M"
-        ; "--output"; bundle_path
-        ]
-      in
-      match%lwt CurlI.request ~options url with
-      | RequestSuccess _ ->
-          return bundle_path
-      | RequestFailure error ->
-          Lwt.fail_with (Printf.sprintf "could not download RAUC bundle (%s)" (Curl.pretty_print_error error))
-
 (* Update mechanism process *)
     (** perform a single state transition from given state *)
     let run_step (state:state) : state Lwt.t =
@@ -139,7 +94,7 @@ module UpdateService(Deps : ServiceDeps) = struct
       | GettingVersionInfo ->
         (* get version information and decide what to do *)
         begin
-          match%lwt get_version_info config.update_url with
+          match%lwt get_version_info () with
           | Ok version_info ->
 
             (* Compare latest available version to version booted. *)
@@ -176,7 +131,7 @@ module UpdateService(Deps : ServiceDeps) = struct
             else if inactive_update_available then
               (* Booted system is not up to date and there is an update available for inactive system. *)
               let latest_version = version_info.latest |> snd in
-              let url = latest_download_url ~update_url:config.update_url latest_version in
+              let url = Update_client.latest_download_url ~update_url:config.update_url latest_version in
               Downloading {url = url; version = latest_version}
               |> set
 
@@ -210,7 +165,7 @@ module UpdateService(Deps : ServiceDeps) = struct
 
       | Downloading {url; version} ->
         (* download latest version *)
-        (match%lwt Lwt_result.catch (fun () -> download (Uri.of_string url) version) with
+        (match%lwt Lwt_result.catch (fun () -> ClientI.download (Uri.of_string url) version) with
          | Ok bundle_path ->
            Installing bundle_path
            |> set
@@ -286,12 +241,12 @@ let build_deps ~connman ~(rauc : Rauc.t) ~(update_url : string) :
 
   let config = build_config update_url in
   let raucI = Rauc_service.build_module rauc in
-  let%lwt curlI = Curl_proxy.init connman in
+  let%lwt clientI = Update_client.init connman in
 
   let module Deps = struct
     let config = config
     module RaucI = (val raucI)
-    module CurlI = (val curlI)
+    module ClientI = (val clientI)
   end in
 
   Lwt.return (module Deps : ServiceDeps)
