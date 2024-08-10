@@ -15,13 +15,13 @@
 (library
  (name update)
  (modules update)
- (libraries curl_proxy rauc_service lwt connman rauc curl semver2)
+ (libraries update_client rauc_service lwt connman rauc curl semver2)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 
 (library
- (name curl_proxy)
- (modules curl_proxy)
- (libraries lwt connman curl)
+ (name update_client)
+ (modules update_client)
+ (libraries lwt connman curl semver2)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 
 (library

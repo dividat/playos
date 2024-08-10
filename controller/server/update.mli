@@ -40,7 +40,7 @@ type config = {
 }
 
 module type ServiceDeps = sig
-    module CurlI: Curl_proxy.CurlProxyInterface
+    module ClientI: Update_client.UpdateClientIntf
     module RaucI: Rauc_service.RaucServiceIntf
     val config : config
 end
