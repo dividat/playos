@@ -2,9 +2,6 @@ open Update
 open Lwt
 open Mocks
 
-let current_version = "10.0.1"
-let next_version = "10.0.2"
-
 module TestCurl = struct
   let request_default :
       (string * string) list option * string option * string list option * Uri.t ->
@@ -49,8 +46,38 @@ let specfmt spec = match spec with
     | UpdateMock _ -> "UpdateMock: <fun>"
 
 
+
+(* string equality, but the magic patern `___` is treated
+  as a placeholder for any sub-string. The implementation converts the
+  `expected` string to a regex where the magic pattern is replaced with ".*",
+  while being careful to `Str.quote` the rest of the string to not accidentally
+  treat them as regex expressions.
+*)
+let str_match_with_magic_pat expected actual =
+    let open Str in
+    let magic_pattern = regexp_string "___" in
+    let exp_parts = full_split magic_pattern expected in
+    let exp_regexp = regexp @@ String.concat "" @@ List.map (fun (p) ->
+        match p with
+            | Text a -> quote a
+            | Delim a -> ".*"
+    ) exp_parts in
+    string_match exp_regexp actual 0
+
+
 let state_formatter out inp = Format.fprintf out "%s" (statefmt inp)
-let t_state = Alcotest.testable state_formatter ( = )
+
+let t_state =
+    let state_eq expected actual =
+        if (expected == actual) then true
+        else
+            (* Horrible hack, but avoids having to pattern match on every
+               variant in the state ADT *)
+            str_match_with_magic_pat
+                (Update.sexp_of_state expected |> Sexplib.Sexp.to_string)
+                (Update.sexp_of_state actual |> Sexplib.Sexp.to_string)
+    in
+    Alcotest.testable state_formatter state_eq
 
 
 let interp_spec (state : Update.state) (spec : scenario_spec) =
@@ -127,6 +154,9 @@ let run_test_case scenario_gen =
 
 let happy_flow_test () =
   let init_state = GettingVersionInfo in
+  let current_version = "10.0.1" in
+  let next_version = "10.0.2" in
+
   let expected_bundle_name =
     "@PLAYOS_BUNDLE_NAME@-" ^ next_version ^ ".raucb"
   in
@@ -138,6 +168,9 @@ let happy_flow_test () =
   let expected_state_sequence =
     [
       UpdateMock (fun () ->
+        Fake_rauc.set_status SystemA {
+            Fake_rauc.some_status with version = current_version
+        };
         TestCurl.Mock.update_f (fun _ ->
             Curl.RequestSuccess (200, next_version) |> Lwt.return)
       );
@@ -184,6 +217,35 @@ let happy_flow_test () =
   in
   (expected_state_sequence, init_state)
 
+let not_so_happy_test () =
+  let init_state = GettingVersionInfo in
+
+  (* both slots have a newer version than fetch from update *)
+  let installed_version = "10.0.0" in
+  let next_version = "9.0.0" in
+
+  let expected_state_sequence =
+    [
+      UpdateMock (fun () ->
+        Fake_rauc.set_status SystemA {
+            Fake_rauc.some_status with version = installed_version
+        };
+        Fake_rauc.set_status SystemB {
+            Fake_rauc.some_status with version = installed_version
+        };
+        TestCurl.Mock.update_f (fun _ ->
+            Curl.RequestSuccess (200, next_version) |> Lwt.return)
+      );
+      StateReached GettingVersionInfo;
+      (* TODO: is this really a non-sensical scenario? *)
+      StateReached
+        (ErrorGettingVersionInfo "nonsensical version information: ___");
+      StateReached GettingVersionInfo;
+    ]
+  in
+  (expected_state_sequence, init_state)
+
+
 let setup_log () =
   Fmt_tty.setup_std_outputs ();
   Logs.set_level @@ Some Logs.Debug;
@@ -200,6 +262,6 @@ let () =
              Alcotest_lwt.test_case "Happy flow" `Quick (fun _ () ->
                  run_test_case happy_flow_test);
              Alcotest_lwt.test_case "Not so happy flow" `Quick (fun _ () ->
-                 run_test_case happy_flow_test);
+                 run_test_case not_so_happy_test);
            ]);
        ]
