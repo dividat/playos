@@ -89,7 +89,7 @@ end
 let run_test_case scenario_gen =
     let () = reset_mocks ()  in
     let (scenario, init_state) = scenario_gen () in
-    run_test_scenario scenario init_state
+    run_test_scenario (Queue.of_seq (List.to_seq scenario)) init_state
 
 let happy_flow_test () =
   let init_state = GettingVersionInfo in
@@ -105,50 +105,49 @@ let happy_flow_test () =
       TestCurl.Mock.update_f (fun _ ->
           Curl.RequestSuccess (200, next_version) |> Lwt.return)
     in
-    Queue.of_seq
-      (List.to_seq
-         [
-           StateReached GettingVersionInfo;
-           ActionDone
-             ( "curl was called",
-               fun () ->
-                 Alcotest.(check int)
-                   "Curl was called once" 1
-                   (Queue.length TestCurl.Mock.calls);
-                 let _ = Queue.pop TestCurl.Mock.calls in
-                 true );
-           StateReached
-             (Downloading { url = expected_url; version = next_version });
-           ActionDone
-             ( "curl was called",
-               fun () ->
-                 match Queue.take_opt TestCurl.Mock.calls with
-                 | Some ((_, _, _, url), _) ->
-                     Alcotest.(check string)
-                       "Curl was called with the right parameters" expected_url
-                       (Uri.to_string url);
-                     true
-                 | _ -> Alcotest.fail "Curl was not called" );
-           StateReached (Installing ("/tmp/" ^ expected_bundle_name));
-           ActionDone ("bundle was installed and marked as primary",
-            fun () ->
-                Lwt_main.run @@ begin
-                    let%lwt primary_opt = Fake_rauc.get_primary () in
-                    let primary = (match primary_opt with
-                        | Some x -> x
-                        | _ -> Alcotest.fail "Primary was not set!")
-                    in
-                    let status = Fake_rauc.get_slot_status primary in
-                    let () = Alcotest.(check string)
-                        "Primary version is set to the newly downloaded bundle"
-                        next_version
-                        status.version in
-                    Lwt.return @@ true
-                end
-           );
-           StateReached RebootRequired;
-           StateReached GettingVersionInfo;
-         ])
+    [
+      StateReached GettingVersionInfo;
+      ActionDone
+        ( "curl was called",
+          fun () ->
+            Alcotest.(check int)
+              "Curl was called once" 1
+              (Queue.length TestCurl.Mock.calls);
+            let _ = Queue.pop TestCurl.Mock.calls in
+            true );
+      StateReached (Downloading { url = expected_url; version = next_version });
+      ActionDone
+        ( "curl was called",
+          fun () ->
+            match Queue.take_opt TestCurl.Mock.calls with
+            | Some ((_, _, _, url), _) ->
+                Alcotest.(check string)
+                  "Curl was called with the right parameters" expected_url
+                  (Uri.to_string url);
+                true
+            | _ -> Alcotest.fail "Curl was not called" );
+      StateReached (Installing ("/tmp/" ^ expected_bundle_name));
+      ActionDone
+        ( "bundle was installed and marked as primary",
+          fun () ->
+            Lwt_main.run
+            @@
+            let%lwt primary_opt = Fake_rauc.get_primary () in
+            let primary =
+              match primary_opt with
+              | Some x -> x
+              | _ -> Alcotest.fail "Primary was not set!"
+            in
+            let status = Fake_rauc.get_slot_status primary in
+            let () =
+              Alcotest.(check string)
+                "Primary version is set to the newly downloaded bundle"
+                next_version status.version
+            in
+            Lwt.return @@ true );
+      StateReached RebootRequired;
+      StateReached GettingVersionInfo;
+    ]
   in
   (expected_state_sequence, init_state)
 
