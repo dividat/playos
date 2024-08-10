@@ -125,6 +125,22 @@ let happy_flow_test () =
                      true
                  | _ -> Alcotest.fail "Curl was not called" );
            StateReached (Installing ("/tmp/" ^ expected_bundle_name));
+           ActionDone ("bundle was installed and marked as primary",
+            fun () ->
+                Lwt_main.run @@ begin
+                    let%lwt primary_opt = Fake_rauc.get_primary () in
+                    let primary = (match primary_opt with
+                        | Some x -> x
+                        | _ -> Alcotest.fail "Primary was not set!")
+                    in
+                    let status = Fake_rauc.get_slot_status primary in
+                    let () = Alcotest.(check string)
+                        "Primary version is set to the newly downloaded bundle"
+                        next_version
+                        status.version in
+                    Lwt.return @@ true
+                end
+           );
            StateReached RebootRequired;
            StateReached GettingVersionInfo;
          ])
