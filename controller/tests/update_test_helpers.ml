@@ -9,7 +9,7 @@ let test_config : config = {
 
 module TestUpdateServiceDeps = struct
   module ClientI = Mock_update_client
-  module RaucI = Fake_rauc
+  module RaucI = Mock_rauc
   let config = test_config
 end
 
@@ -130,7 +130,7 @@ let rec run_test_scenario expected_state_sequence cur_state =
   else Lwt.return ()
 
 let reset_mocks () = begin
-    Fake_rauc.reset_state ();
+    Mock_rauc.reset_state ();
     Mock_update_client.reset_state ()
 end
 

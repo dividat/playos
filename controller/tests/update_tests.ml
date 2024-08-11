@@ -18,8 +18,8 @@ let happy_flow_test () =
   let expected_state_sequence =
     [
       UpdateMock (fun () ->
-        Fake_rauc.set_status SystemA {
-            Fake_rauc.some_status with version = current_version
+        Mock_rauc.set_status SystemA {
+            Mock_rauc.some_status with version = current_version
         };
         Mock_update_client.add_bundle next_version
             ("BUNDLE_CONTENTS: " ^ next_version);
@@ -31,13 +31,13 @@ let happy_flow_test () =
       ActionDone
         ( "bundle was installed and marked as primary",
           fun () ->
-            let%lwt primary_opt = Fake_rauc.get_primary () in
+            let%lwt primary_opt = Mock_rauc.get_primary () in
             let primary =
               match primary_opt with
               | Some x -> x
               | _ -> Alcotest.fail "Primary was not set!"
             in
-            let status = Fake_rauc.get_slot_status primary in
+            let status = Mock_rauc.get_slot_status primary in
             let () =
               Alcotest.(check string)
                 "Primary version is set to the newly downloaded bundle"
@@ -60,11 +60,11 @@ let not_so_happy_test () =
   let expected_state_sequence =
     [
       UpdateMock (fun () ->
-        Fake_rauc.set_status SystemA {
-            Fake_rauc.some_status with version = installed_version
+        Mock_rauc.set_status SystemA {
+            Mock_rauc.some_status with version = installed_version
         };
-        Fake_rauc.set_status SystemB {
-            Fake_rauc.some_status with version = installed_version
+        Mock_rauc.set_status SystemB {
+            Mock_rauc.some_status with version = installed_version
         };
         Mock_update_client.set_latest_version next_version
       );
