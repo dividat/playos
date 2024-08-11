@@ -15,13 +15,11 @@ type state = {
     mutable booted_slot: Slot.t;
 }
 
-let default_state = {
+let state : state = {
     rauc_status = { a = some_status; b = some_status };
     primary_slot = None;
     booted_slot = Slot.SystemA;
 }
-
-let state : state = default_state
 
 (* TODO: is there a less-copy-paste based approach that avoids using full-blown
    objects? *)

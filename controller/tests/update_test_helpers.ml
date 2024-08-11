@@ -2,26 +2,13 @@ open Update
 open Lwt
 open Mocks
 
-module TestCurl = struct
-  let request_default :
-      (string * string) list option * string option * string list option * Uri.t ->
-      Curl.result Lwt.t =
-   fun _ -> failwith "Not defined"
-
-  module Mock = MakeMockFun (val to_fun_mod request_default)
-
-  let request ?headers ?data ?options url =
-    Mock.run (headers, data, options, url)
-end
-
 let test_config : config = {
   error_backoff_duration = 0.01;
   check_for_updates_interval = 0.05;
 }
 
 module TestUpdateServiceDeps = struct
-  module CurlI = TestCurl
-  module ClientI = (val Update_client.build_module (module CurlI))
+  module ClientI = Mock_update_client
   module RaucI = Fake_rauc
   let config = test_config
 end
@@ -45,9 +32,9 @@ let specfmt spec = match spec with
     | ActionDone (descr, c) -> "ActionDone: " ^ descr;
     | UpdateMock _ -> "UpdateMock: <fun>"
 
+let _MAGIC_PAT = "<..>"
 
-
-(* string equality, but the magic patern `___` is treated
+(* string equality, but the magic patern `<..>` is treated
   as a placeholder for any sub-string. The implementation converts the
   `expected` string to a regex where the magic pattern is replaced with ".*",
   while being careful to `Str.quote` the rest of the string to not accidentally
@@ -55,7 +42,7 @@ let specfmt spec = match spec with
 *)
 let str_match_with_magic_pat expected actual =
     let open Str in
-    let magic_pattern = regexp_string "___" in
+    let magic_pattern = regexp_string _MAGIC_PAT in
     let exp_parts = full_split magic_pattern expected in
     let exp_regexp = regexp @@ String.concat "" @@ List.map (fun (p) ->
         match p with
@@ -144,11 +131,10 @@ let rec run_test_scenario expected_state_sequence cur_state =
 
 let reset_mocks () = begin
     Fake_rauc.reset_state ();
-    TestCurl.Mock.reset ()
+    Mock_update_client.reset_state ()
 end
 
 let run_test_case scenario_gen =
     let () = reset_mocks ()  in
     let (scenario, init_state) = scenario_gen () in
     run_test_scenario (Queue.of_seq (List.to_seq scenario)) init_state
-
