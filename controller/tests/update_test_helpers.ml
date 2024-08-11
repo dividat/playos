@@ -1,6 +1,5 @@
 open Update
 open Lwt
-open Mocks
 
 let test_config : config = {
   error_backoff_duration = 0.01;
