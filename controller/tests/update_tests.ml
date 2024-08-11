@@ -7,11 +7,12 @@ let happy_flow_test () =
   let current_version = "10.0.1" in
   let next_version = "10.0.2" in
 
-  let expected_bundle_name =
-    "@PLAYOS_BUNDLE_NAME@-" ^ next_version ^ ".raucb"
+  let expected_bundle_name vsn =
+      Mock_update_client.test_bundle_name ^ _MAGIC_PAT ^ vsn ^ _MAGIC_PAT
   in
   let expected_url =
-    Config.System.update_url ^ next_version ^ "/" ^ expected_bundle_name
+    Config.System.update_url ^ _MAGIC_PAT
+        ^ expected_bundle_name next_version
   in
 
   let expected_state_sequence =
@@ -20,34 +21,13 @@ let happy_flow_test () =
         Fake_rauc.set_status SystemA {
             Fake_rauc.some_status with version = current_version
         };
-        TestCurl.Mock.update_f (fun _ ->
-            Curl.RequestSuccess (200, next_version) |> Lwt.return)
+        Mock_update_client.add_bundle next_version
+            ("BUNDLE_CONTENTS: " ^ next_version);
+        Mock_update_client.set_latest_version next_version;
       );
       StateReached GettingVersionInfo;
-      ActionDone
-        ( "curl was called",
-          fun () ->
-            match Queue.take_opt TestCurl.Mock.calls with
-            | Some ((_, _, _, url), _) ->
-                Alcotest.(check string)
-                  "Curl was called with the right parameters"
-                  (Config.System.update_url ^ "latest")
-                  (Uri.to_string url);
-                Lwt.return true
-            | _ -> Alcotest.fail "Curl was not called" );
       StateReached (Downloading { url = expected_url; version = next_version });
-      ActionDone
-        ( "curl was called",
-          fun () ->
-            match Queue.take_opt TestCurl.Mock.calls with
-            | Some ((_, _, _, url), _) ->
-                Alcotest.(check string)
-                  "Curl was called with the right parameters"
-                  expected_url
-                  (Uri.to_string url);
-                Lwt.return true
-            | _ -> Alcotest.fail "Curl was not called" );
-      StateReached (Installing ("/tmp/" ^ expected_bundle_name));
+      StateReached (Installing (_MAGIC_PAT ^ expected_bundle_name next_version));
       ActionDone
         ( "bundle was installed and marked as primary",
           fun () ->
@@ -86,13 +66,12 @@ let not_so_happy_test () =
         Fake_rauc.set_status SystemB {
             Fake_rauc.some_status with version = installed_version
         };
-        TestCurl.Mock.update_f (fun _ ->
-            Curl.RequestSuccess (200, next_version) |> Lwt.return)
+        Mock_update_client.set_latest_version next_version
       );
       StateReached GettingVersionInfo;
       (* TODO: is this really a non-sensical scenario? *)
       StateReached
-        (ErrorGettingVersionInfo "nonsensical version information: ___");
+        (ErrorGettingVersionInfo "nonsensical version information: <..>");
       StateReached GettingVersionInfo;
     ]
   in

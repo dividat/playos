@@ -19,20 +19,15 @@ module type UpdateClientIntf = sig
     val get_latest_version : unit -> version Lwt.t
 end
 
-(* tiny wrapper around Curl bindings with implicit
-   proxy resolution *)
-module type CurlProxyInterface = sig
-    val request
-      :  ?headers:(string * string) list
-      -> ?data:string
-      -> ?options:string list
-      -> Uri.t
-      -> Curl.result Lwt.t
+module type ProxyProvider = sig
+    val proxy: Uri.t option
 end
+
+val proxy_provider : Uri.t option -> (module ProxyProvider)
+
+module Make (ProxyI : ProxyProvider) : UpdateClientIntf
 
 (* Suggested interface after broader refactoring
    val init : unit -> (module UpdateClientIntf) Lwt.t
 *)
 val init : Connman.Manager.t -> (module UpdateClientIntf) Lwt.t
-
-val build_module : (module CurlProxyInterface) -> (module UpdateClientIntf)

@@ -1,16 +1,5 @@
 open Lwt
 
-(* tiny wrapper around Curl bindings with implicit
-   proxy resolution *)
-module type CurlProxyInterface = sig
-    val request
-      :  ?headers:(string * string) list
-      -> ?data:string
-      -> ?options:string list
-      -> Uri.t
-      -> Curl.result Lwt.t
-end
-
 (* unparsed semver version *)
 type version = string
 (* local filesystem path *)
@@ -25,15 +14,24 @@ module type UpdateClientIntf = sig
 
     (** Get latest version available *)
     val get_latest_version : unit -> version Lwt.t
-
 end
+
+module type ProxyProvider = sig
+    val proxy: Uri.t option
+end
+
+let proxy_provider proxy : (module ProxyProvider) = (module struct
+    let proxy = proxy
+end)
 
 let bundle_name = Config.System.bundle_name
 
 let bundle_file_name version =
   Format.sprintf "%s-%s.raucb" bundle_name version
 
-module UpdateClient (CurlI : CurlProxyInterface) = struct
+module UpdateClient (ProxyI: ProxyProvider) = struct
+    let proxy = ProxyI.proxy
+
     let base_url = Config.System.update_url
 
     (* TODO: FIX: this will produce an invalid URL if ~update_url is missing a
@@ -46,7 +44,7 @@ module UpdateClient (CurlI : CurlProxyInterface) = struct
 
     (** Get latest version available *)
     let get_latest_version () =
-      match%lwt CurlI.request (Uri.of_string (base_url ^ "latest")) with
+      match%lwt Curl.request ?proxy (Uri.of_string (base_url ^ "latest")) with
       | RequestSuccess (_, body) ->
           return body
       | RequestFailure error ->
@@ -61,31 +59,23 @@ module UpdateClient (CurlI : CurlProxyInterface) = struct
         ; "--output"; bundle_path
         ]
       in
-      match%lwt CurlI.request ~options url with
+      match%lwt Curl.request ?proxy ~options url with
       | RequestSuccess _ ->
           return bundle_path
       | RequestFailure error ->
           Lwt.fail_with (Printf.sprintf "could not download RAUC bundle (%s)" (Curl.pretty_print_error error))
 end
 
+module Make (ProxyI : ProxyProvider) = UpdateClient (ProxyI)
+
 let get_proxy_uri connman =
   Connman.Manager.get_default_proxy connman
     >|= Option.map (Connman.Service.Proxy.to_uri ~include_userinfo:true)
-
-let build_module_curl (proxy: Uri.t option) =
-  let module CurlWrap = struct
-    let request = Curl.request ?proxy
-  end in
-  (module CurlWrap : CurlProxyInterface)
-
-let build_module (module CurlWrap: CurlProxyInterface) =
-  (module UpdateClient (CurlWrap) : UpdateClientIntf )
 
 let init connman =
   (* TODO: this could take only `unit` as an argument by just getting
      the connman reference like this:
   let%lwt connman = Connman.Manager.connect () in *)
   let%lwt proxy = get_proxy_uri connman in
-  let curlI = build_module_curl proxy in
-  Lwt.return @@ (module UpdateClient (val curlI : CurlProxyInterface) :
-      UpdateClientIntf )
+  let proxyI = proxy_provider proxy in
+  Lwt.return @@ (module UpdateClient (val proxyI : ProxyProvider) : UpdateClientIntf)
