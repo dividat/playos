@@ -31,10 +31,6 @@
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 
 (library
-  (name config)
-  (modules config))
-
-(library
  (name logging)
  (modules logging)
  (libraries lwt logs logs.fmt logs.lwt lwt.unix))

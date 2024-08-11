@@ -29,6 +29,16 @@ let bundle_name = Config.System.bundle_name
 let bundle_file_name version =
   Format.sprintf "%s-%s.raucb" bundle_name version
 
+(* NOTE/TODO: potential simplification:
+
+    UpdateClient does not care and need to know about the possibility of a
+    proxy, since we are interfacing with curl via bindings that spawn a
+    subprocess it would be sufficient to set the appropriate `http_proxy` env
+    variable system-wide (at run time) and let curl figure out whether it needs
+    to use a proxy or not itself.
+
+    This would allow getting rid of this ProxyProvider and simplify a lot of the
+    code. *)
 module UpdateClient (ProxyI: ProxyProvider) = struct
     let proxy = ProxyI.proxy
 
