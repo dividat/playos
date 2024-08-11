@@ -19,13 +19,15 @@ module type UpdateClientIntf = sig
     val get_latest_version : unit -> version Lwt.t
 end
 
-module type ProxyProvider = sig
+module type UpdateClientConfig = sig
+    (* TODO: convert to Uri.t *)
+    val base_url: string
     val proxy: Uri.t option
 end
 
-val proxy_provider : Uri.t option -> (module ProxyProvider)
+val make_config : ?proxy:Uri.t -> string -> (module UpdateClientConfig)
 
-module Make (ProxyI : ProxyProvider) : UpdateClientIntf
+module Make (ConfigI : UpdateClientConfig) : UpdateClientIntf
 
 (* Suggested interface after broader refactoring
    val init : unit -> (module UpdateClientIntf) Lwt.t

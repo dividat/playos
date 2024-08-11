@@ -5,4 +5,11 @@
  (preprocess (pps lwt_ppx ppx_sexp_conv))
 )
 
+(test
+ (name update_client_tests)
+ (libraries update_client alcotest alcotest-lwt str cohttp-lwt-unix opium)
+ (modules update_client_tests)
+ (preprocess (pps lwt_ppx ppx_sexp_conv))
+)
+
 (env (dev (flags :standard -warn-error -A -w -8-27-32-33)))
