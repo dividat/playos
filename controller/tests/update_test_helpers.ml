@@ -55,13 +55,13 @@ let state_formatter out inp = Format.fprintf out "%s" (statefmt inp)
 
 let t_state =
     let state_eq expected actual =
-        if (expected == actual) then true
-        else
-            (* Horrible hack, but avoids having to pattern match on every
-               variant in the state ADT *)
+        (expected == actual) || (
             str_match_with_magic_pat
+                (* Using string repr is a horrible hack, but avoids having to
+                   pattern match on every variant in the state ADT *)
                 (Update.sexp_of_state expected |> Sexplib.Sexp.to_string)
                 (Update.sexp_of_state actual |> Sexplib.Sexp.to_string)
+        )
     in
     Alcotest.testable state_formatter state_eq
 
@@ -128,6 +128,9 @@ let rec run_test_scenario expected_state_sequence cur_state =
     run_test_scenario expected_state_sequence next_state)
   else Lwt.return ()
 
+(* TODO: rather than having global mutable state and resetting it,
+   it would be better to refactor the mocks into functors which
+   return stateful modules *)
 let reset_mocks () = begin
     Mock_rauc.reset_state ();
     Mock_update_client.reset_state ()
