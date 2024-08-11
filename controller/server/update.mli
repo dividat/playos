@@ -42,7 +42,7 @@ module type ServiceDeps = sig
     val config : config
 end
 
-module UpdateService : functor (_ : ServiceDeps) -> sig
+module UpdateService (_ : ServiceDeps) : sig
   val run : set_state:(state -> unit) -> state -> unit Lwt.t
 
   (* private functions used in testing *)

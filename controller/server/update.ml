@@ -260,7 +260,7 @@ let build_deps ~connman ~(rauc : Rauc.t) :
 let start ~connman ~(rauc : Rauc.t) ~(update_url : string) =
   let state_s, set_state = Lwt_react.S.create GettingVersionInfo in
   let () = Logs.info ~src:log_src (fun m -> m "update URL: %s" update_url) in
-  (* temporarily before sever.ml` is refactored *)
+  (* temporarily, before sever.ml` is refactored *)
   let () = assert (update_url == Config.System.update_url) in
 
   let service = begin

@@ -53,7 +53,7 @@ let happy_flow_test () =
 let not_so_happy_test () =
   let init_state = GettingVersionInfo in
 
-  (* both slots have a newer version than fetch from update *)
+  (* both slots have a newer version than fetched from update *)
   let installed_version = "10.0.0" in
   let next_version = "9.0.0" in
 
