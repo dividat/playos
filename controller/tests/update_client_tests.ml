@@ -48,6 +48,7 @@ module StubServer = struct
         it seems it is not possible with opium/cohttp *)
       |> App.port 9999
       |> App.get "/latest" get_latest_handler
+      |> App.get "/ready" (fun (_) -> return @@ Response.create ())
       |> App.get "/:vsn/:bundle" download_bundle_handler
       |> App.start
       in
@@ -89,9 +90,29 @@ let process_proxy_spec spec server_url =
                 server_url
             )
 
+let rec wait_for_stub_server ?(timeout = 0.2) ?(remaining_tries = 3) url = 
+    let status_endpoint = Uri.of_string (url ^ "ready") in
+    let%lwt rez = Curl.request status_endpoint in
+    match rez with
+        | Curl.RequestSuccess _ -> Lwt.return ()
+        | Curl.RequestFailure err ->
+            let err_msg = (Curl.pretty_print_error err) in
+            print_endline ("StubServer not up, err was: " ^ err_msg);
+            if (remaining_tries > 0) then
+                let%lwt () = Lwt_unix.sleep timeout in
+                wait_for_stub_server
+                    ~timeout:(timeout *. 2.0)  (* exponential backoff *)
+                    ~remaining_tries:(remaining_tries - 1) url
+           else
+                let err_msg = "HTTP stub server did not become ready, last error: " ^ (Curl.pretty_print_error err) in
+                Lwt.fail (Failure err_msg)
+
+
+
 let run_test_case ?(proxy = NoProxy) switch f =
     let () = reset_mocks ()  in
     let (server_url, server_task) = StubServer.run () in
+    let%lwt () = wait_for_stub_server server_url in
     Lwt_switch.add_hook (Some switch)
         (fun () -> Lwt.return @@ Lwt.cancel server_task);
     let (proxy_url, base_url) = process_proxy_spec proxy server_url in
