@@ -1,7 +1,7 @@
 (test
  (name update_tests)
  (libraries update alcotest alcotest-lwt str)
- (modules update_tests update_test_helpers mocks mock_rauc mock_update_client)
+ (modules update_tests update_test_helpers mock_rauc mock_update_client)
  (preprocess (pps lwt_ppx ppx_sexp_conv))
 )
 
