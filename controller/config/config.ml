@@ -18,5 +18,6 @@ module System = struct
 
     (** If set to empty string, will pick curl from PATH *)
     let curl_executable_path =
-        "/run/current-system/sw/bin/curl"
+        Sys.getenv_opt "CURL_EXECUTABLE_PATH" |>
+        Option.value ~default:"/run/current-system/sw/bin/curl"
 end
