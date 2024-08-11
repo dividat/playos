@@ -16,11 +16,14 @@ module type UpdateClientIntf = sig
     val get_latest_version : unit -> version Lwt.t
 end
 
-module type ProxyProvider = sig
+module type UpdateClientConfig = sig
+    (* TODO: convert to Uri.t *)
+    val base_url: string
     val proxy: Uri.t option
 end
 
-let proxy_provider proxy : (module ProxyProvider) = (module struct
+let make_config ?proxy base_url : (module UpdateClientConfig) = (module struct
+    let base_url = base_url
     let proxy = proxy
 end)
 
@@ -39,10 +42,9 @@ let bundle_file_name version =
 
     This would allow getting rid of this ProxyProvider and simplify a lot of the
     code. *)
-module UpdateClient (ProxyI: ProxyProvider) = struct
-    let proxy = ProxyI.proxy
-
-    let base_url = Config.System.update_url
+module UpdateClient (ConfigI: UpdateClientConfig) = struct
+    let proxy = ConfigI.proxy
+    let base_url = ConfigI.base_url
 
     (* TODO: FIX: this will produce an invalid URL if ~update_url is missing a
        trailing slash *)
@@ -76,7 +78,7 @@ module UpdateClient (ProxyI: ProxyProvider) = struct
           Lwt.fail_with (Printf.sprintf "could not download RAUC bundle (%s)" (Curl.pretty_print_error error))
 end
 
-module Make (ProxyI : ProxyProvider) = UpdateClient (ProxyI)
+module Make (ConfigI : UpdateClientConfig) = UpdateClient (ConfigI)
 
 let get_proxy_uri connman =
   Connman.Manager.get_default_proxy connman
@@ -87,5 +89,5 @@ let init connman =
      the connman reference like this:
   let%lwt connman = Connman.Manager.connect () in *)
   let%lwt proxy = get_proxy_uri connman in
-  let proxyI = proxy_provider proxy in
-  Lwt.return @@ (module UpdateClient (val proxyI : ProxyProvider) : UpdateClientIntf)
+  let configI = make_config ?proxy Config.System.update_url in
+  Lwt.return @@ (module UpdateClient (val configI : UpdateClientConfig) : UpdateClientIntf)
