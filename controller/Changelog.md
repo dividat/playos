@@ -3,6 +3,7 @@
 ## Added
 
 - controller: Enable spatial navigation using the arrow keys
+- os: Improve installation device selection
 
 ## Removed
 

@@ -14,6 +14,7 @@ from datetime import datetime
 
 PARTITION_SIZE_GB_SYSTEM = 10
 PARTITION_SIZE_GB_DATA = 5
+REQUIRED_INSTALL_DEVICE_SIZE_GB = PARTITION_SIZE_GB_DATA + 2*PARTITION_SIZE_GB_SYSTEM + 1
 
 GRUB_CFG = "@grubCfg@"
 GRUB_ENV = '/mnt/boot/grub/grubenv'
@@ -40,10 +41,20 @@ def find_device(device_path):
     boot_device = get_blockdevice("/iso")
     if boot_device is None:
         print("Could not identify installer medium. Considering all disks as installation targets.")
-        available_devices = all_devices
-    else:
-        available_devices = [device for device in all_devices if not device.path.startswith(boot_device)]
 
+    def device_filter(dev):
+        is_boot_device = (boot_device is not None) and dev.path.startswith(boot_device)
+        is_read_only = dev.readOnly
+        is_big_enough = gb_size(dev) > REQUIRED_INSTALL_DEVICE_SIZE_GB
+
+        return (not is_boot_device) and (not is_read_only) and is_big_enough
+
+    available_devices = [device for device in all_devices if device_filter(device)]
+
+    print("Minimum required size for installation target: {req_gb} GB".format(
+        req_gb=REQUIRED_INSTALL_DEVICE_SIZE_GB
+    ))
+    
     print(f"Found {len(available_devices)} possible installation targets:")
     for device in available_devices:
         print(f'\t{device_info(device)}')
@@ -76,15 +87,22 @@ def get_blockdevice(mount_path):
     # Find the parent device of the partition with mountpoint
     for device in lsblk_data['blockdevices']:
         if 'children' in device:
-            for child in device['children']:
-                if 'mountpoints' in child and mount_path in child['mountpoints']:
-                    return '/dev/' + device['name']
+            children = device['children']
+        # the mount could be e.g. a cdrom blockdevice, in which case there are
+        # no cildren
+        else:
+            children = [device]
+
+        for child in children:
+            if 'mountpoints' in child and mount_path in child['mountpoints']:
+                return '/dev/' + device['name']
     return None
 
+def gb_size(device):
+    return int((device.sectorSize * device.length) / (10**9))
 
 def device_info(device):
-    gb_size = int((device.sectorSize * device.length) / (10**9))
-    return f'{device.path} ({device.model} - {gb_size} GB)'
+    return f'{device.path} ({device.model} - {gb_size(device)} GB)'
 
 
 def commit(disk):
