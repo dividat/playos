@@ -117,6 +117,13 @@ or individual tests with
 
 Tests added to `test/integration` are executed via a GitHub Action when pushing or creating pull requests.
 
+*Note*: if running non-NixOS Linux, ensure you have KVM setup and `/dev/kvm` is
+*world read-writable* (if not, do `chmod o+rw /dev/kvm`), otherwise qemu invoked
+by `nixbld` users will not able to utilize KVM acceleration and everything will
+run 10x slower. If you see `failed to initialize KVM` in the console logs, it
+means there's a problem. See [this (outdated) Github issue](https://github.com/NixOS/nixpkgs/issues/124371#issue-900719073)
+for more details.
+
 ## Deployment
 
 Update bundles are hosted on Amazon S3. The script `bin/deploy-update` will handle signing and uploading of bundle.
