@@ -1,7 +1,7 @@
 let
   pkgs = import ../../pkgs { };
 in
-pkgs.nixosTest {
+pkgs.testers.runNixOSTest {
   name = "remote maintenance";
 
   nodes = {
