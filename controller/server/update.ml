@@ -47,6 +47,46 @@ module type ServiceDeps = sig
     val config : config
 end
 
+let evaluate_version_info current_primary booted_slot version_info =
+  (* Compare latest available version to version booted. *)
+  let booted_version_compare = Semver.compare version_info.latest version_info.booted in
+  let booted_up_to_date = booted_version_compare = 0 in
+
+  (* Compare latest available version to version on inactive system partition. *)
+  let inactive_version_compare = Semver.compare version_info.latest version_info.inactive in
+  let inactive_up_to_date = inactive_version_compare = 0 in
+  let inactive_update_available = inactive_version_compare > 0 in
+
+  if booted_up_to_date || inactive_up_to_date then
+    match current_primary with
+    | Some primary_slot ->
+      if booted_up_to_date then
+        (* Don't care if inactive can be updated. I.e. Only update the inactive partition once the booted partition is outdated. This results in always two versions being available on the machine. *)
+        UpToDate version_info
+      else
+        if booted_slot = primary_slot then
+          (* Inactive is up to date while booted is out of date, but booted was specifically selected for boot *)
+          OutOfDateVersionSelected
+        else
+          (* If booted is not up to date but inactive is both up to date and primary, we should reboot into the primary *)
+          RebootRequired
+    | None ->
+      (* All systems bad; suggest reinstallation *)
+      ReinstallRequired
+
+  else if inactive_update_available then
+    (* Booted system is not up to date and there is an update available for inactive system. *)
+    Downloading (Semver.to_string version_info.latest)
+
+  else
+    let msg =
+      ("nonsensical version information: "
+       ^ (version_info
+          |> sexp_of_version_info
+          |> Sexplib.Sexp.to_string_hum))
+    in
+    ErrorGettingVersionInfo msg
+
 (** Helper to parse semver from string or fail *)
 let semver_of_string string =
   let trimmed_string = String.trim string
@@ -99,63 +139,13 @@ module UpdateService(Deps : ServiceDeps) = struct
        match (state) with
       | GettingVersionInfo ->
         (* get version information and decide what to do *)
-        begin
-          match%lwt get_version_info () with
-          | Ok version_info ->
-
-            (* Compare latest available version to version booted. *)
-            let booted_version_compare = Semver.compare
-                (version_info.latest)
-                (version_info.booted) in
-            let booted_up_to_date = booted_version_compare = 0 in
-
-            (* Compare latest available version to version on inactive system partition. *)
-            let inactive_version_compare = Semver.compare
-                (version_info.latest)
-                (version_info.inactive) in
-            let inactive_up_to_date = inactive_version_compare = 0 in
-            let inactive_update_available = inactive_version_compare > 0 in
-
-            if booted_up_to_date || inactive_up_to_date then
-              match%lwt RaucI.get_primary () with
-              | Some primary_slot ->
-                if booted_up_to_date then
-                  (* Don't care if inactive can be updated. I.e. Only update the inactive partition once the booted partition is outdated. This results in always two versions being available on the machine. *)
-                  UpToDate version_info |> set
-                else
-                  let%lwt booted_slot = RaucI.get_booted_slot () in
-                  if booted_slot = primary_slot then
-                    (* Inactive is up to date while booted is out of date, but booted was specifically selected for boot *)
-                    OutOfDateVersionSelected |> set
-                  else
-                    (* If booted is not up to date but inactive is both up to date and primary, we should reboot into the primary *)
-                    RebootRequired |> set
-              | None ->
-                (* All systems bad; suggest reinstallation *)
-                ReinstallRequired |> set
-
-            else if inactive_update_available then
-              (* Booted system is not up to date and there is an update available for inactive system. *)
-              Downloading (Semver.to_string version_info.latest)
-              |> set
-
-            else
-              let msg =
-                ("nonsensical version information: "
-                 ^ (version_info
-                    |> sexp_of_version_info
-                    |> Sexplib.Sexp.to_string_hum))
-              in
-              let%lwt () =
-                Logs_lwt.warn ~src:log_src
-                  (fun m -> m "%s" msg)
-              in
-              ErrorGettingVersionInfo msg |> set
-
-          | Error exn ->
-            ErrorGettingVersionInfo (Printexc.to_string exn)
-            |> set
-        end
+        let%lwt current_primary = RaucI.get_primary () in
+        let%lwt booted_slot = RaucI.get_booted_slot () in
+        let%lwt vsn_resp = get_version_info () in
+        (match vsn_resp with
+            | Ok vsn -> evaluate_version_info current_primary booted_slot vsn
+            | Error e -> ErrorGettingVersionInfo (Printexc.to_string e)
+        ) |> set
 
       | ErrorGettingVersionInfo msg ->
         (* handle error while getting version information *)
