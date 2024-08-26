@@ -18,7 +18,7 @@ let pretty_print_error error =
       Printf.sprintf "unreadable status code %s" body
 
   | ProcessExit (n, err) ->
-      Printf.sprintf "curl exited with code %d (%s)" n (String.trim err)
+      Printf.sprintf "curl error: %s (non-zero exit code %d)" (String.trim err) n
 
   | ProcessKill n ->
       Printf.sprintf "curl killed by signal %d" n
