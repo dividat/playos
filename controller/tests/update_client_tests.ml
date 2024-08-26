@@ -118,9 +118,9 @@ let run_test_case ?(proxy = NoProxy) switch f =
     let (proxy_url, base_url) = process_proxy_spec proxy server_url in
     let module ConfigI = (val Update_client.make_config ?proxy:proxy_url base_url) in
     let module UpdateC = Update_client.Make (ConfigI) in
-    f (module UpdateC : UpdateClientIntf)
+    f (module UpdateC : S)
 
-let test_get_version_ok (module Client : UpdateClientIntf) =
+let test_get_version_ok (module Client : S) =
     let expected_version = "1.0.0" in
     let () = StubServer.set_latest_version expected_version in
     let%lwt vsn = Client.get_latest_version () in
@@ -131,7 +131,7 @@ let test_get_version_ok (module Client : UpdateClientIntf) =
 
 let read_file file = In_channel.with_open_bin file In_channel.input_all
 
-let test_download_bundle_ok (module Client : UpdateClientIntf) =
+let test_download_bundle_ok (module Client : S) =
     let version = "1.0.0" in
     let bundle = "BUNDLE_CONTENTS" in
     let () = StubServer.add_bundle version bundle in
@@ -148,7 +148,7 @@ let test_download_bundle_ok (module Client : UpdateClientIntf) =
     return ()
 
 (* invalid proxy URL is set in the `run_test_case` function, see below *)
-let test_invalid_proxy_fail (module Client : UpdateClientIntf) =
+let test_invalid_proxy_fail (module Client : S) =
   Lwt.try_bind Client.get_latest_version
     (fun _ ->
       Alcotest.fail "Get version was supposed to fail due to invalid proxy")

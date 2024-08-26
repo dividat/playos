@@ -37,8 +37,8 @@ type config = {
 }
 
 module type ServiceDeps = sig
-    module ClientI: Update_client.UpdateClientIntf
-    module RaucI: Rauc_service.RaucServiceIntf
+    module ClientI: Update_client.S
+    module RaucI: Rauc_service.S
     val config : config
 end
 
