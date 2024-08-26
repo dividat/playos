@@ -22,7 +22,7 @@ type state =
   | GettingVersionInfo
   | ErrorGettingVersionInfo of string
   | UpToDate of version_info
-  | Downloading of {url: string; version: string}
+  | Downloading of string
   | ErrorDownloading of string
   | Installing of string
   | ErrorInstalling of string
@@ -137,8 +137,7 @@ module UpdateService(Deps : ServiceDeps) = struct
             else if inactive_update_available then
               (* Booted system is not up to date and there is an update available for inactive system. *)
               let latest_version = version_info.latest |> snd in
-              let url = ClientI.download_url latest_version |> Uri.to_string in
-              Downloading {url = url; version = latest_version}
+              Downloading latest_version
               |> set
 
             else
@@ -169,9 +168,9 @@ module UpdateService(Deps : ServiceDeps) = struct
         let%lwt () = sleep_error_backoff in
         set GettingVersionInfo
 
-      | Downloading {url; version} ->
+      | Downloading version ->
         (* download latest version *)
-        (match%lwt Lwt_result.catch (fun () -> ClientI.download (Uri.of_string url) version) with
+        (match%lwt Lwt_result.catch (fun () -> ClientI.download version) with
          | Ok bundle_path ->
            Installing bundle_path
            |> set

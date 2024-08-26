@@ -17,7 +17,7 @@ type state =
   | GettingVersionInfo
   | ErrorGettingVersionInfo of string
   | UpToDate of version_info
-  | Downloading of {url: string; version: string}
+  | Downloading of string
   | ErrorDownloading of string
   | Installing of string
   | ErrorInstalling of string

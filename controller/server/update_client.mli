@@ -7,15 +7,10 @@ type version = string
 type bundle_path = string
 
 module type S = sig
-    (* TODO: this method is currently overspecified, it should probably
-       provide only the version and the client should resolve the URL *)
-    (* download bundle from specified url and save it as `version` *)
-    val download : Uri.t -> version -> bundle_path Lwt.t
+    (* download bundle [version] to [bundle_path] *)
+    val download : version -> bundle_path Lwt.t
 
-    (* URL from which the specified version would be downloaded *)
-    val download_url : version -> Uri.t
-
-    (** Get latest version available at [url] *)
+    (** Get latest version available *)
     val get_latest_version : unit -> version Lwt.t
 end
 
