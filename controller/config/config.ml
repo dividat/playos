@@ -15,9 +15,4 @@ module System = struct
     (** PlayOS bundle name prefix *)
     let bundle_name =
       "@PLAYOS_BUNDLE_NAME@"
-
-    (** If set to empty string, will pick curl from PATH *)
-    let curl_executable_path =
-        Sys.getenv_opt "CURL_EXECUTABLE_PATH" |>
-        Option.value ~default:"/run/current-system/sw/bin/curl"
 end

@@ -75,7 +75,7 @@ let parse_status_code_and_body str =
 
 let request ?proxy ?(headers = []) ?data ?(options = []) url =
   let cmd =
-    Config.System.curl_executable_path,
+    "", (* path to Curl executable (uses PATH if empty string) *)
     (Array.concat
       [ [| "curl"; Uri.to_string url
          ; "--silent"
