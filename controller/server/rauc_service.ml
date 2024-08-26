@@ -1,4 +1,4 @@
-module type RaucServiceIntf = sig
+module type S = sig
     (** [get_status unit] returns current RAUC status *)
     val get_status : unit -> Rauc.status Lwt.t
 
@@ -15,7 +15,7 @@ module type RaucServiceIntf = sig
     val install : string -> unit Lwt.t
 end
 
-module RaucOBus(OBusRef: sig val peer: Rauc.t end): RaucServiceIntf = struct
+module RaucOBus(OBusRef: sig val peer: Rauc.t end): S = struct
     let t = OBusRef.peer
 
     let get_status () : Rauc.status Lwt.t =
@@ -34,7 +34,7 @@ module RaucOBus(OBusRef: sig val peer: Rauc.t end): RaucServiceIntf = struct
         Rauc.install t
 end
 
-let build_module rauc_peer : (module RaucServiceIntf) =
+let build_module rauc_peer : (module S) =
   (module RaucOBus (struct let peer = rauc_peer end))
 
 let init () =

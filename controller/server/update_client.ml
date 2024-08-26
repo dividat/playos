@@ -5,7 +5,7 @@ type version = string
 (* local filesystem path *)
 type bundle_path = string
 
-module type UpdateClientIntf = sig
+module type S = sig
     (* download bundle from specified url and save it as `version` *)
     val download : Uri.t -> version -> bundle_path Lwt.t
 
@@ -90,4 +90,4 @@ let init connman =
   let%lwt connman = Connman.Manager.connect () in *)
   let%lwt proxy = get_proxy_uri connman in
   let configI = make_config ?proxy Config.System.update_url in
-  Lwt.return @@ (module UpdateClient (val configI : UpdateClientConfig) : UpdateClientIntf)
+  Lwt.return @@ (module UpdateClient (val configI : UpdateClientConfig) : S)

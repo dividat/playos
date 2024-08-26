@@ -6,7 +6,7 @@ type version = string
 (* local filesystem path *)
 type bundle_path = string
 
-module type UpdateClientIntf = sig
+module type S = sig
     (* TODO: this method is currently overspecified, it should probably
        provide only the version and the client should resolve the URL *)
     (* download bundle from specified url and save it as `version` *)
@@ -27,9 +27,9 @@ end
 
 val make_config : ?proxy:Uri.t -> string -> (module UpdateClientConfig)
 
-module Make (ConfigI : UpdateClientConfig) : UpdateClientIntf
+module Make (ConfigI : UpdateClientConfig) : S
 
 (* Suggested interface after broader refactoring
-   val init : unit -> (module UpdateClientIntf) Lwt.t
+   val init : unit -> (module S) Lwt.t
 *)
-val init : Connman.Manager.t -> (module UpdateClientIntf) Lwt.t
+val init : Connman.Manager.t -> (module S) Lwt.t
