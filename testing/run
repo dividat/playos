@@ -14,3 +14,8 @@ done
 pushd "$(dirname "$(realpath "$0")")/../kiosk"
 nix-shell --run bin/test
 popd
+
+# Ocaml tests
+pushd "$(dirname "$(realpath "$0")")/../controller"
+nix-shell --run 'dune test -f'
+popd
