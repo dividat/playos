@@ -45,10 +45,7 @@ end
 module UpdateService (_ : ServiceDeps) : sig
   val run : set_state:(state -> unit) -> state -> unit Lwt.t
 
-  (* private functions used in testing *)
-  module Private : sig
-    val run_step : state -> state Lwt.t
-  end
+  val run_step : state -> state Lwt.t
 end
 
 (* maintaining the original entrypoint for backwards compatibility *)
