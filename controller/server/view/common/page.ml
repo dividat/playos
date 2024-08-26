@@ -78,6 +78,7 @@ let html ?current_page ?header content =
       @ [ main
               ~a:[ a_class [ "d-Layout__Main" ] ]
               [ content ]
+      ; script ~a:[ a_src "/static/vendor/focus-shift.js" ] (txt "")
       ; script ~a:[ a_src "/static/client.js" ] (txt "")
       ])
     )
