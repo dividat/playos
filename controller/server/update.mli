@@ -2,13 +2,13 @@
 *)
 type version_info =
   {(* the latest available version *)
-    latest : Semver.t * string
+    latest : Semver.t
 
   (* version of currently booted system *)
-  ; booted : Semver.t * string
+  ; booted : Semver.t
 
   (* version of inactive system *)
-  ; inactive : Semver.t * string
+  ; inactive : Semver.t
   }
 [@@deriving sexp]
 
