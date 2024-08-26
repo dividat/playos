@@ -135,8 +135,7 @@ let test_download_bundle_ok (module Client : S) =
     let version = "1.0.0" in
     let bundle = "BUNDLE_CONTENTS" in
     let () = StubServer.add_bundle version bundle in
-    let url = Client.download_url version in
-    let%lwt bundle_path = Client.download url version in
+    let%lwt bundle_path = Client.download version in
     Alcotest.(check bool)
         "Bundle file is downloaded and saved"
         (Sys.file_exists bundle_path)

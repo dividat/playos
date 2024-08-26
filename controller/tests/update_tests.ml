@@ -10,10 +10,6 @@ let happy_flow_test () =
   let expected_bundle_name vsn =
       Mock_update_client.test_bundle_name ^ _MAGIC_PAT ^ vsn ^ _MAGIC_PAT
   in
-  let expected_url =
-    Config.System.update_url ^ _MAGIC_PAT
-        ^ expected_bundle_name next_version
-  in
 
   let expected_state_sequence =
     [
@@ -26,7 +22,7 @@ let happy_flow_test () =
         Mock_update_client.set_latest_version next_version;
       );
       StateReached GettingVersionInfo;
-      StateReached (Downloading { url = expected_url; version = next_version });
+      StateReached (Downloading next_version);
       StateReached (Installing (_MAGIC_PAT ^ expected_bundle_name next_version));
       ActionDone
         ( "bundle was installed and marked as primary",

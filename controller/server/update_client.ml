@@ -6,11 +6,8 @@ type version = string
 type bundle_path = string
 
 module type S = sig
-    (* download bundle from specified url and save it as `version` *)
-    val download : Uri.t -> version -> bundle_path Lwt.t
-
-    (* URL from which the specified version would be downloaded *)
-    val download_url : version -> Uri.t
+    (* download bundle [version] to [bundle_path] *)
+    val download : version -> bundle_path Lwt.t
 
     (** Get latest version available *)
     val get_latest_version : unit -> version Lwt.t
@@ -63,7 +60,8 @@ module UpdateClient (ConfigI: UpdateClientConfig) = struct
           Lwt.fail_with (Printf.sprintf "could not get latest version (%s)" (Curl.pretty_print_error error))
 
     (** download RAUC bundle *)
-    let download url version =
+    let download version =
+      let url = download_url version in
       let bundle_path = Format.sprintf "/tmp/%s" (bundle_file_name version) in
       let options =
         [ "--continue-at"; "-" (* resume download *)
