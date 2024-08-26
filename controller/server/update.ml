@@ -230,10 +230,6 @@ module UpdateService(Deps : ServiceDeps) = struct
       let%lwt next_state = run_step state in
         set_state state;
         run ~set_state next_state
-
-    module Private = struct
-        let run_step = run_step
-    end
 end
 
 let default_config : config = {

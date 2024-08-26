@@ -123,7 +123,7 @@ let rec run_test_scenario expected_state_sequence cur_state =
 
   (* is there an equivalent of Haskell's whileM ? *)
   if not (Queue.is_empty expected_state_sequence) then (
-    let%lwt next_state = TestUpdateService.Private.run_step cur_state in
+    let%lwt next_state = TestUpdateService.run_step cur_state in
     let%lwt () = check_state expected_state_sequence cur_state next_state in
     run_test_scenario expected_state_sequence next_state)
   else Lwt.return ()
