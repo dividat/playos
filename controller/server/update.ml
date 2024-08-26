@@ -8,13 +8,13 @@ let log_src = Logs.Src.create "update"
 (** Type containing version information *)
 type version_info =
   {(* the latest available version *)
-    latest : (Semver.t [@sexp.opaque]) * string
+    latest : (Semver.t [@sexp.opaque])
 
   (* version of currently booted system *)
-  ; booted : (Semver.t [@sexp.opaque]) * string
+  ; booted : (Semver.t [@sexp.opaque])
 
   (* version of inactive system *)
-  ; inactive : (Semver.t [@sexp.opaque]) * string
+  ; inactive : (Semver.t [@sexp.opaque])
   }
 [@@deriving sexp]
 
@@ -56,7 +56,7 @@ let semver_of_string string =
     failwith
       (Format.sprintf "could not parse version (version string: %s)" string)
   | Some version ->
-    version, trimmed_string
+    version
 
 module UpdateService(Deps : ServiceDeps) = struct
     open Deps
@@ -105,14 +105,14 @@ module UpdateService(Deps : ServiceDeps) = struct
 
             (* Compare latest available version to version booted. *)
             let booted_version_compare = Semver.compare
-                (fst version_info.latest)
-                (fst version_info.booted) in
+                (version_info.latest)
+                (version_info.booted) in
             let booted_up_to_date = booted_version_compare = 0 in
 
             (* Compare latest available version to version on inactive system partition. *)
             let inactive_version_compare = Semver.compare
-                (fst version_info.latest)
-                (fst version_info.inactive) in
+                (version_info.latest)
+                (version_info.inactive) in
             let inactive_up_to_date = inactive_version_compare = 0 in
             let inactive_update_available = inactive_version_compare > 0 in
 
@@ -136,8 +136,7 @@ module UpdateService(Deps : ServiceDeps) = struct
 
             else if inactive_update_available then
               (* Booted system is not up to date and there is an update available for inactive system. *)
-              let latest_version = version_info.latest |> snd in
-              Downloading latest_version
+              Downloading (Semver.to_string version_info.latest)
               |> set
 
             else
