@@ -1,6 +1,3 @@
-(* would suggest moving this to `rauc_service_intf.ml` and 
-   using `include`s (jane-street-style) to avoid having to duplicate
-   it in the .ml files *)
 module type S = sig
     (** [get_status unit] returns current RAUC status *)
     val get_status : unit -> Rauc.status Lwt.t
