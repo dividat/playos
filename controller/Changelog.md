@@ -1,3 +1,9 @@
+# [UNRELEASED]
+
+## Added
+
+- controller: Enable spatial navigation using the arrow keys
+
 # [2024.7.0] - 2024-08-02
 
 # [2024.7.0-VALIDATION] - 2024-07-02
