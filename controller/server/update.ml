@@ -47,6 +47,12 @@ module type ServiceDeps = sig
     val config : config
 end
 
+module type UpdateService = sig
+  val run : set_state:(state -> unit) -> state -> unit Lwt.t
+
+  val run_step : state -> state Lwt.t
+end
+
 let evaluate_version_info current_primary booted_slot version_info =
   (* Compare latest available version to version booted. *)
   let booted_version_compare = Semver.compare version_info.latest version_info.booted in
@@ -98,7 +104,7 @@ let semver_of_string string =
   | Some version ->
     version
 
-module UpdateService(Deps : ServiceDeps) = struct
+module Make(Deps : ServiceDeps) : UpdateService = struct
     open Deps
 
     let sleep_error_backoff =
@@ -249,7 +255,7 @@ let start ~connman ~(rauc : Rauc.t) ~(update_url : string) =
 
   let service = begin
       let%lwt deps = build_deps ~connman ~rauc in
-      let module UpdateServiceI = UpdateService(val deps) in
+      let module UpdateServiceI = Make(val deps) in
       UpdateServiceI.run ~set_state GettingVersionInfo
   end in
 
