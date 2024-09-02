@@ -28,8 +28,6 @@ class mock = object (self)
     method private gen_stored_bundle_path vsn =
         let prefix = test_bundle_name ^ "_" in
         let suffix = "-" ^ vsn ^ ".raucb" in
-        (* TODO: this actually creates a temp file - would be good to cleanup
-           afterwards *)
         let tmp = Filename.temp_file prefix suffix in
         tmp
 
