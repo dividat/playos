@@ -4,21 +4,26 @@ open Update_test_helpers
 
 let happy_flow_test {update_client; rauc} =
   let init_state = GettingVersionInfo in
-  let current_version = "10.0.1" in
+  let installed_version = "10.0.1" in
   let next_version = "10.0.2" in
 
   let expected_bundle_name vsn =
       Mock_update_client.test_bundle_name ^ _MAGIC_PAT ^ vsn ^ _MAGIC_PAT
   in
 
+  let initial_status : Rauc.Slot.status = {
+      device = "Device";
+      state = "Good";
+      class' = "class";
+      version = installed_version;
+      installed_timestamp = "2023-01-01T00:00:00Z";
+  } in
+
   let expected_state_sequence =
     [
       UpdateMock (fun () ->
-        rauc#set_status SystemA {
-            Mock_rauc.some_status with version = current_version
-        };
-        update_client#add_bundle next_version
-            ("BUNDLE_CONTENTS: " ^ next_version);
+        rauc#set_status SystemA initial_status;
+        update_client#add_bundle next_version ("BUNDLE_CONTENTS: " ^ next_version);
         update_client#set_latest_version next_version;
       );
       StateReached GettingVersionInfo;
@@ -53,15 +58,19 @@ let not_so_happy_test {update_client; rauc} =
   let installed_version = "10.0.0" in
   let next_version = "9.0.0" in
 
+  let initial_status : Rauc.Slot.status = {
+      device = "Device";
+      state = "Good";
+      class' = "class";
+      version = installed_version;
+      installed_timestamp = "2023-01-01T00:00:00Z";
+  } in
+
   let expected_state_sequence =
     [
       UpdateMock (fun () ->
-        rauc#set_status SystemA {
-            Mock_rauc.some_status with version = installed_version
-        };
-        rauc#set_status SystemB {
-            Mock_rauc.some_status with version = installed_version
-        };
+        rauc#set_status SystemA initial_status;
+        rauc#set_status SystemB initial_status;
         update_client#set_latest_version next_version
       );
       StateReached GettingVersionInfo;
