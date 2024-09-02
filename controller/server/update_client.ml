@@ -14,8 +14,7 @@ module type S = sig
 end
 
 module type UpdateClientDeps = sig
-    (* TODO: convert to Uri.t *)
-    val base_url: string
+    val base_url: Uri.t
     val get_proxy: unit -> Uri.t option Lwt.t
 end
 
@@ -29,12 +28,17 @@ let bundle_name = Config.System.bundle_name
 let bundle_file_name version =
   Format.sprintf "%s-%s.raucb" bundle_name version
 
-module UpdateClient (DepsI: UpdateClientDeps) = struct
-    include DepsI
+let ensure_trailing_slash uri =
+    let u = Uri.to_string uri in
+    if (String.ends_with ~suffix:"/" @@ u) then
+        u
+    else
+        (u ^ "/")
 
-    (* TODO: FIX: this will produce an invalid URL if ~update_url is missing a
-       trailing slash *)
-    (* TODO: Should probably be moved to config too *)
+module UpdateClient (DepsI: UpdateClientDeps) = struct
+    let get_proxy = DepsI.get_proxy
+    let base_url = ensure_trailing_slash DepsI.base_url
+
     let download_url version_string =
       Format.sprintf "%s%s/%s" base_url version_string (bundle_file_name version_string)
       |>
@@ -78,5 +82,5 @@ let init connman =
      the connman reference like this:
   let%lwt connman = Connman.Manager.connect () in *)
   let get_proxy () = get_proxy_uri connman in
-  let depsI = make_deps get_proxy Config.System.update_url in
+  let depsI = make_deps get_proxy (Uri.of_string Config.System.update_url) in
   Lwt.return @@ (module UpdateClient (val depsI : UpdateClientDeps) : S)

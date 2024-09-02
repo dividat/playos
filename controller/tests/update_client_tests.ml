@@ -79,10 +79,10 @@ let process_proxy_spec spec server_url =
             (* pretend stub server is a proxy, i.e. use an invalid base_url,
                and the actual server_url for the proxy *)
             (
-                (server_url |> Uri.of_string |> Option.some),
+                (server_url |> Option.some),
                 (* Note: DO NOT use https here, because curl will attempt
                    to CONNECT and then this whole setup doesn't work *)
-                "http://some-invalid-url.local/"
+                (Uri.of_string "http://some-invalid-url.local/")
             )
         | Custom p ->
             (
@@ -115,7 +115,8 @@ let run_test_case ?(proxy = NoProxy) switch f =
     let%lwt () = wait_for_stub_server server_url in
     Lwt_switch.add_hook (Some switch)
         (fun () -> Lwt.return @@ Lwt.cancel server_task);
-    let (proxy_url, base_url) = process_proxy_spec proxy server_url in
+    let (proxy_url, base_url) =
+        process_proxy_spec proxy (Uri.of_string server_url) in
     let get_proxy () = Lwt.return proxy_url in
     let module DepsI = (val Update_client.make_deps get_proxy base_url) in
     let module UpdateC = Update_client.Make (DepsI) in
