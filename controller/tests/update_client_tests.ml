@@ -42,17 +42,30 @@ module StubServer = struct
         in
         Lwt.return resp
 
+    (* binds on port 0 and returns (loopback addr, port) pair *)
+    let get_random_available_port () =
+        let protocol_id = 0 in
+        let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM protocol_id in
+        let addr = Unix.ADDR_INET (
+            Unix.inet_addr_loopback,
+            0
+        ) in
+        let () = Unix.bind sock addr in
+        let Unix.ADDR_INET (real_addr, real_port) = Unix.getsockname sock in
+        let () = Unix.close sock in
+        (Unix.string_of_inet_addr real_addr, real_port)
+
     let run () =
+      let (addr, port) = get_random_available_port () in
+      let server_url = Format.sprintf "http://%s:%d/" addr port in
       let server = App.empty
-     (* TODO: should bind to random available port instead, but
-        it seems it is not possible with opium/cohttp *)
-      |> App.port 9999
+      |> App.port port
       |> App.get "/latest" get_latest_handler
       |> App.get "/ready" (fun (_) -> return @@ Response.create ())
       |> App.get "/:vsn/:bundle" download_bundle_handler
       |> App.start
       in
-      ("http://localhost:9999/", server)
+      (server_url, server)
 end
 
 
