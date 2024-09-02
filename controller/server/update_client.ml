@@ -72,7 +72,7 @@ let get_proxy_uri connman =
   Connman.Manager.get_default_proxy connman
     >|= Option.map (Connman.Service.Proxy.to_uri ~include_userinfo:true)
 
-let init connman =
+let build_module connman =
   (* TODO: this could take only `unit` as an argument by just getting
      the connman reference like this:
   let%lwt connman = Connman.Manager.connect () in *)

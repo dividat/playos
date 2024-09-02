@@ -18,7 +18,4 @@ val make_deps : (unit -> Uri.t option Lwt.t) -> Uri.t -> (module UpdateClientDep
 
 module Make (DepsI : UpdateClientDeps) : S
 
-(* Suggested interface after broader refactoring
-   val init : unit -> (module S) Lwt.t
-*)
-val init : Connman.Manager.t -> (module S) Lwt.t
+val build_module : Connman.Manager.t -> (module S) Lwt.t

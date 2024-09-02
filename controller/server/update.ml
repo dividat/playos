@@ -236,7 +236,7 @@ let build_deps ~connman ~(rauc : Rauc.t) :
 
   let config = default_config in
   let raucI = Rauc_service.build_module rauc in
-  let%lwt clientI = Update_client.init connman in
+  let%lwt clientI = Update_client.build_module connman in
 
   let module Deps = struct
     let config = config
@@ -246,17 +246,16 @@ let build_deps ~connman ~(rauc : Rauc.t) :
 
   Lwt.return (module Deps : ServiceDeps)
 
-(* "legacy" entry point *)
-let start ~connman ~(rauc : Rauc.t) ~(update_url : string) =
-  let state_s, set_state = Lwt_react.S.create GettingVersionInfo in
-  let () = Logs.info ~src:log_src (fun m -> m "update URL: %s" update_url) in
-  (* temporarily, before sever.ml` is refactored *)
-  let () = assert (update_url == Config.System.update_url) in
+let start ~connman ~(rauc : Rauc.t) =
+  let initial_state = GettingVersionInfo in
+  let state_s, set_state = Lwt_react.S.create initial_state in
+  let () = Logs.info ~src:log_src
+    (fun m -> m "update URL: %s" Config.System.update_url) in
 
   let service = begin
       let%lwt deps = build_deps ~connman ~rauc in
       let module UpdateServiceI = Make(val deps) in
-      UpdateServiceI.run ~set_state GettingVersionInfo
+      UpdateServiceI.run ~set_state initial_state
   end in
 
   let () = Logs.info ~src:log_src (fun m -> m "Started") in

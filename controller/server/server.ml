@@ -38,7 +38,7 @@ let main debug port =
   let%lwt connman = Connman.Manager.connect () in
 
   (* Start the update mechanism *)
-  let update_s, update_p = Update.start ~connman ~rauc ~update_url:Info.update_url in
+  let update_s, update_p = Update.start ~connman ~rauc in
 
   (* Log changes in update mechanism state *)
   let%lwt () =

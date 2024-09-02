@@ -15,9 +15,4 @@ module type S = sig
     val install : string -> unit Lwt.t
 end
 
-val init : unit -> (module S) Lwt.t
-
-(* NOTE: only exposed now to enable partial refactoring. In the final impl only
-   `init` is called once at the top-level (server module) and then the
-   module/interface is passed to dependencies (Update, Gui, Health) directly *)
 val build_module : Rauc.t -> (module S)
