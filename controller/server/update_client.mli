@@ -15,12 +15,11 @@ module type S = sig
 end
 
 module type UpdateClientDeps = sig
-    (* TODO: convert to Uri.t *)
-    val base_url: string
+    val base_url: Uri.t
     val get_proxy: unit -> Uri.t option Lwt.t
 end
 
-val make_deps : (unit -> Uri.t option Lwt.t) -> string -> (module UpdateClientDeps)
+val make_deps : (unit -> Uri.t option Lwt.t) -> Uri.t -> (module UpdateClientDeps)
 
 module Make (DepsI : UpdateClientDeps) : S
 
