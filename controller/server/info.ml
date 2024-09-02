@@ -12,17 +12,7 @@ type t =
   ; local_time : string
   }
 
-(** Version, set by build system *)
-let version =
-  "@PLAYOS_VERSION@"
-
-(** URL from where to get updates, set by build system *)
-let update_url =
-  "@PLAYOS_UPDATE_URL@"
-
-(** URL to which kiosk is pointed *)
-let kiosk_url =
-  "@PLAYOS_KIOSK_URL@"
+include Config.System
 
 (** Break up a string into groups of size n *)
 let rec grouped n s =
