@@ -8,47 +8,44 @@ type state = {
 
 let test_bundle_name = "TEST_PLAYOS_BUNDLE"
 
-let state : state = {
-    latest_version = "0.0.0";
-    available_bundles = Hashtbl.create 5;
-    base_url = Config.System.update_url;
-}
+class mock = object (self)
 
-(* TODO: is there a less-copy-paste based approach that avoids using full-blown
-   objects? *)
-let reset_state () =
-    state.latest_version <- "0.0.0";
-    state.available_bundles <- Hashtbl.create 5;
-    state.base_url <- Config.System.update_url
+    val state = {
+        latest_version = "0.0.0";
+        available_bundles = Hashtbl.create 5;
+        base_url = Config.System.update_url;
+    }
 
-let add_bundle vsn contents =
-    Hashtbl.add state.available_bundles vsn contents
+    method add_bundle vsn contents =
+        Hashtbl.add state.available_bundles vsn contents
 
-let remove_bundle vsn contents =
-    Hashtbl.remove state.available_bundles vsn
+    method remove_bundle vsn =
+        Hashtbl.remove state.available_bundles vsn
 
-let set_latest_version vsn =
-    state.latest_version <- vsn
+    method set_latest_version vsn =
+        state.latest_version <- vsn
 
-let gen_stored_bundle_path vsn =
-    let prefix = test_bundle_name ^ "_" in
-    let suffix = "-" ^ vsn ^ ".raucb" in
-    (* TODO: this actually creates a temp file - would be good to cleanup
-       afterwards *)
-    let tmp = Filename.temp_file prefix suffix in
-    tmp
+    method private gen_stored_bundle_path vsn =
+        let prefix = test_bundle_name ^ "_" in
+        let suffix = "-" ^ vsn ^ ".raucb" in
+        (* TODO: this actually creates a temp file - would be good to cleanup
+           afterwards *)
+        let tmp = Filename.temp_file prefix suffix in
+        tmp
 
-let download_url vsn =
-    Uri.of_string @@ state.base_url ^ "/" ^ test_bundle_name ^ "-" ^ vsn ^ ".raucb"
+    method download vsn =
+        let contents = Hashtbl.find state.available_bundles vsn in
+        let tmp = self#gen_stored_bundle_path vsn in
+        let oc = open_out tmp in
+        let () = Printf.fprintf oc "%s\n" contents in
+        let () = close_out oc in
+        Lwt.return tmp
 
+    method get_latest_version () =
+        Lwt.return state.latest_version
 
-let download vsn =
-    let contents = Hashtbl.find state.available_bundles vsn in
-    let tmp = gen_stored_bundle_path vsn in
-    let oc = open_out tmp in
-    let () = Printf.fprintf oc "%s\n" contents in
-    let () = close_out oc in
-    Lwt.return tmp
-
-let get_latest_version () =
-    Lwt.return state.latest_version
+    method to_module = (module struct
+        let download = self#download
+        let get_latest_version = self#get_latest_version
+    end : Update_client.S)
+end

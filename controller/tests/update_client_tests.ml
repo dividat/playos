@@ -25,7 +25,7 @@ let stub_server () = object (self)
     val mutable state = ref {
         latest_version = "0.0.0";
         available_bundles = Hashtbl.create 5
-    } 
+    }
 
     method add_bundle vsn contents =
         Hashtbl.add !state.available_bundles vsn contents
