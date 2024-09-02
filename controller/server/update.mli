@@ -42,11 +42,13 @@ module type ServiceDeps = sig
     val config : config
 end
 
-module UpdateService (_ : ServiceDeps) : sig
+module type UpdateService = sig
   val run : set_state:(state -> unit) -> state -> unit Lwt.t
 
   val run_step : state -> state Lwt.t
 end
+
+module Make (_ : ServiceDeps) : UpdateService
 
 (* maintaining the original entrypoint for backwards compatibility *)
 val start : connman:Connman.Manager.t -> rauc:Rauc.t -> update_url:string -> state Lwt_react.signal * unit Lwt.t
