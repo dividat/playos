@@ -50,5 +50,6 @@ end
 
 module Make (_ : ServiceDeps) : UpdateService
 
-(* maintaining the original entrypoint for backwards compatibility *)
-val start : connman:Connman.Manager.t -> rauc:Rauc.t -> update_url:string -> state Lwt_react.signal * unit Lwt.t
+(* top-level entrypoint that uses global Config.System and initializes
+   all the dependencies *)
+val start : connman:Connman.Manager.t -> rauc:Rauc.t -> state Lwt_react.signal * unit Lwt.t

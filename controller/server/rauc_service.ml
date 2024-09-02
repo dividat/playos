@@ -36,8 +36,3 @@ end
 
 let build_module rauc_peer : (module S) =
   (module RaucOBus (struct let peer = rauc_peer end))
-
-let init () =
-  (* Connect with RAUC *)
-  let%lwt rauc_peer = Rauc.daemon () in
-  Lwt.return @@ build_module rauc_peer
