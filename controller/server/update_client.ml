@@ -13,15 +13,15 @@ module type S = sig
     val get_latest_version : unit -> version Lwt.t
 end
 
-module type UpdateClientConfig = sig
+module type UpdateClientDeps = sig
     (* TODO: convert to Uri.t *)
     val base_url: string
-    val proxy: Uri.t option
+    val get_proxy: unit -> Uri.t option Lwt.t
 end
 
-let make_config ?proxy base_url : (module UpdateClientConfig) = (module struct
+let make_deps get_proxy base_url : (module UpdateClientDeps) = (module struct
     let base_url = base_url
-    let proxy = proxy
+    let get_proxy = get_proxy
 end)
 
 let bundle_name = Config.System.bundle_name
@@ -29,19 +29,8 @@ let bundle_name = Config.System.bundle_name
 let bundle_file_name version =
   Format.sprintf "%s-%s.raucb" bundle_name version
 
-(* NOTE/TODO: potential simplification:
-
-    UpdateClient does not care and need to know about the possibility of a
-    proxy, since we are interfacing with curl via bindings that spawn a
-    subprocess it would be sufficient to set the appropriate `http_proxy` env
-    variable system-wide (at run time) and let curl figure out whether it needs
-    to use a proxy or not itself.
-
-    This would allow getting rid of this ProxyProvider and simplify a lot of the
-    code. *)
-module UpdateClient (ConfigI: UpdateClientConfig) = struct
-    let proxy = ConfigI.proxy
-    let base_url = ConfigI.base_url
+module UpdateClient (DepsI: UpdateClientDeps) = struct
+    include DepsI
 
     (* TODO: FIX: this will produce an invalid URL if ~update_url is missing a
        trailing slash *)
@@ -53,6 +42,7 @@ module UpdateClient (ConfigI: UpdateClientConfig) = struct
 
     (** Get latest version available *)
     let get_latest_version () =
+      let%lwt proxy = get_proxy () in
       match%lwt Curl.request ?proxy (Uri.of_string (base_url ^ "latest")) with
       | RequestSuccess (_, body) ->
           return body
@@ -69,6 +59,7 @@ module UpdateClient (ConfigI: UpdateClientConfig) = struct
         ; "--output"; bundle_path
         ]
       in
+      let%lwt proxy = get_proxy () in
       match%lwt Curl.request ?proxy ~options url with
       | RequestSuccess _ ->
           return bundle_path
@@ -76,7 +67,7 @@ module UpdateClient (ConfigI: UpdateClientConfig) = struct
           Lwt.fail_with (Printf.sprintf "could not download RAUC bundle (%s)" (Curl.pretty_print_error error))
 end
 
-module Make (ConfigI : UpdateClientConfig) = UpdateClient (ConfigI)
+module Make (DepsI : UpdateClientDeps) = UpdateClient (DepsI)
 
 let get_proxy_uri connman =
   Connman.Manager.get_default_proxy connman
@@ -86,6 +77,6 @@ let init connman =
   (* TODO: this could take only `unit` as an argument by just getting
      the connman reference like this:
   let%lwt connman = Connman.Manager.connect () in *)
-  let%lwt proxy = get_proxy_uri connman in
-  let configI = make_config ?proxy Config.System.update_url in
-  Lwt.return @@ (module UpdateClient (val configI : UpdateClientConfig) : S)
+  let get_proxy () = get_proxy_uri connman in
+  let depsI = make_deps get_proxy Config.System.update_url in
+  Lwt.return @@ (module UpdateClient (val depsI : UpdateClientDeps) : S)
