@@ -116,8 +116,9 @@ let run_test_case ?(proxy = NoProxy) switch f =
     Lwt_switch.add_hook (Some switch)
         (fun () -> Lwt.return @@ Lwt.cancel server_task);
     let (proxy_url, base_url) = process_proxy_spec proxy server_url in
-    let module ConfigI = (val Update_client.make_config ?proxy:proxy_url base_url) in
-    let module UpdateC = Update_client.Make (ConfigI) in
+    let get_proxy () = Lwt.return proxy_url in
+    let module DepsI = (val Update_client.make_deps get_proxy base_url) in
+    let module UpdateC = Update_client.Make (DepsI) in
     f (module UpdateC : S)
 
 let test_get_version_ok (module Client : S) =
