@@ -2,7 +2,7 @@ open Update
 open Lwt
 open Update_test_helpers
 
-let happy_flow_test () =
+let happy_flow_test {update_client; rauc} =
   let init_state = GettingVersionInfo in
   let current_version = "10.0.1" in
   let next_version = "10.0.2" in
@@ -14,12 +14,12 @@ let happy_flow_test () =
   let expected_state_sequence =
     [
       UpdateMock (fun () ->
-        Mock_rauc.set_status SystemA {
+        rauc#set_status SystemA {
             Mock_rauc.some_status with version = current_version
         };
-        Mock_update_client.add_bundle next_version
+        update_client#add_bundle next_version
             ("BUNDLE_CONTENTS: " ^ next_version);
-        Mock_update_client.set_latest_version next_version;
+        update_client#set_latest_version next_version;
       );
       StateReached GettingVersionInfo;
       StateReached (Downloading next_version);
@@ -27,13 +27,13 @@ let happy_flow_test () =
       ActionDone
         ( "bundle was installed and marked as primary",
           fun () ->
-            let%lwt primary_opt = Mock_rauc.get_primary () in
+            let%lwt primary_opt = rauc#get_primary () in
             let primary =
               match primary_opt with
               | Some x -> x
               | _ -> Alcotest.fail "Primary was not set!"
             in
-            let status = Mock_rauc.get_slot_status primary in
+            let status = rauc#get_slot_status primary in
             let () =
               Alcotest.(check string)
                 "Primary version is set to the newly downloaded bundle"
@@ -46,7 +46,7 @@ let happy_flow_test () =
   in
   (expected_state_sequence, init_state)
 
-let not_so_happy_test () =
+let not_so_happy_test {update_client; rauc} =
   let init_state = GettingVersionInfo in
 
   (* both slots have a newer version than fetched from update *)
@@ -56,13 +56,13 @@ let not_so_happy_test () =
   let expected_state_sequence =
     [
       UpdateMock (fun () ->
-        Mock_rauc.set_status SystemA {
+        rauc#set_status SystemA {
             Mock_rauc.some_status with version = installed_version
         };
-        Mock_rauc.set_status SystemB {
+        rauc#set_status SystemB {
             Mock_rauc.some_status with version = installed_version
         };
-        Mock_update_client.set_latest_version next_version
+        update_client#set_latest_version next_version
       );
       StateReached GettingVersionInfo;
       (* TODO: is this really a non-sensical scenario? *)

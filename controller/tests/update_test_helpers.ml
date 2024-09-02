@@ -1,18 +1,17 @@
 open Update
 open Lwt
 
+type test_context = {
+    update_client : Mock_update_client.mock;
+    rauc : Mock_rauc.mock;
+    update_service : (module UpdateService)
+}
+
 let test_config : config = {
   error_backoff_duration = 0.01;
   check_for_updates_interval = 0.05;
 }
 
-module TestUpdateServiceDeps = struct
-  module ClientI = Mock_update_client
-  module RaucI = Mock_rauc
-  let config = test_config
-end
-
-module TestUpdateService = UpdateService (TestUpdateServiceDeps)
 
 type action_descr = string
 type action_check = unit -> bool Lwt.t
@@ -116,27 +115,36 @@ let rec consume_mock_specs state_seq cur_state =
     | _ -> Lwt.return ()
 
 
-let rec run_test_scenario expected_state_sequence cur_state =
+let rec run_test_scenario test_context expected_state_sequence cur_state =
   (* special case for specifying `MockUpdate`'s BEFORE any
     `StateReached` spec's to enable initialization of mocks *)
   let _ = consume_mock_specs expected_state_sequence cur_state in
+  let module UpdateServiceI = (val test_context.update_service) in
 
-  (* is there an equivalent of Haskell's whileM ? *)
   if not (Queue.is_empty expected_state_sequence) then (
-    let%lwt next_state = TestUpdateService.run_step cur_state in
+    let%lwt next_state = UpdateServiceI.run_step cur_state in
     let%lwt () = check_state expected_state_sequence cur_state next_state in
-    run_test_scenario expected_state_sequence next_state)
+    run_test_scenario test_context expected_state_sequence next_state)
   else Lwt.return ()
 
-(* TODO: rather than having global mutable state and resetting it,
-   it would be better to refactor the mocks into functors which
-   return stateful modules *)
-let reset_mocks () = begin
-    Mock_rauc.reset_state ();
-    Mock_update_client.reset_state ()
-end
+
+(* creates fresh instances of UpdateClient, Rauc_service and UpdateService *)
+let setup_test_deps () : test_context =
+    let update_client = new Mock_update_client.mock in
+    let rauc = new Mock_rauc.mock in
+    let module TestUpdateServiceDeps = struct
+      module ClientI = (val update_client#to_module)
+      module RaucI = (val rauc#to_module)
+      let config = test_config
+    end in
+    let module TestUpdateService = Update.Make (TestUpdateServiceDeps) in
+    {
+        update_client = update_client;
+        rauc = rauc;
+        update_service = (module TestUpdateService)
+    }
 
 let run_test_case scenario_gen =
-    let () = reset_mocks ()  in
-    let (scenario, init_state) = scenario_gen () in
-    run_test_scenario (Queue.of_seq (List.to_seq scenario)) init_state
+    let test_context = setup_test_deps ()  in
+    let (scenario, init_state) = scenario_gen test_context in
+    run_test_scenario test_context (Queue.of_seq (List.to_seq scenario)) init_state
