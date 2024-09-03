@@ -253,14 +253,14 @@ let test_combo_matrix_case case =
 
         let module UpdateServiceI = (val update_service) in
         let%lwt out_state = UpdateServiceI.run_step GettingVersionInfo in
-        let is_match = state_matches_expected_outcome out_state expected_outcome in
-        Lwt.return @@ Alcotest.(check bool)
-            (Format.sprintf
+        if state_matches_expected_outcome out_state expected_outcome then
+            Lwt.return ()
+        else
+            Alcotest.fail (Format.sprintf
                 "Reached state [%s] does not match expected outcome [%s]"
                 (statefmt out_state)
                 expected_outcome_str
             )
-            is_match true
     )
 
 
