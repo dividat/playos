@@ -27,6 +27,9 @@ class mock = object (self)
       | Slot.SystemA -> state.rauc_status <- { state.rauc_status with a = status }
       | Slot.SystemB -> state.rauc_status <- { state.rauc_status with b = status }
 
+    method set_version slot version =
+        self#set_status slot {(self#get_slot_status slot) with version = version}
+
     method get_status () = state.rauc_status |> Lwt.return
 
     method get_slot_status slot =
@@ -59,8 +62,10 @@ class mock = object (self)
         in
         (* "install" into non-booted slot *)
         let () = self#set_status other_slot {some_status with version = vsn} in
+        (* Note: UpdateService or RAUC bindings do not explicitly set the
+           primary, but it is part of RAUC's install process, so we simulate it
+           here too. *)
         let () = self#set_primary other_slot in
-        (* TODO: what about mark_good? *)
         Lwt.return ()
 
     method mark_good _ = failwith "Not implemented"

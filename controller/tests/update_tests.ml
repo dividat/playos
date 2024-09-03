@@ -2,47 +2,40 @@ open Update
 open Lwt
 open Update_test_helpers
 
-let happy_flow_test {update_client; rauc} =
+let both_out_of_date {update_client; rauc} =
   let init_state = GettingVersionInfo in
-  let installed_version = "10.0.1" in
-  let next_version = "10.0.2" in
+  (* Swap versions to make sure both versions are compared *)
+  let booted_version = "10.0.0" in
+  let inactive_version = "9.0.0" in
+  let upstream_version = "10.0.2" in
 
   let expected_bundle_name vsn =
       Mock_update_client.test_bundle_name ^ _MAGIC_PAT ^ vsn ^ _MAGIC_PAT
   in
 
-  let initial_status : Rauc.Slot.status = {
-      device = "Device";
-      state = "Good";
-      class' = "class";
-      version = installed_version;
-      installed_timestamp = "2023-01-01T00:00:00Z";
-  } in
-
   let expected_state_sequence =
     [
       UpdateMock (fun () ->
-        rauc#set_status SystemA initial_status;
-        update_client#add_bundle next_version ("BUNDLE_CONTENTS: " ^ next_version);
-        update_client#set_latest_version next_version;
+        (* TODO: test for symmetry by swapping A and B *)
+        rauc#set_version SystemA booted_version;
+        rauc#set_version SystemB inactive_version;
+        rauc#set_booted_slot SystemA;
+
+        update_client#add_bundle upstream_version
+            ("BUNDLE_CONTENTS: " ^ upstream_version);
+        update_client#set_latest_version upstream_version;
       );
       StateReached GettingVersionInfo;
-      StateReached (Downloading next_version);
-      StateReached (Installing (_MAGIC_PAT ^ expected_bundle_name next_version));
+      StateReached (Downloading upstream_version);
+      StateReached (Installing (_MAGIC_PAT ^ expected_bundle_name upstream_version));
       ActionDone
-        ( "bundle was installed and marked as primary",
+        ( "bundle was installed into secondary slot",
           fun () ->
-            let%lwt primary_opt = rauc#get_primary () in
-            let primary =
-              match primary_opt with
-              | Some x -> x
-              | _ -> Alcotest.fail "Primary was not set!"
-            in
-            let status = rauc#get_slot_status primary in
+            let status = rauc#get_slot_status SystemB in
             let () =
               Alcotest.(check string)
-                "Primary version is set to the newly downloaded bundle"
-                next_version status.version
+                "Secondary slot has the newly downloaded bundle's version"
+                upstream_version status.version
             in
             Lwt.return true );
       StateReached RebootRequired;
@@ -51,33 +44,48 @@ let happy_flow_test {update_client; rauc} =
   in
   (expected_state_sequence, init_state)
 
-let not_so_happy_test {update_client; rauc} =
+let both_newer_than_upstream {update_client; rauc} =
   let init_state = GettingVersionInfo in
 
   (* both slots have a newer version than fetched from update *)
   let installed_version = "10.0.0" in
-  let next_version = "9.0.0" in
-
-  let initial_status : Rauc.Slot.status = {
-      device = "Device";
-      state = "Good";
-      class' = "class";
-      version = installed_version;
-      installed_timestamp = "2023-01-01T00:00:00Z";
-  } in
+  let upstream_version = "9.0.0" in
 
   let expected_state_sequence =
     [
       UpdateMock (fun () ->
-        rauc#set_status SystemA initial_status;
-        rauc#set_status SystemB initial_status;
-        update_client#set_latest_version next_version
+        rauc#set_version SystemA installed_version;
+        rauc#set_version SystemB installed_version;
+        rauc#set_primary SystemA;
+        update_client#set_latest_version upstream_version
       );
       StateReached GettingVersionInfo;
       (* TODO: is this really a non-sensical scenario? *)
       StateReached
         (ErrorGettingVersionInfo "nonsensical version information: <..>");
       StateReached GettingVersionInfo;
+    ]
+  in
+  (expected_state_sequence, init_state)
+
+let booted_newer_secondary_older {update_client; rauc} =
+  let init_state = GettingVersionInfo in
+
+  let booted_version = "10.0.0" in
+  let secondary_version = "8.0.0" in
+  let upstream_version = "9.0.0" in
+
+  let expected_state_sequence =
+    [
+      UpdateMock (fun () ->
+        rauc#set_version SystemA booted_version;
+        rauc#set_version SystemB secondary_version;
+        rauc#set_booted_slot SystemA;
+        rauc#set_primary SystemA;
+        update_client#set_latest_version upstream_version
+      );
+      StateReached GettingVersionInfo;
+      StateReached (Downloading upstream_version);
     ]
   in
   (expected_state_sequence, init_state)
@@ -96,9 +104,14 @@ let () =
        [
          ( "all",
            [
-             Alcotest_lwt.test_case "Happy flow" `Quick (fun _ () ->
-                 run_test_case happy_flow_test);
-             Alcotest_lwt.test_case "Not so happy flow" `Quick (fun _ () ->
-                 run_test_case not_so_happy_test);
+             Alcotest_lwt.test_case
+                "Both slots out of date -> Update"
+                `Quick (fun _ () -> run_test_case both_out_of_date);
+             Alcotest_lwt.test_case
+                "Both slots newer than upstream -> non-sensical err"
+                `Quick (fun _ () -> run_test_case both_newer_than_upstream);
+             Alcotest_lwt.test_case
+                "Booted slot newer, inactive older -> Update"
+                `Quick (fun _ () -> run_test_case booted_newer_secondary_older);
            ]);
        ]
