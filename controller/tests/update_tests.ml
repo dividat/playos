@@ -114,6 +114,85 @@ let booted_older_secondary_newer {update_client; rauc} =
   in
   (expected_state_sequence, init_state)
 
+let booted_current_secondary_current {update_client; rauc} =
+  let init_state = GettingVersionInfo in
+
+  let upstream_version = "9.0.0" in
+  let booted_version = upstream_version in
+  let secondary_version = upstream_version in
+
+  let expected_version_info = {
+      latest = Semver.of_string upstream_version |> Option.get;
+      booted = Semver.of_string booted_version |> Option.get;
+      inactive = Semver.of_string secondary_version |> Option.get;
+  } in
+
+  let expected_state_sequence =
+    [
+      UpdateMock (fun () ->
+        rauc#set_version SystemA booted_version;
+        rauc#set_version SystemB secondary_version;
+        rauc#set_booted_slot SystemA;
+        rauc#set_primary SystemA;
+        update_client#set_latest_version upstream_version
+      );
+      StateReached GettingVersionInfo;
+      StateReached (UpToDate expected_version_info);
+    ]
+  in
+  (expected_state_sequence, init_state)
+
+let booted_current_secondary_older {update_client; rauc} =
+  let init_state = GettingVersionInfo in
+
+  let upstream_version = "9.0.0" in
+  let booted_version = upstream_version in
+  let secondary_version = "8.0.0" in
+
+  let expected_version_info = {
+      latest = Semver.of_string upstream_version |> Option.get;
+      booted = Semver.of_string booted_version |> Option.get;
+      inactive = Semver.of_string secondary_version |> Option.get;
+  } in
+
+  let expected_state_sequence =
+    [
+      UpdateMock (fun () ->
+        rauc#set_version SystemA booted_version;
+        rauc#set_version SystemB secondary_version;
+        rauc#set_booted_slot SystemA;
+        rauc#set_primary SystemA;
+        update_client#set_latest_version upstream_version
+      );
+      StateReached GettingVersionInfo;
+      StateReached (UpToDate expected_version_info);
+    ]
+  in
+  (expected_state_sequence, init_state)
+
+
+let booted_older_secondary_current {update_client; rauc} =
+  let init_state = GettingVersionInfo in
+
+  let upstream_version = "9.0.0" in
+  let booted_version = "8.0.0" in
+  let secondary_version = upstream_version in
+
+  let expected_state_sequence =
+    [
+      UpdateMock (fun () ->
+        rauc#set_version SystemA booted_version;
+        rauc#set_version SystemB secondary_version;
+        rauc#set_booted_slot SystemA;
+        rauc#set_primary SystemA;
+        update_client#set_latest_version upstream_version
+      );
+      StateReached GettingVersionInfo;
+      StateReached OutOfDateVersionSelected;
+    ]
+  in
+  (expected_state_sequence, init_state)
+
 let setup_log () =
   Fmt_tty.setup_std_outputs ();
   Logs.set_level @@ Some Logs.Debug;
@@ -123,16 +202,26 @@ let setup_log () =
 let () =
   let () = setup_log () in
   Lwt_main.run
-  @@ Alcotest_lwt.run "Basic tests"
+  @@ Alcotest_lwt.run "UpdateService tests"
        [
-         ( "all",
+         ( "Booted = Primary",
            [
+            (* BOOTED = PRIMARY in all these *)
              Alcotest_lwt.test_case
                 "Both slots out of date -> Update"
                 `Quick (fun _ () -> run_test_case both_out_of_date);
              Alcotest_lwt.test_case
                 "Both slots newer than upstream -> non-sensical err"
                 `Quick (fun _ () -> run_test_case both_newer_than_upstream);
+             Alcotest_lwt.test_case
+                "Booted slot current, inactive older -> UpToDate"
+                `Quick (fun _ () -> run_test_case booted_current_secondary_older);
+             Alcotest_lwt.test_case
+                "Booted slot older, inactive current -> UpToDate"
+                `Quick (fun _ () -> run_test_case booted_older_secondary_current);
+             Alcotest_lwt.test_case
+                "Booted slot current, inactive current -> UpToDate"
+                `Quick (fun _ () -> run_test_case booted_current_secondary_current);
              Alcotest_lwt.test_case
                 "Booted slot newer, inactive older -> Update"
                 `Quick (fun _ () -> run_test_case booted_newer_secondary_older);
