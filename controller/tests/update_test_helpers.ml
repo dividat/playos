@@ -164,6 +164,105 @@ let semver_v1 = Semver.of_string "1.0.0" |> Option.get
 let semver_v2 = Semver.of_string "2.0.0" |> Option.get
 let semver_v3 = Semver.of_string "3.0.0" |> Option.get
 
+type version_logic_input = {
+    booted_slot: Rauc.Slot.t;
+    primary_slot: Rauc.Slot.t Option.t;
+    input_versions: Update.version_info;
+}
+
+let version_info_to_string {latest; booted; inactive} =
+    Format.sprintf "{latest=%s booted=%s inactive=%s}"
+        (Semver.to_string latest)
+        (Semver.to_string booted)
+        (Semver.to_string inactive)
+
+let slot_to_string = function
+    | Rauc.Slot.SystemA -> "SystemA"
+    | Rauc.Slot.SystemB -> "SystemB"
+
+let version_logic_input_to_string {booted_slot; primary_slot; input_versions} =
+    Format.sprintf
+            "booted=%s\tprimary=%s\tvsns%s"
+            (slot_to_string booted_slot)
+            (Option.map slot_to_string primary_slot |> Option.value ~default:"-")
+            (version_info_to_string input_versions)
+
+
+type expected_outcomes =
+    | DoNothing
+    | InstallVsnTo of (Semver.t * Rauc.Slot.t [@sexp.opaque])
+    | ProduceWarning
+    [@@deriving sexp]
+
+let combo_to_outcome {booted_slot; primary_slot; input_versions} =
+    let booted_is_out_of_date =
+        (Semver.compare input_versions.booted input_versions.latest) = -1
+    in
+    let inactive_is_out_of_date =
+        (Semver.compare input_versions.inactive input_versions.latest) = -1
+    in
+    let inactive_slot = other_slot booted_slot in
+    if booted_is_out_of_date && inactive_is_out_of_date then
+        InstallVsnTo (input_versions.latest, inactive_slot)
+    else
+        match primary_slot with
+            | None -> ProduceWarning
+            | _ -> DoNothing
+
+
+let state_matches_expected_outcome state outcome =
+    match (outcome, state) with
+        | (DoNothing, GettingVersionInfo) -> true
+        | (DoNothing, UpToDate _) -> true
+        | (DoNothing, _) -> false
+        (* TODO: should also check whether it is install into the right slot *)
+        | (InstallVsnTo (v1, _slot), Downloading v2) -> (Semver.to_string v1) = v2
+        | (InstallVsnTo _, _) -> false
+        | (ProduceWarning, ErrorGettingVersionInfo _) -> true
+        | (ProduceWarning, _) -> false
+
+let test_combo_matrix_case case =
+    let expected_outcome = combo_to_outcome case in
+    let expected_outcome_str =
+            (sexp_of_expected_outcomes expected_outcome |> Sexplib.Sexp.to_string)
+    in
+    let {booted_slot; primary_slot; input_versions} = case in
+    let test_case_descr =
+        Format.sprintf
+            "%s\t->\t%s"
+            (version_logic_input_to_string case)
+            expected_outcome_str
+    in
+    Alcotest_lwt.test_case test_case_descr `Quick (fun _ () ->
+        let {rauc; update_service; update_client} = setup_test_deps () in
+
+        let booted_version = Semver.to_string input_versions.booted in
+        let secondary_version = Semver.to_string input_versions.inactive in
+        let upstream_version = Semver.to_string input_versions.latest in
+
+        let inactive_slot = other_slot booted_slot in
+
+        (* setup mocks *)
+        rauc#set_version booted_slot booted_version;
+        rauc#set_version inactive_slot secondary_version;
+        rauc#set_booted_slot booted_slot;
+        rauc#set_primary primary_slot;
+        update_client#set_latest_version upstream_version;
+
+        let module UpdateServiceI = (val update_service) in
+        let%lwt out_state = UpdateServiceI.run_step GettingVersionInfo in
+        let is_match = state_matches_expected_outcome out_state expected_outcome in
+        Lwt.return @@ Alcotest.(check bool)
+            (Format.sprintf
+                "Reached state [%s] does not match expected outcome [%s]"
+                (statefmt out_state)
+                expected_outcome_str
+            )
+            is_match true
+    )
+
+
+(* NOTE: this can probably be deprecated once the above version is "enabled" *)
 let test_version_logic_case
     ?(booted_slot=Rauc.Slot.SystemA)
     ?(primary_slot=(Some Rauc.Slot.SystemA))

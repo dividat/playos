@@ -109,6 +109,46 @@ let booted_older_secondary_current =
   in
   test_version_logic_case ~input_versions expected_state
 
+
+let possible_versions = [semver_v1; semver_v2; semver_v3]
+let possible_booted_slots = [Rauc.Slot.SystemA; Rauc.Slot.SystemB]
+let possible_primary_slots =
+    None :: List.map (Option.some) possible_booted_slots
+
+let flatten_tuple (a, (b, c)) = (a, b, c)
+
+let combine3 l1 l2 l3 =
+    List.combine l1 (List.combine l2 l3) |>
+        List.map flatten_tuple
+
+let product l1 l2 =
+    List.concat_map
+        (fun e1 -> List.map (fun e2 -> (e1, e2)) l2)
+        l1
+
+let product3 l1 l2 l3 =
+    product l1 (product l2 l3) |>
+        List.map flatten_tuple
+
+let vsn_triple_to_version_info (latest, booted, inactive) = {
+    latest = latest;
+    booted = booted;
+    inactive = inactive;
+}
+
+let all_possible_combos =
+    let vsn_triples = product3 possible_versions possible_versions possible_versions in
+    let combos = product3 vsn_triples possible_booted_slots possible_primary_slots in
+    List.map (fun (vsns, booted_slot, primary_slot) ->
+        let vsn_info = vsn_triple_to_version_info vsns in
+        {
+            booted_slot = booted_slot;
+            primary_slot = primary_slot;
+            input_versions = vsn_info;
+        })
+        combos
+
+
 let () =
   let () = setup_log () in
   Lwt_main.run
@@ -139,4 +179,7 @@ let () =
                 "Booted slot older, inactive newer -> non-sensical"
                 `Quick (fun _ () -> run_test_case booted_older_secondary_newer);
            ]);
+           ( "Version cases matrix",
+             List.map test_combo_matrix_case all_possible_combos
+           )
        ]
