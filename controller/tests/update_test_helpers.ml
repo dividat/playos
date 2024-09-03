@@ -219,6 +219,8 @@ let state_matches_expected_outcome state outcome =
         | (InstallVsnTo (v1, _slot), Downloading v2) -> (Semver.to_string v1) = v2
         | (InstallVsnTo _, _) -> false
         | (ProduceWarning, ErrorGettingVersionInfo _) -> true
+        | (ProduceWarning, ReinstallRequired) -> true
+        | (ProduceWarning, OutOfDateVersionSelected) -> true
         | (ProduceWarning, _) -> false
 
 let test_combo_matrix_case case =
