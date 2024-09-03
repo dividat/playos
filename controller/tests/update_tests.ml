@@ -91,6 +91,29 @@ let booted_newer_secondary_older {update_client; rauc} =
   (expected_state_sequence, init_state)
 
 
+let booted_older_secondary_newer {update_client; rauc} =
+  let init_state = GettingVersionInfo in
+
+  let booted_version = "8.0.0" in
+  let secondary_version = "10.0.0" in
+  let upstream_version = "9.0.0" in
+
+  let expected_state_sequence =
+    [
+      UpdateMock (fun () ->
+        rauc#set_version SystemA booted_version;
+        rauc#set_version SystemB secondary_version;
+        rauc#set_booted_slot SystemA;
+        rauc#set_primary SystemA;
+        update_client#set_latest_version upstream_version
+      );
+      StateReached GettingVersionInfo;
+      StateReached
+        (ErrorGettingVersionInfo "nonsensical version information: <..>");
+    ]
+  in
+  (expected_state_sequence, init_state)
+
 let setup_log () =
   Fmt_tty.setup_std_outputs ();
   Logs.set_level @@ Some Logs.Debug;
@@ -113,5 +136,8 @@ let () =
              Alcotest_lwt.test_case
                 "Booted slot newer, inactive older -> Update"
                 `Quick (fun _ () -> run_test_case booted_newer_secondary_older);
+             Alcotest_lwt.test_case
+                "Booted slot older, inactive newer -> non-sensical"
+                `Quick (fun _ () -> run_test_case booted_older_secondary_newer);
            ]);
        ]
