@@ -127,6 +127,11 @@ let rec run_test_scenario test_context expected_state_sequence cur_state =
     run_test_scenario test_context expected_state_sequence next_state)
   else Lwt.return ()
 
+let setup_log () =
+  Fmt_tty.setup_std_outputs ();
+  Logs.set_level @@ Some Logs.Debug;
+  Logs.set_reporter (Logs_fmt.reporter ());
+  ()
 
 (* creates fresh instances of UpdateClient, Rauc_service and UpdateService *)
 let setup_test_deps () : test_context =
