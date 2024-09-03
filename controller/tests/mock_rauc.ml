@@ -37,7 +37,7 @@ class mock = object (self)
       | Slot.SystemA -> state.rauc_status.a
       | Slot.SystemB -> state.rauc_status.b
 
-    method set_primary slot = state.primary_slot <- Some slot
+    method set_primary some_slot = state.primary_slot <- some_slot
     method get_primary () = state.primary_slot |> Lwt.return
 
     method set_booted_slot slot = state.booted_slot <- slot
@@ -65,7 +65,7 @@ class mock = object (self)
         (* Note: UpdateService or RAUC bindings do not explicitly set the
            primary, but it is part of RAUC's install process, so we simulate it
            here too. *)
-        let () = self#set_primary other_slot in
+        let () = self#set_primary (Some other_slot) in
         Lwt.return ()
 
     method mark_good _ = failwith "Not implemented"

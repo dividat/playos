@@ -44,154 +44,70 @@ let both_out_of_date {update_client; rauc} =
   in
   (expected_state_sequence, init_state)
 
-let both_newer_than_upstream {update_client; rauc} =
-  let init_state = GettingVersionInfo in
-
-  (* both slots have a newer version than fetched from update *)
-  let installed_version = "10.0.0" in
-  let upstream_version = "9.0.0" in
-
-  let expected_state_sequence =
-    [
-      UpdateMock (fun () ->
-        rauc#set_version SystemA installed_version;
-        rauc#set_version SystemB installed_version;
-        rauc#set_primary SystemA;
-        update_client#set_latest_version upstream_version
-      );
-      StateReached GettingVersionInfo;
-      (* TODO: is this really a non-sensical scenario? *)
-      StateReached
-        (ErrorGettingVersionInfo "nonsensical version information: <..>");
-      StateReached GettingVersionInfo;
-    ]
-  in
-  (expected_state_sequence, init_state)
-
-let booted_newer_secondary_older {update_client; rauc} =
-  let init_state = GettingVersionInfo in
-
-  let booted_version = "10.0.0" in
-  let secondary_version = "8.0.0" in
-  let upstream_version = "9.0.0" in
-
-  let expected_state_sequence =
-    [
-      UpdateMock (fun () ->
-        rauc#set_version SystemA booted_version;
-        rauc#set_version SystemB secondary_version;
-        rauc#set_booted_slot SystemA;
-        rauc#set_primary SystemA;
-        update_client#set_latest_version upstream_version
-      );
-      StateReached GettingVersionInfo;
-      StateReached (Downloading upstream_version);
-    ]
-  in
-  (expected_state_sequence, init_state)
-
-
-let booted_older_secondary_newer {update_client; rauc} =
-  let init_state = GettingVersionInfo in
-
-  let booted_version = "8.0.0" in
-  let secondary_version = "10.0.0" in
-  let upstream_version = "9.0.0" in
-
-  let expected_state_sequence =
-    [
-      UpdateMock (fun () ->
-        rauc#set_version SystemA booted_version;
-        rauc#set_version SystemB secondary_version;
-        rauc#set_booted_slot SystemA;
-        rauc#set_primary SystemA;
-        update_client#set_latest_version upstream_version
-      );
-      StateReached GettingVersionInfo;
-      StateReached
-        (ErrorGettingVersionInfo "nonsensical version information: <..>");
-    ]
-  in
-  (expected_state_sequence, init_state)
-
-let booted_current_secondary_current {update_client; rauc} =
-  let init_state = GettingVersionInfo in
-
-  let upstream_version = "9.0.0" in
-  let booted_version = upstream_version in
-  let secondary_version = upstream_version in
-
-  let expected_version_info = {
-      latest = Semver.of_string upstream_version |> Option.get;
-      booted = Semver.of_string booted_version |> Option.get;
-      inactive = Semver.of_string secondary_version |> Option.get;
+let both_newer_than_upstream =
+  let input_versions = {
+        booted = semver_v3;
+        inactive = semver_v2;
+        latest = semver_v1;
   } in
-
-  let expected_state_sequence =
-    [
-      UpdateMock (fun () ->
-        rauc#set_version SystemA booted_version;
-        rauc#set_version SystemB secondary_version;
-        rauc#set_booted_slot SystemA;
-        rauc#set_primary SystemA;
-        update_client#set_latest_version upstream_version
-      );
-      StateReached GettingVersionInfo;
-      StateReached (UpToDate expected_version_info);
-    ]
+  let expected_state =
+      ErrorGettingVersionInfo "nonsensical version information: <..>"
   in
-  (expected_state_sequence, init_state)
+  test_version_logic_case ~input_versions expected_state
 
-let booted_current_secondary_older {update_client; rauc} =
-  let init_state = GettingVersionInfo in
-
-  let upstream_version = "9.0.0" in
-  let booted_version = upstream_version in
-  let secondary_version = "8.0.0" in
-
-  let expected_version_info = {
-      latest = Semver.of_string upstream_version |> Option.get;
-      booted = Semver.of_string booted_version |> Option.get;
-      inactive = Semver.of_string secondary_version |> Option.get;
+let booted_newer_secondary_older =
+  let input_versions = {
+        latest = semver_v2;
+        booted = semver_v3;
+        inactive = semver_v1;
   } in
-
-  let expected_state_sequence =
-    [
-      UpdateMock (fun () ->
-        rauc#set_version SystemA booted_version;
-        rauc#set_version SystemB secondary_version;
-        rauc#set_booted_slot SystemA;
-        rauc#set_primary SystemA;
-        update_client#set_latest_version upstream_version
-      );
-      StateReached GettingVersionInfo;
-      StateReached (UpToDate expected_version_info);
-    ]
+  let expected_state =
+      Downloading (Semver.to_string semver_v2)
   in
-  (expected_state_sequence, init_state)
+  test_version_logic_case ~input_versions expected_state
 
-
-let booted_older_secondary_current {update_client; rauc} =
-  let init_state = GettingVersionInfo in
-
-  let upstream_version = "9.0.0" in
-  let booted_version = "8.0.0" in
-  let secondary_version = upstream_version in
-
-  let expected_state_sequence =
-    [
-      UpdateMock (fun () ->
-        rauc#set_version SystemA booted_version;
-        rauc#set_version SystemB secondary_version;
-        rauc#set_booted_slot SystemA;
-        rauc#set_primary SystemA;
-        update_client#set_latest_version upstream_version
-      );
-      StateReached GettingVersionInfo;
-      StateReached OutOfDateVersionSelected;
-    ]
+let booted_older_secondary_newer =
+  let input_versions = {
+        latest = semver_v2;
+        booted = semver_v1;
+        inactive = semver_v3;
+  } in
+  let expected_state =
+      ErrorGettingVersionInfo "nonsensical version information: <..>"
   in
-  (expected_state_sequence, init_state)
+  test_version_logic_case ~input_versions expected_state
+
+let booted_current_secondary_current =
+  let input_versions = {
+        latest = semver_v2;
+        booted = semver_v2;
+        inactive = semver_v2;
+  } in
+  let expected_state =
+      UpToDate input_versions
+  in
+  test_version_logic_case ~input_versions expected_state
+
+let booted_current_secondary_older =
+  let input_versions = {
+        latest = semver_v2;
+        booted = semver_v2;
+        inactive = semver_v1;
+  } in
+  let expected_state =
+      UpToDate input_versions
+  in
+  test_version_logic_case ~input_versions expected_state
+
+let booted_older_secondary_current =
+  let input_versions = {
+        latest = semver_v2;
+        booted = semver_v1;
+        inactive = semver_v2;
+  } in
+  let expected_state = OutOfDateVersionSelected
+  in
+  test_version_logic_case ~input_versions expected_state
 
 let setup_log () =
   Fmt_tty.setup_std_outputs ();

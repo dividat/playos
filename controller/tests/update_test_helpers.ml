@@ -148,3 +148,43 @@ let run_test_case scenario_gen =
     let test_context = setup_test_deps ()  in
     let (scenario, init_state) = scenario_gen test_context in
     run_test_scenario test_context (Queue.of_seq (List.to_seq scenario)) init_state
+
+
+let other_slot slot = match slot with
+    | Rauc.Slot.SystemA -> Rauc.Slot.SystemB
+    | Rauc.Slot.SystemB -> Rauc.Slot.SystemA
+
+
+let semver_v1 = Semver.of_string "1.0.0" |> Option.get
+let semver_v2 = Semver.of_string "2.0.0" |> Option.get
+let semver_v3 = Semver.of_string "3.0.0" |> Option.get
+
+let test_version_logic_case
+    ?(booted_slot=Rauc.Slot.SystemA)
+    ?(primary_slot=(Some Rauc.Slot.SystemA))
+    ~(input_versions:Update.version_info)
+    (expected_state:Update.state) =
+
+  let init_state = GettingVersionInfo in
+
+  let booted_version = Semver.to_string input_versions.booted in
+  let secondary_version = Semver.to_string input_versions.inactive in
+  let upstream_version = Semver.to_string input_versions.latest in
+
+  let inactive_slot = other_slot booted_slot in
+
+  fun {update_client; rauc} ->
+      let expected_state_sequence =
+        [
+          UpdateMock (fun () ->
+            rauc#set_version booted_slot booted_version;
+            rauc#set_version inactive_slot secondary_version;
+            rauc#set_booted_slot booted_slot;
+            rauc#set_primary primary_slot;
+            update_client#set_latest_version upstream_version
+          );
+          StateReached GettingVersionInfo;
+          StateReached expected_state;
+        ]
+      in
+      (expected_state_sequence, init_state)
