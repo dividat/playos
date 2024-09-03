@@ -67,14 +67,18 @@ let evaluate_version_info current_primary booted_slot version_info =
     match current_primary with
     | Some primary_slot ->
       if booted_up_to_date then
-        (* Don't care if inactive can be updated. I.e. Only update the inactive partition once the booted partition is outdated. This results in always two versions being available on the machine. *)
+        (* Don't care if inactive can be updated. I.e. Only update the inactive
+           partition once the booted partition is outdated. This results in
+           always two versions being available on the machine. *)
         UpToDate version_info
       else
         if booted_slot = primary_slot then
-          (* Inactive is up to date while booted is out of date, but booted was specifically selected for boot *)
+          (* Inactive is up to date while booted is out of date, but booted was
+             specifically selected for boot *)
           OutOfDateVersionSelected
         else
-          (* If booted is not up to date but inactive is both up to date and primary, we should reboot into the primary *)
+          (* If booted is not up to date but inactive is both up to date and
+             primary, we should reboot into the primary *)
           RebootRequired
     | None ->
       (* All systems bad; suggest reinstallation *)
