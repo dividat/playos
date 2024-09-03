@@ -109,12 +109,6 @@ let booted_older_secondary_current =
   in
   test_version_logic_case ~input_versions expected_state
 
-let setup_log () =
-  Fmt_tty.setup_std_outputs ();
-  Logs.set_level @@ Some Logs.Debug;
-  Logs.set_reporter (Logs_fmt.reporter ());
-  ()
-
 let () =
   let () = setup_log () in
   Lwt_main.run
