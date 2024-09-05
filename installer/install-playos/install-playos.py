@@ -159,7 +159,8 @@ def _compute_geometries(device, part_sizes):
     esp = parted.Geometry(
         device=device,
         start=parted.sizeToSectors(8, "MB", sectorSize),
-        length=parted.sizeToSectors(550, "MB", sectorSize))
+        # TODO: this could be computed from grub + RESCUE_SYSTEM size
+        length=parted.sizeToSectors(800, "MB", sectorSize))
     data = parted.Geometry(
         device=device,
         start=esp.end + 1,
