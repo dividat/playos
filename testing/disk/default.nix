@@ -3,16 +3,21 @@
 
 , install-playos
 
-, # Size of data partition in GiB
-  dataPartitionSize ? 5
+, closureInfo
+, systemImage
 
-, # Size of system partition in GiB
-  systemPartitionSize ? 10
+, # Size of data partition in GB
+  dataPartitionSize ? 1
+, bootPartitionSize ? 1
 }:
 with lib;
 let
-  # disk size in GiB
-  diskSize = (1 + dataPartitionSize + systemPartitionSize + systemPartitionSize + 1);
+  systemClosureInfo = closureInfo { rootPaths = [ systemImage ]; };
+  systemSizeBytes = strings.toInt (builtins.readFile "${systemClosureInfo}/total-nar-size");
+  systemSizeGB = systemSizeBytes / (1000.0*1000*1000);
+  # add extra 20% because nar size is not accurate
+  systemPartitionSize = builtins.ceil (systemSizeGB * 1.2);
+  diskSize = bootPartitionSize + dataPartitionSize + systemPartitionSize*2;
 in vmTools.runInLinuxVM (
   runCommand "build-playos-disk"
     {
@@ -20,7 +25,10 @@ in vmTools.runInLinuxVM (
 
       preVM = ''
         diskImage=nixos.raw
-        truncate -s ${toString diskSize}G $diskImage
+        echo "System image (closure) size is: ${toString systemSizeGB} GB"
+        echo "System partition size is: ${toString systemPartitionSize} GB"
+        echo "Computed disk size is: ${toString diskSize} GB"
+        truncate -s ${toString diskSize}GB $diskImage
       '';
 
       postVM = ''
