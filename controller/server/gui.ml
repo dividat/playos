@@ -395,62 +395,6 @@ module NetworkGui = struct
 end
 
 
-(** Label printing *)
-module LabelGui = struct
-  open Label_printer
-
-  let make_label () =
-    let%lwt ethernet_interfaces =
-      Network.Interface.get_all ()
-      >|= List.filter (fun (i: Network.Interface.t) ->
-          Re.execp (Re.seq [Re.start; Re.str "enp" ] |> Re.compile) i.name)
-    in
-    let%lwt server_info = Info.get () in
-    return
-      ({ machine_id = server_info.machine_id
-       ; mac_1 = CCOption.(
-             ethernet_interfaces
-             |> CCList.get_at_idx 0
-             >|= (fun i -> i.address)
-             |> get_or ~default:"-"
-           )
-       ; mac_2 = CCOption.(
-             ethernet_interfaces
-             |> CCList.get_at_idx 1
-             >|= (fun i -> i.address)
-             |> get_or ~default:"-"
-           )
-       } : Label_printer.label)
-
-  let overview _req =
-    let%lwt label = make_label () in
-    Lwt.return (page (Label_page.html label))
-
-  let print req =
-    let%lwt form_data = urlencoded_pairs_of_body req in
-    let url = form_data
-              |> List.assoc "label_printer_url"
-              |> List.hd
-    in
-    let count = form_data
-                |> List.assoc "count"
-                |> List.hd
-                |> int_of_string
-    in
-    let%lwt label = make_label () in
-    CCList.replicate count ()
-    |> Lwt_list.iter_s
-      (fun () -> Label_printer.print ~url label)
-    >|= (fun () -> "Labels printed.")
-    >|= success
-
-  let build app =
-    app
-    |> get "/label" overview
-    |> post "/label/print" print
-
-end
-
 module StatusGui = struct
   let build ~health_s ~update_s ~rauc app =
     app
@@ -537,7 +481,6 @@ let routes ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman app =
   |> InfoGui.build
   |> NetworkGui.build ~connman
   |> LocalizationGui.build
-  |> LabelGui.build
   |> StatusGui.build ~health_s ~update_s ~rauc
   |> ChangelogGui.build
   |> RemoteMaintenanceGui.build ~systemd
