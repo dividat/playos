@@ -83,8 +83,8 @@ def disk_overlay(disk):
         # Create a disk overlay
         subprocess.run(
             [
-                QEMU_IMG, 'create', '-f', 'qcow2', '-o'
-                'backing_file={}'.format(disk), temp + "/disk-overlay.qcow2"
+                QEMU_IMG, 'create', '-f', 'qcow2', '-b', disk, '-F', 'raw',
+                temp + "/disk-overlay.qcow2"
             ],
             check=True)
 
