@@ -68,10 +68,9 @@ let html ?current_page ?header content =
       ~a:[ a_class [ "d-Layout" ] ]
       (( aside
           ~a:[ a_class [ "d-Layout__Aside" ]
-          ; a_user_data "focus-group" "first"
+          ; a_user_data "focus-group" "active"
           ]
           [ nav
-              ~a:[ a_user_data "focus-group" "active" ]
               ([ Info; Network; Localization; SystemStatus; Changelog ]
                 |> List.concat_map (fun page -> [ menu_item current_page page; txt " " ]))
           ; div
