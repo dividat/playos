@@ -51,7 +51,7 @@ let both_newer_than_upstream =
         latest = semver_v1;
   } in
   let expected_state =
-      ErrorGettingVersionInfo "nonsensical version information: <..>"
+      UpToDate input_versions
   in
   test_version_logic_case ~input_versions expected_state
 
@@ -62,7 +62,7 @@ let booted_newer_secondary_older =
         inactive = semver_v1;
   } in
   let expected_state =
-      Downloading (Semver.to_string semver_v2)
+      UpToDate input_versions
   in
   test_version_logic_case ~input_versions expected_state
 
@@ -73,7 +73,7 @@ let booted_older_secondary_newer =
         inactive = semver_v3;
   } in
   let expected_state =
-      ErrorGettingVersionInfo "nonsensical version information: <..>"
+      OutOfDateVersionSelected
   in
   test_version_logic_case ~input_versions expected_state
 
@@ -161,7 +161,7 @@ let () =
                 "Both slots out of date -> Update"
                 `Quick (fun _ () -> run_test_case both_out_of_date);
              Alcotest_lwt.test_case
-                "Both slots newer than upstream -> non-sensical err"
+                "Both slots newer than upstream -> UpToDate"
                 `Quick (fun _ () -> run_test_case both_newer_than_upstream);
              Alcotest_lwt.test_case
                 "Booted slot current, inactive older -> UpToDate"
@@ -173,10 +173,10 @@ let () =
                 "Booted slot current, inactive current -> UpToDate"
                 `Quick (fun _ () -> run_test_case booted_current_secondary_current);
              Alcotest_lwt.test_case
-                "Booted slot newer, inactive older -> Update"
+                "Booted slot newer, inactive older -> UpToDate"
                 `Quick (fun _ () -> run_test_case booted_newer_secondary_older);
              Alcotest_lwt.test_case
-                "Booted slot older, inactive newer -> non-sensical"
+                "Booted slot older, inactive newer -> OutOfDateVersionSelected"
                 `Quick (fun _ () -> run_test_case booted_older_secondary_newer);
            ]);
            ( "Version cases matrix",

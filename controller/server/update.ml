@@ -55,15 +55,16 @@ end
 
 let evaluate_version_info current_primary booted_slot version_info =
   (* Compare latest available version to version booted. *)
-  let booted_version_compare = Semver.compare version_info.latest version_info.booted in
-  let booted_up_to_date = booted_version_compare = 0 in
+  let up_to_date_with_latest v = Semver.compare v version_info.latest >=0 in
+  let booted_up_to_date = up_to_date_with_latest version_info.booted in
+  let inactive_up_to_date = up_to_date_with_latest version_info.inactive in
 
-  (* Compare latest available version to version on inactive system partition. *)
-  let inactive_version_compare = Semver.compare version_info.latest version_info.inactive in
-  let inactive_up_to_date = inactive_version_compare = 0 in
-  let inactive_update_available = inactive_version_compare > 0 in
-
-  if booted_up_to_date || inactive_up_to_date then
+  if booted_up_to_date && inactive_up_to_date then
+  (* Should not happen during the automatic update process (one partition must
+     always be older than latest upstream), but can happen if e.g. a newer
+     version is manually installed into one of the slots. *)
+    UpToDate version_info
+  else if booted_up_to_date || inactive_up_to_date then
     match current_primary with
     | Some primary_slot ->
       if booted_up_to_date then
@@ -84,18 +85,10 @@ let evaluate_version_info current_primary booted_slot version_info =
       (* All systems bad; suggest reinstallation *)
       ReinstallRequired
 
-  else if inactive_update_available then
-    (* Booted system is not up to date and there is an update available for inactive system. *)
+  else
+    (* Both systems are out of date -> update the inactive system *)
     Downloading (Semver.to_string version_info.latest)
 
-  else
-    let msg =
-      ("nonsensical version information: "
-       ^ (version_info
-          |> sexp_of_version_info
-          |> Sexplib.Sexp.to_string_hum))
-    in
-    ErrorGettingVersionInfo msg
 
 (** Helper to parse semver from string or fail *)
 let semver_of_string string =
