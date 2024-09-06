@@ -4,6 +4,10 @@
 
 - controller: Enable spatial navigation using the arrow keys
 
+## Removed
+
+- controller: Remove unused label printing functionality
+
 # [2024.7.0] - 2024-08-02
 
 # [2024.7.0-VALIDATION] - 2024-07-02

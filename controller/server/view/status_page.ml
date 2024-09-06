@@ -16,12 +16,7 @@ let html { health; update; rauc } =
     ~current_page:Page.SystemStatus 
     ~header:(Page.header_title 
       ~icon:Icon.screen 
-      [ txt "System Statu"
-      ; a
-          ~a:[ a_class [ "d-HiddenLink" ]
-          ; a_href "/label"
-          ]
-          [ txt "s" ]
+      [ txt "System Status"
       ])
     (Definition.list
       (definition "Health" health

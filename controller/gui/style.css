@@ -454,12 +454,6 @@ html {
     overflow: auto;
 }
 
-.d-HiddenLink {
-    text-decoration: none;
-    cursor: text;
-    color: black;
-}
-
 .d-Code {
     font-style: normal;
     background-color: #F1F1F1;
