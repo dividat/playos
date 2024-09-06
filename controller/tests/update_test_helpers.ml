@@ -164,7 +164,7 @@ let semver_v1 = Semver.of_string "1.0.0" |> Option.get
 let semver_v2 = Semver.of_string "2.0.0" |> Option.get
 let semver_v3 = Semver.of_string "3.0.0" |> Option.get
 
-type version_logic_input = {
+type system_slot_spec = {
     booted_slot: Rauc.Slot.t;
     primary_slot: Rauc.Slot.t Option.t;
     input_versions: Update.version_info;
@@ -231,12 +231,27 @@ let state_matches_expected_outcome state outcome =
            and should not appear *)
         | (DoNothingOrProduceWarning, _) ->                         false
 
+let setup_mocks_from_system_slot_spec {rauc; update_client} case =
+    let {booted_slot; primary_slot; input_versions} = case in
+
+    let booted_version = Semver.to_string input_versions.booted in
+    let secondary_version = Semver.to_string input_versions.inactive in
+    let upstream_version = Semver.to_string input_versions.latest in
+
+    let inactive_slot = other_slot booted_slot in
+
+    rauc#set_version booted_slot booted_version;
+    rauc#set_version inactive_slot secondary_version;
+    rauc#set_booted_slot booted_slot;
+    rauc#set_primary primary_slot;
+    update_client#set_latest_version upstream_version;
+    ()
+
 let test_combo_matrix_case case =
     let expected_outcome = combo_to_outcome case in
     let expected_outcome_str =
             (sexp_of_expected_outcomes expected_outcome |> Sexplib.Sexp.to_string)
     in
-    let {booted_slot; primary_slot; input_versions} = case in
     let test_case_descr =
         Format.sprintf
             "%s\t->\t%s"
@@ -244,22 +259,11 @@ let test_combo_matrix_case case =
             expected_outcome_str
     in
     Alcotest_lwt.test_case test_case_descr `Quick (fun _ () ->
-        let {rauc; update_service; update_client} = setup_test_deps () in
+        let mocks = setup_test_deps () in
 
-        let booted_version = Semver.to_string input_versions.booted in
-        let secondary_version = Semver.to_string input_versions.inactive in
-        let upstream_version = Semver.to_string input_versions.latest in
+        let () = setup_mocks_from_system_slot_spec mocks case in
 
-        let inactive_slot = other_slot booted_slot in
-
-        (* setup mocks *)
-        rauc#set_version booted_slot booted_version;
-        rauc#set_version inactive_slot secondary_version;
-        rauc#set_booted_slot booted_slot;
-        rauc#set_primary primary_slot;
-        update_client#set_latest_version upstream_version;
-
-        let module UpdateServiceI = (val update_service) in
+        let module UpdateServiceI = (val mocks.update_service) in
         let%lwt out_state = UpdateServiceI.run_step GettingVersionInfo in
         if state_matches_expected_outcome out_state expected_outcome then
             Lwt.return ()
@@ -272,7 +276,9 @@ let test_combo_matrix_case case =
     )
 
 
-(* NOTE: this can probably be deprecated once the above version is "enabled" *)
+(* NOTE: this is almost the same as the `test_combo_matrix_case` above,
+         except that it expects a specific state outcome and
+         uses the `run_test_scenario` machinery. *)
 let test_version_logic_case
     ?(booted_slot=Rauc.Slot.SystemA)
     ?(primary_slot=(Some Rauc.Slot.SystemA))
@@ -281,21 +287,15 @@ let test_version_logic_case
 
   let init_state = GettingVersionInfo in
 
-  let booted_version = Semver.to_string input_versions.booted in
-  let secondary_version = Semver.to_string input_versions.inactive in
-  let upstream_version = Semver.to_string input_versions.latest in
-
-  let inactive_slot = other_slot booted_slot in
-
-  fun {update_client; rauc} ->
+  fun mocks ->
       let expected_state_sequence =
         [
           UpdateMock (fun () ->
-            rauc#set_version booted_slot booted_version;
-            rauc#set_version inactive_slot secondary_version;
-            rauc#set_booted_slot booted_slot;
-            rauc#set_primary primary_slot;
-            update_client#set_latest_version upstream_version
+            setup_mocks_from_system_slot_spec mocks {
+                booted_slot = booted_slot;
+                primary_slot = primary_slot;
+                input_versions = input_versions
+            }
           );
           StateReached GettingVersionInfo;
           StateReached expected_state;
