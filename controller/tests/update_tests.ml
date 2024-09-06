@@ -115,21 +115,6 @@ let possible_booted_slots = [Rauc.Slot.SystemA; Rauc.Slot.SystemB]
 let possible_primary_slots =
     None :: List.map (Option.some) possible_booted_slots
 
-let flatten_tuple (a, (b, c)) = (a, b, c)
-
-let combine3 l1 l2 l3 =
-    List.combine l1 (List.combine l2 l3) |>
-        List.map flatten_tuple
-
-let product l1 l2 =
-    List.concat_map
-        (fun e1 -> List.map (fun e2 -> (e1, e2)) l2)
-        l1
-
-let product3 l1 l2 l3 =
-    product l1 (product l2 l3) |>
-        List.map flatten_tuple
-
 let vsn_triple_to_version_info (latest, booted, inactive) = {
     latest = latest;
     booted = booted;
