@@ -1,5 +1,9 @@
 # [UNRELEASED]
 
+## Added
+
+- controller: Enable spatial navigation using the arrow keys
+
 ## Removed
 
 - controller: Remove unused label printing functionality

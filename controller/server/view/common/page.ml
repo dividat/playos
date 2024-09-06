@@ -36,14 +36,15 @@ let menu_label page =
   | Shutdown -> "Shutdown"
 
 let menu_item current_page page =
+  let is_active = current_page = Some page in
   let class_ =
-    "d-Menu__Item" ::
-      (if current_page = Some page then [ "d-Menu__Item--Active" ] else [])
+    "d-Menu__Item" :: (if is_active then [ "d-Menu__Item--Active" ] else [])
   in
   a
-    ~a:[ a_href (menu_link page) 
-    ; a_class class_ 
-    ]
+    ~a:(
+      a_href (menu_link page) :: a_class class_ ::
+      if is_active then [ a_user_data "focus-active" "" ] else []
+    )
     [ menu_icon page
     ; txt (menu_label page)
     ]
@@ -66,7 +67,9 @@ let html ?current_page ?header content =
     (body
       ~a:[ a_class [ "d-Layout" ] ]
       (( aside
-          ~a:[ a_class [ "d-Layout__Aside" ] ]
+          ~a:[ a_class [ "d-Layout__Aside" ]
+          ; a_user_data "focus-group" "active"
+          ]
           [ nav
               ([ Info; Network; Localization; SystemStatus; Changelog ]
                 |> List.concat_map (fun page -> [ menu_item current_page page; txt " " ]))
@@ -78,6 +81,7 @@ let html ?current_page ?header content =
       @ [ main
               ~a:[ a_class [ "d-Layout__Main" ] ]
               [ content ]
+      ; script ~a:[ a_src "/static/vendor/focus-shift.js" ] (txt "")
       ; script ~a:[ a_src "/static/client.js" ] (txt "")
       ])
     )
