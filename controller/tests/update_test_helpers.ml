@@ -187,11 +187,9 @@ let version_logic_input_to_string {booted_slot; primary_slot; input_versions} =
             (Option.map slot_to_string primary_slot |> Option.value ~default:"-")
             (version_info_to_string input_versions)
 
-
 type expected_outcomes =
-    | DoNothing
-    | InstallVsnTo of (Semver.t * Rauc.Slot.t [@sexp.opaque])
-    | ProduceWarning
+    | DoNothingOrProduceWarning
+    | InstallVsn of (Semver.t [@sexp.opaque])
     [@@deriving sexp]
 
 let combo_to_outcome {booted_slot; primary_slot; input_versions} =
@@ -201,27 +199,26 @@ let combo_to_outcome {booted_slot; primary_slot; input_versions} =
     let inactive_is_out_of_date =
         (Semver.compare input_versions.inactive input_versions.latest) = -1
     in
-    let inactive_slot = other_slot booted_slot in
     if booted_is_out_of_date && inactive_is_out_of_date then
-        InstallVsnTo (input_versions.latest, inactive_slot)
+        InstallVsn input_versions.latest
     else
-        match primary_slot with
-            | None -> ProduceWarning
-            | _ -> DoNothing
-
+        DoNothingOrProduceWarning
 
 let state_matches_expected_outcome state outcome =
     match (outcome, state) with
-        | (DoNothing, GettingVersionInfo) -> true
-        | (DoNothing, UpToDate _) -> true
-        | (DoNothing, _) -> false
-        (* TODO: should also check whether it is install into the right slot *)
-        | (InstallVsnTo (v1, _slot), Downloading v2) -> (Semver.to_string v1) = v2
-        | (InstallVsnTo _, _) -> false
-        | (ProduceWarning, ErrorGettingVersionInfo _) -> true
-        | (ProduceWarning, ReinstallRequired) -> true
-        | (ProduceWarning, OutOfDateVersionSelected) -> true
-        | (ProduceWarning, _) -> false
+        | (InstallVsn v1,             Downloading v2) ->
+                (Semver.to_string v1) = v2
+        | (InstallVsn _,              _) ->                         false
+        | (DoNothingOrProduceWarning, ErrorGettingVersionInfo _) -> true
+        | (DoNothingOrProduceWarning, UpToDate _) ->                true
+        | (DoNothingOrProduceWarning, OutOfDateVersionSelected) ->  true
+        | (DoNothingOrProduceWarning, RebootRequired) ->            true
+        | (DoNothingOrProduceWarning, ReinstallRequired) ->         true
+        (* should not _directly_ return to GettingVersionInfo state *)
+        | (DoNothingOrProduceWarning, GettingVersionInfo) ->        false
+        (* all the other states are part of the installation process
+           and should not appear *)
+        | (DoNothingOrProduceWarning, _) ->                         false
 
 let test_combo_matrix_case case =
     let expected_outcome = combo_to_outcome case in
