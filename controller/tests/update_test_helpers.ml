@@ -187,6 +187,17 @@ let version_logic_input_to_string {booted_slot; primary_slot; input_versions} =
             (Option.map slot_to_string primary_slot |> Option.value ~default:"-")
             (version_info_to_string input_versions)
 
+let flatten_tuple (a, (b, c)) = (a, b, c)
+
+let product l1 l2 =
+    List.concat_map
+        (fun e1 -> List.map (fun e2 -> (e1, e2)) l2)
+        l1
+
+let product3 l1 l2 l3 =
+    product l1 (product l2 l3) |>
+        List.map flatten_tuple
+
 type expected_outcomes =
     | DoNothingOrProduceWarning
     | InstallVsn of (Semver.t [@sexp.opaque])
