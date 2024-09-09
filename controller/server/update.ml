@@ -112,8 +112,6 @@ module Make(Deps : ServiceDeps) : UpdateService = struct
 
     (** Get version information *)
     let get_version_info () =
-      Lwt_result.catch
-        (fun () ->
           let%lwt latest = ClientI.get_latest_version () >|= semver_of_string in
           let%lwt rauc_status = RaucI.get_status () in
 
@@ -133,7 +131,6 @@ module Make(Deps : ServiceDeps) : UpdateService = struct
             ; inactive = system_a_version
             }
             |> return
-        )
 
 (* Update mechanism process *)
     (** perform a single state transition from given state *)
@@ -142,12 +139,17 @@ module Make(Deps : ServiceDeps) : UpdateService = struct
        match (state) with
       | GettingVersionInfo ->
         (* get version information and decide what to do *)
-        let%lwt current_primary = RaucI.get_primary () in
-        let%lwt booted_slot = RaucI.get_booted_slot () in
-        let%lwt vsn_resp = get_version_info () in
-        (match vsn_resp with
-            | Ok vsn -> evaluate_version_info current_primary booted_slot vsn
-            | Error e -> ErrorGettingVersionInfo (Printexc.to_string e)
+        let%lwt resp = Lwt_result.catch (fun () ->
+            let%lwt slot_primary = RaucI.get_primary () in
+            let%lwt slot_booted = RaucI.get_booted_slot () in
+            let%lwt vsn_resp = get_version_info () in
+            return (slot_primary, slot_booted, vsn_resp)
+        ) in
+        (match resp with
+            | Ok (slot_p, slot_b, vsns) ->
+                evaluate_version_info slot_p slot_b vsns
+            | Error e ->
+                ErrorGettingVersionInfo (Printexc.to_string e)
         ) |> set
 
       | ErrorGettingVersionInfo msg ->
