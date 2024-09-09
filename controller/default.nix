@@ -51,5 +51,7 @@ ocamlPackages.buildDunePackage rec {
     fieldslib
     alcotest
     alcotest-lwt
+    qcheck
+    qcheck-alcotest
   ];
 }

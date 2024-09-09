@@ -16,7 +16,6 @@ let both_out_of_date {update_client; rauc} =
   let expected_state_sequence =
     [
       UpdateMock (fun () ->
-        (* TODO: test for symmetry by swapping A and B *)
         rauc#set_version SystemA booted_version;
         rauc#set_version SystemB inactive_version;
         rauc#set_booted_slot SystemA;
@@ -110,36 +109,10 @@ let booted_older_secondary_current =
   test_version_logic_case ~input_versions expected_state
 
 
-let possible_versions = [semver_v1; semver_v2; semver_v3]
-let possible_booted_slots = [Rauc.Slot.SystemA; Rauc.Slot.SystemB]
-let possible_primary_slots =
-    None :: List.map (Option.some) possible_booted_slots
-
-let vsn_triple_to_version_info (latest, booted, inactive) = {
-    latest = latest;
-    booted = booted;
-    inactive = inactive;
-}
-
-let all_possible_combos =
-    let vsn_triples = product3 possible_versions possible_versions possible_versions in
-    let combos = product3 vsn_triples possible_booted_slots possible_primary_slots in
-    List.map (fun (vsns, booted_slot, primary_slot) ->
-        let vsn_info = vsn_triple_to_version_info vsns in
-        {
-            booted_slot = booted_slot;
-            primary_slot = primary_slot;
-            input_versions = vsn_info;
-        })
-        combos
-
-
 let () =
-  let () = setup_log () in
-  Lwt_main.run
-  @@ Alcotest_lwt.run "UpdateService tests"
+  Lwt_main.run @@ Alcotest_lwt.run "UpdateService basic tests"
        [
-         ( "Booted = Primary",
+         ( "Main cases, booted = primary",
            [
             (* BOOTED = PRIMARY in all these *)
              Alcotest_lwt.test_case
@@ -164,7 +137,7 @@ let () =
                 "Booted slot older, inactive newer -> OutOfDateVersionSelected"
                 `Quick (fun _ () -> run_test_case booted_older_secondary_newer);
            ]);
-           ( "Version cases matrix",
-             List.map test_combo_matrix_case all_possible_combos
-           )
+           ( "All version/slot combinations",
+             List.map test_slot_spec_combo_case all_possible_slot_spec_combos
+           );
        ]
