@@ -8,8 +8,15 @@ type state = {
 
 let test_bundle_name = "TEST_PLAYOS_BUNDLE"
 
-class mock = object (self)
-
+class mock failure_generator =
+    let return a =
+        let%lwt should_fail = failure_generator () in
+        if (should_fail) then
+            raise (Failure "Random test injected failure!")
+        else
+            Lwt.return a
+    in
+    object (self)
     val state = {
         latest_version = "0.0.0";
         available_bundles = Hashtbl.create 5;
@@ -37,10 +44,10 @@ class mock = object (self)
         let oc = open_out tmp in
         let () = Printf.fprintf oc "%s\n" contents in
         let () = close_out oc in
-        Lwt.return tmp
+        return tmp
 
     method get_latest_version () =
-        Lwt.return state.latest_version
+        return state.latest_version
 
     method to_module = (module struct
         let download = self#download

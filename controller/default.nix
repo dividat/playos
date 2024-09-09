@@ -48,5 +48,7 @@ ocamlPackages.buildDunePackage rec {
     ppx_protocol_conv_jsonm
     alcotest
     alcotest-lwt
+    qcheck
+    qcheck-alcotest
   ];
 }
