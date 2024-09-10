@@ -61,60 +61,60 @@ let test_random_failure_case =
              (List.length @@ List.filter (Fun.id) seq_rauc) (fail_seq_to_str seq_rauc)
     in
     let test_check (seq_upd, seq_rauc, inp_case) =
-            let failure_gen_upd = failure_seq_to_f seq_upd in
-            let failure_gen_rauc = failure_seq_to_f seq_rauc in
-            let test_config = {
-              error_backoff_duration = 0.001;
-              check_for_updates_interval = 0.002;
-            } in
-            let mocks = init_test_deps
-                ~failure_gen_upd
-                ~failure_gen_rauc
-                ~test_config
-                ()
-            in
-            let () = setup_mocks_from_system_slot_spec mocks inp_case in
-            let module UpdateServiceI = (val mocks.update_service) in
-            let () = Printexc.record_backtrace true in
-            let run s = Lwt_main.run @@ Lwt_result.catch
-                (fun () -> UpdateServiceI.run_step s) in
-            let state_seq = Queue.create () in
-            let state_seq_to_str state_seq =
-                (String.concat " -> " @@ (List.map statefmt @@
-                    List.of_seq (Queue.to_seq state_seq)
-                ))
-            in
-            let rec do_while ?(c=0) loop_lim cur_state =
-                Queue.push cur_state state_seq;
-                let out = run cur_state in
-                match out with
-                    | (Error e) ->
-                        QCheck2.Test.fail_reportf
-                        "Update Service crashed (possibly due to an injected \
-                        exception), see specified source code line in the \
-                        backtrace for the callsite which caused the crash:\n\
-                        Exception: %s\n\
-                        Backtace: %s\n\
-                        State sequence: %s -> exception\n"
-                            (Printexc.to_string e)
-                            (Printexc.get_backtrace ())
-                            (state_seq_to_str state_seq)
+        let failure_gen_upd = failure_seq_to_f seq_upd in
+        let failure_gen_rauc = failure_seq_to_f seq_rauc in
+        let test_config = {
+          error_backoff_duration = 0.001;
+          check_for_updates_interval = 0.002;
+        } in
+        let mocks = init_test_deps
+            ~failure_gen_upd
+            ~failure_gen_rauc
+            ~test_config
+            ()
+        in
+        let () = setup_mocks_from_system_slot_spec mocks inp_case in
+        let module UpdateServiceI = (val mocks.update_service) in
+        let () = Printexc.record_backtrace true in
+        let run s = Lwt_main.run @@ Lwt_result.catch
+            (fun () -> UpdateServiceI.run_step s) in
+        let state_seq = Queue.create () in
+        let state_seq_to_str state_seq =
+            (String.concat " -> " @@ (List.map statefmt @@
+                List.of_seq (Queue.to_seq state_seq)
+            ))
+        in
+        let rec do_while ?(c=0) loop_lim cur_state =
+            Queue.push cur_state state_seq;
+            let out = run cur_state in
+            match out with
+                | (Error e) ->
+                    QCheck2.Test.fail_reportf
+                    "Update Service crashed (possibly due to an injected \
+                    exception), see specified source code line in the \
+                    backtrace for the callsite which caused the crash:\n\
+                    Exception: %s\n\
+                    Backtace: %s\n\
+                    State sequence: %s -> exception\n"
+                        (Printexc.to_string e)
+                        (Printexc.get_backtrace ())
+                        (state_seq_to_str state_seq)
 
-                    | (Ok GettingVersionInfo) ->
-                            Queue.push GettingVersionInfo state_seq;
-                            true
-                    | (Ok state) ->
-                            if (c < loop_lim) then
-                               do_while ~c:(c+1) loop_lim state
-                            else
-                                QCheck2.Test.fail_reportf
-                                    "Did not reach GettingVersionInfo \
-                                    in %d iterations, state transitions:\n\
-                                    %s\n"
-                                    loop_lim
-                                   (state_seq_to_str state_seq)
-            in
-            do_while 5 GettingVersionInfo
+                | (Ok GettingVersionInfo) ->
+                        Queue.push GettingVersionInfo state_seq;
+                        true
+                | (Ok state) ->
+                        if (c < loop_lim) then
+                           do_while ~c:(c+1) loop_lim state
+                        else
+                            QCheck2.Test.fail_reportf
+                                "Did not reach GettingVersionInfo \
+                                in %d iterations, state transitions:\n\
+                                %s\n"
+                                loop_lim
+                               (state_seq_to_str state_seq)
+        in
+        do_while 5 GettingVersionInfo
     in
     QCheck2.Test.make
          ~count:10_000
@@ -125,13 +125,12 @@ let test_random_failure_case =
 
 let () =
   let argv_with_verbose = Array.append Sys.argv [| "--verbose" |] in
-  Alcotest.run
-    ~argv:argv_with_verbose
-    ~and_exit:false
-    "UpdateService qcheck/prop tests" [
-        ( "Fault injection test",
-            [ QCheck_alcotest.to_alcotest
-                ~verbose:true ~long:true test_random_failure_case;
-            ]
-    )
-  ]
+  Alcotest.run ~argv:argv_with_verbose ~and_exit:false
+    "UpdateService qcheck/prop tests"
+    [
+      ( "Fault injection test",
+        [
+          QCheck_alcotest.to_alcotest ~verbose:true ~long:true
+            test_random_failure_case;
+        ] );
+    ]
