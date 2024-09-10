@@ -10,12 +10,14 @@ end
 
 module type UpdateClientDeps = sig
     val base_url: Uri.t
+    val download_dir: string
     val get_proxy: unit -> Uri.t option Lwt.t
 end
 
-let make_deps get_proxy base_url : (module UpdateClientDeps) = (module struct
+let make_deps ?(download_dir="/tmp") get_proxy base_url : (module UpdateClientDeps) = (module struct
     let base_url = base_url
     let get_proxy = get_proxy
+    let download_dir = download_dir
 end)
 
 let bundle_name = Config.System.bundle_name
@@ -32,6 +34,7 @@ let ensure_trailing_slash uri =
 
 module UpdateClient (DepsI: UpdateClientDeps) = struct
     let get_proxy = DepsI.get_proxy
+    let download_dir = DepsI.download_dir
     let base_url = ensure_trailing_slash DepsI.base_url
 
     let download_url version_string =
@@ -51,7 +54,9 @@ module UpdateClient (DepsI: UpdateClientDeps) = struct
     (** download RAUC bundle *)
     let download version =
       let url = download_url version in
-      let bundle_path = Format.sprintf "/tmp/%s" (bundle_file_name version) in
+      let bundle_path = Format.sprintf
+        "%s/%s" download_dir (bundle_file_name version)
+      in
       let options =
         [ "--continue-at"; "-" (* resume download *)
         ; "--limit-rate"; "10M"
