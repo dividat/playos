@@ -57,6 +57,8 @@ let delete_downloaded_bundle_on_err {update_client; rauc} =
       UpdateMock (fun () ->
         rauc#set_version SystemB inactive_version;
         rauc#set_booted_slot SystemA;
+        (* bundles that do not contain their own version will be treated
+           as invalid by mock RAUC *)
         update_client#add_bundle upstream_version "CORRUPT_BUNDLE_CONTENTS"
       );
       StateReached (Downloading upstream_version);
@@ -145,7 +147,7 @@ let booted_older_secondary_current =
 
 let () =
   Lwt_main.run
-  @@ Alcotest_lwt.run "UpdateService basic tests"
+  @@ Alcotest_lwt.run "UpdateService tests"
        [
          ( "Main cases, booted = primary",
            [

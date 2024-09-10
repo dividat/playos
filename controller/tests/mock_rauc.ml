@@ -63,6 +63,7 @@ class mock failure_generator =
             Alcotest.fail @@
                 "Failed to extract version from bundle_path: " ^ bundle_path
 
+    (* A bundle is considered valid if it contains it's own version *)
     method private check_if_bundle_is_valid (bundle_path : string) vsn : unit =
         let ic = In_channel.open_text bundle_path in
         let contents = In_channel.input_all ic in
@@ -73,7 +74,7 @@ class mock failure_generator =
         with | _ ->
             failwith @@
                 Format.sprintf
-                    "Downloaded bundle does not contain version string inside [%s]"
+                    "Downloaded bundle does not contain own version string inside [%s]"
                     vsn
 
     method install (bundle_path : string) : unit Lwt.t =
