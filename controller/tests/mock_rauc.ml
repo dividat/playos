@@ -63,8 +63,22 @@ class mock failure_generator =
             Alcotest.fail @@
                 "Failed to extract version from bundle_path: " ^ bundle_path
 
+    method private check_if_bundle_is_valid (bundle_path : string) vsn : unit =
+        let ic = In_channel.open_text bundle_path in
+        let contents = In_channel.input_all ic in
+        let vsn_regex = Str.regexp_string vsn in
+        try
+            let _ = Str.search_forward vsn_regex contents 0 in
+            ()
+        with | _ ->
+            failwith @@
+                Format.sprintf
+                    "Downloaded bundle does not contain version string inside [%s]"
+                    vsn
+
     method install (bundle_path : string) : unit Lwt.t =
         let vsn = self#extract_version bundle_path in
+        self#check_if_bundle_is_valid bundle_path vsn;
         let%lwt booted_slot = self#get_booted_slot () in
         let other_slot = match booted_slot with
             | Slot.SystemA -> Slot.SystemB

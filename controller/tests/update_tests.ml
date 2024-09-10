@@ -2,9 +2,9 @@ open Update
 open Lwt
 open Update_test_helpers
 
+(* Main test scenario: full update process *)
 let both_out_of_date {update_client; rauc} =
   let init_state = GettingVersionInfo in
-  (* Swap versions to make sure both versions are compared *)
   let booted_version = "10.0.0" in
   let inactive_version = "9.0.0" in
   let upstream_version = "10.0.2" in
@@ -29,7 +29,7 @@ let both_out_of_date {update_client; rauc} =
       StateReached (Installing (_MAGIC_PAT ^ expected_bundle_name upstream_version));
       ActionDone
         ( "bundle was installed into secondary slot",
-          fun () ->
+          fun _ ->
             let status = rauc#get_slot_status SystemB in
             let () =
               Alcotest.(check string)
@@ -38,6 +38,41 @@ let both_out_of_date {update_client; rauc} =
             in
             Lwt.return true );
       StateReached RebootRequired;
+      StateReached GettingVersionInfo;
+    ]
+  in
+  (expected_state_sequence, init_state)
+
+let delete_downloaded_bundle_on_err {update_client; rauc} =
+  let inactive_version = "9.0.0" in
+  let upstream_version = "10.0.0" in
+
+  let init_state = Downloading upstream_version in
+  let expected_bundle_name vsn =
+      Mock_update_client.test_bundle_name ^ _MAGIC_PAT ^ vsn ^ _MAGIC_PAT
+  in
+
+  let expected_state_sequence =
+    [
+      UpdateMock (fun () ->
+        rauc#set_version SystemB inactive_version;
+        rauc#set_booted_slot SystemA;
+        update_client#add_bundle upstream_version "CORRUPT_BUNDLE_CONTENTS"
+      );
+      StateReached (Downloading upstream_version);
+      StateReached (Installing (_MAGIC_PAT ^ expected_bundle_name upstream_version));
+      ActionDone
+        ( "bundle was deleted from path due to installation error",
+          fun (Installing path) ->
+            let status = rauc#get_slot_status SystemB in
+            Alcotest.(check string)
+                "Inactive slot remains in the same version"
+                 inactive_version status.version;
+            Alcotest.(check bool)
+                "Downloaded corrupt bundle was deleted"
+                false (Sys.file_exists path);
+            Lwt.return true );
+      StateReached (ErrorInstalling _MAGIC_PAT);
       StateReached GettingVersionInfo;
     ]
   in
@@ -108,36 +143,38 @@ let booted_older_secondary_current =
   in
   test_version_logic_case ~input_versions expected_state
 
-
 let () =
-  Lwt_main.run @@ Alcotest_lwt.run "UpdateService basic tests"
+  Lwt_main.run
+  @@ Alcotest_lwt.run "UpdateService basic tests"
        [
          ( "Main cases, booted = primary",
            [
-            (* BOOTED = PRIMARY in all these *)
+             (* BOOTED = PRIMARY in all these *)
+             Alcotest_lwt.test_case "Both slots out of date -> Update" `Quick
+               (fun _ () -> run_test_case both_out_of_date);
+             Alcotest_lwt.test_case "Both slots newer than upstream -> UpToDate"
+               `Quick (fun _ () -> run_test_case both_newer_than_upstream);
              Alcotest_lwt.test_case
-                "Both slots out of date -> Update"
-                `Quick (fun _ () -> run_test_case both_out_of_date);
+               "Booted slot current, inactive older -> UpToDate" `Quick
+               (fun _ () -> run_test_case booted_current_secondary_older);
              Alcotest_lwt.test_case
-                "Both slots newer than upstream -> UpToDate"
-                `Quick (fun _ () -> run_test_case both_newer_than_upstream);
+               "Booted slot older, inactive current -> UpToDate" `Quick
+               (fun _ () -> run_test_case booted_older_secondary_current);
              Alcotest_lwt.test_case
-                "Booted slot current, inactive older -> UpToDate"
-                `Quick (fun _ () -> run_test_case booted_current_secondary_older);
+               "Booted slot current, inactive current -> UpToDate" `Quick
+               (fun _ () -> run_test_case booted_current_secondary_current);
              Alcotest_lwt.test_case
-                "Booted slot older, inactive current -> UpToDate"
-                `Quick (fun _ () -> run_test_case booted_older_secondary_current);
+               "Booted slot newer, inactive older -> UpToDate" `Quick
+               (fun _ () -> run_test_case booted_newer_secondary_older);
              Alcotest_lwt.test_case
-                "Booted slot current, inactive current -> UpToDate"
-                `Quick (fun _ () -> run_test_case booted_current_secondary_current);
-             Alcotest_lwt.test_case
-                "Booted slot newer, inactive older -> UpToDate"
-                `Quick (fun _ () -> run_test_case booted_newer_secondary_older);
-             Alcotest_lwt.test_case
-                "Booted slot older, inactive newer -> OutOfDateVersionSelected"
-                `Quick (fun _ () -> run_test_case booted_older_secondary_newer);
-           ]);
-           ( "All version/slot combinations",
-             List.map test_slot_spec_combo_case all_possible_slot_spec_combos
-           );
+               "Booted slot older, inactive newer -> OutOfDateVersionSelected"
+               `Quick (fun _ () -> run_test_case booted_older_secondary_newer);
+           ] );
+         ( "Error handling",
+           [
+             Alcotest_lwt.test_case "Delete downloaded bundle on install error"
+             `Quick (fun _ () -> run_test_case delete_downloaded_bundle_on_err);
+           ] );
+         ( "All version/slot combinations",
+           List.map test_slot_spec_combo_case all_possible_slot_spec_combos );
        ]
