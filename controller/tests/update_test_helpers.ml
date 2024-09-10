@@ -222,7 +222,7 @@ let test_slot_spec_combo_case case =
 (* === Update scenario spec framework === *)
 
 type action_descr = string
-type action_check = unit -> bool Lwt.t
+type action_check = Update.state -> bool Lwt.t
 type mock_update = unit -> unit
 
 type scenario_spec =
@@ -250,7 +250,7 @@ let str_match_with_magic_pat expected actual =
     let exp_regexp = regexp @@ String.concat "" @@ List.map (fun (p) ->
         match p with
             | Text a -> quote a
-            | Delim a -> ".*"
+            | Delim _ -> ".*"
     ) exp_parts in
     string_match exp_regexp actual 0
 
@@ -258,13 +258,21 @@ let str_match_with_magic_pat expected actual =
 let state_formatter out inp = Format.fprintf out "%s" (statefmt inp)
 
 let t_state =
+    let state_to_str s =
+        Update.sexp_of_state s
+            (* using _hum instead of _mach, because _mach seems to remove
+               whitespace between atoms in some cases *)
+            |> Sexplib.Sexp.to_string_hum
+            (* remove new lines to ignore whitespace differences *)
+            |> Str.global_replace (Str.regexp_string "\n") ""
+    in
     let state_eq expected actual =
         (expected == actual) || (
             str_match_with_magic_pat
                 (* Using string repr is a horrible hack, but avoids having to
                    pattern match on every variant in the state ADT *)
-                (Update.sexp_of_state expected |> Sexplib.Sexp.to_string)
-                (Update.sexp_of_state actual |> Sexplib.Sexp.to_string)
+                (state_to_str expected)
+                (state_to_str actual)
         )
     in
     Alcotest.testable state_formatter state_eq
@@ -275,7 +283,7 @@ let interp_spec (state : Update.state) (spec : scenario_spec) =
   | StateReached s ->
       Lwt.return @@ Alcotest.check t_state (specfmt spec) s state
   | ActionDone (descr, f) ->
-      let%lwt rez = f () in
+      let%lwt rez = f state in
       Lwt.return @@ Alcotest.(check bool) (specfmt spec) true rez
   | UpdateMock f -> Lwt.return @@ f ()
 
