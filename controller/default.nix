@@ -32,11 +32,6 @@ ocamlPackages.buildDunePackage rec {
   ];
 
   buildInputs = with ocamlPackages; [
-    nodejs
-    utop
-  ];
-
-  propagatedBuildInputs = with ocamlPackages; [
     opium
     ocaml_lwt
     logs
