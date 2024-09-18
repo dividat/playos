@@ -21,6 +21,7 @@ in
 , buildBundle ? true
 , buildDisk ? true
 , buildLive ? true
+, buildTest ? false
 }:
 
 let
@@ -35,7 +36,9 @@ let
   components = with pkgs; lib.makeScope newScope (self: with self; {
 
     inherit updateUrl deployUrl kioskUrl;
-    inherit (application) version safeProductName fullProductName;
+    inherit (application) safeProductName fullProductName;
+
+    version = application.version + (lib.optionalString buildTest "-TEST");
 
     greeting = lib.attrsets.attrByPath [ "greeting" ] (label: label) application;
 
@@ -55,7 +58,10 @@ let
     updateCert = copyPathToStore updateCert;
 
     # System image as used in full installation
-    systemImage = callPackage ./system-image { application = application; };
+    systemImage = callPackage ./system-image {
+        application = application;
+        isTestBuild = buildTest;
+    };
 
     # USB live system
     live = callPackage ./live { application = application; };
@@ -66,7 +72,10 @@ let
     };
 
     # Rescue system
-    rescueSystem = callPackage ./bootloader/rescue { application = application; };
+    rescueSystem = callPackage ./bootloader/rescue {
+        application = application;
+    } // lib.optionalAttrs buildTest
+        { squashfsCompressionOpts = "-no-compression"; };
 
     # Installer ISO image
     installer = callPackage ./installer {};
@@ -78,6 +87,7 @@ let
     unsignedRaucBundle = callPackage ./rauc-bundle {};
 
     # NixOS system toplevel with test machinery
+    # used for run-in-vm (without --disk) and testing/integration
     testingToplevel = callPackage ./testing/system { application = application; };
 
     # Disk image containing pre-installed system
@@ -86,6 +96,11 @@ let
     # Script for spinning up VMs
     run-in-vm = callPackage ./testing/run-in-vm {};
 
+    # End-to-end tests that depend on on `disk`
+    tests = (if ! buildDisk then
+                throw "buildDisk is required for running end-to-end tests"
+            else
+                callPackage ./testing/end-to-end {});
   });
 
 in
@@ -124,6 +139,9 @@ with pkgs; stdenv.mkDerivation {
     ln -s ${components.unsignedRaucBundle} $out/${components.safeProductName}-${components.version}-UNSIGNED.raucb
     cp ${components.deploy-update} $out/bin/deploy-update
     chmod +x $out/bin/deploy-update
+  ''
+  # Tests
+  + lib.optionalString buildTest ''
+    ln -s ${components.tests} $out/tests
   '';
-
 }
