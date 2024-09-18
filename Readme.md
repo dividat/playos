@@ -105,7 +105,15 @@ Building a complete system takes time, so it is a good idea to test at the compo
 
 ### Automated Testing
 
-Subcomponent tests using the [NixOS test framework](https://nixos.org/manual/nixos/stable/index.html#sec-nixos-tests) may be added to `test/integration`.
+There are 3 types of tests:
+
+- unit tests (used in kiosk and controller)
+- subcomponent integration tests (see below)
+- end-to-end system level tests (see below)
+
+#### Subcomponent (integration) tests
+
+Subcomponent tests using the [NixOS test framework](https://nixos.org/manual/nixos/stable/index.html#sec-nixos-tests) may be added to `testing/integration`.
 
 Run tests with
 
@@ -116,6 +124,23 @@ or individual tests with
     nix-build testing/integration/EXAMPLE.nix
 
 Tests added to `test/integration` are executed via a GitHub Action when pushing or creating pull requests.
+
+#### End-to-end system tests
+
+End-to-end tests use the full PlayOS system, ran on a VM from an installed disk image (obtained from `buildDisk`).
+
+**Note**: the system-under-test will have some extra modules and services installed that are needed for test instrumentation and therefore is not 100% identical to the "real" PlayOS system, see [testing/end-to-end/profile.nix](testing/end-to-end/profile.nix) for the modifications.
+
+To run the tests, execute
+
+    ./build test-e2e
+
+To add additional tests, follow the examples in
+[testing/end-to-end/tests/](testing/end-to-end/tests/).
+
+When developing the tests, it can be helpful to run the NixOS test driver in
+interactive mode, which can be done using
+`./result/tests/interactive/<TEST_NAME>/bin/nixos-test-driver`.
 
 *Note*: if running non-NixOS Linux, ensure you have KVM setup and `/dev/kvm` is
 *world read-writable* (if not, do `chmod o+rw /dev/kvm`), otherwise qemu invoked

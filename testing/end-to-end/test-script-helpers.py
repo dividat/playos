@@ -5,7 +5,7 @@ from colorama import Fore, Style
 
 # HACK: create writable cow disk overlay (same as in ./run-in-vm --disk)
 # TODO: how to create this before the test script without a derivation?
-def creater_overlay(disk, overlay_path):
+def create_overlay(disk, overlay_path):
     subprocess.run(["rm", "-f", overlay_path])
     subprocess.run([
         # TODO: use /nix/store'd qemu path
@@ -41,3 +41,14 @@ class TestCase(object):
             self.print_fail()
 
         return False # signals to re-raise the exception
+
+def wait_for_logs(vm, regex, unit=None, timeout=10):
+    maybe_unit = f"--unit={unit}" if unit else ""
+    journal_cmd = f"journalctl --reverse {maybe_unit}"
+    try:
+        vm.wait_until_succeeds(f"{journal_cmd} | grep '{regex}'", timeout=timeout)
+    except Exception as e:
+        _, output = vm.execute(f"{journal_cmd} | head -30")
+        print("Last VM logs:\n")
+        print(output)
+        raise e
