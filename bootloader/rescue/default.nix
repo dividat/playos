@@ -3,7 +3,8 @@
 , squashfsTools, closureInfo, makeInitrd, linkFarm
 , importFromNixos
 , writeScript, dialog
-, vim, grub2_efi, rauc}:
+, vim, grub2_efi, rauc
+, squashfsCompressionOpts ? "-comp xz -Xdict-size 100%"}:
 with lib;
 let
   nixos = importFromNixos "";
@@ -132,7 +133,7 @@ in
 
           # Generate the squashfs image.
           mksquashfs init $(cat $closureInfo/store-paths) $out \
-            -keep-as-directory -all-root -b 1048576 -comp xz -Xdict-size 100%
+            -keep-as-directory -all-root -b 1048576 ${squashfsCompressionOpts}
         '';
     };
 
