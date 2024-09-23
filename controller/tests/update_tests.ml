@@ -80,6 +80,49 @@ let delete_downloaded_bundle_on_err {update_client; rauc} =
   in
   (expected_state_sequence, init_state)
 
+let sleep_after_error_or_check_test () =
+  (* long-ish timeouts, but these will run in parallel, so no biggie *)
+  let test_config = {
+    error_backoff_duration = 1.0;
+    check_for_updates_interval = 2.0;
+  } in
+
+  let {update_service; _} = init_test_deps ~test_config () in
+  let module UpdateServiceI = (val update_service) in
+
+  let error_states = [
+      ErrorGettingVersionInfo "err";
+      ErrorInstalling "err";
+      ErrorDownloading "err";
+  ] in
+  let post_check_states = [
+      UpToDate (vsn_triple_to_version_info (semver_v1, semver_v1, semver_v1));
+      RebootRequired;
+      OutOfDateVersionSelected;
+      ReinstallRequired;
+  ] in
+
+  let test_state expected_timeout inp_state =
+      let start_time = Unix.gettimeofday() in
+      (* NOTE: running the same step TWICE to ensure
+         that we execute the code in the same thread multiple times *)
+      let%lwt _ = UpdateServiceI.run_step inp_state in
+      let%lwt _ = UpdateServiceI.run_step inp_state in
+      let end_time = Unix.gettimeofday() in
+      let elasped_seconds = end_time -. start_time in
+      if elasped_seconds > (expected_timeout *. 2.0) then
+          Lwt.return ()
+      else
+          Lwt.return @@ Alcotest.fail @@
+            Format.sprintf "Slept shorter than expected (expected %f; slept %f) after state %s"
+                (expected_timeout *. 2.0) elasped_seconds (statefmt inp_state)
+   in
+   Lwt.join @@
+    (List.map (test_state test_config.error_backoff_duration) error_states)
+    @
+    (List.map (test_state test_config.check_for_updates_interval) post_check_states)
+
+
 let both_newer_than_upstream =
   let input_versions = {
         booted = semver_v3;
@@ -176,6 +219,9 @@ let () =
            [
              Alcotest_lwt.test_case "Delete downloaded bundle on install error"
              `Quick (fun _ () -> run_test_case delete_downloaded_bundle_on_err);
+
+             Alcotest_lwt.test_case "Sleep for a duration after error or check"
+             `Quick (fun _ () -> sleep_after_error_or_check_test ());
            ] );
          ( "All version/slot combinations",
            List.map test_slot_spec_combo_case all_possible_slot_spec_combos );
