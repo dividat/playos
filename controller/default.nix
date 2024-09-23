@@ -10,18 +10,25 @@ ocamlPackages.buildDunePackage rec {
 
   src = ./.;
 
-  preConfigure = ''
+  preConfigure = let
+    subs = {
+        "@PLAYOS_VERSION" = version;
+        "@PLAYOS_UPDATE_URL@" = updateUrl;
+        "@PLAYOS_KIOSK_URL@" = kioskUrl;
+        "@PLAYOS_BUNDLE_NAME@" = bundleName;
+    };
+    in
+    ''
     markdown Changelog.md > Changelog.html
 
-    sed -i \
-      -e "s,@PLAYOS_VERSION@,${version},g" \
-      -e "s,@PLAYOS_UPDATE_URL@,${updateUrl},g" \
-      -e "s,@PLAYOS_KIOSK_URL@,${kioskUrl},g" \
-      ./server/info.ml
+    ${lib.strings.toShellVar "subs_arr" subs}
 
-    sed -i \
-      -e "s,@PLAYOS_BUNDLE_NAME@,${bundleName},g" \
-      ./server/update.ml
+    for name in "''${!subs_arr[@]}"; do
+        # check that the specified template variables are used
+        grep -q $name ./config/config.ml || \
+            (echo "$name is missing in ./config/config.ml"; exit 1)
+        sed -i -e "s,$name,''${subs_arr[$name]},g" ./config/config.ml
+    done
   '';
 
   useDune2 = true;
