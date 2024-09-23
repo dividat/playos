@@ -104,10 +104,10 @@ let semver_of_string string =
 module Make(Deps : ServiceDeps) : UpdateService = struct
     open Deps
 
-    let sleep_error_backoff =
+    let sleep_error_backoff () =
         Lwt_unix.sleep config.error_backoff_duration
 
-    let sleep_update_check =
+    let sleep_update_check () =
         Lwt_unix.sleep config.check_for_updates_interval
 
     (** Get version information *)
@@ -159,7 +159,7 @@ module Make(Deps : ServiceDeps) : UpdateService = struct
             (fun m -> m "failed to get version information: %s" msg)
         in
         (* sleep and retry *)
-        let%lwt () = sleep_error_backoff in
+        let%lwt () = sleep_error_backoff () in
         set GettingVersionInfo
 
       | Downloading version ->
@@ -180,7 +180,7 @@ module Make(Deps : ServiceDeps) : UpdateService = struct
             (fun m -> m "failed to download RAUC bundle: %s" msg)
         in
         (* sleep and retry *)
-        let%lwt () = sleep_error_backoff in
+        let%lwt () = sleep_error_backoff () in
         set GettingVersionInfo
 
       | Installing bundle_path ->
@@ -207,7 +207,7 @@ module Make(Deps : ServiceDeps) : UpdateService = struct
             (fun m -> m "failed to install RAUC bundle: %s" msg)
         in
         (* sleep and retry *)
-        let%lwt () = sleep_error_backoff in
+        let%lwt () = sleep_error_backoff () in
         set GettingVersionInfo
 
       | UpToDate _
@@ -215,7 +215,7 @@ module Make(Deps : ServiceDeps) : UpdateService = struct
       | OutOfDateVersionSelected
       | ReinstallRequired ->
         (* sleep and recheck for new updates *)
-        let%lwt () = sleep_update_check in
+        let%lwt () = sleep_update_check () in
         set GettingVersionInfo
 
     (** Finite state machine handling updates *)
