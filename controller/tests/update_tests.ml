@@ -103,12 +103,12 @@ let sleep_after_error_or_check_test () =
   ] in
 
   let test_state expected_timeout inp_state =
-      let start_time = Unix.gettimeofday() in
+      let start_time = Unix.gettimeofday () in
       (* NOTE: running the same step TWICE to ensure
          that we execute the code in the same thread multiple times *)
       let%lwt _ = UpdateServiceI.run_step inp_state in
       let%lwt _ = UpdateServiceI.run_step inp_state in
-      let end_time = Unix.gettimeofday() in
+      let end_time = Unix.gettimeofday () in
       let elasped_seconds = end_time -. start_time in
       if elasped_seconds > (expected_timeout *. 2.0) then
           Lwt.return ()
