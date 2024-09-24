@@ -12,6 +12,5 @@ pkgs.mkShell {
   packages =
     playos-controller.buildInputs
       ++ playos-controller.nativeBuildInputs
-      ++ playos-controller.propagatedBuildInputs
       ++ [ pkgs.watchexec ];
 }
