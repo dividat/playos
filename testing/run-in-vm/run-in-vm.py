@@ -18,7 +18,7 @@ BINDFS_BIN = "@bindfs@/bin/bindfs"
 QEMU_SYSTEM_X86_64 = "@qemu@/bin/qemu-system-x86_64"
 QEMU_IMG = "@qemu@/bin/qemu-img"
 
-DEFAULT_QEMU_OPTS = ['--enable-kvm', '-m', '2048']
+DEFAULT_QEMU_OPTS = ['-enable-kvm', '-m', '2048']
 
 # set DISK to None if not substituted
 if not os.path.isfile(DISK):
@@ -83,8 +83,8 @@ def disk_overlay(disk):
         # Create a disk overlay
         subprocess.run(
             [
-                QEMU_IMG, 'create', '-f', 'qcow2', '-o'
-                'backing_file={}'.format(disk), temp + "/disk-overlay.qcow2"
+                QEMU_IMG, 'create', '-f', 'qcow2', '-b', disk, '-F', 'raw',
+                temp + "/disk-overlay.qcow2"
             ],
             check=True)
 
