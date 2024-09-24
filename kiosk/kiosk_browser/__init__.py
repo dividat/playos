@@ -1,6 +1,7 @@
 import sys
 import logging
-from PyQt5.QtCore import Qt, QUrl
+import signal
+from PyQt5.QtCore import Qt, QUrl, QSize
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QApplication
 
@@ -20,9 +21,25 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
 
     mainWidget.setContextMenuPolicy(Qt.NoContextMenu)
 
-    if fullscreen:
-        set_fullscreen(app, mainWidget)
+    screen_size = app.primaryScreen().size()
 
+    if fullscreen:
+        # Without a Window Manager, showFullScreen does not work under X,
+        # so set the window size to the primary screen size.
+        mainWidget.resize(screen_size)
+        mainWidget.showFullScreen()
+    else:
+        mainWidget.resize(QSize(round(screen_size.width() / 2), round(screen_size.height() / 2)))
+        mainWidget.show()
+
+    # Quit application when receiving SIGINT
+    def on_SIGINT(signum, frame):
+       print('Exiting…')
+       app.quit()
+       sys.exit(130)
+    signal.signal(signal.SIGINT, on_SIGINT)
+
+    # Start application
     app.exec_()
 
 def parseUrl(url):
@@ -31,10 +48,3 @@ def parseUrl(url):
         raise InvalidUrl('Failed to parse URL "%s"' % url) from Exception
     else:
         return parsed_url
-
-def set_fullscreen(app, mainWidget):
-    # Without a Window Manager, showFullScreen does not work under X,
-    # so set the window size to the primary screen size.
-    screen_size = app.primaryScreen().size()
-    mainWidget.resize(screen_size)
-    mainWidget.showFullScreen()

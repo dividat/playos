@@ -54,17 +54,18 @@ class BrowserWidget(QtWidgets.QWidget):
         # Allow sound playback without user gesture
         self._webview.page().settings().setAttribute(QtWebEngineWidgets.QWebEngineSettings.PlaybackRequiresUserGesture, False)
 
+        # Prevent opening context menu on right click or pressing menu
+        self._webview.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.NoContextMenu)
+
         # Load url
         self._webview.setUrl(url)
         self._view(Status.LOADING)
         self._webview.loadFinished.connect(self._load_finished)
 
         # Shortcut to manually reload
-        self._reload_shortcut = QtWidgets.QShortcut('CTRL+R', self)
-        self._reload_shortcut.activated.connect(self.reload)
+        QtWidgets.QShortcut('CTRL+R', self).activated.connect(self.reload)
         # Shortcut to perform a hard refresh
-        self._hard_refresh_shortcut = QtWidgets.QShortcut('CTRL+SHIFT+R', self)
-        self._hard_refresh_shortcut.activated.connect(self._hard_refresh)
+        QtWidgets.QShortcut('CTRL+SHIFT+R', self).activated.connect(self._hard_refresh)
 
         # Prepare reload timer
         self._reload_timer = QtCore.QTimer(self)
