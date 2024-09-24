@@ -19,9 +19,6 @@ rec {
 
     overlays = [
       (import ./application/overlays version)
-      # Limit virtual terminals that can be switched to
-      # Virtual terminal 7 is the kiosk, 8 is the status screen
-      (import ./application/overlays/xorg { activeVirtualTerminals = [ 7 8 ]; })
     ];
 
     module = { config, lib, pkgs, ... }: {
@@ -29,6 +26,7 @@ rec {
       imports = [
         ./application/playos-status.nix
         ./application/power-management/default.nix
+        ./application/limit-vtes.nix
       ];
 
       # Kiosk runs as a non-privileged user
@@ -46,6 +44,10 @@ rec {
         user = "play";
         group = "users";
       };
+
+      # Limit virtual terminals that can be switched to
+      # Virtual terminal 7 is the kiosk, 8 is the status screen
+      playos.xserver.activeVirtualTerminals = [ 7 8 ];
 
       # System-wide packages
       environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme ];
