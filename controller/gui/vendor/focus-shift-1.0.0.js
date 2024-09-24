@@ -90,7 +90,7 @@ function focusInitial(direction, container) {
     .filter(hasTabIndex)
     .filter((elem) => elem.tabIndex > 0)
   const markedElement = getMinimumBy(tabindexed, (elem) => elem.tabIndex)
-  if (markedElement != null) {
+  if (markedElement != null && isBeingRendered(markedElement)) {
     applyFocus(direction, makeVirtualOrigin(direction), markedElement)
     return
   }
@@ -137,7 +137,8 @@ function getFocusableElements(container) {
  * - it is a descendant of an element marked with `data-focus-skip`,
  * - it is a descendant of a closed `details` element,
  * - it is `disabled`,
- * - it is `inert`.
+ * - it is `inert`
+ * - it is not being rendered.
  *
  * Otherwise it counts as focusable.
  *
@@ -162,7 +163,51 @@ function isFocusable(element) {
   // Descends from closed details element
   if (hasClosedDetailsAncestor(element)) return false
 
+  return isBeingRendered(element)
+}
+
+/**
+ * Decide whether an element is being rendered or not.
+ *
+ * An element is not being rendered if:
+ * 1. An element has the style "visibility: hidden | collapse" or "display: none". (Note: these are inherited.)
+ * 2. An element has the style "opacity: 0". (Somewhat of a white lie, as it will still affect layout.)
+ * 3. The width or height of an element is explicitly set to 0.
+ * 4. An element's parent is hidden.
+ *
+ * @see {@link https://html.spec.whatwg.org/multipage/rendering.html#being-rendered}
+ * @function isBeingRendered
+ * @param element {Element}
+ * @returns {boolean}
+ */
+
+function isBeingRendered(element) {
+  if (element.parentElement) {
+    const parentStyle = window.getComputedStyle(element.parentElement, null)
+    if (hasHidingStyleProperty(parentStyle)) return false
+  }
+  const elementStyle = window.getComputedStyle(element, null)
+  if (
+    hasHidingStyleProperty(elementStyle) ||
+    elementStyle.getPropertyValue("width") === "0px" ||
+    elementStyle.getPropertyValue("height") === "0px"
+  )
+    return false
   return true
+}
+
+/**
+ * Determine if a style declaration has any properties that make an element hidden.
+ * @function hasHidingStyleProperty
+ * @param style {CSSStyleDeclaration}
+ * @returns {boolean}
+ */
+function hasHidingStyleProperty(style) {
+  return (
+    style.getPropertyValue("display") === "none" ||
+    ["hidden", "collapse"].includes(style.getPropertyValue("visibility")) ||
+    style.getPropertyValue("opacity") === "0"
+  )
 }
 
 /**
