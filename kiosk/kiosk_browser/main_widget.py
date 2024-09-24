@@ -86,13 +86,13 @@ class MainWidget(QtWidgets.QWidget):
         # Toggle settings with a long press on the Menu key
         if event.type() == QtCore.QEvent.ShortcutOverride:
             if event.key() == QtCore.Qt.Key_Menu:
-                if self._menu_press_since is None:
+                if not event.isAutoRepeat():
                     self._menu_press_since = time.time()
-                elif time.time() - self._menu_press_since > self._menu_press_delay_seconds:
+                elif self._menu_press_since is not None and time.time() - self._menu_press_since > self._menu_press_delay_seconds:
                     self._menu_press_since = None
                     self._toggle_settings()
         elif event.type() == QtCore.QEvent.KeyRelease:
-            if event.key() == QtCore.Qt.Key_Menu:
+            if event.key() == QtCore.Qt.Key_Menu and not event.isAutoRepeat():
                 self._menu_press_since = None
 
         return super(MainWidget, self).eventFilter(source, event)
