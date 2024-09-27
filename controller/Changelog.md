@@ -6,6 +6,10 @@
 - controller: Enable spatial navigation using the arrow keys
 - os: Improve installation device selection
 
+## Changed
+
+- driver: Bump to 2.5.0 for extended discovery time in firmware updates
+
 ## Removed
 
 - controller: Remove unused label printing functionality
