@@ -2,7 +2,7 @@
 
 let
 
-  version = "2.4.0";
+  version = "2.5.0";
 
 in buildGoModule rec {
 
@@ -13,7 +13,7 @@ in buildGoModule rec {
     owner = "dividat";
     repo = "driver";
     rev = version;
-    sha256 = "sha256-JeyV01WAhuPw1BIG1EJ4ET5HjSc7VwoWTZ/6EvVEC5Q=";
+    sha256 = "sha256-Xf65d3lqhqOjF+II66BhyCxINngvK5rSvSxifOlMpoY=";
   };
 
   vendorHash = "sha256-Jj6aI85hZXGeWhJ8wq9MgI9uTm11tJZUdVwI90Pio4s=";
