@@ -32,12 +32,15 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
         mainWidget.resize(QSize(round(screen_size.width() / 2), round(screen_size.height() / 2)))
         mainWidget.show()
 
-    # Quit application when receiving SIGINT
-    def on_SIGINT(signum, frame):
+    # Quit application gracefully when receiving SIGINT or SIGTERM
+    # Tries to ensure profile / localStorage is flushed to disk
+    def quit_on_signal(signum, _frame):
        print('Exiting…')
        app.quit()
-       sys.exit(130)
-    signal.signal(signal.SIGINT, on_SIGINT)
+       sys.exit(128+signum)
+
+    signal.signal(signal.SIGINT, quit_on_signal)
+    signal.signal(signal.SIGTERM, quit_on_signal)
 
     # Start application
     app.exec_()
