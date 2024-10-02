@@ -1,6 +1,7 @@
 { config, pkgs, lib, ... }:
 let
   cfg = config.playos.storage;
+  cfgPart = cfg.persistentDataPartition;
 in
 with lib;
 {
@@ -11,6 +12,16 @@ with lib;
           default = null;
           example = "/dev/sda";
           type = types.nullOr types.str;
+        };
+
+        mountPath = mkOption {
+          default = "/mnt/data";
+          type = types.path;
+          description = ''
+            Path where the `persistentDataPartition` will be mounted.
+            Note: used both for the partition and as a prefix of
+            `playos.storage.persistentFolders`.
+          '';
         };
 
         fsType = mkOption {
@@ -43,7 +54,7 @@ with lib;
     fileSystems =
       (lib.mapAttrs
       (n: config: {
-        device = "/mnt/data${n}";
+        device = "${cfgPart.mountPath}${n}";
         options = [ "bind" "noexec" ];
       })
       cfg.persistentFolders) //
@@ -53,9 +64,9 @@ with lib;
           fsType = "tmpfs";
           options = [ "mode=0755" "noexec" ];
         };
-        "/mnt/data" = {
-          inherit (cfg.persistentDataPartition) device fsType;
-	  options = cfg.persistentDataPartition.options ++ [ "noexec" ];
+        "${cfgPart.mountPath}" = {
+          inherit (cfgPart) device fsType;
+	  options = cfgPart.options ++ [ "noexec" ];
           # mount during stage-1, so that directories can be initialized
           neededForBoot = true;
         };
@@ -65,9 +76,9 @@ with lib;
     ensurePersistentFoldersExist = lib.stringAfter [ "groups" ] (
       lib.concatStringsSep "\n"
         (lib.mapAttrsToList (n: config: ''
-          mkdir -p /mnt/data${n}
-          chmod -R ${config.mode} /mnt/data${n}
-          chown ${config.user}:${config.group} /mnt/data${n}
+          mkdir -p ${cfgPart.mountPath}${n}
+          chmod -R ${config.mode} ${cfgPart.mountPath}${n}
+          chown ${config.user}:${config.group} ${cfgPart.mountPath}${n}
         '') cfg.persistentFolders));
     };
 
