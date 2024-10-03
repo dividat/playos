@@ -33,7 +33,7 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
         mainWidget.show()
 
     # Quit application gracefully when receiving SIGINT or SIGTERM
-    # Tries to ensure profile / localStorage is flushed to disk
+    # This is important to trigger flushing of in-memory DOM storage to disk
     def quit_on_signal(signum, _frame):
        print('Exiting…')
        app.quit()
