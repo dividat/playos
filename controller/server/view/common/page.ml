@@ -77,9 +77,20 @@ let html ?current_page ?header content =
           [ nav
               ([ Info; Network; Localization; SystemStatus; Changelog; Licensing ]
                 |> List.concat_map (fun page -> [ menu_item current_page page; txt " " ]))
-          ; div
-              ~a: [ a_class [ "d-Layout__Shutdown" ] ]
-              [ menu_item current_page Shutdown ]
+          ; form
+              ~a:[ a_action (menu_link Shutdown)
+                 ; a_method `Post
+                 ; a_class [ "d-Layout__Shutdown" ]
+              ]
+              [
+               button
+                  ~a:[
+                      a_class [ "d-Menu__Item"; "d-Menu_Item--Shutdown " ]
+                  ]
+                  [ menu_icon Shutdown
+                  ; txt (menu_label Shutdown)
+                  ]
+              ]
           ])
       :: header
       @ [ main
