@@ -91,6 +91,12 @@ html {
     white-space: nowrap;
 }
 
+.d-Menu_Item--Shutdown {
+    cursor: pointer;
+    border: 0;
+    width: 100%;
+}
+
 .d-Menu__Item--Active {
     position: relative;
 }

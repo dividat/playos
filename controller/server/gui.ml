@@ -472,7 +472,7 @@ let routes ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman app =
 
   |> get "/" (fun _ -> "/info" |> Uri.of_string |> redirect')
 
-  |> get "/shutdown" (fun _ ->
+  |> post "/shutdown" (fun _ ->
       shutdown ()
       >|= (fun _ -> `String "Ok")
       >|= respond
