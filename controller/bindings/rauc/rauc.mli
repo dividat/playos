@@ -9,6 +9,10 @@ module Slot : sig
     | SystemA
     | SystemB
 
+  val t_of_string : string -> t
+
+  val string_of_t : t -> string
+
   type status =
     { device : string
     ; class' : string
