@@ -51,17 +51,25 @@ let get_booted_slot daemon =
   |> OBus_property.get
   >|= Slot.of_string
 
-let mark_good daemon slot =
+
+let mark_slot daemon slot status =
   let%lwt marked, msg = OBus_method.call
       De_pengutronix_rauc_Installer.m_Mark
       (proxy daemon)
-      ("good", slot |> Slot.string_of_t)
+      (status, slot |> Slot.string_of_t)
   in
   let%lwt () = Logs_lwt.info ~src:log_src (fun m -> m "%s" msg) in
   if Slot.of_string marked = slot then
     return_unit
   else
-    Lwt.fail_with "Wrong slot marked good."
+    Lwt.fail_with "Wrong slot marked."
+
+
+let mark_good daemon slot =
+    mark_slot daemon slot "good"
+
+let mark_active daemon slot =
+    mark_slot daemon slot "active"
 
 type status =
   { a: Slot.status
