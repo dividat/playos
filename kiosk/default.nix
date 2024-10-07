@@ -23,6 +23,7 @@ python3Packages.buildPythonApplication rec {
   nativeBuildInputs = [
     mypy
     qt6.wrapQtAppsHook
+    wrapGAppsHook
   ];
 
   propagatedBuildInputs = with python3Packages; [
