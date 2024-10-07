@@ -17,7 +17,7 @@ python3Packages.buildPythonApplication rec {
 
   doCheck = false;
 
-  nativeBuildInputs = [ qt5.wrapQtAppsHook mypy ];
+  nativeBuildInputs = [ qt5.wrapQtAppsHook mypy wrapGAppsHook ];
 
   propagatedBuildInputs = with python3Packages; [
     dbus-python
