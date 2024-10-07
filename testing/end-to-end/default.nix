@@ -1,4 +1,4 @@
-{pkgs, disk, safeProductName, updateUrl, kioskUrl, ...}:
+args@{pkgs, disk, safeProductName, updateUrl, kioskUrl, ...}:
 with builtins;
 with pkgs.lib;
 let
@@ -7,8 +7,7 @@ let
     testFiles = fileset.fileFilter (file: file.hasExt "nix") ./tests;
     testPackages = map
         (file: pkgs.callPackage file
-            # TODO: why does (args // {inherit overlayPath}) not work??
-            { inherit overlayPath disk safeProductName updateUrl kioskUrl; }
+            (args // { inherit overlayPath; })
         )
         (fileset.toList testFiles);
     # TODO: Currently this builds AND runs the tests, however
