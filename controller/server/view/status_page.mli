@@ -1,7 +1,13 @@
+type rauc_state =
+    | Status of Rauc.status
+    | Installing
+    | Error of string
+
 type params =
-  { health: string
-  ; update: string
-  ; rauc: string
+  { health: Health.state
+  ; update: Update.state
+  ; rauc: rauc_state
+  ; booted_slot: Rauc.Slot.t
   }
 
 val html :

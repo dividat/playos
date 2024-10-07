@@ -15,7 +15,7 @@ let menu_link page =
   | Localization -> "/localization"
   | SystemStatus -> "/status"
   | Changelog -> "/changelog"
-  | Shutdown -> "/shutdown"
+  | Shutdown -> "/system/shutdown"
 
 let menu_icon page =
   match page with
