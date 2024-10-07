@@ -102,7 +102,10 @@ pkgs.testers.runNixOSTest {
     };
   };
 
-  extraPythonPackages = ps: [ps.types-colorama];
+  extraPythonPackages = ps: [
+    ps.colorama
+    ps.types-colorama
+  ];
 
 
   testScript = {nodes}:

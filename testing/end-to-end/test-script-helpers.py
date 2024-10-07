@@ -1,6 +1,5 @@
 import subprocess
 import unittest
-# colorama is used by test-driver too
 from colorama import Fore, Style
 
 # HACK: create writable cow disk overlay (same as in ./run-in-vm --disk)

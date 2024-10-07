@@ -41,6 +41,7 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.colorama
     ps.types-colorama
     ps.pyppeteer
     ps.requests
