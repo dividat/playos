@@ -388,36 +388,76 @@ end
 
 
 module StatusGui = struct
-  let build ~health_s ~update_s ~rauc app =
-    app
-    |> get "/status" (fun _req ->
+  open Status_page
+
+  let shutdown () =
+      Util.run_cmd_no_stdout [|"halt"; "--poweroff"|]
+
+  let reboot () =
+      Util.run_cmd_no_stdout [|"reboot"|]
+
+  let switch_slot rauc target_slot =
+      let%lwt () = Rauc.mark_active rauc target_slot in
+      reboot ()
+
+  let factory_reset systemd =
+    let%lwt () = Logs_lwt.info ~src:log_src (fun m ->
+        m "Enabling persistent data wipe..."
+    ) in
+    let%lwt () = Systemd.Manager.start_unit systemd "playos-wipe-persistent-data.service" in
+    let%lwt () = Logs_lwt.info ~src:log_src (fun m ->
+        m "Persistent data wipe is enabled, rebooting."
+    ) in
+    reboot ()
+
+  let get_status ~health_s ~update_s ~rauc =
+        let health_state = health_s |> Lwt_react.S.value in
+        let update_state = update_s |> Lwt_react.S.value in
+        let%lwt booted_slot = Rauc.get_booted_slot rauc in
         let%lwt rauc =
-          match update_s |> Lwt_react.S.value with
+          match update_state with
           (* RAUC status is not meaningful while installing
              https://github.com/rauc/rauc/issues/416
           *)
           | Update.Installing _ ->
-            Lwt.return "Installing to inactive slot"
+            Lwt.return Status_page.Installing
           | _ ->
-            catch
-              (fun () -> Rauc.get_status rauc
-                >|= Rauc.sexp_of_status
-                >|= Sexplib.Sexp.to_string_hum)
-              (fun exn -> Printexc.to_string exn
-                          |> return)
+            Lwt_result.catch (fun () -> Rauc.get_status rauc) >|=
+                (Result.fold
+                    ~ok:(fun (s) -> Status_page.Status s)
+                    ~error:(fun (e) -> Status_page.Error (Printexc.to_string e))
+                )
         in
-        Lwt.return (page (Status_page.html
-          { health = health_s
-              |> Lwt_react.S.value
-              |> Health.sexp_of_state
-              |> Sexplib.Sexp.to_string_hum
-          ; update = update_s
-              |> Lwt_react.S.value
-              |> Update.sexp_of_state
-              |> Sexplib.Sexp.to_string_hum
-          ; rauc
-          }))
-      )
+        { health = health_state
+        ; update = update_state
+        ; rauc
+        ; booted_slot = booted_slot
+        } |> return
+
+  let exec_and_resp_ok f = (fun req ->
+        f req
+        >|= (fun _ -> `String "Ok")
+        >|= respond
+  )
+
+  let build ~systemd ~health_s ~update_s ~rauc app =
+    app
+    |> post "/system/shutdown" (exec_and_resp_ok (fun _ ->
+        shutdown ()
+    ))
+    |> post "/system/reboot" (exec_and_resp_ok (fun _ ->
+        reboot ()
+    ))
+    |> post "/system/factory-reset" (exec_and_resp_ok (fun _ ->
+        factory_reset systemd
+    ))
+    |> post "/system/switch/:slot" (exec_and_resp_ok (fun req ->
+        switch_slot rauc (param req "slot" |> Rauc.Slot.t_of_string)
+    ))
+    |> get "/status" (fun _req ->
+        let%lwt status = get_status ~update_s ~health_s ~rauc in
+        Lwt.return (page (Status_page.html status))
+    )
 end
 
 module ChangelogGui = struct
@@ -465,30 +505,24 @@ module RemoteMaintenanceGui = struct
 end
 
 
-let routes ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman app =
+let routes ~systemd ~health_s ~update_s ~rauc ~connman app =
   app
   |> middleware (static ())
   |> middleware error_handling
 
   |> get "/" (fun _ -> "/info" |> Uri.of_string |> redirect')
 
-  |> post "/shutdown" (fun _ ->
-      shutdown ()
-      >|= (fun _ -> `String "Ok")
-      >|= respond
-    )
-
   |> InfoGui.build
   |> NetworkGui.build ~connman
   |> LocalizationGui.build
-  |> StatusGui.build ~health_s ~update_s ~rauc
+  |> StatusGui.build ~systemd ~health_s ~update_s ~rauc
   |> ChangelogGui.build
   |> LicensingGui.build
   |> RemoteMaintenanceGui.build ~systemd
 
 (* NOTE: probably easier to create a record with all the inputs instead of passing in x arguments. *)
-let start ~port ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman =
+let start ~port ~systemd ~health_s ~update_s ~rauc ~connman =
   empty
   |> Opium.App.port port
-  |> routes ~systemd ~shutdown ~health_s ~update_s ~rauc ~connman
+  |> routes ~systemd ~health_s ~update_s ~rauc ~connman
   |> start

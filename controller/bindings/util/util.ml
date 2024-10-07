@@ -49,3 +49,16 @@ let write_to_file log_src path str =
       (fun m -> m "failed to write to %s: %s" path (Printexc.to_string exn))
     in
     fail exn
+
+let run_cmd_no_stdout cmd =
+  match%lwt
+    Lwt_process.(exec
+                   ~stdout:`Dev_null
+                   ~stderr:`Keep
+                   ("", cmd)
+                )
+  with
+  | Unix.WEXITED 0 ->
+    return_unit
+  | _ ->
+    Lwt.fail_with (Format.sprintf "%s failed" cmd.(0))
