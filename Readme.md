@@ -135,12 +135,13 @@ To run the tests, execute
 
     ./build test-e2e
 
+This will first build the interactive test runners for each test (useful for
+debugging) and put them in
+`./result/tests/interactive/<TEST_NAME>/bin/nixos-test-driver`). Afterwards, it
+will run a second `nix-build` that will run all of the tests.
+
 To add additional tests, follow the examples in
 [testing/end-to-end/tests/](testing/end-to-end/tests/).
-
-When developing the tests, it can be helpful to run the NixOS test driver in
-interactive mode, which can be done using
-`./result/tests/interactive/<TEST_NAME>/bin/nixos-test-driver`.
 
 *Note*: if running non-NixOS Linux, ensure you have KVM setup and `/dev/kvm` is
 *world read-writable* (if not, do `chmod o+rw /dev/kvm`), otherwise qemu invoked

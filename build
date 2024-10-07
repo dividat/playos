@@ -116,14 +116,20 @@ elif [ "$TARGET" == "shed-key" ]; then
 
 elif [ "$TARGET" == "test-e2e" ]; then
 
-  (set -x; nix-build \
-    --arg kioskUrl "http://10.0.2.99:8989/" \
+  test_flags="
+    --arg kioskUrl http://10.0.2.99:8989/ \
     --arg updateUrl http://update-server.local/ \
     --arg buildInstaller false \
     --arg buildBundle false \
     --arg buildLive false \
     --arg buildDisk true \
-    --arg buildTest true)
+    --arg buildTest true
+  "
+  echo "Building interactive e2e test runners."
+  (set -x; nix-build $test_flags)
+  echo "Running e2e tests..."
+  (set -x; nix-build $test_flags -A tests --no-out-link)
+  echo "Done. All e2e tests passed."
 
 elif [ "$TARGET" == "all" ]; then
 
