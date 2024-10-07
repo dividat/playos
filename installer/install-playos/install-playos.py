@@ -12,8 +12,11 @@ import configparser
 import re
 from datetime import datetime
 
-DEFAULT_PARTITION_SIZE_GB_SYSTEM = 10
-DEFAULT_PARTITION_SIZE_GB_DATA = 5
+ALIGNMENT_SECTOR_SIZE_MiB = 8 # 8 MiBs
+
+DEFAULT_PARTITION_SIZE_MiB_BOOT = 550 # 550 MiBs
+DEFAULT_PARTITION_SIZE_MiB_SYSTEM = 10 * 1024 # 10 GiB's
+DEFAULT_PARTITION_SIZE_MiB_DATA = 5 * 1024 # 5 GiB's
 
 GRUB_CFG = "@grubCfg@"
 GRUB_ENV = '/mnt/boot/grub/grubenv'
@@ -25,6 +28,25 @@ VERSION = "@version@"
 PLAYOS_UPDATE_URL = "@updateUrl@"
 PLAYOS_KIOSK_URL = "@kioskUrl@"
 
+def mib_size(device):
+    return int((device.sectorSize * device.length) / (1024*1024))
+
+def fmt_mib_size_in_gibs(mib_size):
+    size_in_gib = round(mib_size / 1024.0, 1)
+    return f"{size_in_gib} GiB"
+
+def device_info(device):
+    size_str = fmt_mib_size_in_gibs(mib_size(device))
+    return f'{device.path} ({device.model} - {size_str})'
+
+def total_req_size_mib(part_sizes):
+    return ALIGNMENT_SECTOR_SIZE_MiB + \
+           part_sizes['boot'] + \
+           part_sizes['data'] + \
+           part_sizes['system'] * 2 \
+           + 1
+
+
 def find_device(device_path, part_sizes):
     """Return suitable device to install PlayOS on"""
     all_devices = parted.getAllDevices()
@@ -33,7 +55,7 @@ def find_device(device_path, part_sizes):
     for device in all_devices:
         print(f'\t{device_info(device)}')
 
-    required_install_device_size_gb = part_sizes['data'] + 2*part_sizes['system'] + 1
+    req_size = total_req_size_mib(part_sizes)
 
     # We want to avoid installing to the installer medium, so we filter out
     # devices from the boot disk. We use the fact that we mount from the
@@ -45,14 +67,14 @@ def find_device(device_path, part_sizes):
     def device_filter(dev):
         is_boot_device = (boot_device is not None) and dev.path.startswith(boot_device)
         is_read_only = dev.readOnly
-        is_big_enough = gb_size(dev) > required_install_device_size_gb
+        is_big_enough = mib_size(dev) > req_size
 
         return (not is_boot_device) and (not is_read_only) and is_big_enough
 
     available_devices = [device for device in all_devices if device_filter(device)]
 
-    print("Minimum required size for installation target: {req_gb} GB".format(
-        req_gb=required_install_device_size_gb
+    print("Minimum required size for installation target: {s}".format(
+        s=fmt_mib_size_in_gibs(req_size)
     ))
     
     print(f"Found {len(available_devices)} possible installation targets:")
@@ -97,12 +119,6 @@ def get_blockdevice(mount_path):
             if 'mountpoints' in child and mount_path in child['mountpoints']:
                 return '/dev/' + device['name']
     return None
-
-def gb_size(device):
-    return int((device.sectorSize * device.length) / (10**9))
-
-def device_info(device):
-    return f'{device.path} ({device.model} - {gb_size(device)} GB)'
 
 
 def commit(disk):
@@ -158,22 +174,21 @@ def _compute_geometries(device, part_sizes):
     sectorSize = device.sectorSize
     esp = parted.Geometry(
         device=device,
-        start=parted.sizeToSectors(8, "MB", sectorSize),
-        # TODO: this could be computed from grub + RESCUE_SYSTEM size
-        length=parted.sizeToSectors(800, "MB", sectorSize))
+        start=parted.sizeToSectors(ALIGNMENT_SECTOR_SIZE_MiB, "MiB", sectorSize),
+        length=parted.sizeToSectors(part_sizes['boot'], "MiB", sectorSize))
     data = parted.Geometry(
         device=device,
         start=esp.end + 1,
-        length=parted.sizeToSectors(part_sizes['data'], "GB", sectorSize))
+        length=parted.sizeToSectors(part_sizes['data'], "MiB", sectorSize))
     systemA = parted.Geometry(
         device=device,
         start=data.end + 1,
-        length=parted.sizeToSectors(part_sizes['system'], "GB",
+        length=parted.sizeToSectors(part_sizes['system'], "MiB",
                                     sectorSize))
     systemB = parted.Geometry(
         device=device,
         start=systemA.end + 1,
-        length=parted.sizeToSectors(part_sizes['system'], "GB",
+        length=parted.sizeToSectors(part_sizes['system'], "MiB",
                                     sectorSize))
     return {'esp': esp, 'data': data, 'systemA': systemA, 'systemB': systemB}
 
@@ -375,8 +390,9 @@ def confirm(device, machine_id, no_confirm):
 
 
 def _main(opts):
-    # sizes in GB
+    # sizes in MiB
     part_sizes = {
+        'boot': opts.partition_size_boot,
         'system': opts.partition_size_system,
         'data': opts.partition_size_data,
     }
@@ -441,15 +457,21 @@ if __name__ == '__main__':
     )
     part_args = parser.add_argument_group('partitioning', 'Partitioning options')
     part_args.add_argument(
+        '--partition-size-boot',
+        type=int,
+        default=DEFAULT_PARTITION_SIZE_MiB_BOOT,
+        help='Size of the boot (ESP) partition, in MiB'
+    )
+    part_args.add_argument(
         '--partition-size-system',
         type=int,
-        default=DEFAULT_PARTITION_SIZE_GB_SYSTEM,
-        help='Size of the system partitions, in GB'
+        default=DEFAULT_PARTITION_SIZE_MiB_SYSTEM,
+        help='Size of the system partitions, in MiB'
     )
     part_args.add_argument(
         '--partition-size-data',
         type=int,
-        default=DEFAULT_PARTITION_SIZE_GB_DATA,
-        help='Size of the data partition, in GB'
+        default=DEFAULT_PARTITION_SIZE_MiB_DATA,
+        help='Size of the data partition, in MiB'
     )
     _main(parser.parse_args())
