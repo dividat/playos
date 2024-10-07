@@ -6,7 +6,7 @@
         #
         # Instead of specifying/building a NixOS system, here we
         # pass an already built disk image, so the options below are mainly
-        # for _preventing_ qemu-vm.nix from passing any unnecssary flags to
+        # for _preventing_ qemu-vm.nix from passing any unnecessary flags to
         # QEMU.
         #
         # Due to this, test driver features requiring
