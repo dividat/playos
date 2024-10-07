@@ -22,6 +22,13 @@ let
         opium_kernel = self.callPackage ./ocaml-modules/opium_kernel {};
       });
 
+      # fixes getExe warning, used in tests
+      tinyproxy = super.tinyproxy.overrideAttrs (_: prev: {
+        meta = prev.meta // {
+          mainProgram = "tinyproxy";
+        };
+      });
+
     };
 
 in
