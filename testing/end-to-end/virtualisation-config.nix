@@ -28,7 +28,11 @@
 
         virtualisation.qemu.options = [
             "-enable-kvm"
-            # HACK, see testScript
+            # HACK: normally the `system.build.vm` derivation produces a start
+            # script that creates a (temporary or overlay) filesystem image file
+            # prior to launching a VM. Since it is not configurable to our
+            # needs, we create the overlay image instead in the `testScript`,
+            # so this path is a "forward reference" that does not exist.
             "-hda ${overlayPath}"
         ];
     };
