@@ -23,6 +23,7 @@ let
       });
 
       # fixes getExe warning, used in tests
+      # Should be obsolete after upgrading to nixpkgs 24.05: https://github.com/NixOS/nixpkgs/pull/273952
       tinyproxy = super.tinyproxy.overrideAttrs (_: prev: {
         meta = prev.meta // {
           mainProgram = "tinyproxy";
