@@ -20,7 +20,7 @@ in
         # but since we are booting with a custom GRUB config it has no effect,
         # so instead we set this directly in journald
         services.journald.extraConfig = ''
-            TTYPath = ${qemu-common.qemuSerialDevice};
+            TTYPath=/dev/${qemu-common.qemuSerialDevice}
         '';
     };
 }
