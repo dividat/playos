@@ -87,7 +87,7 @@ with TestCase("PlayOS services are runnning"):
 playos.succeed("curl --fail '${kioskUrl}'")
 
 async def wait_for_kiosk_page(browser):
-    kiosk_url = "${toString kioskUrl}".rstrip("/")
+    kiosk_url = "${kioskUrl}".rstrip("/")
 
     pages = await browser.pages()
     t.assertEqual(
