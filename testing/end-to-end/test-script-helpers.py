@@ -3,19 +3,15 @@ import unittest
 from colorama import Fore, Style
 
 # HACK: create writable cow disk overlay (same as in ./run-in-vm --disk)
-# TODO: how to create this before the test script without a derivation?
 def create_overlay(disk, overlay_path):
     subprocess.run(["rm", "-f", overlay_path])
     subprocess.run([
-        # TODO: use /nix/store'd qemu path
         'qemu-img', 'create',
             '-b', disk, '-F', 'raw',
             '-f', 'qcow2', overlay_path
         ],
         check=True)
 
-# TODO: upgrade this into a magic proxy class that makes every
-# assert* call loggable, to make debugging easier
 class TestCase(object):
     def __init__(self, test_descr):
         self.test_descr = test_descr

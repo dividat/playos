@@ -4,7 +4,6 @@ let
 
    nextVersion = "9999.99.99-TESTMAGIC";
 
-   # TODO: use a real PlayOS system and also test that MarkGood works
    minimalTestSystem = (nixos {
       configuration = {...}: {
         imports = [
@@ -163,7 +162,7 @@ pkgs.testers.runNixOSTest {
 
     playos.wait_for_unit('multi-user.target')
 
-    # Not the most elegant setup, but works for now, TODO: move to helpers?
+    # Not the most elegant setup, but works for now
     with TestCase("Setup: networking and check if update VM is reachable") as t:
         # ens7 is the VLAN #1 interface
         playos.succeed("ip addr flush dev ens7")
@@ -202,7 +201,6 @@ pkgs.testers.runNixOSTest {
 
     with TestCase("Controller is able to query the version"):
         expected_controller_log = f"latest.*{current_version}"
-        # TODO: set lower update timeouts in controller configuration when testing
         wait_for_logs(playos,
             expected_controller_log,
             unit="playos-controller.service",

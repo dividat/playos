@@ -1,10 +1,9 @@
 {pkgs, disk, overlayPath, kioskUrl, ...}:
 let
-    # TODO: set/get in application.nix
+    # currently hard-coded in application.nix
     guestCDPport = 3355;
     hostCDPport = 13355;
 
-    # TODO: assert that kioskUrl is actually http://IP:PORT
     kioskParts = builtins.match "http://(.*):([0-9]+).*" kioskUrl;
     guestKioskIP = builtins.elemAt kioskParts 0;
     guestKioskURLport = pkgs.lib.strings.toInt (builtins.elemAt kioskParts 1);

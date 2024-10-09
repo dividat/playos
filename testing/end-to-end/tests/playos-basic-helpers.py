@@ -59,7 +59,6 @@ def run_stub_server(port):
 
 
 async def connect_to_kiosk_debug_engine(vm, guest_cdp_port=None, host_cdp_port=None):
-    # TODO: enable runtime configuration of the remote debugging URL instead?
     expose_local_port(vm, guest_cdp_port)
 
     async def try_connect():
