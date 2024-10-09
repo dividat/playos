@@ -1,13 +1,14 @@
-{pkgs, disk, overlayPath, kioskUrl, ...}:
+{pkgs, disk, overlayPath, runtimeConfig, ...}:
 let
     # currently hard-coded in application.nix
     guestCDPport = 3355;
     hostCDPport = 13355;
 
-    kioskParts = builtins.match "http://(.*):([0-9]+).*" kioskUrl;
-    guestKioskIP = builtins.elemAt kioskParts 0;
-    guestKioskURLport = pkgs.lib.strings.toInt (builtins.elemAt kioskParts 1);
+    guestKioskIP = "10.0.2.99";
+    guestKioskURLport = 8989;
     hostKioskURLport = 18989;
+
+    kioskUrl = "http://${guestKioskIP}:${toString guestKioskURLport}/";
 in
 pkgs.testers.runNixOSTest {
   name = "Kiosk's web storage persistence";
@@ -16,9 +17,17 @@ pkgs.testers.runNixOSTest {
     playos = { config, lib, pkgs, ... }:
     {
       imports = [
-        (import ../../virtualisation-config.nix { inherit overlayPath; })
+        ../../virtualisation-config.nix
       ];
       config = {
+        playos.e2e-tests.overlayPath = overlayPath;
+        playos.e2e-tests.overlayConfig = runtimeConfig.mergeAndGenTOML {
+            kiosk = {
+                url = kioskUrl;
+                remote_debug_listen = "0.0.0.0:3355";
+            };
+        };
+
         virtualisation.forwardPorts = [
             # CDP access inside of PlayOS VM from test driver
             {   from = "host";

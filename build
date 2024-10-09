@@ -116,8 +116,9 @@ elif [ "$TARGET" == "shed-key" ]; then
 
 elif [ "$TARGET" == "test-e2e" ]; then
 
+  # Note: updateUrl is still here because controller PR needs
+  # be merged to allow passing runtime configuration to it
   test_flags="
-    --arg kioskUrl http://10.0.2.99:8989/ \
     --arg updateUrl http://update-server.local/ \
     --arg buildVm false \
     --arg buildInstaller false \

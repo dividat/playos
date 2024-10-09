@@ -1,5 +1,28 @@
-{ overlayPath, ... }:
+{ config, pkgs, lib, ... }:
+with lib;
+let
+    cfg = config.playos.e2e-tests;
+    virtfsDir = pkgs.linkFarm "extra-files" [{
+        name = "playos-config.toml";
+        path = cfg.overlayConfig;
+    }];
+in
 {
+    options = {
+        playos.e2e-tests.overlayPath = mkOption {
+            type = types.path;
+            description = "Path to a qcow overlay disk from which to boot";
+        };
+        playos.e2e-tests.overlayConfig = mkOption {
+            type = types.nullOr types.path;
+            description = ''
+                If provided, will bind-mount the config file at
+                /etc/playos-config.toml as a way to override configuration
+                parameters without rebuilding the PlayOS disk.
+            '';
+            default = null;
+        };
+    };
     config = {
         # Kinda abusing the NixOS testing infra here, because
         # there is no other interface for creating test VMs/nodes.
@@ -32,7 +55,11 @@
             # prior to launching a VM. Since it is not configurable to our
             # needs, we create the overlay image instead in the `testScript`,
             # so this path is a "forward reference" that does not exist.
-            "-hda ${overlayPath}"
+            "-hda ${cfg.overlayPath}"
+        ] ++ lib.lists.optionals (cfg.overlayConfig != null) [
+            "--virtfs"
+            # Note: extra-test-files is hardcoded in profile.nix
+            "local,path=${virtfsDir},mount_tag=extra-test-files,readonly=on,security_model=none,multidevs=remap"
         ];
     };
 }

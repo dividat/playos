@@ -6,8 +6,11 @@ pkgs.testers.runNixOSTest {
     playos = { config, lib, pkgs, ... }:
     {
       imports = [
-        (import ../../virtualisation-config.nix { inherit overlayPath; })
+        ../../virtualisation-config.nix
       ];
+      config = {
+        playos.e2e-tests.overlayPath = overlayPath;
+      };
     };
   };
 

@@ -27,6 +27,7 @@ rec {
         ./application/playos-status.nix
         ./application/power-management/default.nix
         ./application/limit-vtes.nix
+        (import ./application/runtime-config.nix { inherit pkgs; }).module
       ];
 
       # Kiosk runs as a non-privileged user
@@ -45,6 +46,20 @@ rec {
         group = "users";
       };
 
+      playos.runtimeConfig.config = {
+          kiosk = {
+              # TODO: config.playos.kioskUrl should be removed in favour of this
+              # but not dealing with this now
+              url = config.playos.kioskUrl;
+              remote_debug_listen = "127.0.0.1:3355";
+          };
+          controller = {
+              port = 3333;
+          };
+      };
+
+
+
       # Limit virtual terminals that can be switched to
       # Virtual terminal 7 is the kiosk, 8 is the status screen
       playos.xserver.activeVirtualTerminals = [ 7 8 ];
@@ -53,7 +68,9 @@ rec {
       environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme ];
 
       # Kiosk session
-      services.xserver = let sessionName = "kiosk-browser";
+      services.xserver = let
+        sessionName = "kiosk-browser";
+        getCfgVal = cfgPath: "$(${config.playos.runtimeConfig.getValCmd cfgPath})";
       in {
         enable = true;
 
@@ -89,11 +106,14 @@ rec {
               esac
 
               # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-6/qtwebengine-debugging.html)
-              export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
+              export QTWEBENGINE_REMOTE_DEBUGGING = \
+                "${getCfgVal "kiosk.remote_debug_listen"}"
+
+              controller_port = "${getCfgVal "controller.port"}"
 
               ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
-                ${config.playos.kioskUrl} \
-                http://localhost:3333/
+                "${getCfgVal "kiosk.url"}" \
+                "http://localhost:$controller_port"
 
               waitPID=$!
             '';
