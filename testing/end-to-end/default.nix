@@ -3,7 +3,7 @@ with builtins;
 with pkgs.lib;
 let
     overlayPath = "/tmp/playos-test-disk-overlay.qcow2";
-    # this is recursive, but whatever
+    # fileFilter is recursive, so tests can in theory be in subfolders
     testFiles = fileset.fileFilter (file: file.hasExt "nix") ./tests;
     testPackages = map
         (file: pkgs.callPackage file
