@@ -181,9 +181,9 @@ playos.succeed(
 playos.shutdown()
 playos.start()
 
-playos.wait_for_x()
-
 with TestCase("Booted into other slot") as t:
+    playos.wait_for_x()
+
     rauc_status = json.loads(playos.succeed("rauc status --output-format=json"))
     t.assertEqual(
         rauc_status['booted'],
