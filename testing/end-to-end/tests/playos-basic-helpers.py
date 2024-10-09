@@ -69,7 +69,7 @@ async def connect_to_kiosk_debug_engine(vm, guest_cdp_port=None, host_cdp_port=N
         browser = await pyppeteer.launcher.connect(browserWSEndpoint=ws_url)
         return browser
 
-    # Sometimes try_connect fails with connection reset by peer, 
+    # Sometimes try_connect fails with connection reset by peer,
     # probably due to firewall restart when doing `expose_local_port`?
     return await retry_until_no_exception(try_connect)
 
