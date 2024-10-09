@@ -204,8 +204,8 @@ pkgs.testers.runNixOSTest {
         wait_for_logs(playos,
             expected_controller_log,
             unit="playos-controller.service",
-            # TODO: this should not be longer than 30, but maybe the VM is
-            # running with a bad clock?
+            # this should not be longer than 30, could there be some
+            # DNS cache somehwere?
             timeout=61)
 
     with TestCase("Controller installs the new upstream version") as t:
