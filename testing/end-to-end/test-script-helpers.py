@@ -46,11 +46,13 @@ class TestCase(object):
 
 def wait_for_logs(vm, regex, unit=None, timeout=10):
     maybe_unit = f"--unit={unit}" if unit else ""
-    journal_cmd = f"journalctl --reverse {maybe_unit}"
+    journal_cmd = f"journalctl {maybe_unit}"
+    full_cmd = f"{journal_cmd} | grep '{regex}'"
     try:
-        vm.wait_until_succeeds(f"{journal_cmd} | grep '{regex}'", timeout=timeout)
+        vm.wait_until_succeeds(full_cmd, timeout=timeout)
     except Exception as e:
-        _, output = vm.execute(f"{journal_cmd} | head -30")
+        print(f"wait_for_logs ({full_cmd}) failed after {timeout} seconds")
         print("Last VM logs:\n")
+        _, output = vm.execute(f"{journal_cmd} | tail -30")
         print(output)
         raise e
