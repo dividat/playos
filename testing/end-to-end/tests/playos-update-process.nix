@@ -230,7 +230,9 @@ pkgs.testers.runNixOSTest {
             wait_for_logs(playos,
                 state,
                 unit="playos-controller.service",
-                timeout=61)
+                # curl is limited to 10MB/s in controller, so
+                # a 600 MB bundle will take at least 60s
+                timeout=75)
 
     with TestCase("RAUC status confirms the installation") as t:
         rauc_status = json.loads(playos.succeed(
