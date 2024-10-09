@@ -89,6 +89,7 @@ pkgs.testers.runNixOSTest {
           Port = 8888;
           Listen = "0.0.0.0";
           Upstream = ''http 127.0.0.1:80 "${update_host_port}"'';
+          LogLevel = "Critical"; # comment out to debug proxied reqs
         };
 
         systemd.tmpfiles.rules = [
