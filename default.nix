@@ -17,10 +17,12 @@ in
 , applicationPath ? ./application.nix
 
   ##### Allow disabling the build of unused artifacts when developing/testing #####
+, buildVm ? true
 , buildInstaller ? true
 , buildBundle ? true
 , buildDisk ? true
 , buildLive ? true
+, buildTest ? false
 }:
 
 let
@@ -31,8 +33,8 @@ let
     applicationOverlays = application.overlays;
   });
 
-  # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
-  components = with pkgs; lib.makeScope newScope (self: with self; {
+  # lib.makeScope returns consistent set of packages that depend on each other
+  mkComponents = { application, rescueSystemOpts ? {}, diskBuildEnabled ? buildDisk }: (with pkgs; lib.makeScope newScope (self: with self; {
 
     inherit updateUrl deployUrl kioskUrl;
     inherit (application) version safeProductName fullProductName;
@@ -55,7 +57,9 @@ let
     updateCert = copyPathToStore updateCert;
 
     # System image as used in full installation
-    systemImage = callPackage ./system-image { application = application; };
+    systemImage = callPackage ./system-image {
+        application = application;
+    };
 
     # USB live system
     live = callPackage ./live { application = application; };
@@ -66,7 +70,9 @@ let
     };
 
     # Rescue system
-    rescueSystem = callPackage ./bootloader/rescue { application = application; };
+    rescueSystem = callPackage ./bootloader/rescue {
+        application = application;
+    } // rescueSystemOpts;
 
     # Installer ISO image
     installer = callPackage ./installer {};
@@ -78,15 +84,38 @@ let
     unsignedRaucBundle = callPackage ./rauc-bundle {};
 
     # NixOS system toplevel with test machinery
+    # used for run-in-vm (without --disk) and testing/integration
     testingToplevel = callPackage ./testing/system { application = application; };
 
     # Disk image containing pre-installed system
-    disk = if buildDisk then callPackage ./testing/disk {} else null;
+    disk = if diskBuildEnabled then callPackage ./testing/disk {} else null;
 
     # Script for spinning up VMs
     run-in-vm = callPackage ./testing/run-in-vm {};
 
-  });
+    # End-to-end tests that depend on on `disk`
+    tests = (if ! diskBuildEnabled then
+                throw "disk is required for running end-to-end tests"
+            else
+                callPackage ./testing/end-to-end {});
+  }));
+
+  components = mkComponents { inherit application; };
+
+  testComponents = mkComponents {
+    diskBuildEnabled = true;
+    application = {
+      inherit (application) safeProductName fullProductName greeting overlays;
+      version = "${application.version}-TEST";
+      module = {
+        imports = [
+          application.module
+          ./testing/end-to-end/profile.nix
+        ];
+      };
+    };
+    rescueSystemOpts = { squashfsCompressionOpts = "-no-compression"; };
+  };
 
 in
 
@@ -104,14 +133,14 @@ with pkgs; stdenv.mkDerivation {
 
     ln -s ${components.docs} $out/docs
 
-    mkdir -p $out/bin
-    cp ${components.run-in-vm} $out/bin/run-in-vm
-    chmod +x $out/bin/run-in-vm
-
     # Certificate used to verify update bundles
     ln -s ${updateCert} $out/cert.pem
   ''
-
+  + lib.optionalString buildVm ''
+    mkdir -p $out/bin
+    cp ${components.run-in-vm} $out/bin/run-in-vm
+    chmod +x $out/bin/run-in-vm
+  ''
   + lib.optionalString buildLive ''
     ln -s ${components.live}/iso/${components.safeProductName}-live-${components.version}.iso $out/${components.safeProductName}-live-${components.version}.iso
   ''
@@ -124,6 +153,13 @@ with pkgs; stdenv.mkDerivation {
     ln -s ${components.unsignedRaucBundle} $out/${components.safeProductName}-${components.version}-UNSIGNED.raucb
     cp ${components.deploy-update} $out/bin/deploy-update
     chmod +x $out/bin/deploy-update
+  ''
+  # Tests
+  + lib.optionalString buildTest ''
+    ln -s ${testComponents.tests.interactive-tests} $out/tests
   '';
 
+  passthru.tests = lib.optionalAttrs buildTest {
+    end-to-end = testComponents.tests.run-tests;
+  };
 }

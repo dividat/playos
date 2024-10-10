@@ -12,9 +12,11 @@ import configparser
 import re
 from datetime import datetime
 
-PARTITION_SIZE_GB_SYSTEM = 10
-PARTITION_SIZE_GB_DATA = 5
-REQUIRED_INSTALL_DEVICE_SIZE_GB = PARTITION_SIZE_GB_DATA + 2*PARTITION_SIZE_GB_SYSTEM + 1
+ALIGNMENT_SECTOR_SIZE_MiB = 8 # 8 MiBs
+
+DEFAULT_PARTITION_SIZE_MiB_BOOT = 525 # 525 MiBs
+DEFAULT_PARTITION_SIZE_MiB_SYSTEM = 10 * 1024 # 10 GiB's
+DEFAULT_PARTITION_SIZE_MiB_DATA = 5 * 1024 # 5 GiB's
 
 GRUB_CFG = "@grubCfg@"
 GRUB_ENV = '/mnt/boot/grub/grubenv'
@@ -26,14 +28,34 @@ VERSION = "@version@"
 PLAYOS_UPDATE_URL = "@updateUrl@"
 PLAYOS_KIOSK_URL = "@kioskUrl@"
 
+def mib_size(device):
+    return int((device.sectorSize * device.length) / (1024*1024))
 
-def find_device(device_path):
+def fmt_mib_size_in_gibs(mib_size):
+    size_in_gib = round(mib_size / 1024.0, 1)
+    return f"{size_in_gib} GiB"
+
+def device_info(device):
+    size_str = fmt_mib_size_in_gibs(mib_size(device))
+    return f'{device.path} ({device.model} - {size_str})'
+
+def total_req_size_mib(part_sizes):
+    return ALIGNMENT_SECTOR_SIZE_MiB + \
+           part_sizes['boot'] + \
+           part_sizes['data'] + \
+           part_sizes['system'] * 2 \
+           + 1
+
+
+def find_device(device_path, part_sizes):
     """Return suitable device to install PlayOS on"""
     all_devices = parted.getAllDevices()
 
     print(f"Found {len(all_devices)} disk devices:")
     for device in all_devices:
         print(f'\t{device_info(device)}')
+
+    req_size = total_req_size_mib(part_sizes)
 
     # We want to avoid installing to the installer medium, so we filter out
     # devices from the boot disk. We use the fact that we mount from the
@@ -45,14 +67,14 @@ def find_device(device_path):
     def device_filter(dev):
         is_boot_device = (boot_device is not None) and dev.path.startswith(boot_device)
         is_read_only = dev.readOnly
-        is_big_enough = gb_size(dev) > REQUIRED_INSTALL_DEVICE_SIZE_GB
+        is_big_enough = mib_size(dev) > req_size
 
         return (not is_boot_device) and (not is_read_only) and is_big_enough
 
     available_devices = [device for device in all_devices if device_filter(device)]
 
-    print("Minimum required size for installation target: {req_gb} GB".format(
-        req_gb=REQUIRED_INSTALL_DEVICE_SIZE_GB
+    print("Minimum required size for installation target: {s}".format(
+        s=fmt_mib_size_in_gibs(req_size)
     ))
     
     print(f"Found {len(available_devices)} possible installation targets:")
@@ -98,12 +120,6 @@ def get_blockdevice(mount_path):
                 return '/dev/' + device['name']
     return None
 
-def gb_size(device):
-    return int((device.sectorSize * device.length) / (10**9))
-
-def device_info(device):
-    return f'{device.path} ({device.model} - {gb_size(device)} GB)'
-
 
 def commit(disk):
     """Commit disk partitioning. WARNING: This will make any data on
@@ -111,13 +127,13 @@ def commit(disk):
     disk.commit()
 
 
-def create_partitioning(device):
+def create_partitioning(device, part_sizes):
     """Returns a suitable partitioning (a disk) of the given
     device. You must specify device path (e.g. "/dev/sda"). Note that
     no changes will be made to the device. To write the partition to
     device use commit."""
     disk = parted.freshDisk(device, 'gpt')
-    geometries = _compute_geometries(device)
+    geometries = _compute_geometries(device, part_sizes)
     # Create ESP
     esp = parted.Partition(
         disk=disk,
@@ -154,25 +170,25 @@ def create_partitioning(device):
     return (disk)
 
 
-def _compute_geometries(device):
+def _compute_geometries(device, part_sizes):
     sectorSize = device.sectorSize
     esp = parted.Geometry(
         device=device,
-        start=parted.sizeToSectors(8, "MB", sectorSize),
-        length=parted.sizeToSectors(550, "MB", sectorSize))
+        start=parted.sizeToSectors(ALIGNMENT_SECTOR_SIZE_MiB, "MiB", sectorSize),
+        length=parted.sizeToSectors(part_sizes['boot'], "MiB", sectorSize))
     data = parted.Geometry(
         device=device,
         start=esp.end + 1,
-        length=parted.sizeToSectors(PARTITION_SIZE_GB_DATA, "GB", sectorSize))
+        length=parted.sizeToSectors(part_sizes['data'], "MiB", sectorSize))
     systemA = parted.Geometry(
         device=device,
         start=data.end + 1,
-        length=parted.sizeToSectors(PARTITION_SIZE_GB_SYSTEM, "GB",
+        length=parted.sizeToSectors(part_sizes['system'], "MiB",
                                     sectorSize))
     systemB = parted.Geometry(
         device=device,
         start=systemA.end + 1,
-        length=parted.sizeToSectors(PARTITION_SIZE_GB_SYSTEM, "GB",
+        length=parted.sizeToSectors(part_sizes['system'], "MiB",
                                     sectorSize))
     return {'esp': esp, 'data': data, 'systemA': systemA, 'systemB': systemB}
 
@@ -374,8 +390,14 @@ def confirm(device, machine_id, no_confirm):
 
 
 def _main(opts):
+    # sizes in MiB
+    part_sizes = {
+        'boot': opts.partition_size_boot,
+        'system': opts.partition_size_system,
+        'data': opts.partition_size_data,
+    }
     # Detect device to install to
-    device = find_device(opts.device)
+    device = find_device(opts.device, part_sizes)
     if device is None:
         print('\nNo suitable device to install on found.')
         exit(1)
@@ -387,7 +409,7 @@ def _main(opts):
     if confirm(device, machine_id, no_confirm=opts.no_confirm):
 
         # Create a partitioned disk
-        disk = create_partitioning(device)
+        disk = create_partitioning(device, part_sizes)
 
         # Write partition to disk. WARNING: This partitions your drive!
         commit(disk)
@@ -408,7 +430,10 @@ def _main(opts):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Install PlayOS")
+    parser = argparse.ArgumentParser(
+        description="Install PlayOS",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     parser.add_argument('-v', '--version', action='version', version=VERSION)
     parser.add_argument(
         '--device',
@@ -429,5 +454,24 @@ if __name__ == '__main__':
         '--machine-id',
         help=
         'Set system machine-id. If not specified, an already configured id will be reused, or a random id will be generated'
+    )
+    part_args = parser.add_argument_group('partitioning', 'Partitioning options')
+    part_args.add_argument(
+        '--partition-size-boot',
+        type=int,
+        default=DEFAULT_PARTITION_SIZE_MiB_BOOT,
+        help='Size of the boot (ESP) partition, in MiB'
+    )
+    part_args.add_argument(
+        '--partition-size-system',
+        type=int,
+        default=DEFAULT_PARTITION_SIZE_MiB_SYSTEM,
+        help='Size of the system partitions, in MiB'
+    )
+    part_args.add_argument(
+        '--partition-size-data',
+        type=int,
+        default=DEFAULT_PARTITION_SIZE_MiB_DATA,
+        help='Size of the data partition, in MiB'
     )
     _main(parser.parse_args())

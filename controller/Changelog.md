@@ -5,10 +5,12 @@
 - kiosk: Open settings with a long press on the Menu key
 - controller: Enable spatial navigation using the arrow keys
 - os: Improve installation device selection
+- os: Add end-to-end system tests
 
 ## Changed
 
 - driver: Bump to 2.5.0 for extended discovery time in firmware updates
+- os: Increase ESP (boot/rescue) partition size
 
 ## Removed
 

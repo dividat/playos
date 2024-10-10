@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 {vm|develop|validation|master|stuck|lab-key|shed-key|all}"
+  echo "Usage: $0 {vm|develop|validation|master|stuck|lab-key|shed-key|test-e2e|all}"
   exit 1
 }
 
@@ -113,6 +113,24 @@ elif [ "$TARGET" == "shed-key" ]; then
     --arg buildInstaller false \
     --arg buildBundle false \
     --arg buildDisk false)
+
+elif [ "$TARGET" == "test-e2e" ]; then
+
+  test_flags="
+    --arg kioskUrl http://10.0.2.99:8989/ \
+    --arg updateUrl http://update-server.local/ \
+    --arg buildVm false \
+    --arg buildInstaller false \
+    --arg buildBundle false \
+    --arg buildLive false \
+    --arg buildDisk false \
+    --arg buildTest true
+  "
+  echo "Building interactive e2e test runners."
+  (set -x; nix-build $test_flags)
+  echo "Running e2e tests..."
+  (set -x; nix-build $test_flags -A tests --no-out-link)
+  echo "Done. All e2e tests passed."
 
 elif [ "$TARGET" == "all" ]; then
 
