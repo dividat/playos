@@ -28,7 +28,9 @@ let
 
   application = import applicationPath;
 
-  pkgs = import ./pkgs { applicationOverlays = application.overlays; };
+  pkgs = import ./pkgs (with application; {
+    applicationOverlays = application.overlays;
+  });
 
   # lib.makeScope returns consistent set of packages that depend on each other
   mkComponents = application: (with pkgs; lib.makeScope newScope (self: with self; {
@@ -117,8 +119,8 @@ with pkgs; stdenv.mkDerivation {
   name = "${components.safeProductName}-${components.version}";
 
   buildInputs = [
-    pkgs.rauc
-    (pkgs.python3.withPackages(ps: with ps; [pyparted]))
+    rauc
+    (python3.withPackages(ps: with ps; [pyparted]))
     components.install-playos
   ];
 
