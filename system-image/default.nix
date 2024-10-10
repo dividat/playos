@@ -1,7 +1,5 @@
 # Build an installable system image assuming a disk layout of a full A/B installation
-{pkgs, lib, updateCert, kioskUrl, playos-controller, application,
- isTestBuild ? false
-}:
+{pkgs, lib, updateCert, kioskUrl, playos-controller, application }:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
@@ -15,10 +13,7 @@ let nixos = pkgs.importFromNixos ""; in
 
       # Application-specific module
       application.module
-    ]
-    # TODO: move this to a 'test' overlay in the application?
-    ++ lib.lists.optional isTestBuild
-        (import ../testing/end-to-end/profile.nix { inherit pkgs; });
+    ];
 
     # Storage
     fileSystems = {

@@ -8,7 +8,7 @@ let
       configuration = {...}: {
         imports = [
             (pkgs.importFromNixos "modules/profiles/minimal.nix")
-            (import ../profile.nix { inherit pkgs; })
+            (import ../profile.nix {inherit (pkgs) importFromNixos;})
             ./../../../base/system-partition.nix
             ./../../../base/volatile-root.nix
         ];

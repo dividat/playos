@@ -1,5 +1,5 @@
 let
-  bootstrap = (import <nixpkgs> {});
+  bootstrap = (import ./pkgs {});
 in
 {
   ###### Configuration that is passed into the build system #######
@@ -26,19 +26,13 @@ in
 
 let
 
-  application = import applicationPath;
+  # lib.makeScope returns consistent set of packages that depend on each other
+  mkComponents = application: (
+    let pkgs = import ./pkgs { applicationOverlays = application.overlays; }; in
+    (with pkgs; lib.makeScope newScope (self: with self; {
 
-  pkgs = import ./pkgs (with application; {
-    applicationOverlays = application.overlays;
-  });
-
-  # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
-  components = with pkgs; lib.makeScope newScope (self: with self; {
-
-    inherit updateUrl deployUrl kioskUrl;
-    inherit (application) safeProductName fullProductName;
-
-    version = application.version + (lib.optionalString buildTest "-TEST");
+    inherit updateUrl deployUrl kioskUrl pkgs;
+    inherit (application) version safeProductName fullProductName;
 
     greeting = lib.attrsets.attrByPath [ "greeting" ] (label: label) application;
 
@@ -60,7 +54,6 @@ let
     # System image as used in full installation
     systemImage = callPackage ./system-image {
         application = application;
-        isTestBuild = buildTest;
     };
 
     # USB live system
@@ -101,16 +94,35 @@ let
                 throw "buildDisk is required for running end-to-end tests"
             else
                 callPackage ./testing/end-to-end {});
+  })));
+
+  application = import applicationPath;
+
+  components = mkComponents application;
+
+  testComponents = mkComponents ({
+    inherit (application) safeProductName fullProductName greeting overlays;
+    version = "${application.version}-TEST";
+    module = {
+      imports = [
+        application.module
+        (import ./testing/end-to-end/profile.nix {inherit (bootstrap) importFromNixos; })
+      ];
+    };
   });
 
 in
 
-with pkgs; stdenv.mkDerivation {
+let
+  lib = bootstrap.lib;
+  stdenv = bootstrap.stdenv;
+in
+stdenv.mkDerivation {
   name = "${components.safeProductName}-${components.version}";
 
   buildInputs = [
-    rauc
-    (python3.withPackages(ps: with ps; [pyparted]))
+    components.pkgs.rauc
+    (components.pkgs.python3.withPackages(ps: with ps; [pyparted]))
     components.install-playos
   ];
 
@@ -142,10 +154,10 @@ with pkgs; stdenv.mkDerivation {
   ''
   # Tests
   + lib.optionalString buildTest ''
-    ln -s ${components.tests.interactive-tests} $out/tests
+    ln -s ${testComponents.tests.interactive-tests} $out/tests
   '';
 
   passthru.tests = lib.optionalAttrs buildTest {
-    end-to-end = components.tests.run-tests;
+    end-to-end = testComponents.tests.run-tests;
   };
 }
