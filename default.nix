@@ -33,7 +33,7 @@ let
   });
 
   # lib.makeScope returns consistent set of packages that depend on each other
-  mkComponents = application: (with pkgs; lib.makeScope newScope (self: with self; {
+  mkComponents = { application, rescueSystemOpts ? {} }: (with pkgs; lib.makeScope newScope (self: with self; {
 
     inherit updateUrl deployUrl kioskUrl;
     inherit (application) version safeProductName fullProductName;
@@ -71,8 +71,7 @@ let
     # Rescue system
     rescueSystem = callPackage ./bootloader/rescue {
         application = application;
-    } // lib.optionalAttrs buildTest
-        { squashfsCompressionOpts = "-no-compression"; };
+    } // rescueSystemOpts;
 
     # Installer ISO image
     installer = callPackage ./installer {};
@@ -100,18 +99,21 @@ let
                 callPackage ./testing/end-to-end {});
   }));
 
-  components = mkComponents application;
+  components = mkComponents { inherit application; };
 
-  testComponents = mkComponents ({
-    inherit (application) safeProductName fullProductName greeting overlays;
-    version = "${application.version}-TEST";
-    module = {
-      imports = [
-        application.module
-        (import ./testing/end-to-end/profile.nix { inherit (pkgs) importFromNixos; })
-      ];
+  testComponents = mkComponents {
+    application = {
+      inherit (application) safeProductName fullProductName greeting overlays;
+      version = "${application.version}-TEST";
+      module = {
+        imports = [
+          application.module
+          (import ./testing/end-to-end/profile.nix { inherit (pkgs) importFromNixos; })
+        ];
+      };
     };
-  });
+    rescueSystemOpts = { squashfsCompressionOpts = "-no-compression"; };
+  };
 
 in
 
