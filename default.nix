@@ -1,5 +1,5 @@
 let
-  bootstrap = (import ./pkgs {});
+  bootstrap = (import <nixpkgs> {});
 in
 {
   ###### Configuration that is passed into the build system #######
@@ -106,7 +106,7 @@ let
     module = {
       imports = [
         application.module
-        (import ./testing/end-to-end/profile.nix { inherit (bootstrap) importFromNixos; })
+        (import ./testing/end-to-end/profile.nix { inherit (pkgs) importFromNixos; })
       ];
     };
   });
