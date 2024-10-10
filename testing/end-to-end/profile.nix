@@ -1,9 +1,8 @@
-{importFromNixos}:
-{pkgs,...}:
+{pkgs, modulesPath, ...}:
 {
     imports = [
-      (importFromNixos "modules/profiles/qemu-guest.nix")
-      (importFromNixos "modules/testing/test-instrumentation.nix")
+      (modulesPath + "/profiles/qemu-guest.nix")
+      (modulesPath + "/testing/test-instrumentation.nix")
     ];
 
     config = {
@@ -15,12 +14,10 @@
         # so instead we set this directly in journald
         services.journald.extraConfig =
         let
-          qemu-common = importFromNixos "lib/qemu-common.nix" {
-            inherit pkgs;
-            inherit (pkgs) lib;
-          };
+          qemu-common = pkgs.callPackage
+            (pkgs.path + "/nixos/lib/qemu-common.nix") {};
         in
-	''
+        ''
             TTYPath=/dev/${qemu-common.qemuSerialDevice}
         '';
     };

@@ -5,10 +5,11 @@ let
    nextVersion = "9999.99.99-TESTMAGIC";
 
    minimalTestSystem = (nixos {
-      configuration = {...}: {
+      configuration = {modulesPath, ...}: {
         imports = [
-            (pkgs.importFromNixos "modules/profiles/minimal.nix")
-            (import ../profile.nix {inherit (pkgs) importFromNixos;})
+            (modulesPath + "/profiles/qemu-guest.nix")
+            (modulesPath + "/testing/test-instrumentation.nix")
+            (modulesPath + "/profiles/minimal.nix")
             ./../../../base/system-partition.nix
             ./../../../base/volatile-root.nix
         ];

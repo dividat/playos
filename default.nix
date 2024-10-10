@@ -108,7 +108,7 @@ let
       module = {
         imports = [
           application.module
-          (import ./testing/end-to-end/profile.nix { inherit (pkgs) importFromNixos; })
+          ./testing/end-to-end/profile.nix
         ];
       };
     };
