@@ -34,7 +34,7 @@ let
   });
 
   # lib.makeScope returns consistent set of packages that depend on each other
-  mkComponents = { application, rescueSystemOpts ? {} }: (with pkgs; lib.makeScope newScope (self: with self; {
+  mkComponents = { application, rescueSystemOpts ? {}, diskBuildEnabled ? buildDisk }: (with pkgs; lib.makeScope newScope (self: with self; {
 
     inherit updateUrl deployUrl kioskUrl;
     inherit (application) version safeProductName fullProductName;
@@ -88,14 +88,14 @@ let
     testingToplevel = callPackage ./testing/system { application = application; };
 
     # Disk image containing pre-installed system
-    disk = if buildDisk then callPackage ./testing/disk {} else null;
+    disk = if diskBuildEnabled then callPackage ./testing/disk {} else null;
 
     # Script for spinning up VMs
     run-in-vm = callPackage ./testing/run-in-vm {};
 
     # End-to-end tests that depend on on `disk`
-    tests = (if ! buildDisk then
-                throw "buildDisk is required for running end-to-end tests"
+    tests = (if ! diskBuildEnabled then
+                throw "disk is required for running end-to-end tests"
             else
                 callPackage ./testing/end-to-end {});
   }));
@@ -103,6 +103,7 @@ let
   components = mkComponents { inherit application; };
 
   testComponents = mkComponents {
+    diskBuildEnabled = true;
     application = {
       inherit (application) safeProductName fullProductName greeting overlays;
       version = "${application.version}-TEST";
