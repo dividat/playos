@@ -26,12 +26,14 @@ in
 
 let
 
-  # lib.makeScope returns consistent set of packages that depend on each other
-  mkComponents = application: (
-    let pkgs = import ./pkgs { applicationOverlays = application.overlays; }; in
-    (with pkgs; lib.makeScope newScope (self: with self; {
+  application = import applicationPath;
 
-    inherit updateUrl deployUrl kioskUrl pkgs;
+  pkgs = import ./pkgs { applicationOverlays = application.overlays; };
+
+  # lib.makeScope returns consistent set of packages that depend on each other
+  mkComponents = application: (with pkgs; lib.makeScope newScope (self: with self; {
+
+    inherit updateUrl deployUrl kioskUrl;
     inherit (application) version safeProductName fullProductName;
 
     greeting = lib.attrsets.attrByPath [ "greeting" ] (label: label) application;
@@ -94,9 +96,7 @@ let
                 throw "buildDisk is required for running end-to-end tests"
             else
                 callPackage ./testing/end-to-end {});
-  })));
-
-  application = import applicationPath;
+  }));
 
   components = mkComponents application;
 
@@ -106,23 +106,19 @@ let
     module = {
       imports = [
         application.module
-        (import ./testing/end-to-end/profile.nix {inherit (bootstrap) importFromNixos; })
+        (import ./testing/end-to-end/profile.nix { inherit (bootstrap) importFromNixos; })
       ];
     };
   });
 
 in
 
-let
-  lib = bootstrap.lib;
-  stdenv = bootstrap.stdenv;
-in
-stdenv.mkDerivation {
+with pkgs; stdenv.mkDerivation {
   name = "${components.safeProductName}-${components.version}";
 
   buildInputs = [
-    components.pkgs.rauc
-    (components.pkgs.python3.withPackages(ps: with ps; [pyparted]))
+    pkgs.rauc
+    (pkgs.python3.withPackages(ps: with ps; [pyparted]))
     components.install-playos
   ];
 
