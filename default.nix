@@ -17,6 +17,7 @@ in
 , applicationPath ? ./application.nix
 
   ##### Allow disabling the build of unused artifacts when developing/testing #####
+, buildVm ? true
 , buildInstaller ? true
 , buildBundle ? true
 , buildDisk ? true
@@ -131,14 +132,14 @@ with pkgs; stdenv.mkDerivation {
 
     ln -s ${components.docs} $out/docs
 
-    mkdir -p $out/bin
-    cp ${components.run-in-vm} $out/bin/run-in-vm
-    chmod +x $out/bin/run-in-vm
-
     # Certificate used to verify update bundles
     ln -s ${updateCert} $out/cert.pem
   ''
-
+  + lib.optionalString buildVm ''
+    mkdir -p $out/bin
+    cp ${components.run-in-vm} $out/bin/run-in-vm
+    chmod +x $out/bin/run-in-vm
+  ''
   + lib.optionalString buildLive ''
     ln -s ${components.live}/iso/${components.safeProductName}-live-${components.version}.iso $out/${components.safeProductName}-live-${components.version}.iso
   ''
