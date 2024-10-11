@@ -12,13 +12,14 @@ def create_overlay(disk, overlay_path):
         ],
         check=True)
 
-class TestCase(object):
-    def __init__(self, test_descr):
+class AbstractTestCheck(object):
+    def __init__(self, check_kind, test_descr):
+        self.check_kind = check_kind
         self.test_descr = test_descr
         self.test_c = unittest.TestCase()
 
     def print_descr(self, outcome=""):
-        print(f"{Style.BRIGHT}[TestCase] {self.test_descr}... {outcome}")
+        print(f"{Style.BRIGHT}[{self.check_kind}] {self.test_descr}... {outcome}")
         print(Style.RESET_ALL)
 
     def print_ok(self):
@@ -39,6 +40,13 @@ class TestCase(object):
 
         return False # signals to re-raise the exception
 
+class TestPrecondition(AbstractTestCheck):
+    def __init__(self, test_descr):
+        super().__init__("TestPrecondition", test_descr)
+
+class TestCase(AbstractTestCheck):
+    def __init__(self, test_descr):
+        super().__init__("TestCase", test_descr)
 
 def wait_for_logs(vm, regex, unit=None, timeout=10):
     maybe_unit = f"--unit={unit}" if unit else ""

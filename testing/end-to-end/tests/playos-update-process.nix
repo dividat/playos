@@ -58,8 +58,8 @@ pkgs.testers.runNixOSTest {
       ];
       virtualisation.vlans = [ 1 ];
     };
-    # more accurate name would be update_and_proxy_server...
-    update_server = { config, nodes, lib, pkgs, ... }:
+    # runs an HTTP proxy and a mock HTTP update/bundle server
+    sidekick = { config, nodes, lib, pkgs, ... }:
     {
       config = {
         assertions = [ {
@@ -112,59 +112,44 @@ pkgs.testers.runNixOSTest {
   testScript = {nodes}:
   ''
     ${builtins.readFile ../test-script-helpers.py}
+    ${builtins.readFile ./update-helpers.py}
     import json
     import re
 
     product_name = "${safeProductName}"
     current_version = "1.1.1-TESTMAGIC"
 
-    http_root = "${nodes.update_server.services.static-web-server.root}"
+    http_root = "${nodes.sidekick.services.static-web-server.root}"
     http_local_url = "http://127.0.0.1"
 
-    proxy_url = "http://${nodes.update_server.networking.primaryIPAddress}:8888"
+    proxy_url = "http://${nodes.sidekick.networking.primaryIPAddress}:8888"
 
     create_overlay("${disk}", "${overlayPath}")
     playos.start(allow_reboot=True)
-    update_server.start()
+    sidekick.start()
 
-    ### === Update server setup
 
-    update_server.wait_for_unit('static-web-server.service')
-    # Setup stub server
-    update_server.succeed(f"curl -v {http_local_url}")
+    ### === Stub Update server setup
 
-    def set_latest_version(version):
-        update_server.succeed(f"echo -n '{version}' > {http_root}/latest")
+    with TestPrecondition("Stub update server is started"):
+        update_server = UpdateServer(sidekick, product_name, http_root)
+        update_server.wait_for_unit()
+        sidekick.succeed(f"curl -v {http_local_url}")
 
-    def bundle_filename(version):
-        return f"{product_name}-{version}.raucb"
-
-    def bundle_path(version):
-        bundle = bundle_filename(version)
-        return f"{http_root}/{version}/{bundle}"
-
-    def add_bundle(version, filepath=None):
-        path = bundle_path(version)
-        update_server.succeed(f"mkdir -p {http_root}/{version}")
-        if filepath:
-            update_server.succeed(f"mv {filepath} {path}")
-            update_server.succeed(f"chmod a+rwx {path}")
-        else:
-            update_server.succeed(f"echo -n 'FAKE_BUNDLE' > {path}")
-
-    with TestCase("Stub server setup is functional") as t:
-        add_bundle(current_version)
-        set_latest_version(current_version)
-        out_v = update_server.succeed(f"curl -f -v {http_local_url}/latest")
+    with TestPrecondition("Stub update server is functional") as t:
+        update_server.add_bundle(current_version)
+        update_server.set_latest_version(current_version)
+        out_v = sidekick.succeed(f"curl -f {http_local_url}/latest")
         t.assertEqual(out_v, current_version)
-
 
     ### === PlayOS setup
 
-    playos.wait_for_unit('multi-user.target')
+    with TestPrecondition("PlayOS is booted, controller is started"):
+        playos.wait_for_unit('multi-user.target')
+        playos.wait_for_unit('playos-controller.service')
 
     # Not the most elegant setup, but works for now
-    with TestCase("Setup: networking and check if update VM is reachable") as t:
+    with TestPrecondition("Routing setup, check if sidekick VM is reachable") as t:
         # ens7 is the VLAN #1 interface
         playos.succeed("ip addr flush dev ens7")
         playos.succeed("ip addr add ${nodes.playos.networking.primaryIPAddress}/32 dev ens7")
@@ -172,12 +157,12 @@ pkgs.testers.runNixOSTest {
         playos.succeed("ip route add 192.168.1.0/24 dev ens7")
 
         # check if routing works
-        playos.succeed("curl -f -L -v http://${nodes.update_server.networking.primaryIPAddress}/latest")
+        playos.succeed("curl -f -L -v http://${nodes.sidekick.networking.primaryIPAddress}/latest")
 
         # check if proxy works
         playos.succeed(f"curl --proxy {proxy_url} -f -L -v http://update-server.local/latest")
 
-    with TestCase("Setup: set HTTP proxy settings via connman") as t:
+    with TestPrecondition("Set HTTP proxy settings via connman") as t:
         # the output will also contain service types, filtered out below
         services = playos.succeed("connmanctl services").strip().split()
         default_service = None
@@ -194,6 +179,8 @@ pkgs.testers.runNixOSTest {
 
         playos.succeed(f"connmanctl config {default_service} --proxy manual {proxy_url}")
 
+
+    ### === Test scenario
 
     with TestCase("Kiosk picks up the proxy"):
         proxy_host_port = proxy_url.replace("http://", "")
@@ -212,16 +199,16 @@ pkgs.testers.runNixOSTest {
     with TestCase("Controller installs the new upstream version") as t:
         next_version = "${nextVersion}"
 
-        update_server.copy_from_host(
+        sidekick.copy_from_host(
             "${nextVersionBundle}",
             "/tmp/next-bundle.raucb"
         )
-        add_bundle(next_version, filepath="/tmp/next-bundle.raucb")
-        set_latest_version(next_version)
+        update_server.add_bundle(next_version, filepath="/tmp/next-bundle.raucb")
+        update_server.set_latest_version(next_version)
 
         expected_states = [
             "Downloading",
-            f"Installing.*{bundle_filename(next_version)}",
+            f"Installing.*{update_server.bundle_filename(next_version)}",
             "RebootRequired"
         ]
 
@@ -250,7 +237,6 @@ pkgs.testers.runNixOSTest {
             next_version,
             "Installed bundle does not have correct version"
         )
-
 
     with TestCase("System boots into the new bundle") as t:
         playos.shutdown()

@@ -54,6 +54,8 @@ import json
 import time
 from enum import StrEnum, auto
 
+# ===== Test settings
+
 class WebStorageBackends(StrEnum):
     LocalStorage = auto();
     Cookies = auto();
@@ -65,25 +67,8 @@ ENABLED_WEB_STORAGES = [
     # WebStorageBackends.Cookies,
 ]
 
-create_overlay("${disk}", "${overlayPath}")
 
-aio = asyncio.Runner()
-
-run_stub_server(${toString hostKioskURLport})
-
-playos.start(allow_reboot=True)
-
-with TestCase("PlayOS disk boots"):
-    playos.wait_for_unit('multi-user.target')
-    playos.wait_for_x()
-
-with TestCase("PlayOS services are runnning"):
-    playos.wait_for_unit('dividat-driver.service')
-    playos.wait_for_unit('playos-controller.service')
-    playos.wait_for_unit('playos-status.service')
-
-# Sanity-check: can reach stub server
-playos.succeed("curl --fail '${kioskUrl}'")
+# ===== Test assertions that are re-used
 
 async def wait_for_kiosk_page(browser):
     kiosk_url = "${kioskUrl}".rstrip("/")
@@ -145,7 +130,30 @@ async def check_web_storages_after_restart(page, t):
             "TEST_VALUE cookie was not persisted"
         )
 
-with TestCase("Kiosk is open, web storage is persisted") as t:
+def get_booted_slot():
+    rauc_status = json.loads(playos.succeed("rauc status --output-format=json"))
+    return rauc_status['booted']
+
+# ===== Test scenario
+
+aio = asyncio.Runner()
+run_stub_server(${toString hostKioskURLport})
+
+create_overlay("${disk}", "${overlayPath}")
+playos.start(allow_reboot=True)
+
+with TestPrecondition("PlayOS is booted, controller is running"):
+    playos.wait_for_unit('multi-user.target')
+    playos.wait_for_unit('playos-controller.service')
+
+with TestPrecondition("VM can reach HTTP stub server"):
+    playos.succeed("curl --fail '${kioskUrl}'")
+
+with TestCase("xserver and kiosk are running"):
+    playos.wait_for_x()
+    playos.succeed("pgrep -f kiosk-browser > /dev/null")
+
+with TestCase("Kiosk's debug port open, web storage is persisted") as t:
     page = aio.run(connect_and_get_kiosk_page())
 
     aio.run(populate_web_storages(page))
@@ -163,26 +171,21 @@ with TestCase("Kiosk is open, web storage is persisted") as t:
     new_page = aio.run(connect_and_get_kiosk_page())
     aio.run(check_web_storages_after_restart(new_page, t))
 
-with TestCase("Booted from system.a") as t:
-    rauc_status = json.loads(playos.succeed("rauc status --output-format=json"))
-    t.assertEqual(
-        rauc_status['booted'],
-        "a"
-    )
+with TestPrecondition("Booted from slot a") as t:
+    t.assertEqual(get_booted_slot(), "a")
 
-# mark other (b) slot as active and try to reboot into it
+# mark slot b as active and try to reboot into it
 playos.succeed(
     'busctl call de.pengutronix.rauc / ' + \
-        'de.pengutronix.rauc.Installer Mark ss "active" "other"'
+        'de.pengutronix.rauc.Installer Mark ss "active" "system.b"'
 )
 
-# NOTE: 'systemctl reboot' fails because of some bug in test-driver
+# Note: a regular reboot fails, probably a bug in test-driver
 playos.shutdown()
 playos.start()
 
-with TestCase("Booted into other slot") as t:
-    playos.wait_for_x()
-
+with TestPrecondition("Booted into slot b") as t:
+    t.assertEqual(get_booted_slot(), "b")
     rauc_status = json.loads(playos.succeed("rauc status --output-format=json"))
     t.assertEqual(
         rauc_status['booted'],
@@ -191,6 +194,8 @@ with TestCase("Booted into other slot") as t:
     )
 
 with TestCase("kiosk's web storage is restored") as t:
+    playos.wait_for_x()
+
     page = aio.run(connect_and_get_kiosk_page())
     aio.run(check_web_storages_after_restart(page, t))
 '';
