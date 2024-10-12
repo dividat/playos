@@ -2,6 +2,8 @@
 let
    nixos = pkgs.importFromNixos "";
 
+   playosRoot = ./../../../..;
+
    nextVersion = "9999.99.99-TESTMAGIC";
 
    minimalTestSystem = (nixos {
@@ -10,8 +12,8 @@ let
             (modulesPath + "/profiles/qemu-guest.nix")
             (modulesPath + "/testing/test-instrumentation.nix")
             (modulesPath + "/profiles/minimal.nix")
-            ./../../../base/system-partition.nix
-            ./../../../base/volatile-root.nix
+            (playosRoot +  "/base/system-partition.nix")
+            (playosRoot + "/base/volatile-root.nix")
         ];
         config = {
             system.nixos.label = "${safeProductName}-${nextVersion}";
@@ -42,7 +44,7 @@ let
    };
    }).config.system.build.toplevel;
 
-   nextVersionBundle = pkgs.callPackage ../../../rauc-bundle/default.nix {
+   nextVersionBundle = pkgs.callPackage (playosRoot + "/rauc-bundle/default.nix") {
     version  = nextVersion;
     systemImage = minimalTestSystem;
    };
@@ -54,7 +56,7 @@ pkgs.testers.runNixOSTest {
     playos = { config, lib, pkgs, ... }:
     {
       imports = [
-        (import ../virtualisation-config.nix { inherit overlayPath; })
+        (import ../../virtualisation-config.nix { inherit overlayPath; })
       ];
       virtualisation.vlans = [ 1 ];
     };
@@ -111,8 +113,8 @@ pkgs.testers.runNixOSTest {
 
   testScript = {nodes}:
   ''
-    ${builtins.readFile ../test-script-helpers.py}
-    ${builtins.readFile ./update-helpers.py}
+    ${builtins.readFile ../../test-script-helpers.py}
+    ${builtins.readFile ./proxy-and-update-helpers.py}
     import json
     import re
 

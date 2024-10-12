@@ -16,7 +16,7 @@ pkgs.testers.runNixOSTest {
     playos = { config, lib, pkgs, ... }:
     {
       imports = [
-        (import ../virtualisation-config.nix { inherit overlayPath; })
+        (import ../../virtualisation-config.nix { inherit overlayPath; })
       ];
       config = {
         virtualisation.forwardPorts = [
@@ -48,8 +48,8 @@ pkgs.testers.runNixOSTest {
   ];
 
   testScript = ''
-${builtins.readFile ../test-script-helpers.py}
-${builtins.readFile ./playos-basic-helpers.py}
+${builtins.readFile ../../test-script-helpers.py}
+${builtins.readFile ./kiosk-persistence-helpers.py}
 import json
 import time
 from enum import StrEnum, auto
