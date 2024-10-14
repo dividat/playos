@@ -1,18 +1,31 @@
 { vmTools, runCommand
 , lib
+, pkgs
 
 , install-playos
 
-, # Size of data partition in GiB
-  dataPartitionSize ? 5
+, closureInfo
+, rescueSystem
+, systemImage
 
-, # Size of system partition in GiB
-  systemPartitionSize ? 10
+, # Size of data partition in MiB
+  dataPartSizeMiB ? 400
 }:
 with lib;
 let
-  # disk size in GiB
-  diskSize = (1 + dataPartitionSize + systemPartitionSize + systemPartitionSize + 1);
+  computeImageSizeMiB = image:
+    let
+        imageInfo = closureInfo { rootPaths = [ image ]; };
+        closureSizeBytes = strings.toInt (builtins.readFile
+            "${imageInfo}/total-nar-size");
+        closureSizeMiB = closureSizeBytes / (1024.0*1024);
+    in
+        # add extra 20% because NAR size does not match real disk usage
+        builtins.ceil(closureSizeMiB * 1.2);
+
+  bootPartSizeMiB = computeImageSizeMiB rescueSystem;
+  systemPartSizeMiB = computeImageSizeMiB systemImage;
+  diskSizeMiB = 10 + bootPartSizeMiB + dataPartSizeMiB + systemPartSizeMiB*2;
 in vmTools.runInLinuxVM (
   runCommand "build-playos-disk"
     {
@@ -20,7 +33,10 @@ in vmTools.runInLinuxVM (
 
       preVM = ''
         diskImage=nixos.raw
-        truncate -s ${toString diskSize}G $diskImage
+        echo "Boot partition size is: ${toString bootPartSizeMiB} MiB"
+        echo "System partition size is: ${toString systemPartSizeMiB} MiB"
+        echo "Computed disk size is: ${toString diskSizeMiB} MiB"
+        truncate -s ${toString diskSizeMiB}MiB $diskImage
       '';
 
       postVM = ''
@@ -35,6 +51,9 @@ in vmTools.runInLinuxVM (
       install-playos \
         --device /dev/vda \
         --machine-id "f414cca8312548d29689ebf287fb67e0" \
+        --partition-size-boot ${toString bootPartSizeMiB} \
+        --partition-size-system ${toString systemPartSizeMiB} \
+        --partition-size-data ${toString dataPartSizeMiB} \
         --no-confirm
     ''
 ) + "/playos-disk.img"
