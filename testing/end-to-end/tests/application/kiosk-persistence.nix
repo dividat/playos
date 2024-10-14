@@ -10,7 +10,7 @@ let
     hostKioskURLport = 18989;
 in
 pkgs.testers.runNixOSTest {
-  name = "Built PlayOS is functional";
+  name = "Kiosk's web storage persistence";
 
   nodes = {
     playos = { config, lib, pkgs, ... }:
