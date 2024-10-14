@@ -185,6 +185,7 @@ playos.shutdown()
 playos.start()
 
 with TestPrecondition("Booted into slot b") as t:
+    playos.wait_for_unit("rauc.service")
     t.assertEqual(get_booted_slot(), "b")
     rauc_status = json.loads(playos.succeed("rauc status --output-format=json"))
     t.assertEqual(
