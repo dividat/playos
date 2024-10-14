@@ -9,8 +9,7 @@
         # for _preventing_ qemu-vm.nix from passing any unnecessary flags to
         # QEMU.
         #
-        # Due to this, test driver features requiring
-        # `virtualisation.sharedDirectories` (e.g. `copy_from_vm`) are not
+        # Due to this, certain NixOS test driver features might not be
         # functional.
         virtualisation.mountHostNixStore = false;
         virtualisation.useHostCerts = false;
