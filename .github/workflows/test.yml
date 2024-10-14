@@ -22,6 +22,8 @@ jobs:
       matrix:
         file: ${{fromJson(needs.prepare-matrix.outputs.integration_tests)}}
     steps:
+    - name: Ensure KVM is usable by nix-build
+      run: sudo chmod a+rwx /dev/kvm
     - uses: actions/checkout@v3
     - uses: cachix/install-nix-action@v18
       with:
