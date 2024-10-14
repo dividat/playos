@@ -10,7 +10,6 @@
 ## Changed
 
 - driver: Bump to 2.5.0 for extended discovery time in firmware updates
-- os: Increase ESP (boot/rescue) partition size
 
 ## Removed
 
