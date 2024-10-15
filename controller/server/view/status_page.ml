@@ -51,7 +51,7 @@ let reboot_call =
       ; action_form "/system/reboot" "Reboot into updated version"
       ]
 
-let switch_system_call target_slot =
+let switch_to_newer_system_call target_slot =
       [ note "This machine has an out of date PlayOS version selected as the
               default. You can switch to the new version (requires a reboot)."
       ; action_form
@@ -59,9 +59,21 @@ let switch_system_call target_slot =
             "Switch to newer version and reboot"
       ]
 
-let reinstall_call  =
+let switch_to_older_system_call target_slot =
+      [ note "You are running the latest version of PlayOS, but you can still
+              switch back to the older version (requires a reboot)."
+      ; action_form
+            ("/system/switch/" ^ (slot_fmt target_slot))
+            "Switch to older version and reboot"
+      ]
+
+let reinstall_call target_slot  =
       [ note "The PlayOS installation appears to be faulty, manual system
-              reinsallation is recommended. Please contact support."
+              reinsallation is recommended. Please contact support. You can
+              attempt to switch to another system slot (requires reboot)."
+      ; action_form
+            ("/system/switch/" ^ (slot_fmt target_slot))
+            "Switch to other slot and reboot"
       ]
 
 let factory_reset_call =
@@ -79,15 +91,22 @@ let other_slot = let open Rauc.Slot in function
     | SystemB -> SystemA
 
 let suggested_action_of_state (update:Update.state) (rauc:rauc_state) booted_slot =
+    let target_slot = other_slot booted_slot in
     match (update, rauc) with
         | (RebootRequired, _) ->
             Some (Definition.description reboot_call)
         | (OutOfDateVersionSelected, Status _) ->
             Some (Definition.description (
-                switch_system_call (other_slot booted_slot)
+                switch_to_newer_system_call target_slot
+            ))
+        | (UpToDate _, Status _) ->
+            Some (Definition.description (
+                switch_to_older_system_call target_slot
             ))
         | (ReinstallRequired, _) ->
-            Some (Definition.description reinstall_call)
+            Some (Definition.description (
+                reinstall_call target_slot
+            ))
         | _ ->
             None
 
