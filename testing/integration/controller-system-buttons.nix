@@ -99,7 +99,7 @@ pkgs.testers.runNixOSTest {
 
     # ===== Factory reset works
 
-    # Ensure persitent-data-wipe service is running
+    # Ensure persistent-data-wipe service is running
     with subtest("Factory reset works"):
         playos.succeed("""
             systemctl show --no-pager \
