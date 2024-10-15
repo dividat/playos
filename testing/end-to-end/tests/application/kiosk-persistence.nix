@@ -187,12 +187,6 @@ playos.start()
 with TestPrecondition("Booted into slot b") as t:
     playos.wait_for_unit("rauc.service")
     t.assertEqual(get_booted_slot(), "b")
-    rauc_status = json.loads(playos.succeed("rauc status --output-format=json"))
-    t.assertEqual(
-        rauc_status['booted'],
-        "b",
-        "Did not boot from other (i.e. system.b) slot"
-    )
 
 with TestCase("kiosk's web storage is restored") as t:
     playos.wait_for_x()
