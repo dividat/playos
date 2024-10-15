@@ -82,7 +82,7 @@ let html ?current_page ?header content =
               [
                button
                   ~a:[
-                      a_class [ "d-Menu__Item"; "d-Menu_Item--Shutdown " ]
+                      a_class [ "d-Menu__Item" ]
                   ]
                   [ menu_icon Shutdown
                   ; txt (menu_label Shutdown)
