@@ -10,7 +10,7 @@ type version_info =
   (* version of inactive system *)
   ; inactive : Semver.t
   }
-[@@deriving sexp]
+[@@deriving sexp_of]
 
 (** State of update mechanism *)
 type state =
@@ -24,7 +24,7 @@ type state =
   | RebootRequired
   | OutOfDateVersionSelected
   | ReinstallRequired
-[@@deriving sexp]
+[@@deriving sexp_of]
 
 type sleep_duration = float (* seconds *)
 

@@ -8,15 +8,24 @@ let log_src = Logs.Src.create "update"
 (** Type containing version information *)
 type version_info =
   {(* the latest available version *)
-    latest : (Semver.t [@sexp.opaque])
+    latest : Semver.t
 
   (* version of currently booted system *)
-  ; booted : (Semver.t [@sexp.opaque])
+  ; booted : Semver.t
 
   (* version of inactive system *)
-  ; inactive : (Semver.t [@sexp.opaque])
+  ; inactive : Semver.t
   }
-[@@deriving sexp]
+
+let sexp_of_version_info v =
+    let open Sexplib in
+    Sexp.(List [
+        List [Atom "latest";   Atom (Semver.to_string v.latest)];
+        List [Atom "booted";   Atom (Semver.to_string v.booted)];
+        List [Atom "inactive"; Atom (Semver.to_string v.inactive)];
+    ])
+
+
 
 type state =
   | GettingVersionInfo
@@ -32,7 +41,7 @@ type state =
   | OutOfDateVersionSelected
   (* there are no known-good systems and a reinstall is recommended *)
   | ReinstallRequired
-[@@deriving sexp]
+[@@deriving sexp_of]
 
 type sleep_duration = float (* seconds *)
 
