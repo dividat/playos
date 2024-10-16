@@ -113,10 +113,9 @@ pkgs.testers.runNixOSTest {
 
   testScript = {nodes}:
   ''
-    ${builtins.readFile ../../test-script-helpers.py}
+    ${builtins.readFile ../../../helpers/nixos-test-script-helpers.py}
     ${builtins.readFile ./proxy-and-update-helpers.py}
     import json
-    import re
 
     product_name = "${safeProductName}"
     current_version = "1.1.1-TESTMAGIC"
@@ -164,23 +163,7 @@ pkgs.testers.runNixOSTest {
         # check if proxy works
         playos.succeed(f"curl --proxy {proxy_url} -f -L -v http://update-server.local/latest")
 
-    with TestPrecondition("Set HTTP proxy settings via connman") as t:
-        # the output will also contain service types, filtered out below
-        services = playos.succeed("connmanctl services").strip().split()
-        default_service = None
-        for s in services:
-            if re.match("ethernet_.*_cable", s):
-                info = playos.succeed(f"connmanctl services {s}")
-                # default IP assigned to Guest VMs started with `-net user`
-                if "Address=10.0.2.15" in info:
-                    default_service = s
-                    break
-
-        if default_service is None:
-            t.fail("Unable to find default interface among connman services")
-
-        playos.succeed(f"connmanctl config {default_service} --proxy manual {proxy_url}")
-
+    configure_proxy(playos, proxy_url)
 
     ### === Test scenario
 

@@ -1,6 +1,7 @@
 import subprocess
 import unittest
 from colorama import Fore, Style
+import re
 
 # HACK: create writable cow disk overlay (same as in ./run-in-vm --disk)
 def create_overlay(disk, overlay_path):
@@ -60,3 +61,22 @@ def wait_for_logs(vm, regex, unit=None, timeout=10):
         _, output = vm.execute(f"{journal_cmd} | tail -30")
         print(output)
         raise e
+
+
+def configure_proxy(vm, proxy_url):
+    with TestPrecondition("Set HTTP proxy settings via connman") as t:
+        # the output will also contain service types, filtered out below
+        services = vm.succeed("connmanctl services").strip().split()
+        default_service = None
+        for s in services:
+            if re.match("ethernet_.*_cable", s):
+                info = vm.succeed(f"connmanctl services {s}")
+                # default IP assigned to Guest VMs started with `-net user`
+                if "Address=10.0.2.15" in info:
+                    default_service = s
+                    break
+
+        if default_service is None:
+            t.fail("Unable to find default interface among connman services")
+
+        vm.succeed(f"connmanctl config {default_service} --proxy manual {proxy_url}")

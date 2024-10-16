@@ -48,7 +48,7 @@ pkgs.testers.runNixOSTest {
   ];
 
   testScript = ''
-${builtins.readFile ../../test-script-helpers.py}
+${builtins.readFile ../../../helpers/nixos-test-script-helpers.py}
 ${builtins.readFile ./kiosk-persistence-helpers.py}
 import json
 import time
