@@ -31,9 +31,17 @@ ocamlPackages.buildDunePackage rec {
     done
   '';
 
+  postFixup = ''
+    for prog in "$out"/bin/*; do
+        wrapProgram $prog \
+            --set PATH ${lib.makeBinPath [ curl ]}
+    done
+  '';
+
   useDune2 = true;
 
   nativeBuildInputs = [
+    pkgs.makeWrapper
     discount # Transform Markdown to HTML
     ocamlPackages.obus
   ];
