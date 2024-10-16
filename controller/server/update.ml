@@ -221,7 +221,7 @@ module Make(Deps : ServiceDeps) : UpdateService = struct
     (** Finite state machine handling updates *)
     let rec run ~set_state state =
       let%lwt next_state = run_step state in
-        set_state state;
+        set_state next_state;
         run ~set_state next_state
 end
 
