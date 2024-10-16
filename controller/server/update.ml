@@ -235,7 +235,7 @@ let build_deps ~connman ~(rauc : Rauc.t) :
 
   let config = default_config in
   let raucI = Rauc_service.build_module rauc in
-  let%lwt clientI = Update_client.build_module connman in
+  let clientI = Update_client.build_module connman in
 
   let module Deps = struct
     let config = config

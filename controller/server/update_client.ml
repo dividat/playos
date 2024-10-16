@@ -83,4 +83,4 @@ let build_module connman =
   let%lwt connman = Connman.Manager.connect () in *)
   let get_proxy () = get_proxy_uri connman in
   let depsI = make_deps get_proxy (Uri.of_string Config.System.update_url) in
-  Lwt.return @@ (module UpdateClient (val depsI : UpdateClientDeps) : S)
+  (module UpdateClient (val depsI : UpdateClientDeps) : S)
