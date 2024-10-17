@@ -58,18 +58,10 @@ jobs:
     - run: NIXPKGS_ALLOW_UNFREE=1 ./build vm
 
   e2e-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-8-core
     steps:
-    - name: Make more space available on the runner
-      run: |
-        sudo rm -rf /usr/share/dotnet \
-                    /usr/local/lib/android \
-                    /opt/ghc \
-                    /opt/hostedtoolcache/CodeQL
-
     - name: Ensure KVM is usable by nix-build
       run: sudo chmod a+rwx /dev/kvm
-
     - uses: actions/checkout@v3
     - uses: cachix/install-nix-action@v18
       with:
