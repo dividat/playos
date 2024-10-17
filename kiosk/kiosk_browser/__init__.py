@@ -12,6 +12,7 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
     logging.basicConfig(level=logging.INFO)
 
     app = QApplication(sys.argv)
+    app.setApplicationName("kiosk-browser")
 
     mainWidget = main_widget.MainWidget(
         kiosk_url = parseUrl(kiosk_url),
