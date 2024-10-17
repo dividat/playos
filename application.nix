@@ -166,16 +166,24 @@ rec {
       };
 
       # Audio
-      sound.enable = true;
-      hardware.pulseaudio = {
+      #hardware.pulseaudio = {
+        #enable = true;
+        #extraConfig = ''
+          ## Use HDMI output
+          #set-card-profile 0 output:hdmi-stereo
+          ## Respond to changes in connected outputs
+          #load-module module-switch-on-port-available
+          #load-module module-switch-on-connect
+        #'';
+      #};
+      sound.enable = false;
+      security.rtkit.enable = true;
+      # Maybe not promising: https://discourse.nixos.org/t/pipewire-does-not-recognize-my-hdmi-audio-output/50498
+      services.pipewire = {
         enable = true;
-        extraConfig = ''
-          # Use HDMI output
-          set-card-profile 0 output:hdmi-stereo
-          # Respond to changes in connected outputs
-          load-module module-switch-on-port-available
-          load-module module-switch-on-connect
-        '';
+        alsa.enable = true;
+        alsa.support32Bit = true;
+        pulse.enable = true;
       };
 
       # Enable avahi for Senso discovery
