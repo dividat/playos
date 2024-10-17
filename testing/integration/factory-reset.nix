@@ -40,12 +40,12 @@ pkgs.testers.runNixOSTest {
             };
 
             "/boot" = {
-                device = "/dev/sda";
+              device = "/dev/disk/by-label/ESP";
             };
         };
         playos.storage = {
           persistentDataPartition = {
-            device = "/dev/sdb";
+            device = "/dev/disk/by-label/data";
           };
         };
       };
@@ -60,7 +60,9 @@ pkgs.testers.runNixOSTest {
   testScript = ''
 ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
 
-def create_ext4_image(path):
+# ==== Setup: create disk images for /boot and /mnt/data
+
+def create_qemu_disk_image(path):
     subprocess.run(["rm", "-f", path])
 
     subprocess.run(['qemu-img',
@@ -68,16 +70,23 @@ def create_ext4_image(path):
         check=True
     )
 
-    subprocess.run(["${pkgs.e2fsprogs}/bin/mkfs.ext4",
-        "-L", "data", path],
-        check=True
-    )
-
-persistent_volume_image = "${persistentVolumeImage}"
 boot_volume_image = "${bootVolumeImage}"
+persistent_volume_image = "${persistentVolumeImage}"
 
-create_ext4_image(persistent_volume_image)
-create_ext4_image(boot_volume_image)
+create_qemu_disk_image(boot_volume_image)
+subprocess.run(["${pkgs.dosfstools}/bin/mkfs.vfat",
+    "-n", "ESP", boot_volume_image],
+    check=True
+)
+
+create_qemu_disk_image(persistent_volume_image)
+
+subprocess.run(["${pkgs.e2fsprogs}/bin/mkfs.ext4",
+    "-L", "data", persistent_volume_image],
+    check=True
+)
+
+# ==== Test scenario
 
 playos.start(allow_reboot=True)
 
