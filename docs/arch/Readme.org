@@ -210,13 +210,13 @@ The [[https://github.com/dividat/driver][Dividat Driver]], which handles connect
 
 ** Kiosk
 
-The system automatically logs in the user ~play~, starts an X session and launches a custom Kiosk Application based on [[http://doc.qt.io/qt-5/qtwebengine-index.html][QtWebEngine]]. The Kiosk Application loads Dividat Play in a restricted environment.
+The system automatically logs in the user ~play~, starts an X session and launches a custom Kiosk Application based on [[https://doc.qt.io/qt-6/qtwebengine-index.html][QtWebEngine]]. The Kiosk Application loads Dividat Play in a restricted environment.
 
 The [[*User interface][user interface for system configuration]] can be accessed with the key-combination ~Ctrl-Shift-F12~.
 
 If a captive portal is detected, which requires user interaction before granting Internet access, a prompt appears to open it.
 
-For debugging the [[https://doc.qt.io/qt-5/qtwebengine-debugging.html][Qt WebEngine Developer Tools]] are enabled and accessible at http://localhost:3355 and chrome://inspect/#devices. The Dev Tools can be used to inspect and interact with the running page (e.g. load a new page with ~location.replace("https://nixos.org")~).
+For debugging the [[https://doc.qt.io/qt-6/qtwebengine-debugging.html][Qt WebEngine Developer Tools]] are enabled and accessible at http://localhost:3355 and chrome://inspect/#devices. The Dev Tools can be used to inspect and interact with the running page (e.g. load a new page with ~location.replace("https://nixos.org")~).
 
 ** Audio
 

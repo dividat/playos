@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt6 import QtWidgets, QtCore, QtGui
 import time
 
 from kiosk_browser import browser_widget, captive_portal, dialogable_widget, proxy as proxy_module
@@ -48,8 +48,8 @@ class MainWidget(QtWidgets.QWidget):
         self._layout.addWidget(self._dialogable_browser)
         self.setLayout(self._layout)
 
-        # Shortcut to toggle settings
-        QtWidgets.QShortcut(toggle_settings_key, self).activated.connect(self._toggle_settings)
+        # Shortcuts
+        QtGui.QShortcut(toggle_settings_key, self).activated.connect(self._toggle_settings)
 
         # Look at events with the eventFilter function
         self.installEventFilter(self)

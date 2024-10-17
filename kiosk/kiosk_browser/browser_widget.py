@@ -1,4 +1,4 @@
-from PyQt5 import QtCore, QtWidgets, QtWebEngineWidgets, QtGui, QtSvg
+from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
 from enum import Enum, auto
 import logging
 import re
@@ -52,7 +52,7 @@ class BrowserWidget(QtWidgets.QWidget):
         ))
 
         # Allow sound playback without user gesture
-        self._webview.page().settings().setAttribute(QtWebEngineWidgets.QWebEngineSettings.PlaybackRequiresUserGesture, False)
+        self._webview.page().settings().setAttribute(QtWebEngineCore.QWebEngineSettings.WebAttribute.PlaybackRequiresUserGesture, False)
 
         # Prevent opening context menu on right click or pressing menu
         self._webview.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.NoContextMenu)
@@ -63,9 +63,9 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.loadFinished.connect(self._load_finished)
 
         # Shortcut to manually reload
-        QtWidgets.QShortcut('CTRL+R', self).activated.connect(self.reload)
+        QtGui.QShortcut('CTRL+R', self).activated.connect(self.reload)
         # Shortcut to perform a hard refresh
-        QtWidgets.QShortcut('CTRL+SHIFT+R', self).activated.connect(self._hard_refresh)
+        QtGui.QShortcut('CTRL+SHIFT+R', self).activated.connect(self._hard_refresh)
 
         # Prepare reload timer
         self._reload_timer = QtCore.QTimer(self)
@@ -79,6 +79,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.setUrl(self._url)
         self._view(Status.LOADING)
 
+        # If reload_timer is ongoing, stop it, as we’re already reloading
         if self._reload_timer.isActive():
             self._reload_timer.stop()
 
@@ -108,12 +109,12 @@ class BrowserWidget(QtWidgets.QWidget):
         logging.info(f"Clearing HTTP cache (hard refresh)")
         self._webview.page().profile().clearHttpCache()
 
-        # Sleep before triggering reload to avoid a possible race condition.
-        # Future Qt versions may provide a signal on `QWebEngineProfile` to
-        # allow to queue the reload on clear-cache completion instead.
+        # Wait before triggering reload to avoid a possible race condition:
         # https://bugreports.qt.io/browse/QTBUG-111541
-        time.sleep(0.25)
-        self.reload()
+        # Version 6.7 of Qt will provide a signal once the cache has been cleared:
+        # https://doc.qt.io/qt-6/qwebengineprofile.html#clearHttpCacheCompleted
+        self._view(Status.LOADING)
+        self._reload_timer.start(250)
 
     def _proxy_auth(self, get_current_proxy, url, auth, proxyHost):
         proxy = get_current_proxy()
@@ -137,6 +138,8 @@ class BrowserWidget(QtWidgets.QWidget):
             self._loading_page.hide()
             self._network_error_page.hide()
             self._webview.show()
+            # Set focus by clearing first, otherwise focus is lost after using CTRL+R
+            self._webview.clearFocus()
             self._webview.setFocus()
 
 def user_agent_with_system(user_agent, system_name, system_version):
@@ -182,8 +185,8 @@ def network_error_page(parent):
     paragraph_1 = paragraph("Please ensure the Internet connection to this device is active.", parent)
     paragraph_2 = paragraph("If the problem persists, contact Senso Service.", parent)
 
-    logo = QtSvg.QSvgWidget("images/dividat-logo.svg", parent)
-    logo.renderer().setAspectRatioMode(QtCore.Qt.KeepAspectRatio)
+    logo = QtSvgWidgets.QSvgWidget("images/dividat-logo.svg", parent)
+    logo.renderer().setAspectRatioMode(QtCore.Qt.AspectRatioMode.KeepAspectRatio)
     logo.setFixedHeight(30)
 
     layout = QtWidgets.QVBoxLayout()
