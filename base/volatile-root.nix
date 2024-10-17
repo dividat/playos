@@ -4,6 +4,7 @@ let
   cfgPart = cfg.persistentDataPartition;
   magicWipeFile = ".WIPE_PERSISTENT_DATA";
   bootFsCfg = config.fileSystems."/boot";
+  supportedBootFsType = if (bootFsCfg.fsType == "auto") then "vfat" else bootFsCfg.fsType;
 in
 with lib;
 {
@@ -61,6 +62,10 @@ with lib;
         (lib.lists.optional
             (config.fileSystems."/boot".device == "tmpfs")
             "/boot filesystem is not persistent, wiping will not work")
+        ++
+        (lib.lists.optional
+            (config.fileSystems."/boot".fsType == "auto")
+            "/boot fstype is auto, filesystem might not be mountable in stage-1")
     ;
     fileSystems =
       (lib.mapAttrs
@@ -82,6 +87,10 @@ with lib;
           neededForBoot = true;
         };
     };
+
+    # make sure boot fstype (with fallback to at least vfat) support is in initrd
+    boot.supportedFilesystems = [ supportedBootFsType ];
+    boot.initrd.supportedFilesystems = [ supportedBootFsType ];
 
     # Check if /boot contains magicWipeFile and reformat persistent data
     boot.initrd.postDeviceCommands = lib.optionalString (bootFsCfg.device != null) ''
