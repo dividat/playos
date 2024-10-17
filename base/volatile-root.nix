@@ -2,13 +2,9 @@
 let
   cfg = config.playos.storage;
   cfgPart = cfg.persistentDataPartition;
-  # /mnt/data -> "mnt-data.mount"
-  pathToSystemdMountUnit = path:
-      (builtins.replaceStrings ["/"] ["-"] (lib.strings.removePrefix "/" path))
-      + ".mount";
+  magicWipeFile = ".WIPE_PERSISTENT_DATA";
+  bootFsCfg = config.fileSystems."/boot";
 in
-# a "unit test"
-assert (pathToSystemdMountUnit "/mnt/data" == "mnt-data.mount");
 with lib;
 {
   options = {
@@ -57,6 +53,15 @@ with lib;
   };
 
   config = {
+    warnings =
+        (lib.lists.optional
+            (! config.fileSystems ? "/boot")
+            "No /boot filesystem configured, wiping will not work")
+        ++
+        (lib.lists.optional
+            (config.fileSystems."/boot".device == "tmpfs")
+            "/boot filesystem is not persistent, wiping will not work")
+    ;
     fileSystems =
       (lib.mapAttrs
       (n: config: {
@@ -78,6 +83,36 @@ with lib;
         };
     };
 
+    # Check if /boot contains magicWipeFile and reformat persistent data
+    boot.initrd.postDeviceCommands = lib.optionalString (bootFsCfg.device != null) ''
+        # === Create temp mount point for /boot
+        tmpBootMountPoint="/tmp/boot"
+        mkdir -p $tmpBootMountPoint
+
+        # === Resolve /boot's file system type
+        # Sinc ebusybox mount does not deal with `auto` well in initrd, copied
+        # from nixos stage-1-init.sh
+        fsType="${bootFsCfg.fsType}"
+        if [ "$fsType" = auto ]; then
+            fsType=$(blkid -o value -s TYPE "${bootFsCfg.device}")
+            if [ -z "$fsType" ]; then fsType=auto; fi
+        fi
+
+        # === Mount /boot on $tmpBootMountPoint
+        mount -t "$fsType" ${bootFsCfg.device} $tmpBootMountPoint
+
+        # === Wipe persistent data if magicWipeFile is present
+        if [ -f "$tmpBootMountPoint/${magicWipeFile}" ]; then
+            # fstype and label hard-coded, same as in install and rescue scripts
+            ${pkgs.e2fsprogs}/bin/mkfs.ext4 -L data ${cfgPart.device}
+            rm -f $tmpBootMountPoint/${magicWipeFile}
+        fi
+
+        # === Cleanup
+        umount $tmpBootMountPoint
+        rmdir $tmpBootMountPoint
+    '';
+
     system.activationScripts = {
     ensurePersistentFoldersExist = lib.stringAfter [ "groups" ] (
       lib.concatStringsSep "\n"
@@ -88,52 +123,26 @@ with lib;
         '') cfg.persistentFolders));
     };
 
-    # Note: this service executes its payload when STOPPED,
-    # so the conditions are "in reverse" - don't get confused!
+    # Note: this service always exists, but will fail if /boot filesystem is not
+    # configured
     systemd.services."playos-wipe-persistent-data" = {
       # Disable the service on boot. Note that `enable = false` would mask the service,
       # which prevents it from being run entirely and is not what we want.
       wantedBy = mkForce [ ];
 
-      # Ensure this service is stopped AFTER the persistent data partition is unmounted
-      before = [
-        (pathToSystemdMountUnit cfgPart.mountPath)
+      requires = [
+        "boot.mount"
       ];
-
-      # Ensure /nix/store is still mounted while this unit is being stopped
-      after = [
-        "nix-store.mount"
-      ];
-
-      # Specifies that this unit should fail if /nix/store is not available,
-      # without attempting to re-mount it.
-      requisite = [
-        "nix-store.mount"
-      ];
-
-      unitConfig = {
-        DefaultDependencies = "no";
-      };
 
       serviceConfig = {
         User = "root";
         Group = "root";
         Type = "oneshot";
         RemainAfterExit = "yes";
-        TimeoutStopSec = "2min"; # ensure it always has enough time to complete
-        ExecStart = pkgs.writeShellScript "start-wipe" ''
-            echo "Unit activated, persistent data will be wiped on shutdown or reboot!"
+        ExecStart = pkgs.writeShellScript "enable-wipe" ''
+            touch /boot/${magicWipeFile}
+            echo "Wipe activated, persistent data will be wiped on next boot!"
         '';
-        ExecStop =
-            # Not attempting to be generic here because it would require
-            # handling many cases (tmpfs, auto) and ensure appropriate (mkfs.X)
-            # binaries are available (which live in a jungle of packages).
-            #
-            # Format (ext4) and label ('data') match hard-coded values in
-            # install and rescue scripts.
-            pkgs.writeShellScript "wipe-data" ''
-                ${pkgs.e2fsprogs}/bin/mkfs.ext4 -v -F -L data ${cfgPart.device}
-            '';
       };
     };
   };
