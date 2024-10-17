@@ -2,6 +2,7 @@
 
 ## Added
 
+- kiosk: Migrate to Qt6
 - kiosk: Open settings with a long press on the Menu key
 - controller: Enable spatial navigation using the arrow keys
 - os: Improve installation device selection
@@ -34,7 +35,6 @@
 - os: Limit permitted SSH modes and forwarding options
 - os: Ignore suspend and hibernation key presses, but interpret as poweroff when long-pressed
 - driver: Upgrade to add support for Senso firmware updates via app
-- kiosk: Migrate to Qt6
 
 ## Removed
 
