@@ -54,6 +54,12 @@ class MainWidget(QtWidgets.QWidget):
         # Look at events with the eventFilter function
         self.installEventFilter(self)
 
+    def closeEvent(self, event):
+        event.accept()
+
+        # Unset page in web view to avoid it outliving the browser profile
+        self._dialogable_browser.inner_widget()._webview.setPage(None)
+
     # Private
 
     def _toggle_settings(self):

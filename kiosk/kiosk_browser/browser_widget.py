@@ -32,7 +32,8 @@ class BrowserWidget(QtWidgets.QWidget):
         # Init views
         self._loading_page = loading_page(self)
         self._network_error_page = network_error_page(self)
-        self._webview = QtWebEngineWidgets.QWebEngineView(self)
+        self._profile = QtWebEngineCore.QWebEngineProfile("Default")
+        self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
 
         # Add views to layout
         self._layout.addWidget(self._loading_page)
