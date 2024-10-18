@@ -1,4 +1,4 @@
-{ pkgs, system_name, system_version }:
+{ pkgs, system_name, system_version, additional_inputs ? [] }:
 
 with pkgs;
 
@@ -15,32 +15,37 @@ python3Packages.buildPythonApplication rec {
       --replace "@system_version@" "${system_version}"
   '';
 
-  doCheck = false;
+  buildInputs = [
+    bashInteractive
+    makeWrapper
+  ];
 
-  nativeBuildInputs = [ qt5.wrapQtAppsHook mypy ];
+  nativeBuildInputs = [
+    mypy
+    qt6.wrapQtAppsHook
+  ];
 
   propagatedBuildInputs = with python3Packages; [
     dbus-python
     pygobject3
-    pyqtwebengine
+    pyqt6-webengine
     pytest
+    qt6.qtbase
     requests
     types-requests
-  ];
+  ] ++ additional_inputs;
 
   postInstall = ''
     cp -r images/ $out/images
   '';
 
-  dontWrapQtApps = true;
-  makeWrapperArgs = [ "\${qtWrapperArgs[@]}" ];
-
   shellHook = ''
     # Give access to kiosk_browser module
     export PYTHONPATH=./:$PYTHONPATH
 
-    # Give access to Qt platform plugin "xcb" in nix-shell
-    export QT_QPA_PLATFORM_PLUGIN_PATH="${qt5.qtbase.bin}/lib/qt-${qt5.qtbase.version}/plugins";
+    # Setup Qt environment
+    bashdir=$(mktemp -d)
+    makeWrapper "$(type -p bash)" "$bashdir/bash" "''${qtWrapperArgs[@]}"
+    exec "$bashdir/bash"
   '';
-
 }

@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt6 import QtWidgets, QtCore, QtGui
 import time
 
 from kiosk_browser import browser_widget, captive_portal, dialogable_widget, proxy as proxy_module
@@ -48,11 +48,17 @@ class MainWidget(QtWidgets.QWidget):
         self._layout.addWidget(self._dialogable_browser)
         self.setLayout(self._layout)
 
-        # Shortcut to toggle settings
-        QtWidgets.QShortcut(toggle_settings_key, self).activated.connect(self._toggle_settings)
+        # Shortcuts
+        QtGui.QShortcut(toggle_settings_key, self).activated.connect(self._toggle_settings)
 
         # Look at events with the eventFilter function
         self.installEventFilter(self)
+
+    def closeEvent(self, event):
+        event.accept()
+
+        # Unset page in web view to avoid it outliving the browser profile
+        self._dialogable_browser.inner_widget()._webview.setPage(None)
 
     # Private
 
@@ -84,15 +90,15 @@ class MainWidget(QtWidgets.QWidget):
 
     def eventFilter(self, source, event):
         # Toggle settings with a long press on the Menu key
-        if event.type() == QtCore.QEvent.ShortcutOverride:
-            if event.key() == QtCore.Qt.Key_Menu:
+        if event.type() == QtCore.QEvent.Type.ShortcutOverride:
+            if event.key() == QtCore.Qt.Key.Key_Menu:
                 if not event.isAutoRepeat():
                     self._menu_press_since = time.time()
                 elif self._menu_press_since is not None and time.time() - self._menu_press_since > self._menu_press_delay_seconds:
                     self._menu_press_since = None
                     self._toggle_settings()
-        elif event.type() == QtCore.QEvent.KeyRelease:
-            if event.key() == QtCore.Qt.Key_Menu and not event.isAutoRepeat():
+        elif event.type() == QtCore.QEvent.Type.KeyRelease:
+            if event.key() == QtCore.Qt.Key.Key_Menu and not event.isAutoRepeat():
                 self._menu_press_since = None
 
         return super(MainWidget, self).eventFilter(source, event)

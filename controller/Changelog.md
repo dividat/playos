@@ -2,6 +2,7 @@
 
 ## Added
 
+- kiosk: Migrate to Qt6
 - kiosk: Open settings with a long press on the Menu key
 - controller: Enable spatial navigation using the arrow keys
 - os: Improve installation device selection
@@ -23,6 +24,7 @@
 
 - kiosk: Add a key combination to perform hard refresh (Ctrl-Shift-R)
 - os: Added localization options for Polish and Czech
+- controller: Add licensing page in System Settings
 - status screen: Display MAC addresses in text and QR code
 
 ## Changed

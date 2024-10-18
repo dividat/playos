@@ -1,9 +1,9 @@
 import sys
 import logging
 import signal
-from PyQt5.QtCore import Qt, QUrl, QSize
-from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QKeySequence
+from PyQt6.QtWidgets import QApplication
 
 from kiosk_browser import main_widget
 
@@ -12,6 +12,7 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
     logging.basicConfig(level=logging.INFO)
 
     app = QApplication(sys.argv)
+    app.setApplicationName("kiosk-browser")
 
     mainWidget = main_widget.MainWidget(
         kiosk_url = parseUrl(kiosk_url),
@@ -19,7 +20,7 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
         toggle_settings_key = QKeySequence(toggle_settings_key)
     )
 
-    mainWidget.setContextMenuPolicy(Qt.NoContextMenu)
+    mainWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
 
     screen_size = app.primaryScreen().size()
 
@@ -43,7 +44,7 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
     signal.signal(signal.SIGTERM, quit_on_signal)
 
     # Start application
-    app.exec_()
+    app.exec()
 
 def parseUrl(url):
     parsed_url = QUrl(url)
