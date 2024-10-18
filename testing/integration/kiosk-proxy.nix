@@ -2,6 +2,7 @@ let
   pkgs = import ../../pkgs { };
   serverPort = 8080;
   proxyPort = 8888;
+  kioskUrl = "http://kiosk.local/";
   kiosk = import ../../kiosk {
     pkgs = pkgs;
     system_name = "PlayOS";
@@ -13,11 +14,12 @@ pkgs.nixosTest {
   name = "proxy-test";
 
   nodes = {
-    thecloud = {
+    theproxy = {
       virtualisation.vlans = [ 1 ];
 
-      networking = {
-        firewall.allowedTCPPorts = [ serverPort ];
+      networking.firewall = {
+        enable = false;
+        allowedTCPPorts = [ proxyPort ];
       };
 
       systemd.services.http-server = {
@@ -40,13 +42,6 @@ pkgs.nixosTest {
           Restart = "always";
         };
       };
-      };
-
-    theproxy = { config, ... }: {
-      virtualisation.vlans = [ 2 1 ];
-
-      networking.nat.enable = true;
-      networking.firewall.allowedTCPPorts = [ proxyPort ];
 
       services.tinyproxy = {
         enable = true;
@@ -54,6 +49,9 @@ pkgs.nixosTest {
           Listen = "0.0.0.0";
           Port = proxyPort;
           BasicAuth = "user p4ssw0rd";
+          Upstream = [
+            ''http 127.0.0.1:8080 "${builtins.head (builtins.match "https?://([^/]+)/?" kioskUrl)}"''
+          ];
         };
       };
     };
@@ -64,12 +62,11 @@ pkgs.nixosTest {
         (pkgs.importFromNixos "tests/common/x11.nix")
       ];
 
-      virtualisation.vlans = [ 2 ];
+      virtualisation.vlans = [ 1 ];
 
       # Override is needed to enable in test VM, see connman tests:
       # https://github.com/NixOS/nixpkgs/blob/1772251828be641110eb9a47ef530a1252ba211e/nixos/tests/connman.nix#L47-L52
       services.connman.enable = pkgs.lib.mkOverride 0 true;
-      services.connman.networkInterfaceBlacklist = [ "eth0" ];
 
       # We need a graphical environment and regular user for the kiosk browser
       services.xserver = {
@@ -85,31 +82,41 @@ pkgs.nixosTest {
     };
   };
 
-  testScript = ''
-    def reset():
-      thecloud.succeed('rm -f /var/log/request-counter')
+  extraPythonPackages = ps: [
+    ps.colorama
+    ps.types-colorama
+  ];
 
-    def expect_requests(n):
-      if (n == 0):
-        thecloud.succeed('test ! -f /var/log/request-counter')
+
+  testScript = ''
+    ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+
+    def reset():
+      theproxy.succeed('rm -f /var/log/request-counter')
+
+    def expect_requests(n = None):
+      if n is None:
+        theproxy.succeed('test -f /var/log/request-counter')
+      elif n == 0:
+        theproxy.succeed('test ! -f /var/log/request-counter')
       else:
-        thecloud.succeed(f'diff <(echo {n}) /var/log/request-counter')
+        theproxy.succeed(f'diff <(echo {n}) /var/log/request-counter')
 
     start_all()
 
     # Wait for the HTTP server and proxy to start
-    thecloud.wait_for_unit('http-server.service')
+    theproxy.wait_for_unit('http-server.service')
     theproxy.wait_for_unit('tinyproxy.service')
 
-    with subtest('Sanity check: Direct curl request fails'):
-      client.fail('curl http://thecloud:${toString serverPort}')
+    with TestPrecondition('Direct curl request to kiosk URL fails'):
+      client.fail('curl ${kioskUrl}')
       expect_requests(0)
 
     reset()
 
-    with subtest('Sanity check: Proxied curl request arrives'):
+    with TestPrecondition('Proxied curl request to kiosk URL arrives'):
       client.succeed(
-        'curl --proxy http://user:p4ssw0rd@theproxy:${toString proxyPort} http://thecloud:${toString serverPort}'
+        'curl --proxy http://user:p4ssw0rd@theproxy:${toString proxyPort} ${kioskUrl}'
       )
       expect_requests(1)
 
@@ -119,29 +126,28 @@ pkgs.nixosTest {
     client.wait_for_x()
     client.wait_for_unit("connman.service")
 
-    with subtest('kiosk-browser can run with configured proxy'):
+    with TestCase('kiosk-browser uses configured proxy'):
       service_name = client.succeed("connmanctl services | head -1 | awk '{print $3}'").strip(' \t\n\r')
       client.succeed(f"connmanctl config {service_name} proxy manual http://user:p4ssw0rd@theproxy:${toString proxyPort}")
 
       kiosk_result = client.execute(
-        'su - alice -c "kiosk-browser http://thecloud:${toString serverPort} http://foo.xyz" 2>&1',
+        'su - alice -c "kiosk-browser ${kioskUrl} http://foo.xyz" 2>&1',
         check_return=False,
         check_output=True,
         timeout=10
       )
 
-      # Ideally here we would check if the request actually arrived at thecloud.
-      # Unfortunately the proxy is currently not contacted by the kiosk in this
-      # test setup, even though if we look we see that the proxy is set as
-      # application proxy. This issue seems to be specific to the test setup, if
-      # we test in a real installation, the configured proxy is actually used.
-      # So for now we simply test whether the proxy has been picked up and
-      # configured.
-
+      # Expect proxy takeup in kiosk logs
       if "Set proxy to theproxy:${toString proxyPort}" not in kiosk_result[1]:
         print(kiosk_result[1])
         raise AssertionError("Expected kiosk logs to contain info about configured proxy.")
-  '';
+
+      # Expect kiosk request in proxy logs
+      wait_for_logs(theproxy, "GET http://kiosk.local/", unit="tinyproxy.service")
+
+      # Expect arrival of one or more requests at the mock server
+      expect_requests()
+'';
 
 }
 
