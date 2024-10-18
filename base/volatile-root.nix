@@ -3,6 +3,7 @@ let
   cfg = config.playos.storage;
   cfgPart = cfg.persistentDataPartition;
   magicWipeFile = ".WIPE_PERSISTENT_DATA";
+  hasBootFs = config.fileSystems ? "/boot";
   bootFsCfg = config.fileSystems."/boot";
   supportedBootFsType = if (bootFsCfg.fsType == "auto") then "vfat" else bootFsCfg.fsType;
 in
@@ -55,17 +56,14 @@ with lib;
 
   config = {
     warnings =
-        (lib.lists.optional
-            (! config.fileSystems ? "/boot")
-            "No /boot filesystem configured, wiping will not work")
-        ++
-        (lib.lists.optional
-            (config.fileSystems."/boot".device == "tmpfs")
-            "/boot filesystem is not persistent, wiping will not work")
-        ++
-        (lib.lists.optional
-            (config.fileSystems."/boot".fsType == "auto")
-            "/boot fstype is auto, filesystem might not be mountable in stage-1")
+        if (! hasBootFs) then
+            [ "No /boot filesystem configured, wiping will not work" ]
+        else if (bootFsCfg.device == "tmpfs") then
+            [ "/boot filesystem is not persistent, wiping will not work" ]
+        else if (bootFsCfg.fsType == "auto") then
+            [ "/boot fstype is auto, filesystem might not be mountable in stage-1" ]
+        else
+            [ ]
     ;
     fileSystems =
       (lib.mapAttrs
@@ -89,11 +87,11 @@ with lib;
     };
 
     # make sure boot fstype (with fallback to at least vfat) support is in initrd
-    boot.supportedFilesystems = [ supportedBootFsType ];
-    boot.initrd.supportedFilesystems = [ supportedBootFsType ];
+    boot.supportedFilesystems = lib.mkIf hasBootFs [ supportedBootFsType ];
+    boot.initrd.supportedFilesystems = lib.mkIf hasBootFs [ supportedBootFsType ];
 
     # Check if /boot contains magicWipeFile and reformat persistent data
-    boot.initrd.postDeviceCommands = lib.optionalString (bootFsCfg.device != null) ''
+    boot.initrd.postDeviceCommands = lib.mkIf hasBootFs ''
         # === Create temp mount point for /boot
         tmpBootMountPoint="/tmp/boot"
         mkdir -p $tmpBootMountPoint
