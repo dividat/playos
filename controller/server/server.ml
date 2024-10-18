@@ -1,18 +1,5 @@
 open Lwt
 
-let shutdown () =
-  match%lwt
-    Lwt_process.(exec
-                   ~stdout:`Dev_null
-                   ~stderr:`Keep
-                   ("", [|"halt"; "--poweroff"|])
-                )
-  with
-  | Unix.WEXITED 0 ->
-    return_unit
-  | _ ->
-    Lwt.fail_with (Format.sprintf "shutdown failed")
-
 let main debug port =
   Logs.set_reporter (Logging.reporter ());
 
@@ -70,7 +57,6 @@ let main debug port =
     Gui.start
       ~systemd
       ~port
-      ~shutdown
       ~rauc
       ~connman
       ~update_s

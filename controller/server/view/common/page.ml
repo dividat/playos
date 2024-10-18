@@ -15,7 +15,7 @@ let menu_link page =
   | Localization -> "/localization"
   | SystemStatus -> "/status"
   | Changelog -> "/changelog"
-  | Shutdown -> "/shutdown"
+  | Shutdown -> "/system/shutdown"
 
 let menu_icon page =
   match page with
@@ -73,11 +73,23 @@ let html ?current_page ?header content =
           [ nav
               ([ Info; Network; Localization; SystemStatus; Changelog ]
                 |> List.concat_map (fun page -> [ menu_item current_page page; txt " " ]))
-          ; div
-              ~a: [ a_class [ "d-Layout__Shutdown" ] ]
-              [ menu_item current_page Shutdown ]
-          ]) 
-      :: header 
+
+          ; form
+              ~a:[ a_action (menu_link Shutdown)
+                 ; a_method `Post
+                 ; a_class [ "d-Layout__Shutdown" ]
+              ]
+              [
+               button
+                  ~a:[
+                      a_class [ "d-Menu__Item" ]
+                  ]
+                  [ menu_icon Shutdown
+                  ; txt (menu_label Shutdown)
+                  ]
+              ]
+          ])
+      :: header
       @ [ main
               ~a:[ a_class [ "d-Layout__Main" ] ]
               [ content ]
