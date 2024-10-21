@@ -130,9 +130,15 @@ async def check_web_storages_after_restart(page, t):
             "TEST_VALUE cookie was not persisted"
         )
 
-def get_booted_slot():
+def get_booted_slot(retries=3):
     rauc_status = json.loads(playos.succeed("rauc status --output-format=json"))
-    return rauc_status['booted']
+    booted = rauc_status['booted']
+    # RAUC sometimes returns `null`, not sure why
+    if (booted is None) and retries > 0:
+        time.sleep(2)
+        return get_booted_slot(retries=retries-1)
+    else:
+        return booted
 
 # ===== Test scenario
 
