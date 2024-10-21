@@ -83,7 +83,7 @@ let factory_reset_call =
               fresh install state. Will require to manually reconfigure network,
               localization and all other settings. Users will have to re-login
               to Dividat Play."
-      ; action_form ~confirm_msg ("/system/factory-reset") "Factory Reset ⚠"
+      ; action_form ~confirm_msg ("/system/factory-reset") "⚠ Factory Reset"
       ]
 
 let other_slot = let open Rauc.Slot in function
