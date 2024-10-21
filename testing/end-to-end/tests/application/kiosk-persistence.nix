@@ -134,6 +134,11 @@ def get_booted_slot():
     rauc_status = json.loads(playos.succeed("rauc status --output-format=json"))
     return rauc_status['booted']
 
+def wait_for_dm_restart():
+    wait_for_logs(playos, "display-manager.service: Scheduled restart job")
+    playos.wait_for_unit("graphical-session.target")
+
+
 # ===== Test scenario
 
 aio = asyncio.Runner()
@@ -167,6 +172,7 @@ with TestCase("Kiosk's debug port open, web storage is persisted") as t:
 
     # check if data is persisted after kiosk is restarted
     playos.succeed("pkill -f kiosk-browser")
+    wait_for_dm_restart()
 
     new_page = aio.run(connect_and_get_kiosk_page())
     aio.run(check_web_storages_after_restart(new_page, t))
