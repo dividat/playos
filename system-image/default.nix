@@ -19,6 +19,7 @@ let nixos = pkgs.importFromNixos ""; in
     fileSystems = {
       "/boot" = {
         device = "/dev/disk/by-label/ESP";
+        fsType = "vfat";
       };
     };
     playos.storage = {
