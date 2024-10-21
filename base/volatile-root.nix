@@ -58,8 +58,6 @@ with lib;
     warnings =
         if (! hasBootFs) then
             [ "No /boot filesystem configured, wiping will not work" ]
-        else if (bootFsCfg.device == "tmpfs") then
-            [ "/boot filesystem is not persistent, wiping will not work" ]
         else if (bootFsCfg.fsType == "auto") then
             [ "/boot fstype is auto, filesystem might not be mountable in stage-1" ]
         else
