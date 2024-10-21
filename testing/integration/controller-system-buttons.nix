@@ -29,34 +29,10 @@ pkgs.testers.runNixOSTest {
           inherit pkgs kioskUrl playos-controller;
           inherit safeProductName fullProductName greeting version;
         })
+        ../system/fake-rauc-boot.nix
       ];
 
       config = {
-        # These are sufficient to fool RAUC into thinking things are somewhat
-        # properly set up.
-        boot.kernelParams = [
-            "rauc.slot=a"
-        ];
-        boot.postBootCommands = ''
-            mkdir -p /boot/grub
-            ${pkgs.grub2_efi}/grub-editenv - set 'ORDER="a b"'
-            ${pkgs.grub2_efi}/grub-editenv - set a_TRY=0
-            ${pkgs.grub2_efi}/grub-editenv - set a_OK=1
-            ${pkgs.grub2_efi}/grub-editenv - set b_TRY=0
-            ${pkgs.grub2_efi}/grub-editenv - set b_OK=1
-        '';
-
-        fileSystems."/boot" = {
-          device = "tmpfs";
-          fsType = "tmpfs";
-          options = [ "mode=0755" ];
-        };
-
-
-        playos.selfUpdate = {
-          enable = true;
-          updateCert = pkgs.writeText "dummy.pem"  "";
-        };
         services.connman = {
           enable = pkgs.lib.mkOverride 0 true; # disabled in runNixOSTest by default
         };
