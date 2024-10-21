@@ -2,10 +2,12 @@
     config = {
         # These are sufficient to fool RAUC into thinking things are somewhat
         # properly set up.
-        fileSystems."/boot" = {
+        virtualisation.fileSystems."/boot" = {
           device = "tmpfs";
           fsType = "tmpfs";
           options = [ "mode=0755" ];
+          neededForBoot = true; # only to consolidate it with qemu-vm.nix
+                                # creating an ad-hoc /boot directory during stage-1
         };
         boot.kernelParams = [
             "rauc.slot=a"
