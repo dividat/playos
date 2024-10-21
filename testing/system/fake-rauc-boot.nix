@@ -1,7 +1,5 @@
 { pkgs, config, ...}: {
     config = {
-        networking.firewall.enable = false;
-
         # These are sufficient to fool RAUC into thinking things are somewhat
         # properly set up.
         fileSystems."/boot" = {
