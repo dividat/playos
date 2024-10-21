@@ -6,7 +6,7 @@ let
 in
 with pkgs.lib;
 pkgs.testers.runNixOSTest {
-  name = "Controller system calls";
+  name = "Persistent data partition wipe (factory reset) works";
 
   nodes = {
     playos = { config, ... }: {
