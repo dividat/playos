@@ -47,7 +47,7 @@ let note body = div
   [ txt body  ]
 
 let reboot_call =
-      [ note "There is a new system update installed, reboot PlayOS to enable it."
+      [ note "A new version of PlayOS has been installed, reboot to switch to the new version."
       ; action_form "/system/reboot" "Reboot into updated version"
       ]
 
