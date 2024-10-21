@@ -97,7 +97,7 @@ with lib;
         mkdir -p $tmpBootMountPoint
 
         # === Resolve /boot's file system type
-        # Sinc ebusybox mount does not deal with `auto` well in initrd, copied
+        # Since busybox mount does not deal with `auto` well in initrd, copied
         # from nixos stage-1-init.sh
         fsType="${bootFsCfg.fsType}"
         if [ "$fsType" = auto ]; then
