@@ -69,7 +69,7 @@ let switch_to_older_system_call target_slot =
 
 let reinstall_call target_slot  =
       [ note "The PlayOS installation appears to be faulty, manual system
-              reinsallation is recommended. Please contact support. You can
+              reinstallation is recommended. Please contact support. You can
               attempt to switch to another system slot (requires reboot)."
       ; action_form
             ("/system/switch/" ^ (slot_fmt target_slot))
