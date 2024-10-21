@@ -54,6 +54,8 @@ import json
 import time
 from enum import StrEnum, auto
 
+aio = asyncio.Runner()
+
 # ===== Test settings
 
 class WebStorageBackends(StrEnum):
@@ -130,15 +132,16 @@ async def check_web_storages_after_restart(page, t):
             "TEST_VALUE cookie was not persisted"
         )
 
-def get_booted_slot(retries=3):
-    rauc_status = json.loads(playos.succeed("rauc status --output-format=json"))
-    booted = rauc_status['booted']
-    # RAUC sometimes returns `null`, not sure why
-    if (booted is None) and retries > 0:
-        time.sleep(2)
-        return get_booted_slot(retries=retries-1)
-    else:
+def get_booted_slot():
+    playos.wait_for_unit("rauc.service")
+    async def inner():
+        # RAUC sometimes returns `null` or even dumps core, not sure why
+        rauc_status = json.loads(playos.succeed("rauc status --output-format=json"))
+        booted = rauc_status['booted']
+        assert booted is not None, "RAUC returned 'None' for booted slot"
         return booted
+
+    return aio.run(retry_until_no_exception(inner))
 
 def wait_for_dm_restart():
     wait_for_logs(playos, "display-manager.service: Scheduled restart job")
@@ -147,7 +150,6 @@ def wait_for_dm_restart():
 
 # ===== Test scenario
 
-aio = asyncio.Runner()
 run_stub_server(${toString hostKioskURLport})
 
 create_overlay("${disk}", "${overlayPath}")
@@ -197,7 +199,6 @@ playos.shutdown()
 playos.start()
 
 with TestPrecondition("Booted into slot b") as t:
-    playos.wait_for_unit("rauc.service")
     t.assertEqual(get_booted_slot(), "b")
 
 with TestCase("kiosk's web storage is restored") as t:
