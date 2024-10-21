@@ -77,7 +77,7 @@ let reinstall_call target_slot  =
       ]
 
 let factory_reset_call =
-    let confirm_msg = "This will wipe all configuration and user data. Are you sure?"
+    let confirm_msg = "This will wipe all configuration and login data. Proceed?"
     in
       [ note "WARNING: Clears all user data and reboots the machine, resulting in a
               fresh install state. Will require to manually reconfigure network,
