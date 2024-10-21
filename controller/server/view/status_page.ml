@@ -81,8 +81,8 @@ let factory_reset_call =
     in
       [ note "WARNING: Clears all user data and reboots the machine, resulting in a
               fresh install state. Will require to manually reconfigure network,
-              localization and all other settings. Users will have to re-login
-              to Dividat Play."
+              localization and all other settings. Any active sessions and/or
+              logins will be expired."
       ; action_form ~confirm_msg ("/system/factory-reset") "⚠ Factory Reset"
       ]
 
