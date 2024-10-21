@@ -136,7 +136,7 @@ def get_booted_slot():
 
 def wait_for_dm_restart():
     wait_for_logs(playos, "display-manager.service: Scheduled restart job")
-    playos.wait_for_unit("graphical-session.target")
+    playos.wait_for_x()
 
 
 # ===== Test scenario
