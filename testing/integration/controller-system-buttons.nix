@@ -47,8 +47,8 @@ pkgs.testers.runNixOSTest {
     };
   };
 
-  # Note: using mostly `wait_for_console_text` mostly here, because test-driver
-  # crashes if using wait_for_unit or other higher level asserts
+  # Note: using mostly `wait_for_console_text` here, because test-driver
+  # crashes if using `wait_for_unit` or other higher level asserts
   testScript = ''
     def wait_for_http():
         playos.wait_for_unit("playos-controller.service")

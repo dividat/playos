@@ -74,6 +74,7 @@ boot_volume_image = "${bootVolumeImage}"
 persistent_volume_image = "${persistentVolumeImage}"
 
 create_qemu_disk_image(boot_volume_image)
+
 subprocess.run(["${pkgs.dosfstools}/bin/mkfs.vfat",
     "-n", "ESP", boot_volume_image],
     check=True
@@ -87,7 +88,8 @@ subprocess.run(["${pkgs.e2fsprogs}/bin/mkfs.ext4",
 )
 
 # ==== Test scenario
-# scenario is re-used in e2e tests as well
+# Note: scenario is re-used in e2e tests as well
+
 ${builtins.readFile ./factory-reset-scenario.py}
 '';
 }
