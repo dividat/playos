@@ -156,10 +156,10 @@ with pkgs; stdenv.mkDerivation {
   ''
   # Tests
   + lib.optionalString buildTest ''
-    ln -s ${testComponents.tests.interactive-tests} $out/tests
+    mkdir -p $out/tests
+    ln -s ${testComponents.tests.interactive} $out/tests/interactive
+    ln -s ${testComponents.tests.tests} $out/tests/tests
   '';
 
-  passthru.tests = lib.optionalAttrs buildTest {
-    end-to-end = testComponents.tests.run-tests;
-  };
+  passthru.tests = testComponents.tests.run;
 }

@@ -126,11 +126,11 @@ elif [ "$TARGET" == "test-e2e" ]; then
     --arg buildDisk false \
     --arg buildTest true
   "
-  echo "Building interactive e2e test runners."
+  echo "Building e2e test runners."
   (set -x; nix-build $test_flags)
   echo "Running e2e tests..."
-  (set -x; nix-build $test_flags -A tests --no-out-link)
-  echo "Done. All e2e tests passed."
+  (set -x; nix-build $test_flags -A tests -o test-output)
+  exit $(cat test-output/status)
 
 elif [ "$TARGET" == "all" ]; then
 

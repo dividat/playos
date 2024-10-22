@@ -81,6 +81,9 @@ jobs:
     - name: Make magic-nix-cache read-only by removing post-build-hook
       run: sed -i '/post-build-hook = magic-nix-cache-build-hook/d' $HOME/.config/nix/nix.conf
     - run: ./build test-e2e
+    - name: Add summary
+      run: cat test-output/test-report.md >> "$GITHUB_STEP_SUMMARY"
+      if: always()
 
   ocaml-tests:
     runs-on: ubuntu-latest
