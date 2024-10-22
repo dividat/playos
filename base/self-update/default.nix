@@ -23,8 +23,12 @@ in
 
     systemd.services.rauc = {
       description = "RAUC Update Service";
-      serviceConfig.ExecStart = "${pkgs.rauc}/bin/rauc service";
-      serviceConfig.User = "root";
+      serviceConfig = {
+        Type = "dbus";
+        BusName= "de.pengutronix.rauc";
+        ExecStart = "${pkgs.rauc}/bin/rauc service";
+        User = "root";
+      };
       wantedBy = [ "multi-user.target" ];
     };
 
