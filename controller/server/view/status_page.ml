@@ -99,7 +99,7 @@ let suggested_action_of_state (update:Update.state) (rauc:rauc_state) booted_slo
             Some (Definition.description (
                 switch_to_newer_system_call target_slot
             ))
-        | (UpToDate {booted; inactive}, Status _) when booted != inactive ->
+        | (UpToDate {booted; inactive}, Status _) when booted <> inactive ->
             Some (Definition.description (
                 switch_to_older_system_call target_slot
             ))
