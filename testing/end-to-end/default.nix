@@ -35,7 +35,7 @@ let
     '';
     genReport = pkgs.writers.writePython3 "gen-report"
         { libraries = with pkgs.python3Packages; [ colorama ];
-          flakeIgnore = [ "E731" "E501" ];
+          flakeIgnore = [ "E731" "E501" "E741" ];
         }
         (readFile ./gen-report.py);
 in

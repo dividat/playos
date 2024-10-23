@@ -66,6 +66,7 @@ def format_markdown(full_report):
     bold_f = lambda s: f"**{s}**"
     ok_f = lambda s: f"{s} :heavy_check_mark:"
     fail_f = lambda s: f"{s} :x:"
+
     def log_f(logs):
         lines = html.escape(logs).splitlines()
         lines = [l if l.strip() else "<br/>" for l in lines]
@@ -77,6 +78,7 @@ def format_markdown(full_report):
 {log_str}
 </pre>
 </details>""", 4 * ' ')
+
     return format_gen(full_report, bold_f, ok_f, fail_f, log_f)
 
 
