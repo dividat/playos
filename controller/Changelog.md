@@ -7,6 +7,8 @@
 - controller: Enable spatial navigation using the arrow keys
 - os: Improve installation device selection
 - os: Add end-to-end system tests
+- controller: Add factory reset button to System Status page
+- controller: Add system switch calls to System Status page
 
 ## Changed
 
