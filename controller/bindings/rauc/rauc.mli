@@ -9,6 +9,10 @@ module Slot : sig
     | SystemA
     | SystemB
 
+  val t_of_string : string -> t
+
+  val string_of_t : t -> string
+
   type status =
     { device : string
     ; class' : string
@@ -26,6 +30,10 @@ val get_booted_slot : t -> Slot.t Lwt.t
 
 (** [mark_good rauc slot] marks the slot [slot] as good *)
 val mark_good : t -> Slot.t -> unit Lwt.t
+
+(** [mark_active rauc slot] marks the slot [slot] as active
+    (i.e. to-be-booted-to on reboot) *)
+val mark_active : t -> Slot.t -> unit Lwt.t
 
 (** Rauc status *)
 type status =

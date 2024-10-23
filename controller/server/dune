@@ -9,7 +9,7 @@
    licensing_page page definition icon)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium tyxml rauc zerotier connman locale network timedate systemd
-  semver2 fieldslib screen_settings)
+  semver2 fieldslib screen_settings util)
  (preprocess (pps lwt_ppx ppx_sexp_conv)))
 
 (library

@@ -4,6 +4,7 @@ let
   tty = "tty${toString ttyNumber}";
   ttyPath = "/dev/${tty}";
   driverUrl = "http://127.0.0.1:8382";
+  dataPath = config.playos.storage.persistentDataPartition.mountPath;
 
   script =
     pkgs.writeShellScriptBin "print-status" ''
@@ -13,7 +14,7 @@ let
         ethernetMacs=$(cat /sys/class/net/e*/address 2>/dev/null | grep -v '^$' | awk '{print "Ethernet " $0}' | tr '\n' '  ')
         wlanMacs=$(cat /sys/class/net/wl*/address 2>/dev/null | grep -v '^$' | awk '{print "WLAN " $0}' | tr '\n' '  ')
         rfid=$(opensc-tool --list-readers | pr -T -o 2)
-        dataDiskFree=$(df -h /mnt/data | pr -T -o 2)
+        dataDiskFree=$(df -h ${dataPath} | pr -T -o 2)
         controller=$(systemctl is-active playos-controller)
         time=$(date +'%T %Z')
         printf "\033c"

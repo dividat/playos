@@ -85,10 +85,13 @@ html {
     align-items: center;
     padding: var(--spacing-cat) var(--spacing-dog);
     gap: var(--spacing-cat);
+    width: 100%;
+    border: none;
     border-bottom: 1px solid var(--color-border);
     text-decoration: none;
     color: black;
     white-space: nowrap;
+    cursor: pointer;
 }
 
 .d-Menu__Item--Active {

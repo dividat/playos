@@ -118,7 +118,27 @@ Setup timezone, language, keyboard layout, and screen resolution preferences.
 #+attr_html: :width 800px
 [[../screenshots/controller-system-status.png]]
 
-View System Health, Update and RAUC states.
+View System Health, Update and RAUC states. Perform system maintenance actions
+and factory reset.
+
+Based on the current system update and health state, this page will display
+recommended or available user actions, which include:
+
+- ~Reboot into updated version~: displayed after a newer version of PlayOS has
+  been installed. Note that PlayOS will boot into the updated version upon
+  restart without any user interaction, so this button is mostly a convenient
+  notification.
+- ~Switch to newer version and reboot~: displayed when an older version of
+  PlayOS is currently selected as the default.
+- ~Switch to older version and reboot~: displayed when running the latest
+  version, inverse of above action.
+- ~Switch to other slot and reboot~: displayed when running a faulty
+  installation and system versions cannot be determined.
+
+All of these actions will trigger a system reboot.
+
+An option to wipe all configuration and login data is available via the
+~⚠ Factory Reset~ button. Read more in [[#wiping-user-data][Wiping user data]].
 
 ** Changelog
 
@@ -141,7 +161,16 @@ At times network issues may cause corrupted media resources to end up in the kio
 
 Certain user data such as Play login credentials, wireless settings are stored persistently on the computer's disk.
 
-User data can be completely deleted (wiped) from the rescue system. To start the rescue system, reboot the computer and press the ~Escape~ key once the message "Welcome to GRUB!" appears. This will show the boot loader menu:
+User data can be completely deleted (wiped) in two ways:
+
+1. Using the ~Factory reset~ button in the [[#system-status][System Status]] page.
+2. Manually via the rescue system.
+
+Option 1 is easiest and preferred, but option 2 is provided as a fallback.
+
+*** Wiping user data via the rescue system
+
+To start the rescue system, reboot the computer and press the ~Escape~ key once the message "Welcome to GRUB!" appears. This will show the boot loader menu:
 
 #+CAPTION: Boot loader
 #+NAME: fig:boot-loader
