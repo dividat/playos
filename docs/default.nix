@@ -39,7 +39,7 @@ stdenv.mkDerivation {
     cd ../user-manual
     pandoc \
         --template ../templates/default.html \
-        --toc --number-sections \
+        --toc --number-sections --toc-depth=2 \
         -V version=${version} -M date=$DATE \
         -t html5 \
         --standalone --self-contained -o $out/user-manual.html \
