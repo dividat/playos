@@ -2,6 +2,7 @@ import subprocess
 import unittest
 from colorama import Fore, Style
 import re
+import sys
 
 # HACK: create writable cow disk overlay (same as in ./run-in-vm --disk)
 def create_overlay(disk, overlay_path):
@@ -13,6 +14,9 @@ def create_overlay(disk, overlay_path):
         ],
         check=True)
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 class AbstractTestCheck(object):
     def __init__(self, check_kind, test_descr):
         self.check_kind = check_kind
@@ -20,8 +24,8 @@ class AbstractTestCheck(object):
         self.test_c = unittest.TestCase()
 
     def print_descr(self, outcome=""):
-        print(f"{Style.BRIGHT}[{self.check_kind}] {self.test_descr}... {outcome}")
-        print(Style.RESET_ALL)
+        eprint(f"{Style.BRIGHT}[{self.check_kind}] {self.test_descr}... {outcome}")
+        eprint(Style.RESET_ALL)
 
     def print_ok(self):
         self.print_descr(outcome=f"{Fore.GREEN}OK!")
@@ -56,10 +60,10 @@ def wait_for_logs(vm, regex, unit=None, timeout=10):
     try:
         vm.wait_until_succeeds(full_cmd, timeout=timeout)
     except Exception as e:
-        print(f"wait_for_logs ({full_cmd}) failed after {timeout} seconds")
-        print("Last VM logs:\n")
+        eprint(f"wait_for_logs ({full_cmd}) failed after {timeout} seconds")
+        eprint("Last VM logs:\n")
         _, output = vm.execute(f"{journal_cmd} | tail -30")
-        print(output)
+        eprint(output)
         raise e
 
 
