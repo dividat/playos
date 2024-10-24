@@ -16,9 +16,6 @@ let page html =
   Format.asprintf "%a" (Tyxml.Html.pp ()) html
   |> Response.of_string_body ~headers
 
-let success content =
-  page (Page.html (Tyxml.Html.txt content))
-
 type 'a timeout_params =
   { duration: float
   ; on_timeout: unit -> 'a Lwt.t
