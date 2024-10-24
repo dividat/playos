@@ -106,10 +106,9 @@ rec {
               esac
 
               # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-6/qtwebengine-debugging.html)
-              export QTWEBENGINE_REMOTE_DEBUGGING = \
-                "${getCfgVal "kiosk.remote_debug_listen"}"
+              export QTWEBENGINE_REMOTE_DEBUGGING="${getCfgVal "kiosk.remote_debug_listen"}"
 
-              controller_port = "${getCfgVal "controller.port"}"
+              controller_port="${getCfgVal "controller.port"}"
 
               ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
                 "${getCfgVal "kiosk.url"}" \
