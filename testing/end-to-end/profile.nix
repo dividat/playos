@@ -11,13 +11,13 @@
 
         # Enable runtime configuration overrides without rebuilding the disk
         fileSystems = {
-            "/mnt/extra-test-files" = {
+            "/tmp/extra-test-files" = {
                 device = "extra-test-files";
                 fsType = "9p";
                 options = [ "nofail" "trans=virtio" "version=9p2000.L" "cache=loose" ];
             };
             "/etc/playos-config.toml" = {
-                device = "/mnt/extra-test-files/playos-config.toml";
+                device = "/tmp/extra-test-files/playos-config.toml";
                 options = [ "bind" "nofail" ];
             };
         };
