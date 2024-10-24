@@ -83,3 +83,6 @@ jobs:
         # is ~7GB
         use-gha-cache: false
     - run: ./build test-e2e
+    - name: Add summary
+      run: cat test-output/test-report.md >> "$GITHUB_STEP_SUMMARY"
+      if: always()

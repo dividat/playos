@@ -211,7 +211,7 @@ pkgs.testers.runNixOSTest {
         ))
         t.assertEqual(
             rauc_status['boot_primary'],
-            "system.b",
+            "system.x",
             "RAUC installation did not change boot primary other (i.e. system.b) slot"
         )
 

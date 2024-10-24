@@ -3,6 +3,7 @@ import multiprocessing as mp
 import requests
 import asyncio
 import pyppeteer # type: ignore
+import tempfile
 
 # Forward external `port` to 127.0.0.1:port and add firewall exception to allow
 # external access to internal services in PlayOS
@@ -45,12 +46,17 @@ async def retry_until_no_exception(func, retries=3, sleep=3.0):
 # due to nix sandboxing, network access is isolated, so
 # we run a minimal HTTP server for opening in the kiosk
 def run_stub_server(port):
-    with open("index.html", "w") as f:
+    d = tempfile.TemporaryDirectory()
+    with open(f"{d.name}/index.html", "w") as f:
         f.write("Hello world")
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=d.name, **kwargs)
 
     server = http.server.HTTPServer(
         ("", port),
-        http.server.SimpleHTTPRequestHandler
+        Handler
     )
     print(f"Starting HTTP server on port {port}")
     # Running as a separate process to avoid GIL
