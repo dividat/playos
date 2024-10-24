@@ -136,12 +136,8 @@ with TestCase("Controller uses proxy for captive portal"):
 
 with TestCase("Controller is able to query the version and initiate download"):
     wait_for_logs(playos,
-        "update mechanism.*Downloading",
+        f"Downloading.*{latest_version}",
         unit="playos-controller.service",
         timeout=61)
-    wait_for_logs(playos,
-        f"version.*{latest_version}",
-        unit="playos-controller.service",
-        timeout=3)
 '';
 }
