@@ -13,7 +13,7 @@ jobs:
       run: |
         FILES=$(find testing/integration -name '*.nix' -printf '"%p",')
         FILES_JSON="[${FILES%,}]"
-        echo "::set-output name=integration_tests::${FILES_JSON}"
+        echo "integration_tests=${FILES_JSON}" >> $GITHUB_OUTPUT
 
   integration-tests:
     needs: prepare-matrix
