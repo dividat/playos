@@ -34,7 +34,7 @@ ocamlPackages.buildDunePackage rec {
   postFixup = ''
     for prog in "$out"/bin/*; do
         wrapProgram $prog \
-            --set PATH ${lib.makeBinPath [ curl ]}
+            --prefix PATH ":" ${lib.makeBinPath [ curl ]}
     done
   '';
 
