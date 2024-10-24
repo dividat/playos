@@ -14,13 +14,6 @@ def expose_local_port(vm, port):
         print(f"Port {port} already exposed")
         return
 
-    # enable NAT on loopback
-    vm.succeed("sysctl net.ipv4.conf.all.route_localnet=1")
-
-    # forward the port
-    vm.succeed("iptables -t nat -A PREROUTING -p tcp " + \
-                f"--dport {port} -j DNAT --to-destination 127.0.0.1:{port}")
-
     # open the port in the firewall
     vm.succeed(f"iptables -A INPUT -p tcp --dport {port} -j ACCEPT")
     vm.succeed("systemctl reload firewall")
