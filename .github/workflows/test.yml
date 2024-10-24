@@ -19,6 +19,7 @@ jobs:
     needs: prepare-matrix
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         file: ${{fromJson(needs.prepare-matrix.outputs.integration_tests)}}
     steps:
