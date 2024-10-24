@@ -173,13 +173,17 @@ pkgs.testers.runNixOSTest {
         wait_for_logs(playos, expected_kiosk_logs)
 
     with TestCase("Controller is able to query the version"):
-        expected_controller_log = f"latest.*{current_version}"
-        wait_for_logs(playos,
-            expected_controller_log,
-            unit="playos-controller.service",
-            # this should not be longer than 30, could there be some
-            # DNS cache somehwere?
-            timeout=61)
+        expected_states = [
+            "GettingVersionInfo",
+            "UpToDate",
+            f"latest.*{current_version}"
+        ]
+
+        for state in expected_states:
+            wait_for_logs(playos,
+                state,
+                unit="playos-controller.service",
+                timeout=61)
 
     with TestCase("Controller installs the new upstream version") as t:
         next_version = "${nextVersion}"
@@ -190,6 +194,10 @@ pkgs.testers.runNixOSTest {
         )
         update_server.add_bundle(next_version, filepath="/tmp/next-bundle.raucb")
         update_server.set_latest_version(next_version)
+
+        # reboot controller to trigger version check
+        # TODO: override config to reduce check interval instead
+        playos.systemctl("restart playos-controller.service")
 
         expected_states = [
             "Downloading",
