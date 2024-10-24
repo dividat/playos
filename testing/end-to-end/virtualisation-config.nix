@@ -2,10 +2,11 @@
 with lib;
 let
     cfg = config.playos.e2e-tests;
-    virtfsDir = pkgs.linkFarm "extra-files" [{
-        name = "playos-config.toml";
-        path = cfg.overlayConfig;
-    }];
+    # Note: cannot use symlinks (e.g. `linkFarm`) here
+    virtfsDir = pkgs.runCommand "extra-test-files" {} ''
+        mkdir -p $out
+        cp ${cfg.overlayConfig} $out/playos-config.toml
+    '';
 in
 {
     options = {
