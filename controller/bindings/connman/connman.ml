@@ -174,6 +174,14 @@ struct
     | Online
   [@@deriving sexp, yojson]
 
+  type security =
+    | None
+    | WEP
+    | PSK
+    | IEEE8021x
+    | WPS
+  [@@deriving sexp, yojson]
+
   module IPv4 =
   struct
     type t = {
@@ -318,6 +326,7 @@ struct
   ; id : string
   ; name : string
   ; type' : Technology.type'
+  ; security: security list
   ; state : state
   ; strength : int option
   ; favorite : bool
@@ -341,6 +350,17 @@ struct
       | "disconnect" -> Some Disconnect
       | "online" -> Some Online
       | _ -> None
+    in
+    let security_of_string = function
+      | "none" -> Some None
+      | "psk" -> Some PSK
+      | "wps" -> Some WPS
+      | "ieee8021x" -> Some IEEE8021x
+      | _ -> None
+    in
+    let security_of_obus v =
+        let str_list = string_list_of_obus v in
+        List.filter_map security_of_string str_list
     in
     let strength_of_obus v =
       try
@@ -367,13 +387,13 @@ struct
         _ -> None
     in
     CCOption.(
-      pure (fun name type' state strength favorite autoconnect ipv4 ipv4_user_config ipv6 ethernet proxy nameservers ->
+      pure (fun name type' state strength favorite autoconnect ipv4 ipv4_user_config ipv6 ethernet proxy nameservers security ->
           { _proxy = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:path
           ; _manager = manager
           ; id = path |> CCList.last 1 |> CCList.hd
           ; name ; type'; state; strength; favorite; autoconnect
           ; ipv4 = (if Option.is_some ipv4_user_config then ipv4_user_config else ipv4)
-          ; ipv6; ethernet; proxy; nameservers
+          ; ipv6; ethernet; proxy; nameservers; security
           })
       <*> (properties |> List.assoc_opt "Name" >>= string_of_obus)
       <*> (properties |> List.assoc_opt "Type" >>= string_of_obus >>= Technology.type_of_string)
@@ -386,7 +406,8 @@ struct
       <*> (properties |> List.assoc_opt "IPv6" >>= IPv6.of_obus |> pure)
       <*> (properties |> List.assoc_opt "Ethernet" >>= Ethernet.of_obus)
       <*> (properties |> List.assoc_opt "Proxy" >>= proxy_of_obus |> pure)
-      <*> (properties |> List.assoc_opt "Nameservers.Configuration" >|= string_list_of_obus))
+      <*> (properties |> List.assoc_opt "Nameservers.Configuration" >|= string_list_of_obus)
+      <*> (properties |> List.assoc_opt "Security" >|= security_of_obus))
 
   let is_connected t =
     match t.state with
@@ -454,7 +475,7 @@ struct
     in
 
     (* Store agent error in a local mutable variable *)
-    let agent_reported_error = ref None in
+    let agent_reported_error = ref Option.None in
     let on_agent_error msg = Lwt.return (agent_reported_error := Some msg) in
 
     (* Create and register an agent that will pass input to ConnMan *)

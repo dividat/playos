@@ -61,6 +61,14 @@ module Service : sig
     | Online
   [@@deriving sexp, yojson]
 
+  type security =
+    | None
+    | WEP
+    | PSK
+    | IEEE8021x
+    | WPS
+  [@@deriving sexp, yojson]
+
   (** IPv4 properties *)
   module IPv4 : sig
     type t = {
@@ -141,6 +149,7 @@ module Service : sig
   ; id : string
   ; name : string
   ; type' : Technology.type'
+  ; security: security list
   ; state : state
   ; strength : int option
   ; favorite : bool
