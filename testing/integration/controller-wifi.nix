@@ -34,12 +34,24 @@ pkgs.testers.runNixOSTest {
       ];
 
       config = {
-         # connman and wifi are disabled in runNixOSTest with mkVMOverride
-        services.connman.enable = mkOverride 0 true;
+         # wifi and connman are disabled in runNixOSTest with mkVMOverride
         networking.wireless.enable = mkOverride 0 true;
+        services.connman.enable = mkOverride 0 true;
 
+        # wlan1 is the client interface, wlan0* are the simulated APs
+        networking.wireless.interfaces = [ "wlan1" ];
+
+        # prevent connman from touching the simulated APs
+        services.connman.networkInterfaceBlacklist =
+            attrNames config.services.hostapd.radios.wlan0.networks;
+
+        # disable the local DNS caching proxy to avoid conflicts with dnsmasq
+        services.connman.extraFlags = [ "--nodnsproxy" ];
+
+        systemd.services."connman".after = [ "hostapd.service" ];
+
+        # allow accesing controller GUI from the test runner
         networking.firewall.enable = mkForce false;
-
         virtualisation.forwardPorts = [
             {   from = "host";
                 host.port = 13333;
@@ -47,21 +59,20 @@ pkgs.testers.runNixOSTest {
             }
         ];
 
-        # add a virtual wlan interface
-        boot.kernelModules = [ "mac80211_hwsim" ];
 
-        # prevent connman from touching the simulated APs
-        services.connman.networkInterfaceBlacklist =
-            attrNames config.services.hostapd.radios.wlan0.networks;
-        # TODO: try to switch back to #bind-interfaces=true in dnsmasq
-        services.connman.extraFlags = [ "--nodnsproxy" ];
-        systemd.services."connman".after = [ "hostapd.service" ];
+        # === dnsmasq + static IPs for wlan0*
 
-        # TODO: test if running without dnsmasq is really faster
+        # Setup networking + DHCP (dnsmasq) for the simulated wireless APs.
+        # Without this connman will wait ages for a (non-existant) DHCP
+        # offer, makin the tests unbearably slow.
+        #
+        # Note: this could probably be made to properly route traffic via the
+        # test VLANs or QEMU's vnet, but for now just returns some values in
+        # the 10.0.9.0/24 subnet
         networking.interfaces =
             let staticIpCfg = {
                 ipv4.addresses = [{
-                    address = "10.0.2.10";
+                    address = "10.0.9.1"; # irrelevant
                     prefixLength = 24;
                 }];
             };
@@ -72,18 +83,18 @@ pkgs.testers.runNixOSTest {
         services.dnsmasq.enable = true;
         services.dnsmasq.settings = {
             interface = attrNames config.services.hostapd.radios.wlan0.networks;
-            #bind-interfaces = true;
-            #dhcp-relay = "10.0.2.10,10.0.2.3";
 
             dhcp-option = [
-                "3,10.0.2.100"
-                "6,10.0.2.100"
+                "3,10.0.9.2" # gateway, does not exist
+                "6,10.0.9.3" # DNS, does not exist
             ];
-            dhcp-range = "10.0.2.30,10.0.2.99,1h";
+            dhcp-range = "10.0.9.30,10.0.9.99,1h";
         };
 
-        # wlan1 is the client interface
-        networking.wireless.interfaces = [ "wlan1" ];
+        # === Simulated wireless access points
+
+        # enable 802.11 simulation
+        boot.kernelModules = [ "mac80211_hwsim" ];
 
         # wireless access points
         services.hostapd = {
@@ -170,7 +181,7 @@ with TestPrecondition("Test APs are setup and visible to connman"):
 
 wait_for_http()
 
-with TestCase("connman sees the wifi iface and APs") as t:
+with TestCase("controller sees the wifi iface and APs") as t:
     headers = {'Accept': 'application/json'}
     r = requests.get("http://localhost:13333/network", headers=headers)
     r.raise_for_status()
@@ -182,11 +193,14 @@ with TestCase("connman sees the wifi iface and APs") as t:
     for ap in hostapdAPs:
         t.assertIn(ap, [service['name'] for service in services])
 
-with TestCase("connman can connect to all wifi APs") as t:
+# if above passed, we know these are all the hostapdAPs
+TEST_SERVICES = [s for s in services if s['name'] in hostapdAPs]
+
+with TestCase("controller can connect to all wifi APs") as t:
     headers = {'Accept': 'application/json'}
     data = {'passphrase': 'reproducibility'}
 
-    for service in [s for s in services if s['name'] in hostapdAPs]:
+    for service in TEST_SERVICES:
         r = requests.post(
             "http://localhost:13333/network/{id}/connect".format(id=service['id']),
             data=(None if service['name'] == "test-ap-open" else data),
@@ -199,6 +213,21 @@ with TestCase("connman can connect to all wifi APs") as t:
         out_services = output['services']
         ready_services = [s for s in out_services if 'Ready' in s['state']]
         t.assertIn(service['id'], [s['id'] for s in ready_services])
+
+with TestCase("controller can forget all wifi APs") as t:
+    headers = {'Accept': 'application/json'}
+    for service in TEST_SERVICES:
+        r = requests.post(
+            "http://localhost:13333/network/{id}/remove".format(id=service['id']),
+            allow_redirects=True,
+            headers=headers,
+            timeout=15
+        )
+        r.raise_for_status()
+        output = r.json()
+        out_services = output['services']
+        idle_services = [s for s in out_services if 'Idle' in s['state']]
+        t.assertIn(service['id'], [s['id'] for s in idle_services])
   '';
 
 }
