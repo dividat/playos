@@ -72,12 +72,12 @@ let html { proxy; services; interfaces } =
               []
           ) @
           [ Definition.term [ txt "Internet" ]
-          ; Definition.description 
-              [ div 
+          ; Definition.description
+              [ div
                   ~a:[ a_class [ "d-Spinner" ]
-                  ; Unsafe.string_attrib "is" "internet-status" 
+                  ; Unsafe.string_attrib "is" "internet-status"
                   ]
-                  [] 
+                  []
               ]
           ]
         )
