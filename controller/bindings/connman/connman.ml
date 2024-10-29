@@ -32,7 +32,7 @@ struct
     | Ethernet
     | Bluetooth
     | P2P
-  [@@deriving sexp]
+  [@@deriving sexp, yojson]
 
   let type_of_string = function
     | "wifi" -> Some Wifi
@@ -42,12 +42,12 @@ struct
     | _ -> None
 
   type t = {
-    _proxy: (OBus_proxy.t [@sexp.opaque])
+    _proxy: (OBus_proxy.t [@sexp.opaque] [@yojson.opaque])
   ; name : string
   ; type' : type'
   ; powered : bool
   ; connected : bool
-  } [@@deriving sexp]
+  } [@@deriving sexp, yojson]
 
   let set_property proxy ~name ~value =
     OBus_method.call
@@ -82,7 +82,7 @@ struct
   type input =
     | None
     | Passphrase of string
-  [@@deriving sexp]
+  [@@deriving sexp, yojson]
 
   type t = input OBus_object.t
 
@@ -172,7 +172,7 @@ struct
     | Ready
     | Disconnect
     | Online
-  [@@deriving sexp]
+  [@@deriving sexp, yojson]
 
   module IPv4 =
   struct
@@ -182,7 +182,7 @@ struct
     ; netmask : string
     ; gateway : string option
     }
-    [@@deriving sexp]
+    [@@deriving sexp, yojson]
 
     let of_obus v =
       (fun () ->
@@ -207,7 +207,7 @@ struct
     ; gateway : string option
     ; privacy : string
     }
-    [@@deriving sexp]
+    [@@deriving sexp, yojson]
 
     let of_obus v =
       (fun () ->
@@ -235,7 +235,7 @@ struct
     ; address : string
     ; mtu : int
     }
-    [@@deriving sexp]
+    [@@deriving sexp, yojson]
 
     let of_obus v =
       (fun () ->
@@ -255,16 +255,16 @@ struct
   struct
     type credentials =
       { user: string
-      ; password: (string [@sexp.opaque])
+      ; password: (string [@sexp.opaque] [@yojson.opaque])
       }
-      [@@deriving sexp]
+      [@@deriving sexp, yojson]
 
     type t =
     { host: string
     ; port: int
     ; credentials: credentials option
     }
-    [@@deriving sexp]
+    [@@deriving sexp, yojson]
 
     let make ?user ?password host port =
       { host = host
@@ -313,8 +313,8 @@ struct
   end
 
   type t = {
-    _proxy : (OBus_proxy.t [@sexp.opaque])
-  ; _manager : (OBus_proxy.t [@sexp.opaque])
+    _proxy : (OBus_proxy.t [@sexp.opaque] [@yojson.opaque])
+  ; _manager : (OBus_proxy.t [@sexp.opaque] [@yojson.opaque])
   ; id : string
   ; name : string
   ; type' : Technology.type'
@@ -328,7 +328,7 @@ struct
   ; proxy : Proxy.t option
   ; nameservers : string list
   }
-  [@@deriving sexp]
+  [@@deriving sexp, yojson]
 
   (* Helper to parse a service from OBus *)
   let of_obus  manager context (path, properties) =

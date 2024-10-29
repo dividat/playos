@@ -4,7 +4,7 @@
  (name connman)
  (modules connman connman_interfaces)
  (libraries obus logs logs.lwt containers sexplib ezjsonm uri)
- (preprocess (pps lwt_ppx  ppx_sexp_conv)))
+ (preprocess (pps lwt_ppx  ppx_sexp_conv ppx_yojson_conv)))
 
 (rule
  (targets connman_interfaces.ml connman_interfaces.mli)

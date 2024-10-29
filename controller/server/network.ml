@@ -60,7 +60,7 @@ module Interface = struct
     ; address: string
     ; link_type: string
     }
-  [@@deriving sexp]
+  [@@deriving sexp, yojson]
 
   let to_json i =
     Ezjsonm.(dict [

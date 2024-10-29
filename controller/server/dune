@@ -10,7 +10,7 @@
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium tyxml rauc zerotier connman locale network timedate systemd
   semver2 fieldslib screen_settings util)
- (preprocess (pps lwt_ppx ppx_sexp_conv)))
+ (preprocess (pps lwt_ppx ppx_sexp_conv ppx_yojson_conv)))
 
 (library
  (name logging)
@@ -21,5 +21,5 @@
  (name network)
  (modules network)
  (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman systemd curl)
- (preprocess (pps lwt_ppx ppx_sexp_conv)))
+ (preprocess (pps lwt_ppx ppx_sexp_conv ppx_yojson_conv)))
 

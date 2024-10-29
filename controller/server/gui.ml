@@ -16,8 +16,12 @@ let page html =
   Format.asprintf "%a" (Tyxml.Html.pp ()) html
   |> Response.of_string_body ~headers
 
-let success content =
-  page (Page.html (Tyxml.Html.txt content))
+let resp_json json =
+  let headers = Cohttp.Header.init_with "content-type" "application/json" in
+  Yojson.Safe.to_string json
+  |> Response.of_string_body ~headers
+
+let header key req = Cohttp.Header.get (Request.headers req) key
 
 type 'a timeout_params =
   { duration: float
@@ -199,7 +203,7 @@ module NetworkGui = struct
 
   open Connman
 
-  let overview ~(connman:Manager.t) _req =
+  let overview ~(connman:Manager.t) req =
 
     let%lwt all_services = Manager.get_services connman in
 
@@ -216,13 +220,17 @@ module NetworkGui = struct
       | None -> uri
     in
 
-    Lwt.return (page (Network_list_page.html
+    let params: Network_list_page.params =
       { proxy = proxy |> Option.map pp_proxy
       ; services = all_services
       ; interfaces = interfaces
-          |> [%sexp_of: Network.Interface.t list]
-          |> Sexplib.Sexp.to_string_hum
-      }))
+      }
+    in
+    match (header "accept" req) with
+        | Some "application/json" ->
+            Lwt.return @@ resp_json @@ Network_list_page.yojson_of_params params
+        | _ ->
+            Lwt.return (page (Network_list_page.html params))
 
   (** Internet status **)
   let internet_status ~connman _ =

@@ -1,8 +1,9 @@
 type params =
   { proxy: string option
   ; services: Connman.Service.t list
-  ; interfaces: string
+  ; interfaces: Network.Interface.t list
   }
+  [@@deriving yojson]
 
 val html :
   params

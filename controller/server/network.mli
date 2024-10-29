@@ -11,7 +11,7 @@ module Interface : sig
     ; address: string
     ; link_type: string
     }
-  [@@deriving sexp]
+  [@@deriving sexp, yojson]
 
   val to_json : t -> Ezjsonm.value
 
