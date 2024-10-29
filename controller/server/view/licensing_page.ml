@@ -1,5 +1,4 @@
 open Tyxml.Html
-open Lwt
 
 let log_src = Logs.Src.create "licensing_page"
 

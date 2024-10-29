@@ -1,5 +1,4 @@
 open Lwt
-open Sexplib.Std
 open Opium_kernel.Rock
 open Opium.App
 
