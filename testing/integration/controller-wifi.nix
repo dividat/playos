@@ -33,7 +33,10 @@ pkgs.testers.runNixOSTest {
         "${modulesPath}/services/networking/dnsmasq.nix"
       ];
 
-      config = {
+      config = let
+        allSimulatedAPInterfaces = concatMap (radio: attrNames radio.networks)
+            (attrValues config.services.hostapd.radios);
+        in {
          # wifi and connman are disabled in runNixOSTest with mkVMOverride
         networking.wireless.enable = mkOverride 0 true;
         services.connman.enable = mkOverride 0 true;
@@ -41,12 +44,9 @@ pkgs.testers.runNixOSTest {
         # wlan1 is the client interface, wlan0* are the simulated APs
         networking.wireless.interfaces = [ "wlan1" ];
 
-        # prevent connman from touching the simulated APs
+        # tell connman not to touch the simulated APs
         services.connman.networkInterfaceBlacklist =
-            attrNames config.services.hostapd.radios.wlan0.networks;
-
-        # disable the local DNS caching proxy to avoid conflicts with dnsmasq
-        services.connman.extraFlags = [ "--nodnsproxy" ];
+            allSimulatedAPInterfaces;
 
         systemd.services."connman".after = [ "hostapd.service" ];
 
@@ -58,7 +58,6 @@ pkgs.testers.runNixOSTest {
                 guest.port = 3333;
             }
         ];
-
 
         # === dnsmasq + static IPs for wlan0*
 
@@ -77,12 +76,11 @@ pkgs.testers.runNixOSTest {
                 }];
             };
             in
-            mapAttrs (_: _: staticIpCfg)
-                config.services.hostapd.radios.wlan0.networks;
+            attrsets.genAttrs allSimulatedAPInterfaces (_: staticIpCfg);
 
         services.dnsmasq.enable = true;
         services.dnsmasq.settings = {
-            interface = attrNames config.services.hostapd.radios.wlan0.networks;
+            interface = allSimulatedAPInterfaces;
 
             dhcp-option = [
                 "3,10.0.9.2" # gateway, does not exist
@@ -90,6 +88,11 @@ pkgs.testers.runNixOSTest {
             ];
             dhcp-range = "10.0.9.30,10.0.9.99,1h";
         };
+
+        # disable the local DNS caching proxy in connman to avoid conflicts with
+        # dnsmasq
+        services.connman.extraFlags = [ "--nodnsproxy" ];
+
 
         # === Simulated wireless access points
 
@@ -99,29 +102,32 @@ pkgs.testers.runNixOSTest {
         # wireless access points
         services.hostapd = {
           enable = true;
+          # note: do not change this to wlan1 or other id, weird failures appear
           radios.wlan0 = {
             band = "2g";
             countryCode = "US";
             networks = {
               wlan0 = {
                 ssid = "test-ap-sae";
+                bssid = "02:00:00:00:00:00";
                 authentication = {
                   mode = "wpa3-sae";
                   saePasswords = [ { password = "reproducibility"; } ];
                 };
-                bssid = "02:00:00:00:00:00";
               };
               wlan0-1 = {
                 ssid = "test-ap-mixed";
+                bssid = "02:00:00:00:00:01";
                 authentication = {
                   mode = "wpa3-sae-transition";
                   saeAddToMacAllow = true;
                   saePasswordsFile = pkgs.writeText "password" "reproducibility";
                   wpaPasswordFile = pkgs.writeText "password" "reproducibility";
                 };
-                bssid = "02:00:00:00:00:01";
               };
-              # connman fails to connect to this one, nothing in the logs
+
+              # connman hangs when connecting to this AP, nothing in the logs
+              # neither from connman nor from wpa_supplicant ¯\_(ツ)_/¯
               #wlan0-2 = {
               #  ssid = "test-ap-wpa2";
               #  authentication = {
@@ -130,12 +136,49 @@ pkgs.testers.runNixOSTest {
               #  };
               #  bssid = "02:00:00:00:00:02";
               #};
+
               wlan0-3 = {
                 ssid = "test-ap-open";
+                bssid = "02:00:00:00:00:03";
                 authentication = {
                   mode = "none";
                 };
-                bssid = "02:00:00:00:00:03";
+              };
+
+              # connecting to this AP fails with `invalid-key`
+              # (even though the reason is diferent). This is
+              # because wpa_supplicant responds with CTRL-EVENT-AUTH-REJECT
+              # status_code=1, which is "unspecified reason" and so
+              # connman does a buest guess.
+              #wlan0-4 = {
+              #  ssid = "bad-ap-blocked";
+              #  bssid = "02:00:00:00:00:04";
+              #  authentication = {
+              #    mode = "wpa3-sae";
+              #    saePasswords = [ { password = "reproducibility"; } ];
+              #  };
+              #  macAcl = "allow"; # allows only listed clients
+              #  macAllow = [ ] ; # deny everything
+              #};
+
+              # not functional (auth server not set up), but will show up
+              # as an AP with Security = [ ieee8021x ]
+              wlan0-5 = {
+                ssid = "bad-ap-eap";
+                bssid = "02:00:00:00:00:05";
+                # cannot be empty, overriden by settings below
+                authentication.mode = "none";
+                settings = {
+                    wpa = 3;
+                    wpa_key_mgmt = "WPA-EAP";
+                    auth_algs = 3;
+
+                    ieee8021x = 1;
+                    eap_server = 0;
+                    auth_server_addr = "127.0.0.1";
+                    auth_server_port = 1812;
+                    auth_server_shared_secret = "secret";
+                };
               };
             };
           };
@@ -151,19 +194,60 @@ pkgs.testers.runNixOSTest {
     ps.types-colorama
   ];
 
-  testScript = {nodes}: ''
+  testScript = {nodes}: let
+    allNetworks = nodes.playos.services.hostapd.radios.wlan0.networks;
+    allSSIDs = attrsets.catAttrs "ssid" (attrValues allNetworks);
+    badSimulatedAPs = filter (strings.hasPrefix "bad-ap-") allSSIDs;
+    goodSimulatedAPs = lists.subtractLists badSimulatedAPs allSSIDs;
+  in ''
 ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
 import requests
-#import json
 
-hostapdAPs = set("${toString (attrsets.catAttrs "ssid" (attrsets.attrValues nodes.playos.services.hostapd.radios.wlan0.networks))}".split())
+bad_simulated_aps = set("${toString badSimulatedAPs}".split())
+good_simulated_aps = set("${toString goodSimulatedAPs}".split())
+all_simulated_aps = bad_simulated_aps.union(good_simulated_aps)
 
 def wait_for_http():
     playos.wait_for_unit("playos-controller.service")
     playos.wait_until_succeeds("curl --fail http://localhost:3333/")
 
-playos.start()
+def service_req(service, endpoint, data=None, timeout=15):
+    headers = {'Accept': 'application/json'}
+    return requests.post(
+        "http://localhost:13333/network/{id}/{endpoint}".format(
+            id=service['id'],
+            endpoint=endpoint
+        ),
+        data=data,
+        allow_redirects=True,
+        headers=headers,
+        timeout=timeout
+    )
 
+def remove_req(service):
+    return service_req(service, "remove")
+
+def connect_req(service, passphrase=None):
+    data = {'passphrase': passphrase} if passphrase else None
+    try:
+        return service_req(service, "connect", data=data)
+    except Exception as e:
+        print(f"Failed to connect to AP: {service['name']}")
+        raise e
+
+def find_service_by_id(service_id, service_list):
+    for s in service_list:
+        if s['id'] == service_id:
+            return s
+    return None
+
+def find_service_by_name(name, service_list):
+    for s in service_list:
+        if s['name'] == name:
+            return s
+    return None
+
+playos.start()
 
 with TestPrecondition("Test APs are setup and visible to connman"):
     playos.wait_for_unit("hostapd.service")
@@ -171,11 +255,13 @@ with TestPrecondition("Test APs are setup and visible to connman"):
     playos.wait_for_unit("playos-controller.service")
     playos.wait_for_unit("multi-user.target")
 
-    # Wait until connman sees all the APs 
+    # Wait until connman sees all the APs
     # Note: due to the wpa_supplicant restarts (from the rfkill.hook), the
-    # timing is kinda unpredictable
-    for ap in hostapdAPs:
-        playos.wait_until_succeeds(f"connmanctl services | grep {ap}", timeout=20)
+    # timing is kinda unpredictable.
+    # In particular the `bad-ap-blocked` seems to take an extra 10 seconds to
+    # appear.
+    for ap in all_simulated_aps:
+        playos.wait_until_succeeds(f"connmanctl services | grep {ap}", timeout=30)
 
 # === sanity check
 
@@ -190,44 +276,56 @@ with TestCase("controller sees the wifi iface and APs") as t:
     t.assertIn("wlan1", [iface['name'] for iface in ifaces])
 
     services = output['services']
-    for ap in hostapdAPs:
+    for ap in all_simulated_aps:
         t.assertIn(ap, [service['name'] for service in services])
 
-# if above passed, we know these are all the hostapdAPs
-TEST_SERVICES = [s for s in services if s['name'] in hostapdAPs]
+# if above passed, we know these are all visible
+GOOD_SERVICES =       [s for s in services if s['name'] in good_simulated_aps]
+BAD_SERVICES =        [s for s in services if s['name'] in bad_simulated_aps]
+PASSPHRASE_SERVICES = [s for s in GOOD_SERVICES if s['name'] != "test-ap-open"]
 
-with TestCase("controller can connect to all wifi APs") as t:
-    headers = {'Accept': 'application/json'}
-    data = {'passphrase': 'reproducibility'}
+EAP_SERVICE = find_service_by_name("bad-ap-eap", BAD_SERVICES)
 
-    for service in TEST_SERVICES:
-        r = requests.post(
-            "http://localhost:13333/network/{id}/connect".format(id=service['id']),
-            data=(None if service['name'] == "test-ap-open" else data),
-            allow_redirects=True,
-            headers=headers,
-            timeout=15
-        )
+with TestCase("controller can connect to all good APs") as t:
+    for service in GOOD_SERVICES:
+        passphrase = None if service['name'] == "test-ap-open" else 'reproducibility'
+        r = connect_req(service, passphrase=passphrase)
         r.raise_for_status()
         output = r.json()
         out_services = output['services']
-        ready_services = [s for s in out_services if 'Ready' in s['state']]
-        t.assertIn(service['id'], [s['id'] for s in ready_services])
+        found = find_service_by_id(service['id'], out_services)
+        t.assertIsNotNone(found)
+        t.assertEqual(["Ready"], found['state'])
 
-with TestCase("controller can forget all wifi APs") as t:
-    headers = {'Accept': 'application/json'}
-    for service in TEST_SERVICES:
-        r = requests.post(
-            "http://localhost:13333/network/{id}/remove".format(id=service['id']),
-            allow_redirects=True,
-            headers=headers,
-            timeout=15
-        )
+with TestCase("controller can forget all APs") as t:
+    for service in GOOD_SERVICES:
+        r = remove_req(service)
         r.raise_for_status()
         output = r.json()
         out_services = output['services']
-        idle_services = [s for s in out_services if 'Idle' in s['state']]
-        t.assertIn(service['id'], [s['id'] for s in idle_services])
+        found = find_service_by_id(service['id'], out_services)
+        t.assertIsNotNone(found)
+        t.assertEqual(["Idle"], found['state'])
+
+with TestCase("controller produces clear errors when passphrase is incorrect") as t:
+    for service in PASSPHRASE_SERVICES:
+        r = connect_req(service, passphrase='incorrectpass')
+        t.assertRaises(requests.exceptions.HTTPError, r.raise_for_status)
+        output = r.json()
+        t.assertIn("Passphrase is not valid", output['message'])
+
+with TestCase("controller produces clear errors when passphrase is missing") as t:
+    for service in PASSPHRASE_SERVICES:
+        r = connect_req(service, passphrase=None)
+        t.assertRaises(requests.exceptions.HTTPError, r.raise_for_status)
+        output = r.json()
+        t.assertIn("Passphrase is required", output['message'])
+
+with TestCase("controller informs the user when auth protocol is unsupported") as t:
+    r = connect_req(EAP_SERVICE, passphrase='whatever')
+    t.assertRaises(requests.exceptions.HTTPError, r.raise_for_status)
+    output = r.json()
+    t.assertRegex(output['message'], "none of the.*protocols are supported")
+    t.assertIn("Available protocols: IEEE8021x", output['message'])
   '';
-
 }

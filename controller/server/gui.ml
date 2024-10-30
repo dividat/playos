@@ -15,10 +15,10 @@ let page html =
   Format.asprintf "%a" (Tyxml.Html.pp ()) html
   |> Response.of_string_body ~headers
 
-let resp_json json =
+let resp_json ?code json =
   let headers = Cohttp.Header.init_with "content-type" "application/json" in
   Yojson.Safe.to_string json
-  |> Response.of_string_body ~headers
+  |> Response.of_string_body ?code ~headers
 
 let header key req = Cohttp.Header.get (Request.headers req) key
 
@@ -42,14 +42,21 @@ let error_handling =
       return res
     | Error exn ->
       let%lwt () = Logs_lwt.err (fun m -> m "GUI Error: %s" (Printexc.to_string exn)) in
-      Lwt.return (page (Error_page.html
-        { message = exn
-            |> Sexplib.Std.sexp_of_exn
-            |> Sexplib.Sexp.to_string_hum
-        ; request = req
-            |> Request.sexp_of_t
-            |> Sexplib.Sexp.to_string_hum
-        }))
+      match (header "accept" req) with
+          | Some "application/json" -> (* for testing *)
+              Lwt.return @@ resp_json ~code:`Internal_server_error @@ `Assoc [
+                ("error", `Bool true);
+                ("message", `String (Printexc.to_string exn))
+              ]
+          | _ ->
+              Lwt.return (page (Error_page.html
+                { message = exn
+                    |> Sexplib.Std.sexp_of_exn
+                    |> Sexplib.Sexp.to_string_hum
+                ; request = req
+                    |> Request.sexp_of_t
+                    |> Sexplib.Sexp.to_string_hum
+                }))
   in
   Middleware.create ~name:"Error" ~filter
 

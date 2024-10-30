@@ -86,56 +86,128 @@ struct
 
   type t = input OBus_object.t
 
+  type manager_error =
+      | InvalidKey
+      | ConnectFailed
+      | Blocked
+      (* see manager_error_of_string
+      | OutOfRange
+      | PinMissing
+      | DhcpFailed
+      | LoginFailed
+      | AuthFailed
+      *)
+      | Unknown of string
+
+  type agent_error =
+      | PassMissing
+      | MissingRequestedInputs of string list
+      | BrowserRequested
+      | UnexpectedFailure of exn
+
+  type reported_error =
+      | ManagerError of manager_error
+      | AgentError of agent_error
+
   let request_input input service (fields: (string * OBus_value.V.single) list) =
     let%lwt () = Logs_lwt.debug ~src:log_src
         (fun m -> m "input requested from agent for service %s"
             (String.concat "/" service)
         )
     in
-    match input with
-    | Passphrase p ->
-      (match List.assoc_opt "Passphrase" fields with
-       | Some _ ->
-         return [ "Passphrase", p |> OBus_value.C.(make_single basic_string)]
-       | None ->
-         let%lwt () = Logs_lwt.err ~src:log_src
-             (fun m -> m "Passphrase available as input but not being requested")
-         in
-         OBus_error.make "net.connman.Agent.Error.Canceled" "."
-         |> Lwt.fail
-      )
-    | None ->
-      let%lwt () = Logs_lwt.err ~src:log_src
-          (fun m -> m "input requested from agent but none available.")
-      in
-      OBus_error.make "net.connman.Agent.Error.Canceled" "No input available."
-      |> Lwt.fail
-
+    let pass_requested = List.assoc_opt "Passphrase" fields in
+    match (input, pass_requested) with
+        | (Passphrase p, Some _) ->
+            (* TODO: in theory manager can request passphrase _and_ other
+               fields, so this case is kind of incomplete? *)
+            return @@ Ok [ "Passphrase", p |> OBus_value.C.(make_single basic_string)]
+        | (None, Some _) ->
+          let%lwt () = Logs_lwt.err ~src:log_src (fun m -> m
+            "Passphrase requested from agent, but not available.")
+          in
+          return @@ Error PassMissing
+        | (_, None) ->
+            (* This case is triggered when manager is requesting
+               _some_ input(s) (so NOT open networks) and those inputs do not
+               involve a passphrase.
+            *)
+            let (expected_properties, _) = List.split fields in
+            let expected_properties_str =
+                String.concat ", " expected_properties
+            in
+            let%lwt () = Logs_lwt.err ~src:log_src (fun m -> m
+               "Manager is requesting additional missing input(s): %s"
+               expected_properties_str
+            )
+            in
+            return @@ Error (MissingRequestedInputs expected_properties)
 
   let request_browser input service url =
     let%lwt () = Logs_lwt.err ~src:log_src
         (fun m -> m "agent requested to open browser to url: %s" url)
     in
-    OBus_error.make "net.connman.Agent.Error.Canceled" "Can not open browser."
-    |> Lwt.fail
+    return @@ Error BrowserRequested
+
+  (* based on `connman_service_error` enum and it's stringified mapping in
+    error2string: https://git.kernel.org/pub/scm/network/connman/connman.git/tree/src/service.c?h=1.42#n324 *)
+  let manager_error_of_string = function
+    | "invalid-key" -> InvalidKey
+    | "connect-failed" -> ConnectFailed
+    (* although this sounds generic, `blocked` err is only produced by connman
+       when wpa_supplicant reports a wifi deauth with reason code = 6, which is
+       "Class 2 frame received from nonauthenticated station".
+       This seems like a protocol error? *)
+    | "blocked" -> Blocked
+(*
+    (* defined, but never produced in connman v1.42 *)
+    | "dhcp-failed" -> DhcpFailed
+    | "out-of-range" -> OutOfRange
+    | "pin-missing" -> PinMissing
+
+    (* these are VPN related *)
+    | "login-failed" -> LoginFailed
+    | "auth-failed" -> AuthFailed
+*)
+    | s -> Unknown s
+
+  let agent_error_msg = function
+      | PassMissing ->
+          "Passphrase is required for this access point"
+      | MissingRequestedInputs props ->
+          Printf.sprintf
+            "Unsupported protocol: additional inputs are needed: %s"
+            (String.concat ", " props)
+      | BrowserRequested ->
+          "Unsupported protocol: access point requires browser-based authentication"
+      | UnexpectedFailure exn ->
+          Printf.sprintf "Unexpected connection failure: %s" (Printexc.to_string exn)
 
   let interface on_error =
+    let wrap_req f = fun obj (x1, x2) ->
+        let%lwt caught_f = Lwt_result.catch
+            (fun () -> f (OBus_object.get obj) x1 x2) |>
+            (Lwt_result.map_error (fun e -> UnexpectedFailure e))
+        in
+        match (Result.join caught_f) with
+            | Ok a -> Lwt.return a
+            | Error err ->
+                let%lwt () = on_error (AgentError err) in
+                let obus_exn = OBus_error.make
+                    "net.connman.Agent.Error.Canceled"
+                    (agent_error_msg err)
+                in
+                Lwt.fail obus_exn
+    in
     Connman_interfaces.Net_connman_Agent.make {
       m_ReportError = (
         fun obj (service, msg) ->
           let%lwt () = Logs_lwt.err ~src:log_src
               (fun m -> m "error reported to agent: %s" msg)
           in
-          on_error msg
+          on_error (ManagerError (manager_error_of_string msg))
       );
-      m_RequestInput = (
-        fun obj (x1, x2) ->
-          request_input (OBus_object.get obj) x1 x2
-      );
-      m_RequestBrowser = (
-        fun obj (x1, x2) ->
-          request_browser (OBus_object.get obj) x1 x2
-      );
+      m_RequestInput = wrap_req request_input;
+      m_RequestBrowser = wrap_req request_browser;
       m_Cancel = (fun obj () -> return_unit);
       m_Release = (fun obj () -> return_unit);
     }
@@ -181,6 +253,10 @@ struct
     | IEEE8021x
     | WPS
   [@@deriving sexp, yojson]
+
+  let supported_security_protocols = [ None; WEP; PSK; ]
+
+  let string_of_security s = sexp_of_security s |> Sexplib.Sexp.to_string
 
   module IPv4 =
   struct
@@ -470,6 +546,10 @@ struct
 
 
   let connect ?(input=Agent.None) service =
+    let is_supported = List.exists
+        (fun s -> List.mem s supported_security_protocols)
+        service.security
+    in
     let%lwt () = Logs_lwt.debug ~src:log_src
         (fun m -> m "connect to service %s" service.id)
     in
@@ -482,24 +562,59 @@ struct
     let%lwt agent_path, agent = Agent.create ~input on_agent_error in
     let%lwt () = register_agent service._manager ~path:agent_path in
 
-    (Lwt.catch 
-        (* Connect to service *)
-        (fun () ->
-          OBus_method.call
-            Connman_interfaces.Net_connman_Service.m_Connect
-            service._proxy ())
-        (* Give priority to error reported from agent, which is more informative *)
-        (function
-          | exn -> 
-              match !agent_reported_error with
-              | Some "invalid-key" -> Lwt.fail_with "Passphrase is not valid. Please check it and then try to connect again."
-              | Some msg -> Lwt.fail_with msg
-              | None -> Lwt.fail exn
-        ))
-    [%lwt.finally
+    let destroy_agent () =
       (* Cleanup and destroy agent *)
       let%lwt () = unregister_agent service._manager ~path:agent_path in
-      Agent.destroy agent]
+      Agent.destroy agent
+    in
+
+    let%lwt obus_resp = Lwt_result.catch (OBus_method.call
+            Connman_interfaces.Net_connman_Service.m_Connect
+            service._proxy)
+    in
+    let%lwt _ = Lwt_result.catch destroy_agent in
+    match (obus_resp, !agent_reported_error) with
+        | (Ok _, _) ->
+            Lwt.return ()
+        | (Error _, Some (ManagerError InvalidKey)) ->
+            Lwt.fail_with "Passphrase is not valid or client is blocked. Please check the passphrase and then try to connect again."
+        | (Error _, Some (ManagerError ConnectFailed)) ->
+            Lwt.fail_with "Connection to network failed."
+        | (Error _, Some (ManagerError Blocked)) ->
+            Lwt.fail_with "Connection failed, deauthenticated by access point."
+        | (Error exn, Some (ManagerError (Unknown err))) ->
+            Lwt.fail_with (Printf.sprintf
+                "Connection failed, unknown error reported by manager: %s
+                 DBus connect exception: %s" err (Printexc.to_string exn)
+            )
+        | (Error exn, Some (AgentError err)) ->
+            Lwt.fail_with (Printf.sprintf
+                "Connection failed. %s
+                 DBus connect exception: %s"
+                 (Agent.agent_error_msg err) (Printexc.to_string exn)
+            )
+        | (Error exn, None) when not is_supported ->
+            Lwt.fail_with (Printf.sprintf
+                "Connection failed, none of the available authentication protocols are supported.
+                Available protocols: %s
+                Supported protocols: %s
+               "
+               (String.concat ", " @@
+                    List.map string_of_security service.security)
+               (String.concat ", " @@
+                    List.map string_of_security supported_security_protocols)
+            )
+        | (Error exn, None) when
+            OBus_error.name exn = "net.connman.Error.InvalidArguments" ->
+            Lwt.fail_with (Printf.sprintf
+                "Connection failed due to invalid arguments provided, the authentication protocol used by the access point is most likely unsupported"
+            )
+        | (Error exn, None) ->
+            Lwt.fail_with (Printf.sprintf
+                "Connection to network failed.
+                 DBus connect exception: %s"
+                    (Printexc.to_string exn)
+            )
 
   let disconnect service =
     let%lwt () = Logs_lwt.debug ~src:log_src
