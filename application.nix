@@ -159,7 +159,6 @@ rec {
           User = "play";
         };
         environment = {
-          # TODO: is this needed?
           XAUTHORITY = "${config.users.users.play.home}/.Xauthority";
           DISPLAY = ":0";
         };
