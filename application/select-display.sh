@@ -27,22 +27,24 @@ esac
 if [ -z "$CONNECTED_OUTPUTS" ]; then
 
     echo "No connected outputs found. Attempting to apply xrandr globally."
-    xrandr "${scaling_pref_params[@]}"
+    xrandr --auto # this is kind of useless?
 
 else
 
-    first_output=""
+
+    first_functional_output=""
     for output in $CONNECTED_OUTPUTS; do
-        if [ -z "$first_output" ]; then
-            first_output=$output
-            xrandr --output "$output" \
-                --primary \
-                "${scaling_pref_params[@]}"
+        if [ -z "$first_functional_output" ]; then
+            if xrandr --output "$output" --primary "${scaling_pref_params[@]}"; then
+                first_functional_output=$output
+                echo "Configured display $output as primary"
+            else
+                echo "Failed to configure display $output"
+            fi
         else
             xrandr --output "$output" \
-                --same-as "$first_output" \
-                "${scaling_pref_params[@]}"
+                --same-as "$first_functional_output" \
+                "${scaling_pref_params[@]}" || echo "Failed to configure display $output"
         fi
     done
-
 fi
