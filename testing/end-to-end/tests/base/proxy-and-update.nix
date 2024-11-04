@@ -188,11 +188,7 @@ pkgs.testers.runNixOSTest {
     with TestCase("Controller installs the new upstream version") as t:
         next_version = "${nextVersion}"
 
-        sidekick.copy_from_host(
-            "${nextVersionBundle}",
-            "/tmp/next-bundle.raucb"
-        )
-        update_server.add_bundle(next_version, filepath="/tmp/next-bundle.raucb")
+        update_server.add_bundle(next_version, filepath="${nextVersionBundle}")
         update_server.set_latest_version(next_version)
 
         # reboot controller to trigger version check
