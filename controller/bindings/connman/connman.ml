@@ -574,7 +574,7 @@ struct
         | (Error _, Some (ManagerError InvalidKey)) ->
             Lwt.fail_with "Password is not valid or client is blocked. Please check the password and then try to connect again."
         | (Error _, Some (ManagerError ConnectFailed)) ->
-            Lwt.fail_with "Connection to network failed."
+            Lwt.fail_with "Connection failed for unknown reasons. Please check wireless signal strength and network settings."
         | (Error _, Some (ManagerError Blocked)) ->
             Lwt.fail_with "Connection failed, deauthenticated by access point."
         | (Error exn, Some (ManagerError (Unknown err))) ->
