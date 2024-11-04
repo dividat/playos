@@ -167,7 +167,7 @@ struct
 
   let agent_error_msg = function
       | PassMissing ->
-          "Passphrase is required for this access point"
+          "Password is required for this access point"
       | MissingRequestedInputs props ->
           Printf.sprintf
             "Unsupported protocol: additional inputs are needed: %s"
@@ -572,7 +572,7 @@ struct
         | (Ok _, _) ->
             Lwt.return ()
         | (Error _, Some (ManagerError InvalidKey)) ->
-            Lwt.fail_with "Passphrase is not valid or client is blocked. Please check the passphrase and then try to connect again."
+            Lwt.fail_with "Password is not valid or client is blocked. Please check the password and then try to connect again."
         | (Error _, Some (ManagerError ConnectFailed)) ->
             Lwt.fail_with "Connection to network failed."
         | (Error _, Some (ManagerError Blocked)) ->
