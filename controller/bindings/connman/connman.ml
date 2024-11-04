@@ -106,36 +106,44 @@ struct
 
   let request_input input service (fields: (string * OBus_value.V.single) list) =
     let%lwt () = Logs_lwt.debug ~src:log_src
-        (fun m -> m "input requested from agent for service %s"
+        (fun m -> m "input %s requested from agent for service %s"
+            (String.concat ", " @@ List.map (fun (k, v) ->
+                Printf.sprintf "%s: %s" k (OBus_value.V.string_of_single v)
+            ) fields)
             (String.concat "/" service)
         )
     in
-    let pass_requested = List.assoc_opt "Passphrase" fields in
-    match (input, pass_requested) with
-        | (Passphrase p, Some _) ->
-            (* TODO: in theory manager can request passphrase _and_ other
-               fields, so this case is kind of incomplete? *)
+    let mandatory_inputs = List.concat_map (fun (k, v) ->
+        let v_ocaml = OBus_value.C.(cast_single (dict string variant) v) in
+        let requirement_opt = List.assoc_opt "Requirement" v_ocaml |>
+            Option.map (OBus_value.C.(cast_single basic_string)) in
+        match requirement_opt with
+            | Some "mandatory" -> [k]
+            | _ -> []
+    ) fields
+    in
+    match (input, mandatory_inputs) with
+        | (Passphrase p, [ "Passphrase" ]) ->
             return @@ Ok [ "Passphrase", p |> OBus_value.C.(make_single basic_string)]
-        | (None, Some _) ->
+        | (None, [ "Passphrase" ]) ->
           let%lwt () = Logs_lwt.err ~src:log_src (fun m -> m
             "Passphrase requested from agent, but not available.")
           in
           return @@ Error PassMissing
-        | (_, None) ->
+        | (_, _) ->
             (* This case is triggered when manager is requesting
-               _some_ input(s) (so NOT open networks) and those inputs do not
-               involve a passphrase.
+               _some_ input(s) (so NOT open networks) and those inputs
+               involve something additional to (or other than) a passphrase.
             *)
-            let (expected_properties, _) = List.split fields in
             let expected_properties_str =
-                String.concat ", " expected_properties
+                String.concat ", " mandatory_inputs
             in
             let%lwt () = Logs_lwt.err ~src:log_src (fun m -> m
                "Manager is requesting additional missing input(s): %s"
                expected_properties_str
             )
             in
-            return @@ Error (MissingRequestedInputs expected_properties)
+            return @@ Error (MissingRequestedInputs mandatory_inputs)
 
   let request_browser input service url =
     let%lwt () = Logs_lwt.err ~src:log_src
