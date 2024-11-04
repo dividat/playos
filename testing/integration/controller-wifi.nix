@@ -312,14 +312,14 @@ with TestCase("controller produces clear errors when passphrase is incorrect") a
         r = connect_req(service, passphrase='incorrectpass')
         t.assertRaises(requests.exceptions.HTTPError, r.raise_for_status)
         output = r.json()
-        t.assertIn("Passphrase is not valid", output['message'])
+        t.assertIn("Password is not valid", output['message'])
 
 with TestCase("controller produces clear errors when passphrase is missing") as t:
     for service in PASSPHRASE_SERVICES:
         r = connect_req(service, passphrase=None)
         t.assertRaises(requests.exceptions.HTTPError, r.raise_for_status)
         output = r.json()
-        t.assertIn("Passphrase is required", output['message'])
+        t.assertIn("Password is required", output['message'])
 
 with TestCase("controller informs the user when auth protocol is unsupported") as t:
     r = connect_req(EAP_SERVICE, passphrase='whatever')
