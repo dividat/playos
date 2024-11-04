@@ -1,20 +1,46 @@
 {
     pkgs ? import ../pkgs { },
 
-    safeProductName ? (import ../application.nix).safeProductName,
+    application ? import ../application.nix,
 
-    # The disk image could be downloadable?
-    # Latest buildDisk compresses from 9.40 GiB to 2.95 GiB ??? with `zstd -10`
+    safeProductName ? application.safeProductName,
+
+    # Note: the base system disk must be built with a update and kiosk URLs,
+    # which:
+    # 1) have proper domain names (i.e. not localhost or plain IPs)
+    # 2) do not use HTTPS
+    updateUrlDomain ? "update-server.local",
+    kioskUrlDomain ? "kiosk-url.local",
+
+    # PlayOS system we are updating from
+    baseSystemVersion ? "2024.7.0",
+    # The disk image could be a downloadable URL, which would allow easily
+    # testing earlier releases.
+    #
+    # Latest buildDisk compresses from 9.40 GiB to 2.95 GiB with `zstd -10`
     # which is ~6 minutes over a 100 Mbs connection - faster than building from
     # scratch.
-    baseSystemVersion ? "2024.7.0",
-    baseSystemDiskImage ? builtins.storePath "/nix/store/6gmhmagrfk3dw9fsrl4nvjkccpsc87m0-build-playos-disk/playos-disk.img", # PlayOS system we are updating from
+    #baseSystemDiskImage ? (pkgs.callPackage ../default.nix {
+    #    updateUrl = "http://${updateUrlDomain}/"; # irrelevant
+    #    kioskUrl = "http://${kioskUrlDomain}/";
+    #    buildDisk = true;
+    #    # only for now to test the workflow
+    #    versionOverride = baseSystemVersion;
+    #}).components.disk,
+    baseSystemDiskImage ? builtins.storePath "/nix/store/6gmhmagrfk3dw9fsrl4nvjkccpsc87m0-build-playos-disk/playos-disk.img",
 
-    nextSystemVersion ? "9999.99.99", # PlayOS version we are updating into
-    nextSystemBundlePath ? ./foo, # TODO: PlayOS bundle for the next update
+    # PlayOS version we are updating into.
+    # Only used in the stub update server, not set in the bundle, etc.
+    nextSystemVersion ? "9999.99.99",
 
-    updateUrlDomain ? "update-server.local", # as specified in the base system
-    kioskUrlDomain ? "kiosk-url.local", # as specified in the base system
+    # PlayOS bundle for the next update
+    nextSystemBundlePath ? (pkgs.callPackage ../default.nix {
+        updateUrl = "http://${updateUrlDomain}/"; # irrelevant
+        kioskUrl = "http://${kioskUrlDomain}/";
+        # This override is not needed if application.version is "already" newer
+        # then base
+        versionOverride = nextSystemVersion;
+    }).components.unsignedRaucBundle,
 }:
 let
     overlayPath = "/tmp/disk-overlay.qcow2";
