@@ -165,4 +165,6 @@ with pkgs; stdenv.mkDerivation {
   '';
 
   passthru.tests = testComponents.tests.run;
+
+  passthru.components = components;
 }
