@@ -86,17 +86,12 @@ struct
 
   type t = input OBus_object.t
 
+  (* The errors that are relevant and that the manager is known to actually
+     produce. Defined but unused errors are not included. *)
   type manager_error =
       | InvalidKey
       | ConnectFailed
       | Blocked
-      (* see manager_error_of_string
-      | OutOfRange
-      | PinMissing
-      | DhcpFailed
-      | LoginFailed
-      | AuthFailed
-      *)
       | Unknown of string
 
   type agent_error =
