@@ -162,6 +162,8 @@ with pkgs; stdenv.mkDerivation {
     ln -s ${testComponents.tests.interactive-tests} $out/tests
   '';
 
+  passthru.components = components;
+
   passthru.tests = lib.optionalAttrs buildTest {
     end-to-end = testComponents.tests.run-tests;
   };
