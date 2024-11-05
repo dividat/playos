@@ -1,3 +1,17 @@
+# This is meant to be the final _automated_ validation test before
+# pushing the release out for manual testing/QA.
+#
+# It tests the self-update scenario from an earlier release (the 'base' system)
+# to the current/upcoming release (the 'next' system).
+#
+# It is "untainted" because it does not alter the configuration of the base or
+# next systems' in any way (e.g. no test-instrumentation.nix extras). Instead it
+# sets up a simulated environment (DHCP, DNS, update server, etc.) and runs the
+# base system in it, interacting via "physical" inputs (mouse, keyboard using
+# QEMU's QMP) and observing the results via screenshots+OCR.
+#
+# Can be run non-interactively, but for debugging you will definitely need
+# visible output since there are no logs :-)
 {
     pkgs ? import ../pkgs { },
 
@@ -5,29 +19,29 @@
 
     safeProductName ? application.safeProductName,
 
-    # Note: the base system disk must be built with a update and kiosk URLs,
-    # which:
+    # Note: the base system disk must be built with update and kiosk URLs which:
     # 1) have proper domain names (i.e. not localhost or plain IPs)
     # 2) do not use HTTPS
     updateUrlDomain ? "update-server.local",
-    kioskUrlDomain ? "kiosk-url.local",
+    kioskUrlDomain ? "kiosk-server.local",
 
     # PlayOS system we are updating from
     baseSystemVersion ? "2024.7.0",
+
     # The disk image could be a downloadable URL, which would allow easily
-    # testing earlier releases.
+    # testing multiple earlier releases.
     #
     # Latest buildDisk compresses from 9.40 GiB to 2.95 GiB with `zstd -10`
     # which is ~6 minutes over a 100 Mbs connection - faster than building from
     # scratch.
-    #baseSystemDiskImage ? (pkgs.callPackage ../default.nix {
-    #    updateUrl = "http://${updateUrlDomain}/"; # irrelevant
-    #    kioskUrl = "http://${kioskUrlDomain}/";
-    #    buildDisk = true;
-    #    # only for now to test the workflow
-    #    versionOverride = baseSystemVersion;
-    #}).components.disk,
-    baseSystemDiskImage ? builtins.storePath "/nix/store/6gmhmagrfk3dw9fsrl4nvjkccpsc87m0-build-playos-disk/playos-disk.img",
+    #
+    # Using the current system for now to setup the workflow
+    baseSystemDiskImage ? (pkgs.callPackage ../default.nix {
+        updateUrl = "http://${updateUrlDomain}/";
+        kioskUrl = "http://${kioskUrlDomain}/";
+        buildDisk = true;
+        versionOverride = baseSystemVersion;
+    }).components.disk,
 
     # PlayOS version we are updating into.
     # Only used in the stub update server, not set in the bundle, etc.
@@ -89,6 +103,9 @@ pkgs.testers.runNixOSTest {
         };
       };
     };
+    # Note: playos is started from pre-built disk _without_ any test
+    # instrumentation, there's no test-driver "backdoor", no shared files, etc.
+    # Therefore the only way to interact is via QMP.
     playos = { config, lib, pkgs, ... }:
     {
       imports = [
@@ -99,7 +116,17 @@ pkgs.testers.runNixOSTest {
         virtualisation.qemu.networkingOptions = lib.mkOverride 0 [ ];
         virtualisation.sharedDirectories = lib.mkOverride 0 { };
 
+        # Note: this has to be at least 2x bundle size, otherwise
+        # the bundle download will not fit into /tmp (which is defined
+        # as 50% of RAM)!
+        virtualisation.memorySize = lib.mkForce 3072;
+
         virtualisation.vlans = [ 1 ];
+
+        virtualisation.qemu.options = [
+            # needed for mouse_move to work
+            "-device" "usb-mouse,bus=usb-bus.0"
+        ];
       };
     };
   };
@@ -159,11 +186,7 @@ with TestPrecondition("Stub update server is started"):
     sidekick.succeed(f"curl -f {http_local_url}")
 
 with TestPrecondition("Stub update server is functional") as t:
-    sidekick.copy_from_host(
-        "${nextSystemBundlePath}",
-        "/tmp/next-bundle.raucb"
-    )
-    update_server.add_bundle(next_version, filepath="/tmp/next-bundle.raucb")
+    update_server.add_bundle(next_version, filepath="${nextSystemBundlePath}")
     update_server.set_latest_version(next_version)
     out_v = sidekick.succeed(f"curl -f {http_local_url}/latest")
     t.assertEqual(out_v, next_version)
@@ -181,25 +204,86 @@ with TestPrecondition("dnsmasq hands out an IP to playos"):
 
     sidekick.succeed(f"ping -c1 {playos_ip}", timeout=3)
 
-with TestCase("kiosk is open with kiosk URL") as t:
+with TestPrecondition("kiosk is open with kiosk URL") as t:
     wait_until_passes(
         lambda: t.assertIn("Hello world", screenshot_and_ocr(playos))
     )
 
-with TestCase("controller GUI is visible") as t:
+# move mouse to bottom right corner so it doesn't accidentally cover
+# any text while OCR'ing
+playos.send_monitor_command("mouse_move 2000 2000")
+
+with TestPrecondition("controller GUI is visible") as t:
     # switch to controller
     playos.send_key("ctrl-shift-f12")
 
-    screen_text = None
     def t_check():
-        global screen_text
         screen_text = screenshot_and_ocr(playos)
         t.assertIn("Information", screen_text)
+        return screen_text
 
-    wait_until_passes(t_check, retries=3)
+    screen_text = wait_until_passes(t_check, retries=3)
 
     t.assertIn("Version", screen_text)
+    t.assertIn("${baseSystemVersion}", screen_text)
     t.assertIn("Information", screen_text)
     t.assertIn("${baseSystemVersion}", screen_text)
+
+
+# Navigate to system status page using keyboard only.
+# Hack: depends on current UI layout. Could be made more
+# sophisticated by using tesseract to detect the bounding box
+# and then mouse_move'ing there for a click
+def navigate_to_system_status():
+    for _ in range(4):
+        playos.send_key("down")
+    playos.send_key("ret")
+    time.sleep(1)
+
+with TestPrecondition("Navigate to System Status page") as t:
+    navigate_to_system_status()
+    screen_text = screenshot_and_ocr(playos)
+    t.assertIn("Update State", screen_text,
+        "Update State not visible in screen, navigation failed?")
+
+with TestCase("controller starts downloading the bundle") as t:
+    def t_check():
+        playos.send_key("ctrl-r")
+        time.sleep(2)
+        navigate_to_system_status()
+        screen_text = screenshot_and_ocr(playos)
+        t.assertIn("Downloading", screen_text)
+
+    wait_until_passes(t_check, retries=30, sleep=1)
+
+with TestCase("controller has downloaded and installed the bundle") as t:
+    def t_check():
+        playos.send_key("ctrl-r")
+        time.sleep(2)
+        navigate_to_system_status()
+        screen_text = screenshot_and_ocr(playos)
+        t.assertIn("RebootRequired", screen_text)
+
+    # controller takes at least 2 minutes for the download
+    # (1.2GB @ 10 MB/s), so allow up to 5 minutes for the download+install
+    wait_until_passes(t_check, retries=30, sleep=10)
+
+# Reboot to new system
+playos.send_monitor_command("system_reset")
+
+with TestCase("kiosk is open with kiosk URL after reboot") as t:
+    wait_until_passes(
+        lambda: t.assertIn("Hello world", screenshot_and_ocr(playos)),
+        retries=60
+    )
+
+playos.send_monitor_command("mouse_move 2000 2000")
+
+with TestCase("controller GUI with new version is visible") as t:
+    # switch to controller
+    playos.send_key("ctrl-shift-f12")
+    wait_until_passes(
+        lambda: t.assertIn("${nextSystemVersion}", screenshot_and_ocr(playos))
+    )
 '';
 }
