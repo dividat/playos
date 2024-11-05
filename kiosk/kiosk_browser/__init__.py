@@ -17,21 +17,18 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
     mainWidget = main_widget.MainWidget(
         kiosk_url = parseUrl(kiosk_url),
         settings_url = parseUrl(settings_url),
-        toggle_settings_key = QKeySequence(toggle_settings_key)
+        toggle_settings_key = QKeySequence(toggle_settings_key),
+        fullscreen = fullscreen
     )
 
     mainWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
 
-    screen_size = app.primaryScreen().size()
-
-    if fullscreen:
-        # Without a Window Manager, showFullScreen does not work under X,
-        # so set the window size to the primary screen size.
-        mainWidget.resize(screen_size)
-        mainWidget.showFullScreen()
-    else:
-        mainWidget.resize(QSize(round(screen_size.width() / 2), round(screen_size.height() / 2)))
-        mainWidget.show()
+    # Note: Qt primary screen != xrandr primary screen
+    # Qt will set primary when screen becomes visible, while on
+    # xrandr it only changes when `--primary` is explicitly specified
+    app.primaryScreenChanged.connect(mainWidget.handle_screen_change)
+    primary = app.primaryScreen()
+    mainWidget.handle_screen_change(primary)
 
     # Quit application gracefully when receiving SIGINT or SIGTERM
     # This is important to trigger flushing of in-memory DOM storage to disk
