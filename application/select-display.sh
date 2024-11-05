@@ -26,8 +26,7 @@ esac
 
 if [ -z "$CONNECTED_OUTPUTS" ]; then
 
-    echo "No connected outputs found. Attempting to apply xrandr globally."
-    xrandr --auto # this is kind of useless?
+    echo "Error: no connected outputs found. Not applying any changes."
 
 else
 
