@@ -30,7 +30,6 @@ if [ -z "$CONNECTED_OUTPUTS" ]; then
 
 else
 
-
     first_functional_output=""
     for output in $CONNECTED_OUTPUTS; do
         if [ -z "$first_functional_output" ]; then
