@@ -116,6 +116,8 @@ class MainWidget(QtWidgets.QWidget):
         self._primary_screen_con = \
             new_primary.geometryChanged.connect(self._resize_to_screen)
 
+        # Precautionary sleep to allow Chromium to update screens
+        time.sleep(1)
         self._resize_to_screen(new_primary.geometry())
 
     def _resize_to_screen(self, new_geom):

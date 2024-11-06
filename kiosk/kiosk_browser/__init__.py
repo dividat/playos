@@ -26,7 +26,8 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
     # Note: Qt primary screen != xrandr primary screen
     # Qt will set primary when screen becomes visible, while on
     # xrandr it only changes when `--primary` is explicitly specified
-    app.primaryScreenChanged.connect(mainWidget.handle_screen_change)
+    app.primaryScreenChanged.connect(mainWidget.handle_screen_change,
+        type=Qt.ConnectionType.QueuedConnection)
     primary = app.primaryScreen()
     mainWidget.handle_screen_change(primary)
 
