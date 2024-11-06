@@ -114,6 +114,7 @@ class OpenMessage(QtWidgets.QWidget):
 
         button = QtWidgets.QPushButton('Open Network Login Page')
         button.clicked.connect(on_open)
+        button.setDefault(True)
 
         message_layout = QtWidgets.QHBoxLayout()
         message_layout.addWidget(label)
