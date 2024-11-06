@@ -16,7 +16,7 @@ class MainWidget(QtWidgets.QWidget):
                  toggle_settings_key: str, fullscreen: bool):
         super(MainWidget, self).__init__()
         # Display
-        self._primary_screen = None
+        self._primary_screen_con = None
         self._fullscreen = fullscreen
 
         # Proxy
@@ -109,16 +109,17 @@ class MainWidget(QtWidgets.QWidget):
         return super(MainWidget, self).eventFilter(source, event)
 
     def handle_screen_change(self, new_primary):
-        if self._primary_screen is not None:
-            logging.info(f"Primary screen changed from: {self._primary_screen.name()} to {new_primary.name()}")
-            self._primary_screen.geometryChanged.disconnect()
+        logging.info(f"Primary screen changed to {new_primary.name()}")
+        if self._primary_screen_con is not None:
+            QtCore.QObject.disconnect(self._primary_screen_con)
 
-        self._primary_screen = new_primary
-        self._primary_screen.geometryChanged.connect(self._resize_to_screen)
-        self._resize_to_screen()
+        self._primary_screen_con = \
+            new_primary.geometryChanged.connect(self._resize_to_screen)
 
-    def _resize_to_screen(self):
-        screen_size = self._primary_screen.size() # type: ignore
+        self._resize_to_screen(new_primary.geometry())
+
+    def _resize_to_screen(self, new_geom):
+        screen_size = new_geom.size()
         logging.info(f"Resizing widget based on new screen size: {screen_size}")
         if self._fullscreen:
             # Without a Window Manager, showFullScreen does not work under X,
