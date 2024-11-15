@@ -79,9 +79,6 @@ let get_proxy_uri connman =
     >|= Option.map (Connman.Service.Proxy.to_uri ~include_userinfo:true)
 
 let build_module connman =
-  (* TODO: this could take only `unit` as an argument by just getting
-     the connman reference like this:
-  let%lwt connman = Connman.Manager.connect () in *)
   let get_proxy () = get_proxy_uri connman in
   let depsI = make_deps get_proxy (Uri.of_string Config.System.update_url) in
   (module UpdateClient (val depsI : UpdateClientDeps) : S)
