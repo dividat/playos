@@ -1,3 +1,18 @@
+(**
+   Tests Update_client using a stub/mock HTTP server. Since Update_client is
+   invoking Curl via a subprocess, this is more of an integration test than a
+   pure unit test.
+
+   The stub HTTP server simulates the dist server and provides
+       1) a /latest endpoint for the latest version specified
+       2) bundle files for the versions added
+   It also supports download resuming via HTTP range requests.
+
+   Most tests are run twice: once with Update_client configured without a proxy
+   and then again with a proxy. Note: there is no actual HTTP proxy used,
+   the proxy scenario is realized by setting an invalid dist server URL and
+   using the stub server as a proxy.
+*)
 open Opium.Std
 open Lwt
 open Update_client
