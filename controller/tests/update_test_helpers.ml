@@ -257,7 +257,7 @@ let str_match_with_magic_pat expected actual =
 
 let state_formatter out inp = Format.fprintf out "%s" (statefmt inp)
 
-let t_state =
+let testable_state =
     let state_to_str s =
         Update.sexp_of_state s
             (* using _hum instead of _mach, because _mach seems to remove
@@ -281,7 +281,7 @@ let t_state =
 let interpret_spec (state : Update.state) (spec : scenario_spec) =
   match spec with
   | StateReached s ->
-      Lwt.return @@ Alcotest.check t_state (specfmt spec) s state
+      Lwt.return @@ Alcotest.check testable_state (specfmt spec) s state
   | ActionDone (descr, f) ->
       let%lwt rez = f state in
       Lwt.return @@ Alcotest.(check bool) (specfmt spec) true rez
