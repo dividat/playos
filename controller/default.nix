@@ -12,7 +12,7 @@ ocamlPackages.buildDunePackage rec {
 
   preConfigure = let
     subs = {
-        "@PLAYOS_VERSION" = version;
+        "@PLAYOS_VERSION@" = version;
         "@PLAYOS_UPDATE_URL@" = updateUrl;
         "@PLAYOS_KIOSK_URL@" = kioskUrl;
         "@PLAYOS_BUNDLE_NAME@" = bundleName;
