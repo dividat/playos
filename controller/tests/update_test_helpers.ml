@@ -237,7 +237,7 @@ let specfmt spec = match spec with
 
 let _MAGIC_PAT = "<..>"
 
-(* string equality, but the magic patern `<..>` is treated
+(* string equality, but the magic pattern `<..>` is treated
   as a placeholder for any sub-string. The implementation converts the
   `expected` string to a regex where the magic pattern is replaced with ".*",
   while being careful to `Str.quote` the rest of the string to not accidentally
