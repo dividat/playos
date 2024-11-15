@@ -35,17 +35,18 @@ let ensure_trailing_slash uri =
 module UpdateClient (DepsI: UpdateClientDeps) = struct
     let get_proxy = DepsI.get_proxy
     let download_dir = DepsI.download_dir
-    let base_url = ensure_trailing_slash DepsI.base_url
+    let base_url_with_trailing_slash = ensure_trailing_slash DepsI.base_url
 
     let download_url version_string =
-      Format.sprintf "%s%s/%s" base_url version_string (bundle_file_name version_string)
+      Format.sprintf "%s%s/%s" base_url_with_trailing_slash version_string (bundle_file_name version_string)
       |>
       Uri.of_string
 
     (** Get latest version available *)
     let get_latest_version () =
       let%lwt proxy = get_proxy () in
-      match%lwt Curl.request ?proxy (Uri.of_string (base_url ^ "latest")) with
+      let url = Uri.of_string @@ base_url_with_trailing_slash ^ "latest" in
+      match%lwt Curl.request ?proxy url with
       | RequestSuccess (_, body) ->
           return body
       | RequestFailure error ->
