@@ -155,8 +155,8 @@ module Make(Deps : ServiceDeps) : UpdateService = struct
             return (slot_primary, slot_booted, vsn_resp)
         ) in
         (match resp with
-            | Ok (slot_p, slot_b, vsns) ->
-                evaluate_version_info slot_p slot_b vsns
+            | Ok (slot_p, slot_b, version_info) ->
+                evaluate_version_info slot_p slot_b version_info
             | Error e ->
                 ErrorGettingVersionInfo (Printexc.to_string e)
         ) |> set
