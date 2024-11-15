@@ -44,7 +44,7 @@ ocamlPackages.buildDunePackage rec {
     ezjsonm
     containers
     fieldslib
-    yojson
-    ppx_yojson_conv
+    ppx_protocol_conv
+    ppx_protocol_conv_jsonm
   ];
 }

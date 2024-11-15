@@ -1,5 +1,6 @@
 open Lwt
 open Sexplib.Std
+open Protocol_conv_jsonm
 
 let log_src = Logs.Src.create "network"
 
@@ -60,7 +61,7 @@ module Interface = struct
     ; address: string
     ; link_type: string
     }
-  [@@deriving sexp, yojson]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   let to_json i =
     Ezjsonm.(dict [

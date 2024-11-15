@@ -2,8 +2,15 @@ open Lwt
 open Connman_interfaces
 open Sexplib.Std
 open Sexplib.Conv
+open Protocol_conv_jsonm
 
 let log_src = Logs.Src.create "connman"
+
+module OBus_proxy = struct
+    include OBus_proxy
+    let to_jsonm _ = `String "@opaque"
+    let of_jsonm_exn _ = failwith "Deserialization is not supported"
+end
 
 let string_of_obus value =
   (* Helper to safely get string from OBus_value.V.single *)
@@ -32,7 +39,7 @@ struct
     | Ethernet
     | Bluetooth
     | P2P
-  [@@deriving sexp, yojson]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   let type_of_string = function
     | "wifi" -> Some Wifi
@@ -42,12 +49,12 @@ struct
     | _ -> None
 
   type t = {
-    _proxy: (OBus_proxy.t [@sexp.opaque] [@yojson.opaque])
+    _proxy: (OBus_proxy.t [@sexp.opaque])
   ; name : string
   ; type' : type'
   ; powered : bool
   ; connected : bool
-  } [@@deriving sexp, yojson]
+  } [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   let set_property proxy ~name ~value =
     OBus_method.call
@@ -82,7 +89,7 @@ struct
   type input =
     | None
     | Passphrase of string
-  [@@deriving sexp, yojson]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   type t = input OBus_object.t
 
@@ -247,7 +254,7 @@ struct
     | Ready
     | Disconnect
     | Online
-  [@@deriving sexp, yojson]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   type security =
     | None
@@ -255,7 +262,7 @@ struct
     | PSK
     | IEEE8021x
     | WPS
-  [@@deriving sexp, yojson]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   let supported_security_protocols = [ None; WEP; PSK; ]
 
@@ -269,7 +276,7 @@ struct
     ; netmask : string
     ; gateway : string option
     }
-    [@@deriving sexp, yojson]
+    [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
     let of_obus v =
       (fun () ->
@@ -294,7 +301,7 @@ struct
     ; gateway : string option
     ; privacy : string
     }
-    [@@deriving sexp, yojson]
+    [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
     let of_obus v =
       (fun () ->
@@ -322,7 +329,7 @@ struct
     ; address : string
     ; mtu : int
     }
-    [@@deriving sexp, yojson]
+    [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
     let of_obus v =
       (fun () ->
@@ -342,16 +349,16 @@ struct
   struct
     type credentials =
       { user: string
-      ; password: (string [@sexp.opaque] [@yojson.opaque])
+      ; password: (string [@sexp.opaque])
       }
-      [@@deriving sexp, yojson]
+      [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
     type t =
     { host: string
     ; port: int
     ; credentials: credentials option
     }
-    [@@deriving sexp, yojson]
+    [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
     let make ?user ?password host port =
       { host = host
@@ -400,8 +407,8 @@ struct
   end
 
   type t = {
-    _proxy : (OBus_proxy.t [@sexp.opaque] [@yojson.opaque])
-  ; _manager : (OBus_proxy.t [@sexp.opaque] [@yojson.opaque])
+    _proxy : (OBus_proxy.t [@sexp.opaque])
+  ; _manager : (OBus_proxy.t [@sexp.opaque])
   ; id : string
   ; name : string
   ; type' : Technology.type'
@@ -416,7 +423,7 @@ struct
   ; proxy : Proxy.t option
   ; nameservers : string list
   }
-  [@@deriving sexp, yojson]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   (* Helper to parse a service from OBus *)
   let of_obus  manager context (path, properties) =

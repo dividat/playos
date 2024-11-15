@@ -1,6 +1,7 @@
 open Connman.Service
 open Tyxml.Html
 open Sexplib.Std
+open Protocol_conv_jsonm
 
 let service_item ({ id; name; strength; ipv4 } as service) =
   let icon =
@@ -35,7 +36,7 @@ type params =
   ; services: Connman.Service.t list
   ; interfaces: Network.Interface.t list
   }
-  [@@deriving yojson]
+  [@@deriving protocol ~driver:(module Jsonm)]
 
 let html { proxy; services; interfaces } =
   let connected_services, available_services =

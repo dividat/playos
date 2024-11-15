@@ -9,8 +9,8 @@
    licensing_page page definition icon)
  (libraries lwt logs logs.fmt logs.lwt fpath cohttp-lwt-unix logging
   opium tyxml rauc zerotier connman locale network timedate systemd
-  semver2 fieldslib screen_settings util)
- (preprocess (pps lwt_ppx ppx_sexp_conv ppx_yojson_conv)))
+  semver2 fieldslib screen_settings util ppx_protocol_conv_jsonm)
+ (preprocess (pps lwt_ppx ppx_sexp_conv ppx_protocol_conv)))
 
 (library
  (name logging)
@@ -20,6 +20,7 @@
 (library
  (name network)
  (modules network)
- (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman systemd curl)
- (preprocess (pps lwt_ppx ppx_sexp_conv ppx_yojson_conv)))
+ (libraries lwt logs.lwt lwt.unix cohttp-lwt-unix connman systemd curl
+            ppx_protocol_conv_jsonm)
+ (preprocess (pps lwt_ppx ppx_sexp_conv ppx_protocol_conv)))
 

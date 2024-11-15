@@ -17,7 +17,7 @@ let page html =
 
 let resp_json ?code json =
   let headers = Cohttp.Header.init_with "content-type" "application/json" in
-  Yojson.Safe.to_string json
+  Ezjsonm.value_to_string json
   |> Response.of_string_body ?code ~headers
 
 let header key req = Cohttp.Header.get (Request.headers req) key
@@ -44,7 +44,7 @@ let error_handling =
       let%lwt () = Logs_lwt.err (fun m -> m "GUI Error: %s" (Printexc.to_string exn)) in
       match (header "accept" req) with
           | Some "application/json" -> (* for testing *)
-              Lwt.return @@ resp_json ~code:`Internal_server_error @@ `Assoc [
+              Lwt.return @@ resp_json ~code:`Internal_server_error @@ `O [
                 ("error", `Bool true);
                 ("message", `String (Printexc.to_string exn))
               ]
@@ -234,7 +234,7 @@ module NetworkGui = struct
     in
     match (header "accept" req) with
         | Some "application/json" ->
-            Lwt.return @@ resp_json @@ Network_list_page.yojson_of_params params
+            Lwt.return @@ resp_json @@ Network_list_page.params_to_jsonm params
         | _ ->
             Lwt.return (page (Network_list_page.html params))
 

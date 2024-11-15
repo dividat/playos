@@ -295,7 +295,7 @@ with TestCase("controller can connect to all good APs") as t:
         out_services = output['services']
         found = find_service_by_id(service['id'], out_services)
         t.assertIsNotNone(found)
-        t.assertEqual(["Ready"], found['state'])
+        t.assertEqual("Ready", found['state'])
 
 with TestCase("controller can forget all APs") as t:
     for service in GOOD_SERVICES:
@@ -305,7 +305,7 @@ with TestCase("controller can forget all APs") as t:
         out_services = output['services']
         found = find_service_by_id(service['id'], out_services)
         t.assertIsNotNone(found)
-        t.assertEqual(["Idle"], found['state'])
+        t.assertEqual("Idle", found['state'])
 
 with TestCase("controller produces clear errors when passphrase is incorrect") as t:
     for service in PASSPHRASE_SERVICES:
