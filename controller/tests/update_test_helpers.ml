@@ -278,7 +278,7 @@ let t_state =
     Alcotest.testable state_formatter state_eq
 
 
-let interp_spec (state : Update.state) (spec : scenario_spec) =
+let interpret_spec (state : Update.state) (spec : scenario_spec) =
   match spec with
   | StateReached s ->
       Lwt.return @@ Alcotest.check t_state (specfmt spec) s state
@@ -297,7 +297,7 @@ let check_state expected_state_sequence prev_state cur_state =
     failwith @@ "Expected a state spec, but got " ^ specfmt spec ^ " - bad spec?";
 
   (* check if state spec matches the prev_state (i.e. initial state) *)
-  let%lwt () = interp_spec prev_state spec in
+  let%lwt () = interpret_spec prev_state spec in
 
   (* progress forward until we either reach the end or we hit a state
      spec, which means we have to progress the state machine *)
@@ -308,7 +308,7 @@ let check_state expected_state_sequence prev_state cur_state =
 
     (fun () ->
     let next_spec = Queue.pop expected_state_sequence in
-    interp_spec prev_state next_spec
+    interpret_spec prev_state next_spec
     )
 
 let rec consume_mock_specs state_seq cur_state =
@@ -316,7 +316,7 @@ let rec consume_mock_specs state_seq cur_state =
   match next with
     | Some spec when is_mock_spec spec ->
             let _ = Queue.pop state_seq in
-            let%lwt () = interp_spec cur_state spec in
+            let%lwt () = interpret_spec cur_state spec in
             consume_mock_specs state_seq cur_state
     | _ -> Lwt.return ()
 
