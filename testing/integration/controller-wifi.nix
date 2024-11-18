@@ -126,8 +126,9 @@ pkgs.testers.runNixOSTest {
                 };
               };
 
-              # connman hangs when connecting to this AP, nothing in the logs
-              # neither from connman nor from wpa_supplicant ¯\_(ツ)_/¯
+              # connman (tested w/ versions 1.42 and 1.43) hangs when connecting
+              # to this AP, nothing in the logs neither from connman nor from
+              # wpa_supplicant ¯\_(ツ)_/¯
               #wlan0-2 = {
               #  ssid = "test-ap-wpa2";
               #  authentication = {
