@@ -24,7 +24,6 @@ buildDunePackage rec {
 
   useDune2 = true;
 
-  #nativeBuildInputs = [ ];
   propagatedBuildInputs = [
     base
     ppxlib

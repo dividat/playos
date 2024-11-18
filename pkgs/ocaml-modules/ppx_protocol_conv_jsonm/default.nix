@@ -23,7 +23,6 @@ buildDunePackage rec {
 
   useDune2 = true;
 
-  #nativeBuildInputs = [ ];
   propagatedBuildInputs = [
     ppx_protocol_conv
     ezjsonm
