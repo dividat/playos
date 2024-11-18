@@ -1,3 +1,5 @@
+open Protocol_conv_jsonm
+
 (** Initialize Network connectivity *)
 val init
   : connman : Connman.Manager.t
@@ -11,7 +13,7 @@ module Interface : sig
     ; address: string
     ; link_type: string
     }
-  [@@deriving sexp]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   val to_json : t -> Ezjsonm.value
 

@@ -1,8 +1,11 @@
+open Protocol_conv_jsonm
+
 type params =
   { proxy: string option
   ; services: Connman.Service.t list
-  ; interfaces: string
+  ; interfaces: Network.Interface.t list
   }
+  [@@deriving protocol ~driver:(module Jsonm)]
 
 val html :
   params

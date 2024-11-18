@@ -2,8 +2,15 @@ open Lwt
 open Connman_interfaces
 open Sexplib.Std
 open Sexplib.Conv
+open Protocol_conv_jsonm
 
 let log_src = Logs.Src.create "connman"
+
+module OBus_proxy = struct
+    include OBus_proxy
+    let to_jsonm _ = `String "@opaque"
+    let of_jsonm_exn _ = failwith "Deserialization is not supported"
+end
 
 let string_of_obus value =
   (* Helper to safely get string from OBus_value.V.single *)
@@ -32,7 +39,7 @@ struct
     | Ethernet
     | Bluetooth
     | P2P
-  [@@deriving sexp]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   let type_of_string = function
     | "wifi" -> Some Wifi
@@ -47,7 +54,7 @@ struct
   ; type' : type'
   ; powered : bool
   ; connected : bool
-  } [@@deriving sexp]
+  } [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   let set_property proxy ~name ~value =
     OBus_method.call
@@ -82,60 +89,135 @@ struct
   type input =
     | None
     | Passphrase of string
-  [@@deriving sexp]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   type t = input OBus_object.t
 
+  (* The errors that are relevant and that the manager is known to actually
+     produce. Defined but unused errors are not included. *)
+  type manager_error =
+      | InvalidKey
+      | ConnectFailed
+      | Blocked
+      | Unknown of string
+
+  type agent_error =
+      | PassMissing
+      | MissingRequestedInputs of string list
+      | BrowserRequested
+      | UnexpectedFailure of exn
+
+  type reported_error =
+      | ManagerError of manager_error
+      | AgentError of agent_error
+
   let request_input input service (fields: (string * OBus_value.V.single) list) =
     let%lwt () = Logs_lwt.debug ~src:log_src
-        (fun m -> m "input requested from agent for service %s"
+        (fun m -> m "input %s requested from agent for service %s"
+            (String.concat ", " @@ List.map (fun (k, v) ->
+                Printf.sprintf "%s: %s" k (OBus_value.V.string_of_single v)
+            ) fields)
             (String.concat "/" service)
         )
     in
-    match input with
-    | Passphrase p ->
-      (match List.assoc_opt "Passphrase" fields with
-       | Some _ ->
-         return [ "Passphrase", p |> OBus_value.C.(make_single basic_string)]
-       | None ->
-         let%lwt () = Logs_lwt.err ~src:log_src
-             (fun m -> m "Passphrase available as input but not being requested")
-         in
-         OBus_error.make "net.connman.Agent.Error.Canceled" "."
-         |> Lwt.fail
-      )
-    | None ->
-      let%lwt () = Logs_lwt.err ~src:log_src
-          (fun m -> m "input requested from agent but none available.")
-      in
-      OBus_error.make "net.connman.Agent.Error.Canceled" "No input available."
-      |> Lwt.fail
-
+    let mandatory_inputs = List.concat_map (fun (k, v) ->
+        let v_ocaml = OBus_value.C.(cast_single (dict string variant) v) in
+        let requirement_opt = List.assoc_opt "Requirement" v_ocaml |>
+            Option.map (OBus_value.C.(cast_single basic_string)) in
+        match requirement_opt with
+            | Some "mandatory" -> [k]
+            | _ -> []
+    ) fields
+    in
+    match (input, mandatory_inputs) with
+        | (Passphrase p, [ "Passphrase" ]) ->
+            return @@ Ok [ "Passphrase", p |> OBus_value.C.(make_single basic_string)]
+        | (None, [ "Passphrase" ]) ->
+          let%lwt () = Logs_lwt.err ~src:log_src (fun m -> m
+            "Passphrase requested from agent, but not available.")
+          in
+          return @@ Error PassMissing
+        | (_, _) ->
+            (* This case is triggered when manager is requesting
+               _some_ input(s) (so NOT open networks) and those inputs
+               involve something additional to (or other than) a passphrase.
+            *)
+            let expected_properties_str =
+                String.concat ", " mandatory_inputs
+            in
+            let%lwt () = Logs_lwt.err ~src:log_src (fun m -> m
+               "Manager is requesting additional missing input(s): %s"
+               expected_properties_str
+            )
+            in
+            return @@ Error (MissingRequestedInputs mandatory_inputs)
 
   let request_browser input service url =
     let%lwt () = Logs_lwt.err ~src:log_src
         (fun m -> m "agent requested to open browser to url: %s" url)
     in
-    OBus_error.make "net.connman.Agent.Error.Canceled" "Can not open browser."
-    |> Lwt.fail
+    return @@ Error BrowserRequested
+
+  (* based on `connman_service_error` enum and it's stringified mapping in
+    error2string: https://git.kernel.org/pub/scm/network/connman/connman.git/tree/src/service.c?h=1.42#n324 *)
+  let manager_error_of_string = function
+    | "invalid-key" -> InvalidKey
+    | "connect-failed" -> ConnectFailed
+    (* although this sounds generic, `blocked` err is only produced by connman
+       when wpa_supplicant reports a wifi deauth with reason code = 6, which is
+       "Class 2 frame received from nonauthenticated station".
+       This seems like a protocol error? *)
+    | "blocked" -> Blocked
+(*
+    (* defined, but never produced in connman v1.42 *)
+    | "dhcp-failed" -> DhcpFailed
+    | "out-of-range" -> OutOfRange
+    | "pin-missing" -> PinMissing
+
+    (* these are VPN related *)
+    | "login-failed" -> LoginFailed
+    | "auth-failed" -> AuthFailed
+*)
+    | s -> Unknown s
+
+  let agent_error_msg = function
+      | PassMissing ->
+          "Password is required for this access point"
+      | MissingRequestedInputs props ->
+          Printf.sprintf
+            "Unsupported protocol: additional inputs are needed: %s"
+            (String.concat ", " props)
+      | BrowserRequested ->
+          "Unsupported protocol: access point requires browser-based authentication"
+      | UnexpectedFailure exn ->
+          Printf.sprintf "Unexpected connection failure: %s" (Printexc.to_string exn)
 
   let interface on_error =
+    let wrap_req f = fun obj (x1, x2) ->
+        let%lwt caught_f = Lwt_result.catch
+            (fun () -> f (OBus_object.get obj) x1 x2) |>
+            (Lwt_result.map_error (fun e -> UnexpectedFailure e))
+        in
+        match (Result.join caught_f) with
+            | Ok a -> Lwt.return a
+            | Error err ->
+                let%lwt () = on_error (AgentError err) in
+                let obus_exn = OBus_error.make
+                    "net.connman.Agent.Error.Canceled"
+                    (agent_error_msg err)
+                in
+                Lwt.fail obus_exn
+    in
     Connman_interfaces.Net_connman_Agent.make {
       m_ReportError = (
         fun obj (service, msg) ->
           let%lwt () = Logs_lwt.err ~src:log_src
               (fun m -> m "error reported to agent: %s" msg)
           in
-          on_error msg
+          on_error (ManagerError (manager_error_of_string msg))
       );
-      m_RequestInput = (
-        fun obj (x1, x2) ->
-          request_input (OBus_object.get obj) x1 x2
-      );
-      m_RequestBrowser = (
-        fun obj (x1, x2) ->
-          request_browser (OBus_object.get obj) x1 x2
-      );
+      m_RequestInput = wrap_req request_input;
+      m_RequestBrowser = wrap_req request_browser;
       m_Cancel = (fun obj () -> return_unit);
       m_Release = (fun obj () -> return_unit);
     }
@@ -172,7 +254,19 @@ struct
     | Ready
     | Disconnect
     | Online
-  [@@deriving sexp]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
+
+  type security =
+    | None
+    | WEP
+    | PSK
+    | IEEE8021x
+    | WPS
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
+
+  let supported_security_protocols = [ None; WEP; PSK; ]
+
+  let string_of_security s = sexp_of_security s |> Sexplib.Sexp.to_string
 
   module IPv4 =
   struct
@@ -182,7 +276,7 @@ struct
     ; netmask : string
     ; gateway : string option
     }
-    [@@deriving sexp]
+    [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
     let of_obus v =
       (fun () ->
@@ -207,7 +301,7 @@ struct
     ; gateway : string option
     ; privacy : string
     }
-    [@@deriving sexp]
+    [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
     let of_obus v =
       (fun () ->
@@ -235,7 +329,7 @@ struct
     ; address : string
     ; mtu : int
     }
-    [@@deriving sexp]
+    [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
     let of_obus v =
       (fun () ->
@@ -257,14 +351,14 @@ struct
       { user: string
       ; password: (string [@sexp.opaque])
       }
-      [@@deriving sexp]
+      [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
     type t =
     { host: string
     ; port: int
     ; credentials: credentials option
     }
-    [@@deriving sexp]
+    [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
     let make ?user ?password host port =
       { host = host
@@ -318,6 +412,7 @@ struct
   ; id : string
   ; name : string
   ; type' : Technology.type'
+  ; security: security list
   ; state : state
   ; strength : int option
   ; favorite : bool
@@ -328,7 +423,7 @@ struct
   ; proxy : Proxy.t option
   ; nameservers : string list
   }
-  [@@deriving sexp]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   (* Helper to parse a service from OBus *)
   let of_obus  manager context (path, properties) =
@@ -341,6 +436,17 @@ struct
       | "disconnect" -> Some Disconnect
       | "online" -> Some Online
       | _ -> None
+    in
+    let security_of_string = function
+      | "none" -> Some None
+      | "psk" -> Some PSK
+      | "wps" -> Some WPS
+      | "ieee8021x" -> Some IEEE8021x
+      | _ -> None
+    in
+    let security_of_obus v =
+        let str_list = string_list_of_obus v in
+        List.filter_map security_of_string str_list
     in
     let strength_of_obus v =
       try
@@ -367,13 +473,13 @@ struct
         _ -> None
     in
     CCOption.(
-      pure (fun name type' state strength favorite autoconnect ipv4 ipv4_user_config ipv6 ethernet proxy nameservers ->
+      pure (fun name type' state strength favorite autoconnect ipv4 ipv4_user_config ipv6 ethernet proxy nameservers security ->
           { _proxy = OBus_proxy.make ~peer:(OBus_context.sender context) ~path:path
           ; _manager = manager
           ; id = path |> CCList.last 1 |> CCList.hd
           ; name ; type'; state; strength; favorite; autoconnect
           ; ipv4 = (if Option.is_some ipv4_user_config then ipv4_user_config else ipv4)
-          ; ipv6; ethernet; proxy; nameservers
+          ; ipv6; ethernet; proxy; nameservers; security
           })
       <*> (properties |> List.assoc_opt "Name" >>= string_of_obus)
       <*> (properties |> List.assoc_opt "Type" >>= string_of_obus >>= Technology.type_of_string)
@@ -386,7 +492,8 @@ struct
       <*> (properties |> List.assoc_opt "IPv6" >>= IPv6.of_obus |> pure)
       <*> (properties |> List.assoc_opt "Ethernet" >>= Ethernet.of_obus)
       <*> (properties |> List.assoc_opt "Proxy" >>= proxy_of_obus |> pure)
-      <*> (properties |> List.assoc_opt "Nameservers.Configuration" >|= string_list_of_obus))
+      <*> (properties |> List.assoc_opt "Nameservers.Configuration" >|= string_list_of_obus)
+      <*> (properties |> List.assoc_opt "Security" >|= security_of_obus))
 
   let is_connected t =
     match t.state with
@@ -449,36 +556,75 @@ struct
 
 
   let connect ?(input=Agent.None) service =
+    let is_supported = List.exists
+        (fun s -> List.mem s supported_security_protocols)
+        service.security
+    in
     let%lwt () = Logs_lwt.debug ~src:log_src
         (fun m -> m "connect to service %s" service.id)
     in
 
     (* Store agent error in a local mutable variable *)
-    let agent_reported_error = ref None in
+    let agent_reported_error = ref Option.None in
     let on_agent_error msg = Lwt.return (agent_reported_error := Some msg) in
 
     (* Create and register an agent that will pass input to ConnMan *)
     let%lwt agent_path, agent = Agent.create ~input on_agent_error in
     let%lwt () = register_agent service._manager ~path:agent_path in
 
-    (Lwt.catch 
-        (* Connect to service *)
-        (fun () ->
-          OBus_method.call
-            Connman_interfaces.Net_connman_Service.m_Connect
-            service._proxy ())
-        (* Give priority to error reported from agent, which is more informative *)
-        (function
-          | exn -> 
-              match !agent_reported_error with
-              | Some "invalid-key" -> Lwt.fail_with "Passphrase is not valid. Please check it and then try to connect again."
-              | Some msg -> Lwt.fail_with msg
-              | None -> Lwt.fail exn
-        ))
-    [%lwt.finally
+    let destroy_agent () =
       (* Cleanup and destroy agent *)
       let%lwt () = unregister_agent service._manager ~path:agent_path in
-      Agent.destroy agent]
+      Agent.destroy agent
+    in
+
+    let%lwt obus_resp = Lwt_result.catch (OBus_method.call
+            Connman_interfaces.Net_connman_Service.m_Connect
+            service._proxy)
+    in
+    let%lwt _ = Lwt_result.catch destroy_agent in
+    match (obus_resp, !agent_reported_error) with
+        | (Ok _, _) ->
+            Lwt.return ()
+        | (Error _, Some (ManagerError InvalidKey)) ->
+            Lwt.fail_with "Password is not valid or client is blocked. Please check the password and then try to connect again."
+        | (Error _, Some (ManagerError ConnectFailed)) ->
+            Lwt.fail_with "Connection failed for unknown reasons. Please check wireless signal strength and network settings."
+        | (Error _, Some (ManagerError Blocked)) ->
+            Lwt.fail_with "Connection failed, deauthenticated by access point."
+        | (Error exn, Some (ManagerError (Unknown err))) ->
+            Lwt.fail_with (Printf.sprintf
+                "Connection failed, unknown error reported by manager: %s
+                 DBus connect exception: %s" err (Printexc.to_string exn)
+            )
+        | (Error exn, Some (AgentError err)) ->
+            Lwt.fail_with (Printf.sprintf
+                "Connection failed. %s
+                 DBus connect exception: %s"
+                 (Agent.agent_error_msg err) (Printexc.to_string exn)
+            )
+        | (Error exn, None) when not is_supported ->
+            Lwt.fail_with (Printf.sprintf
+                "Connection failed, none of the available authentication protocols are supported.
+                Available protocols: %s
+                Supported protocols: %s
+               "
+               (String.concat ", " @@
+                    List.map string_of_security service.security)
+               (String.concat ", " @@
+                    List.map string_of_security supported_security_protocols)
+            )
+        | (Error exn, None) when
+            OBus_error.name exn = "net.connman.Error.InvalidArguments" ->
+            Lwt.fail_with (Printf.sprintf
+                "Connection failed due to invalid arguments provided, the authentication protocol used by the access point is most likely unsupported"
+            )
+        | (Error exn, None) ->
+            Lwt.fail_with (Printf.sprintf
+                "Connection to network failed.
+                 DBus connect exception: %s"
+                    (Printexc.to_string exn)
+            )
 
   let disconnect service =
     let%lwt () = Logs_lwt.debug ~src:log_src

@@ -1,5 +1,7 @@
 open Connman.Service
 open Tyxml.Html
+open Sexplib.Std
+open Protocol_conv_jsonm
 
 let service_item ({ id; name; strength; ipv4 } as service) =
   let icon =
@@ -32,17 +34,22 @@ let service_item ({ id; name; strength; ipv4 } as service) =
 type params =
   { proxy: string option
   ; services: Connman.Service.t list
-  ; interfaces: string
+  ; interfaces: Network.Interface.t list
   }
+  [@@deriving protocol ~driver:(module Jsonm)]
 
 let html { proxy; services; interfaces } =
   let connected_services, available_services =
     List.partition Connman.Service.is_connected services
   in
-  Page.html 
-    ~current_page:Page.Network 
+  let interfaces_str = interfaces
+      |> [%sexp_of: Network.Interface.t list]
+      |> Sexplib.Sexp.to_string_hum
+  in
+  Page.html
+    ~current_page:Page.Network
     ~header:(
-      Page.header_title 
+      Page.header_title
         ~icon:Icon.world
         ~right_action:(a ~a:[ a_href "/network" ; a_class [ "d-Button" ] ] [ txt "Refresh" ])
         [ txt "Network" ])
@@ -66,12 +73,12 @@ let html { proxy; services; interfaces } =
               []
           ) @
           [ Definition.term [ txt "Internet" ]
-          ; Definition.description 
-              [ div 
+          ; Definition.description
+              [ div
                   ~a:[ a_class [ "d-Spinner" ]
-                  ; Unsafe.string_attrib "is" "internet-status" 
+                  ; Unsafe.string_attrib "is" "internet-status"
                   ]
-                  [] 
+                  []
               ]
           ]
         )
@@ -88,6 +95,6 @@ let html { proxy; services; interfaces } =
 
       ; section
           [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Network Interfaces" ]
-          ; pre ~a: [ a_class [ "d-Preformatted" ] ]  [ txt interfaces ]
+          ; pre ~a: [ a_class [ "d-Preformatted" ] ]  [ txt interfaces_str ]
           ]
       ])

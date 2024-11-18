@@ -1,5 +1,13 @@
 {config, pkgs, lib, hostName, ... }:
-
+with builtins;
+with lib;
+let
+    wifiIfs = config.networking.wireless.interfaces;
+    # see nixos wpa_supplicant.nix module
+    wpaSupplicantServices =
+      if wifiIfs == [] then [ "wpa_supplicant.service" ]
+      else map (i: "wpa_supplicant-${i}.service") wifiIfs;
+in
 {
   # Enable non-free firmware
   hardware.enableRedistributableFirmware = true;
@@ -58,7 +66,7 @@
     };
   };
   # Issue 1: Make sure connman starts after wpa_supplicant
-  systemd.services."connman".after = [ "wpa_supplicant.service" ];
+  systemd.services."connman".after = wpaSupplicantServices;
   # Issue 2: Restart wpa_supplicant (and thereby connman) after rfkill unblock of wlan
   #          This addresses the problem of wpa_supplicant with connman not seeing any
   #          networks if wlan was initially soft blocked. (https://01.org/jira/browse/CM-670)
@@ -69,7 +77,8 @@
       # Wait an instant. Immediate restart gets wpa_supplicant stuck in the same way.
       sleep 5
 
-      ${config.systemd.package}/bin/systemctl try-restart wpa_supplicant.service
+      ${config.systemd.package}/bin/systemctl try-restart \
+        ${toString wpaSupplicantServices}
     fi
   '';
 

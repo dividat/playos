@@ -1,3 +1,5 @@
+open Protocol_conv_jsonm
+
 (** ConnMan Technology API *)
 module Technology : sig
 
@@ -7,7 +9,7 @@ module Technology : sig
     | Ethernet
     | Bluetooth
     | P2P
-  [@@deriving sexp]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   (** ConnMan Technology.
 
@@ -19,7 +21,7 @@ module Technology : sig
   ; type' : type'
   ; powered : bool
   ; connected : bool
-  } [@@deriving sexp]
+  } [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   (** Enable a technology *)
   val enable : t -> unit Lwt.t
@@ -44,7 +46,7 @@ module Agent : sig
   type input =
     | None (** No input *)
     | Passphrase of string (** The passphrase for authentication. For example a WEP key, a PSK passphrase or a passphrase for EAP authentication methods.*)
-  [@@deriving sexp]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 end
 
 (** ConnMan Service API*)
@@ -59,7 +61,15 @@ module Service : sig
     | Ready
     | Disconnect
     | Online
-  [@@deriving sexp]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
+
+  type security =
+    | None
+    | WEP
+    | PSK
+    | IEEE8021x
+    | WPS
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   (** IPv4 properties *)
   module IPv4 : sig
@@ -69,7 +79,7 @@ module Service : sig
     ; netmask : string
     ; gateway : string option
     }
-    [@@deriving sexp]
+    [@@deriving sexp, protocol ~driver:(module Jsonm)]
   end
 
   (** IPv6 properties *)
@@ -81,7 +91,7 @@ module Service : sig
     ; gateway : string option
     ; privacy : string
     }
-    [@@deriving sexp]
+    [@@deriving sexp, protocol ~driver:(module Jsonm)]
   end
 
   (** Ethernet properties *)
@@ -92,7 +102,7 @@ module Service : sig
     ; address : string
     ; mtu : int
     }
-    [@@deriving sexp]
+    [@@deriving sexp, protocol ~driver:(module Jsonm)]
   end
 
   module Proxy : sig
@@ -100,14 +110,14 @@ module Service : sig
       { user: string
       ; password: (string [@sexp.opaque])
       }
-      [@@deriving sexp]
+      [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
     type t =
     { host: string
     ; port: int
     ; credentials: credentials option
     }
-    [@@deriving sexp]
+    [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
     val validate : string -> t option
     (** [validate str] returns [t] if [str] is valid.
@@ -141,6 +151,7 @@ module Service : sig
   ; id : string
   ; name : string
   ; type' : Technology.type'
+  ; security: security list
   ; state : state
   ; strength : int option
   ; favorite : bool
@@ -151,7 +162,7 @@ module Service : sig
   ; proxy : Proxy.t option
   ; nameservers : string list
   }
-  [@@deriving sexp]
+  [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   (** Helper to decide if service is connected *)
   val is_connected : t -> bool
