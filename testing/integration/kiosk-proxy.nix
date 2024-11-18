@@ -116,7 +116,7 @@ pkgs.nixosTest {
 
     with TestPrecondition('Proxied curl request to kiosk URL arrives'):
       client.succeed(
-        'curl --proxy http://user:p4ssw0rd@theproxy:${toString proxyPort} ${kioskUrl}'
+        'curl --proxy http://user:p4ssw0rd@theproxy:${toString proxyPort} ${kioskUrl}/test'
       )
       expect_requests(1)
 
@@ -143,7 +143,7 @@ pkgs.nixosTest {
         raise AssertionError("Expected kiosk logs to contain info about configured proxy.")
 
       # Expect kiosk request in proxy logs
-      wait_for_logs(theproxy, "GET http://kiosk.local/", unit="tinyproxy.service")
+      wait_for_logs(theproxy, "GET http://kiosk.local/ HTTP", unit="tinyproxy.service")
 
       # Expect arrival of one or more requests at the mock server
       expect_requests()
