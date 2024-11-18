@@ -145,27 +145,11 @@ pkgs.testers.runNixOSTest {
                 };
               };
 
-              # connecting to this AP fails with `invalid-key`
-              # (even though the reason is diferent). This is
-              # because wpa_supplicant responds with CTRL-EVENT-AUTH-REJECT
-              # status_code=1, which is "unspecified reason" and so
-              # connman does a buest guess.
-              #wlan0-4 = {
-              #  ssid = "bad-ap-blocked";
-              #  bssid = "02:00:00:00:00:04";
-              #  authentication = {
-              #    mode = "wpa3-sae";
-              #    saePasswords = [ { password = "reproducibility"; } ];
-              #  };
-              #  macAcl = "allow"; # allows only listed clients
-              #  macAllow = [ ] ; # deny everything
-              #};
-
               # not functional (auth server not set up), but will show up
               # as an AP with Security = [ ieee8021x ]
-              wlan0-5 = {
+              wlan0-4 = {
                 ssid = "bad-ap-eap";
-                bssid = "02:00:00:00:00:05";
+                bssid = "02:00:00:00:00:04";
                 # cannot be empty, overriden by settings below
                 authentication.mode = "none";
                 settings = {
