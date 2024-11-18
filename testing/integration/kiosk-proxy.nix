@@ -126,11 +126,11 @@ pkgs.nixosTest {
     client.wait_for_x()
     client.wait_for_unit("connman.service")
 
-    with TestCase('kiosk-browser uses configured proxy'):
+    with TestCase('kiosk-browser uses configured proxy') as t:
       service_name = client.succeed("connmanctl services | head -1 | awk '{print $3}'").strip(' \t\n\r')
       client.succeed(f"connmanctl config {service_name} proxy manual http://user:p4ssw0rd@theproxy:${toString proxyPort}")
 
-      kiosk_result = client.execute(
+      _, kiosk_result = client.execute(
         'su - alice -c "kiosk-browser ${kioskUrl} http://foo.xyz" 2>&1',
         check_return=False,
         check_output=True,
@@ -138,9 +138,11 @@ pkgs.nixosTest {
       )
 
       # Expect proxy takeup in kiosk logs
-      if "Set proxy to theproxy:${toString proxyPort}" not in kiosk_result[1]:
-        print(kiosk_result[1])
-        raise AssertionError("Expected kiosk logs to contain info about configured proxy.")
+      t.assertIn(
+        "Set proxy to theproxy:${toString proxyPort}",
+        kiosk_result,
+        f"Expected kiosk logs to contain info about configured proxy, but got:\n{kiosk_result}"
+      )
 
       # Expect kiosk request in proxy logs
       wait_for_logs(theproxy, "GET http://kiosk.local/ HTTP", unit="tinyproxy.service")
