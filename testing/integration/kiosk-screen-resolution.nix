@@ -199,4 +199,3 @@ pkgs.nixosTest {
             "display manager was restarted, it crashed - check logs!")
 '';
 }
-
