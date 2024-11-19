@@ -23,6 +23,8 @@ rec {
 
     module = { config, lib, pkgs, ... }:
     let
+      sessionName = "kiosk-browser";
+
       selectDisplay = pkgs.writeShellApplication {
         name = "select-display";
         runtimeInputs = with pkgs; [
@@ -65,8 +67,7 @@ rec {
       environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme ];
 
       # Kiosk session
-      services.xserver = let sessionName = "kiosk-browser";
-      in {
+      services.xserver = {
         enable = true;
 
         desktopManager = {
@@ -103,19 +104,11 @@ rec {
         };
 
         displayManager = {
-          # Always automatically log in play user
           lightdm = {
             enable = true;
             greeter.enable = false;
             autoLogin.timeout = 0;
           };
-
-          autoLogin = {
-            enable = true;
-            user = "play";
-          };
-
-          defaultSession = sessionName;
 
           sessionCommands = ''
             ${pkgs.xorg.xrdb}/bin/xrdb -merge <<EOF
@@ -123,6 +116,15 @@ rec {
             EOF
           '';
         };
+      };
+      services.displayManager = {
+        # Always automatically log in play user
+        autoLogin = {
+          enable = true;
+          user = "play";
+        };
+
+        defaultSession = sessionName;
       };
 
       # Firewall configuration
