@@ -77,24 +77,29 @@ let proxy_form proxy =
         ]
     ]
 
+let maybe_elem cond elem = if cond then Some elem else None
+
 let not_connected_form service =
+  let requires_passphrase =  service.security <> [ None ] in
   form
       ~a:[ a_action ("/network/" ^ service.id ^ "/connect")
       ; a_method `Post
       ; Unsafe.string_attrib "is" "disable-after-submit"
       ]
-      [ label
-          ~a:[ a_class [ "d-Label" ] ]
-          [ txt "Passphrase" 
-          ; input
-              ~a:[ a_input_type `Password
-              ; a_class [ "d-Input"; "d-Network__Input" ]
-              ; a_name "passphrase"
-              ; Unsafe.string_attrib "is" "show-password"
+      (Option.to_list (maybe_elem requires_passphrase (
+          label
+              ~a:[ a_class [ "d-Label" ] ]
+              [ txt "Passphrase"
+              ; input
+                  ~a:[ a_input_type `Password
+                  ; a_class [ "d-Input"; "d-Network__Input" ]
+                  ; a_name "passphrase"
+                  ; Unsafe.string_attrib "is" "show-password"
+                  ]
+                  ()
               ]
-              ()
-          ]
-      ; p
+      )) @
+      [ p
           [ input
               ~a:[ a_input_type `Submit
               ; a_class [ "d-Button" ]
@@ -102,7 +107,7 @@ let not_connected_form service =
               ]
               ()
           ]
-      ]
+      ])
 
 (* Regex pattern to validate IP addresses
  * From: https://stackoverflow.com/a/36760050 *)
