@@ -176,7 +176,6 @@ rec {
           #load-module module-switch-on-connect
         #'';
       #};
-      sound.enable = false;
       security.rtkit.enable = true;
       # Maybe not promising: https://discourse.nixos.org/t/pipewire-does-not-recognize-my-hdmi-audio-output/50498
       services.pipewire = {
