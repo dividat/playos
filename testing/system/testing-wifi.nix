@@ -29,6 +29,7 @@ in
       enable = true;
       radios.wlan0 = {
         band = "2g";
+        channel = 7;
         countryCode = "US";
         # wireless access points
         networks = {
