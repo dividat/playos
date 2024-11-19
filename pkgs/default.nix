@@ -15,7 +15,7 @@ let
 
       rauc = (import ./rauc) super;
 
-      ocamlPackages = super.ocamlPackages.overrideScope' (self: super: {
+      ocamlPackages = super.ocamlPackages.overrideScope (self: super: {
         semver = self.callPackage ./ocaml-modules/semver {};
         obus = self.callPackage ./ocaml-modules/obus {};
         opium = self.callPackage ./ocaml-modules/opium {};
