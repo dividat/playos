@@ -230,8 +230,23 @@ let connected_form service =
         ]
     ]
 
+let unsupported_notice service =
+    p ~a: [ a_class ["d-Note"] ][
+      txt "Connecting to this network is not possible, because it uses an unsupported authentication protocol."
+    ; br ()
+    ; txt @@ Printf.sprintf "Available authentication protocols for this network: %s"
+        (String.concat ", " (List.map
+            (fun s -> Sexplib.Sexp.to_string (sexp_of_security s))
+            service.security))
+    ]
+
 let html service =
   let is_service_connected = Connman.Service.is_connected service in
+  let is_service_supported =
+      List.exists (fun e -> List.mem e service.security) [ PSK; WEP; None ]
+    ||
+      (service.security = []) (* wired connections have this *)
+  in
   let is_disconnectable = is_service_connected && service.type' = Connman.Technology.Wifi in
   let icon =
     match service.strength with
@@ -267,8 +282,10 @@ let html service =
     (div
       [ if is_service_connected then
           connected_form service
-        else
+        else if is_service_supported then
           not_connected_form service
+        else
+          unsupported_notice service
       ; div
           ~a:[ a_class [ "d-Network__Properties" ] ]
           [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Service Details" ]
