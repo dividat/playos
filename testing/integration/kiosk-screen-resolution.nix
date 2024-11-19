@@ -84,6 +84,7 @@ pkgs.nixosTest {
     ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
     import time
     import tempfile
+    from collections import Counter
     from PIL import Image, ImageChops
 
     def num_diff_pixels(a, b):
@@ -122,10 +123,10 @@ pkgs.nixosTest {
                 grid-auto-flow: dense;
             }
             div:nth-child(even) {
-                background: yellow;
+                background: rgb(255, 255, 0);
             }
             div:nth-child(odd) {
-                background: red;
+                background: rgb(255, 0, 0);
             }
             div:nth-child(8n+5) {
                 grid-column: 4;
@@ -149,8 +150,20 @@ pkgs.nixosTest {
         time.sleep(3) # give kiosk time to resize
 
         machine.screenshot(d + "/screen1.png")
-        screen1 = Image.open(d + "/screen1.png")
-        t.assertEqual(screen1.size, (640, 480)) # sanity check
+        screen1 = Image.open(d + "/screen1.png").convert("RGB")
+
+        # sanity check: size is correct
+        t.assertEqual(screen1.size, (640, 480))
+
+        # sanity check: only contains yellow and red pixels
+        screen1_colors = Counter(screen1.getdata())
+        t.assertDictEqual(
+            screen1_colors,
+            { (255, 255, 0): 640*480 // 2,
+              (255, 0,   0): 640*480 // 2
+            },
+            "Expected only red and yellow colours on the screen"
+        )
 
         # note: must have the same aspect ratio as the initial resolution
         xrandr("--mode 800x600")
