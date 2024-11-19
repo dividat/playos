@@ -173,7 +173,6 @@ pkgs.nixosTest {
         screen2 = Image.open(d + "/screen2.png")
         screen2_scaled = screen2.resize(screen1.size)
 
-        # Note: not identical due to mouse pointer being in different locations
         t.assertEqual(
             num_diff_pixels(screen1, screen2_scaled),
             0,
