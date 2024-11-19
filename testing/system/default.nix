@@ -16,6 +16,7 @@ let nixos = pkgs.importFromNixos ""; in
 
     # Testing machinery
     (import ./testing.nix { inherit lib pkgs; })
+    ./testing-wifi.nix # comment out to disable simulated wifi APs
   ];
   };
   system = "x86_64-linux";

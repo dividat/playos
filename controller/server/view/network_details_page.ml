@@ -77,24 +77,29 @@ let proxy_form proxy =
         ]
     ]
 
+let maybe_elem cond elem = if cond then Some elem else None
+
 let not_connected_form service =
+  let requires_passphrase =  service.security <> [ None ] in
   form
       ~a:[ a_action ("/network/" ^ service.id ^ "/connect")
       ; a_method `Post
       ; Unsafe.string_attrib "is" "disable-after-submit"
       ]
-      [ label
-          ~a:[ a_class [ "d-Label" ] ]
-          [ txt "Passphrase" 
-          ; input
-              ~a:[ a_input_type `Password
-              ; a_class [ "d-Input"; "d-Network__Input" ]
-              ; a_name "passphrase"
-              ; Unsafe.string_attrib "is" "show-password"
+      (Option.to_list (maybe_elem requires_passphrase (
+          label
+              ~a:[ a_class [ "d-Label" ] ]
+              [ txt "Passphrase"
+              ; input
+                  ~a:[ a_input_type `Password
+                  ; a_class [ "d-Input"; "d-Network__Input" ]
+                  ; a_name "passphrase"
+                  ; Unsafe.string_attrib "is" "show-password"
+                  ]
+                  ()
               ]
-              ()
-          ]
-      ; p
+      )) @
+      [ p
           [ input
               ~a:[ a_input_type `Submit
               ; a_class [ "d-Button" ]
@@ -102,7 +107,7 @@ let not_connected_form service =
               ]
               ()
           ]
-      ]
+      ])
 
 (* Regex pattern to validate IP addresses
  * From: https://stackoverflow.com/a/36760050 *)
@@ -225,8 +230,23 @@ let connected_form service =
         ]
     ]
 
+let unsupported_notice service =
+    p ~a: [ a_class ["d-Note"] ][
+      txt "Connecting to this network is not possible, because it uses an unsupported authentication protocol."
+    ; br ()
+    ; txt @@ Printf.sprintf "Available authentication protocols for this network: %s"
+        (String.concat ", " (List.map
+            (fun s -> Sexplib.Sexp.to_string (sexp_of_security s))
+            service.security))
+    ]
+
 let html service =
   let is_service_connected = Connman.Service.is_connected service in
+  let is_service_supported =
+      List.exists (fun e -> List.mem e service.security) [ PSK; WEP; None ]
+    ||
+      (service.security = []) (* wired connections have this *)
+  in
   let is_disconnectable = is_service_connected && service.type' = Connman.Technology.Wifi in
   let icon =
     match service.strength with
@@ -262,8 +282,10 @@ let html service =
     (div
       [ if is_service_connected then
           connected_form service
-        else
+        else if is_service_supported then
           not_connected_form service
+        else
+          unsupported_notice service
       ; div
           ~a:[ a_class [ "d-Network__Properties" ] ]
           [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Service Details" ]
