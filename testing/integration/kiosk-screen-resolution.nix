@@ -112,6 +112,7 @@ pkgs.nixosTest {
             <style>
             body {
                 margin: 0;
+                height: 100%;
                 display: grid;
                 grid-template-columns: repeat(4, 1fr);
                 grid-template-rows: repeat(4, 1fr);
