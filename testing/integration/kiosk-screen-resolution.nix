@@ -142,7 +142,7 @@ pkgs.nixosTest {
     with TestCase("kiosk gracefully responds to screen and mode changes") as t,\
             tempfile.TemporaryDirectory() as d:
         xrandr("--mode 640x480")
-        time.sleep(3) # give controller time to resize
+        time.sleep(3) # give kiosk time to resize
 
         machine.screenshot(d + "/screen1.png")
         screen1 = Image.open(d + "/screen1.png")
@@ -150,7 +150,7 @@ pkgs.nixosTest {
 
         # note: must have the same aspect ratio as the initial resolution
         xrandr("--mode 800x600")
-        time.sleep(3) # give controller time to resize
+        time.sleep(3) # give kiosk time to resize
 
         machine.screenshot(d + "/screen2.png")
         screen2 = Image.open(d + "/screen2.png")
@@ -165,7 +165,7 @@ pkgs.nixosTest {
 
         xrandr("--off")
         xrandr("--mode 640x480")
-        time.sleep(3) # give controller time to resize
+        time.sleep(3) # give kiosk time to resize
 
         machine.screenshot(d + "/screen3.png")
         screen3 = Image.open(d + "/screen3.png")
