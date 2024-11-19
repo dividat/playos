@@ -89,7 +89,7 @@ let not_connected_form service =
       (Option.to_list (maybe_elem requires_passphrase (
           label
               ~a:[ a_class [ "d-Label" ] ]
-              [ txt "Passphrase"
+              [ txt "Password"
               ; input
                   ~a:[ a_input_type `Password
                   ; a_class [ "d-Input"; "d-Network__Input" ]
