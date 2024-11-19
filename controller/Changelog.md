@@ -4,15 +4,18 @@
 
 - kiosk: Migrate to Qt6
 - kiosk: Open settings with a long press on the Menu key
-- controller: Enable spatial navigation using the arrow keys
 - os: Improve installation device selection
 - os: Add end-to-end system tests
+- controller: Enable spatial navigation using the arrow keys
 - controller: Add factory reset button to System Status page
 - controller: Add system switch calls to System Status page
 
 ## Changed
 
 - driver: Bump to 2.5.0 for extended discovery time in firmware updates
+- controller: Suppress password prompt for open WiFi networks
+- controller: Explicitly mark WiFi networks with unsupported authentication methods
+- controller: Improve error messages when connecting to WiFi networks fails
 
 ## Removed
 
