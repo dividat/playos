@@ -53,6 +53,9 @@ pkgs.nixosTest {
         };
 
         displayManager = {
+          xserverArgs = [
+            "-nocursor"
+          ];
           # Always automatically log in play user
           lightdm = {
             enable = true;
@@ -158,9 +161,9 @@ pkgs.nixosTest {
         screen2_scaled = screen2.resize(screen1.size)
 
         # Note: not identical due to mouse pointer being in different locations
-        t.assertLess(
+        t.assertEqual(
             num_diff_pixels(screen1, screen2_scaled),
-            200,
+            0,
             "Screenshots do not match after rescaling!"
         )
 
@@ -171,9 +174,9 @@ pkgs.nixosTest {
         machine.screenshot(d + "/screen3.png")
         screen3 = Image.open(d + "/screen3.png")
 
-        t.assertLess(
+        t.assertEqual(
             num_diff_pixels(screen1, screen3),
-            200,
+            0,
             "Initial and final screenshots do not match"
         )
 
