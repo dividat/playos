@@ -1,5 +1,6 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
 import time
+import logging
 
 from kiosk_browser import browser_widget, captive_portal, dialogable_widget, proxy as proxy_module
 
@@ -11,8 +12,12 @@ class MainWidget(QtWidgets.QWidget):
     - Use proxy configured in Connman.
     """
 
-    def __init__(self, kiosk_url: str, settings_url: str, toggle_settings_key: str):
+    def __init__(self, kiosk_url: str, settings_url: str,
+                 toggle_settings_key: str, fullscreen: bool):
         super(MainWidget, self).__init__()
+        # Display
+        self._primary_screen_con = None
+        self._fullscreen = fullscreen
 
         # Proxy
         proxy = proxy_module.Proxy()
@@ -102,3 +107,27 @@ class MainWidget(QtWidgets.QWidget):
                 self._menu_press_since = None
 
         return super(MainWidget, self).eventFilter(source, event)
+
+    def handle_screen_change(self, new_primary):
+        logging.info(f"Primary screen changed to {new_primary.name()}")
+        if self._primary_screen_con is not None:
+            QtCore.QObject.disconnect(self._primary_screen_con)
+
+        self._primary_screen_con = \
+            new_primary.geometryChanged.connect(self._resize_to_screen)
+
+        # Precautionary sleep to allow Chromium to update screens
+        time.sleep(1)
+        self._resize_to_screen(new_primary.geometry())
+
+    def _resize_to_screen(self, new_geom):
+        screen_size = new_geom.size()
+        logging.info(f"Resizing widget based on new screen size: {screen_size}")
+        if self._fullscreen:
+            # Without a Window Manager, showFullScreen does not work under X,
+            # so set the window size to the primary screen size.
+            self.resize(screen_size)
+            self.showFullScreen()
+        else:
+            self.resize(QtCore.QSize(round(screen_size.width() / 2), round(screen_size.height() / 2)))
+            self.show()

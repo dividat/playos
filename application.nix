@@ -21,7 +21,19 @@ rec {
       (import ./application/overlays version)
     ];
 
-    module = { config, lib, pkgs, ... }: {
+    module = { config, lib, pkgs, ... }:
+    let
+      selectDisplay = pkgs.writeShellApplication {
+        name = "select-display";
+        runtimeInputs = with pkgs; [
+          gnugrep
+          gawk
+          xorg.xrandr
+          bash
+        ];
+        text = (builtins.readFile ./application/select-display.sh);
+      };
+    in {
 
       imports = [
         ./application/playos-status.nix
@@ -67,6 +79,9 @@ rec {
               xset s noblank
               xset -dpms
 
+              # Select best display to output to
+              ${selectDisplay}/bin/select-display || true
+
               # Localization for xsession
               if [ -f /var/lib/gui-localization/lang ]; then
                 export LANG=$(cat /var/lib/gui-localization/lang)
@@ -74,19 +89,6 @@ rec {
               if [ -f /var/lib/gui-localization/keymap ]; then
                 setxkbmap $(cat /var/lib/gui-localization/keymap) || true
               fi
-
-              # Set preferred screen resolution
-              scaling_pref=$(cat /var/lib/gui-localization/screen-scaling 2>/dev/null || echo "default")
-              case "$scaling_pref" in
-                "default" | "full-hd")
-                  xrandr --size 1920x1080;;
-                "native")
-                  # Nothing to do, let system decide.
-                  ;;
-                *)
-                  echo "Unknown scaling preference '$scaling_pref'. Ignoring."
-                  ;;
-              esac
 
               # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-6/qtwebengine-debugging.html)
               export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
@@ -143,6 +145,24 @@ rec {
         '';
         serviceConfig.User = "play";
         wantedBy = [ "multi-user.target" ];
+      };
+
+      # Monitor hotplugging
+      services.udev.extraRules = ''
+        ACTION=="change", SUBSYSTEM=="drm", RUN+="${pkgs.systemd}/bin/systemctl start select-display.service"
+      '';
+      systemd.services."select-display" = {
+        description = "Select best display to output to";
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${selectDisplay}/bin/select-display";
+          User = "play";
+        };
+        environment = {
+          XAUTHORITY = "${config.users.users.play.home}/.Xauthority";
+          DISPLAY = ":0";
+        };
+        after = [ "graphical.target" ];
       };
 
       # Audio
