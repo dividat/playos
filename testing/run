@@ -17,5 +17,5 @@ popd
 
 # Ocaml tests
 pushd "$(dirname "$(realpath "$0")")/../controller"
-nix-shell --run 'dune test -f --no-buffer'
+nix-shell --run bin/test
 popd
