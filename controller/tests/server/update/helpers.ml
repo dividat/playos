@@ -26,13 +26,6 @@ let version_info_to_string {latest; booted; inactive} =
 let statefmt (state : Update.state) : string =
   state |> Update.sexp_of_state |> Sexplib.Sexp.to_string_hum
 
-let setup_log () =
-  Fmt_tty.setup_std_outputs ();
-  Logs.set_level @@ Some Logs.Debug;
-  Logs.set_reporter (Logs_fmt.reporter ());
-  ()
-
-
 (* === Mock init and setup === *)
 
 let default_test_config : config = {
