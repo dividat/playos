@@ -1,5 +1,3 @@
-open Update
-
 (* ==== Misc helpers ==== *)
 
 let rec lwt_while cond expr =
@@ -17,7 +15,7 @@ let slot_to_string = function
     | Rauc.Slot.SystemA -> "SystemA"
     | Rauc.Slot.SystemB -> "SystemB"
 
-let version_info_to_string {latest; booted; inactive} =
+let version_info_to_string ({latest; booted; inactive}: Update.version_info) =
     Format.sprintf "{latest=%s booted=%s inactive=%s}"
         (Semver.to_string latest)
         (Semver.to_string booted)
@@ -28,7 +26,7 @@ let statefmt (state : Update.state) : string =
 
 (* === Mock init and setup === *)
 
-let default_test_config : config = {
+let default_test_config : Update.config = {
   error_backoff_duration = 0.01;
   check_for_updates_interval = 0.05;
 }
@@ -36,7 +34,7 @@ let default_test_config : config = {
 type test_context = {
     update_client : Mock_update_client.mock;
     rauc : Mock_rauc.mock;
-    update_service : (module UpdateService)
+    update_service : (module Update.UpdateService)
 }
 
 (* see [init_test_deps] for usage *)
@@ -108,7 +106,7 @@ let possible_booted_slots = [Rauc.Slot.SystemA; Rauc.Slot.SystemB]
 let possible_primary_slots =
     None :: List.map (Option.some) possible_booted_slots
 
-let vsn_triple_to_version_info (latest, booted, inactive) = {
+let vsn_triple_to_version_info (latest, booted, inactive) : Update.version_info = {
     latest = latest;
     booted = booted;
     inactive = inactive;
@@ -153,16 +151,16 @@ let slot_spec_to_outcome {booted_slot; primary_slot; input_versions} =
    the expected outcome as determined by [slot_spec_to_outcome] *)
 let state_matches_expected_outcome state outcome =
     match (outcome, state) with
-        | (InstallVsn v1,             Downloading v2) ->
+        | (InstallVsn v1,             Update.Downloading v2) ->
                 (Semver.to_string v1) = v2
         | (InstallVsn _,              _) ->                         false
-        | (DoNothingOrProduceWarning, ErrorGettingVersionInfo _) -> true
-        | (DoNothingOrProduceWarning, UpToDate _) ->                true
-        | (DoNothingOrProduceWarning, OutOfDateVersionSelected) ->  true
-        | (DoNothingOrProduceWarning, RebootRequired) ->            true
-        | (DoNothingOrProduceWarning, ReinstallRequired) ->         true
+        | (DoNothingOrProduceWarning, Update.ErrorGettingVersionInfo _) -> true
+        | (DoNothingOrProduceWarning, Update.UpToDate _) ->                true
+        | (DoNothingOrProduceWarning, Update.OutOfDateVersionSelected) ->  true
+        | (DoNothingOrProduceWarning, Update.RebootRequired) ->            true
+        | (DoNothingOrProduceWarning, Update.ReinstallRequired) ->         true
         (* should not _directly_ return to GettingVersionInfo state *)
-        | (DoNothingOrProduceWarning, GettingVersionInfo) ->        false
+        | (DoNothingOrProduceWarning, Update.GettingVersionInfo) ->        false
         (* all the other states are part of the installation process
            and are treated as errors *)
         | (DoNothingOrProduceWarning, _) ->                         false
@@ -334,7 +332,7 @@ let test_version_logic_case
     ~(input_versions:Update.version_info)
     (expected_state:Update.state) =
 
-  let init_state = GettingVersionInfo in
+  let init_state = Update.GettingVersionInfo in
 
   fun mocks ->
       let expected_state_sequence =
@@ -346,7 +344,7 @@ let test_version_logic_case
                 input_versions = input_versions
             }
           );
-          StateReached GettingVersionInfo;
+          StateReached Update.GettingVersionInfo;
           StateReached expected_state;
         ]
       in
