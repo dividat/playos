@@ -222,5 +222,5 @@ let () =
              `Quick (fun _ () -> sleep_after_error_or_check_test ());
            ] );
          ( "All version/slot combinations",
-           List.map Helpers.test_slot_spec_combo_case Helpers.all_possible_slot_spec_combos );
+           List.map Outcome.test_slot_spec_combo_case Helpers.all_possible_slot_spec_combos );
        ]
