@@ -16,7 +16,7 @@
 (test
  (name update_tests)
  (libraries helpers)
- (modules update_tests)
+ (modules update_tests scenario)
  (preprocess (pps lwt_ppx ppx_sexp_conv))
 )
 

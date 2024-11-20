@@ -8,12 +8,12 @@ let both_out_of_date ({update_client; rauc}: Helpers.test_context) =
   let upstream_version = "10.0.2" in
 
   let expected_bundle_name vsn =
-      Mock_update_client.test_bundle_name ^ Helpers._WILDCARD_PAT ^ vsn ^ Helpers._WILDCARD_PAT
+      Mock_update_client.test_bundle_name ^ Scenario._WILDCARD_PAT ^ vsn ^ Scenario._WILDCARD_PAT
   in
 
   let expected_state_sequence =
     [
-      Helpers.UpdateMock (fun () ->
+      Scenario.UpdateMock (fun () ->
         rauc#set_version SystemA booted_version;
         rauc#set_version SystemB inactive_version;
         rauc#set_booted_slot SystemA;
@@ -22,10 +22,10 @@ let both_out_of_date ({update_client; rauc}: Helpers.test_context) =
             ("BUNDLE_CONTENTS: " ^ upstream_version);
         update_client#set_latest_version upstream_version;
       );
-      Helpers.StateReached GettingVersionInfo;
-      Helpers.StateReached (Downloading upstream_version);
-      Helpers.StateReached (Installing (Helpers._WILDCARD_PAT ^ expected_bundle_name upstream_version));
-      Helpers.ActionDone
+      Scenario.StateReached GettingVersionInfo;
+      Scenario.StateReached (Downloading upstream_version);
+      Scenario.StateReached (Installing (Scenario._WILDCARD_PAT ^ expected_bundle_name upstream_version));
+      Scenario.ActionDone
         ( "bundle was installed into secondary slot",
           fun _ ->
             let status = rauc#get_slot_status SystemB in
@@ -35,8 +35,8 @@ let both_out_of_date ({update_client; rauc}: Helpers.test_context) =
                 upstream_version status.version
             in
             Lwt.return true );
-      Helpers.StateReached RebootRequired;
-      Helpers.StateReached GettingVersionInfo;
+      Scenario.StateReached RebootRequired;
+      Scenario.StateReached GettingVersionInfo;
     ]
   in
   (expected_state_sequence, init_state)
@@ -47,21 +47,21 @@ let delete_downloaded_bundle_on_err ({update_client; rauc}: Helpers.test_context
 
   let init_state = Downloading upstream_version in
   let expected_bundle_name vsn =
-      Mock_update_client.test_bundle_name ^ Helpers._WILDCARD_PAT ^ vsn ^ Helpers._WILDCARD_PAT
+      Mock_update_client.test_bundle_name ^ Scenario._WILDCARD_PAT ^ vsn ^ Scenario._WILDCARD_PAT
   in
 
   let expected_state_sequence =
     [
-      Helpers.UpdateMock (fun () ->
+      Scenario.UpdateMock (fun () ->
         rauc#set_version SystemB inactive_version;
         rauc#set_booted_slot SystemA;
         (* bundles that do not contain their own version will be treated
            as invalid by mock RAUC *)
         update_client#add_bundle upstream_version "CORRUPT_BUNDLE_CONTENTS"
       );
-      Helpers.StateReached (Downloading upstream_version);
-      Helpers.StateReached (Installing (Helpers._WILDCARD_PAT ^ expected_bundle_name upstream_version));
-      Helpers.ActionDone
+      Scenario.StateReached (Downloading upstream_version);
+      Scenario.StateReached (Installing (Scenario._WILDCARD_PAT ^ expected_bundle_name upstream_version));
+      Scenario.ActionDone
         ( "bundle was deleted from path due to installation error",
           fun (Installing path) ->
             let status = rauc#get_slot_status SystemB in
@@ -72,8 +72,8 @@ let delete_downloaded_bundle_on_err ({update_client; rauc}: Helpers.test_context
                 "Downloaded corrupt bundle was deleted"
                 false (Sys.file_exists path);
             Lwt.return true );
-      Helpers.StateReached (ErrorInstalling Helpers._WILDCARD_PAT);
-      Helpers.StateReached GettingVersionInfo;
+      Scenario.StateReached (ErrorInstalling Scenario._WILDCARD_PAT);
+      Scenario.StateReached GettingVersionInfo;
     ]
   in
   (expected_state_sequence, init_state)
@@ -130,7 +130,7 @@ let both_newer_than_upstream =
   let expected_state =
       UpToDate input_versions
   in
-  Helpers.test_version_logic_case ~input_versions expected_state
+  Scenario.test_version_logic_case ~input_versions expected_state
 
 let booted_newer_secondary_older =
   let input_versions = {
@@ -141,7 +141,7 @@ let booted_newer_secondary_older =
   let expected_state =
       UpToDate input_versions
   in
-  Helpers.test_version_logic_case ~input_versions expected_state
+  Scenario.test_version_logic_case ~input_versions expected_state
 
 let booted_older_secondary_newer =
   let input_versions = {
@@ -152,7 +152,7 @@ let booted_older_secondary_newer =
   let expected_state =
       OutOfDateVersionSelected
   in
-  Helpers.test_version_logic_case ~input_versions expected_state
+  Scenario.test_version_logic_case ~input_versions expected_state
 
 let booted_current_secondary_current =
   let input_versions = {
@@ -163,7 +163,7 @@ let booted_current_secondary_current =
   let expected_state =
       UpToDate input_versions
   in
-  Helpers.test_version_logic_case ~input_versions expected_state
+  Scenario.test_version_logic_case ~input_versions expected_state
 
 let booted_current_secondary_older =
   let input_versions = {
@@ -174,7 +174,7 @@ let booted_current_secondary_older =
   let expected_state =
       UpToDate input_versions
   in
-  Helpers.test_version_logic_case ~input_versions expected_state
+  Scenario.test_version_logic_case ~input_versions expected_state
 
 let booted_older_secondary_current =
   let input_versions = {
@@ -184,7 +184,7 @@ let booted_older_secondary_current =
   } in
   let expected_state = OutOfDateVersionSelected
   in
-  Helpers.test_version_logic_case ~input_versions expected_state
+  Scenario.test_version_logic_case ~input_versions expected_state
 
 let () =
   Lwt_main.run
@@ -194,29 +194,29 @@ let () =
            [
              (* BOOTED = PRIMARY in all these *)
              Alcotest_lwt.test_case "Both slots out of date -> Update" `Quick
-               (fun _ () -> Helpers.run_test_case both_out_of_date);
+               (fun _ () -> Scenario.run both_out_of_date);
              Alcotest_lwt.test_case "Both slots newer than upstream -> UpToDate"
-               `Quick (fun _ () -> Helpers.run_test_case both_newer_than_upstream);
+               `Quick (fun _ () -> Scenario.run both_newer_than_upstream);
              Alcotest_lwt.test_case
                "Booted slot current, inactive older -> UpToDate" `Quick
-               (fun _ () -> Helpers.run_test_case booted_current_secondary_older);
+               (fun _ () -> Scenario.run booted_current_secondary_older);
              Alcotest_lwt.test_case
                "Booted slot older, inactive current -> UpToDate" `Quick
-               (fun _ () -> Helpers.run_test_case booted_older_secondary_current);
+               (fun _ () -> Scenario.run booted_older_secondary_current);
              Alcotest_lwt.test_case
                "Booted slot current, inactive current -> UpToDate" `Quick
-               (fun _ () -> Helpers.run_test_case booted_current_secondary_current);
+               (fun _ () -> Scenario.run booted_current_secondary_current);
              Alcotest_lwt.test_case
                "Booted slot newer, inactive older -> UpToDate" `Quick
-               (fun _ () -> Helpers.run_test_case booted_newer_secondary_older);
+               (fun _ () -> Scenario.run booted_newer_secondary_older);
              Alcotest_lwt.test_case
                "Booted slot older, inactive newer -> OutOfDateVersionSelected"
-               `Quick (fun _ () -> Helpers.run_test_case booted_older_secondary_newer);
+               `Quick (fun _ () -> Scenario.run booted_older_secondary_newer);
            ] );
          ( "Error handling",
            [
              Alcotest_lwt.test_case "Delete downloaded bundle on install error"
-             `Quick (fun _ () -> Helpers.run_test_case delete_downloaded_bundle_on_err);
+             `Quick (fun _ () -> Scenario.run delete_downloaded_bundle_on_err);
 
              Alcotest_lwt.test_case "Sleep for a duration after error or check"
              `Quick (fun _ () -> sleep_after_error_or_check_test ());
