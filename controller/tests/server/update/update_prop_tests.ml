@@ -1,5 +1,4 @@
 open Lwt
-open Update_test_helpers
 open Update
 
 (* Converts a (random) sequence of bool elements into a
@@ -41,7 +40,7 @@ let test_random_failure_case =
         QCheck2.Gen.(list_size max_failures bool) in
     let rand_failure_sequence_rauc =
         QCheck2.Gen.(list_size max_failures bool) in
-    let rand_spec = QCheck2.Gen.(no_shrink @@ oneofl all_possible_slot_spec_combos) in
+    let rand_spec = QCheck2.Gen.(no_shrink @@ oneofl Helpers.all_possible_slot_spec_combos) in
     let gen = (QCheck2.Gen.triple
         rand_failure_sequence_upd_client
         rand_failure_sequence_rauc
@@ -51,7 +50,7 @@ let test_random_failure_case =
         let fail_seq_to_str seq =
             List.map (function | true -> "x" | false -> "_") seq |>
             String.concat ""  in
-        let test_case_descr = slot_spec_to_string inp_case in
+        let test_case_descr = Helpers.slot_spec_to_string inp_case in
         Format.sprintf
             "System setup: %s\n\
              Injected Update Client failures (%d): %s\n\
@@ -67,20 +66,20 @@ let test_random_failure_case =
           error_backoff_duration = 0.001;
           check_for_updates_interval = 0.002;
         } in
-        let mocks = init_test_deps
+        let mocks = Helpers.init_test_deps
             ~failure_gen_upd
             ~failure_gen_rauc
             ~test_config
             ()
         in
-        let () = setup_mocks_from_system_slot_spec mocks inp_case in
+        let () = Helpers.setup_mocks_from_system_slot_spec mocks inp_case in
         let module UpdateServiceI = (val mocks.update_service) in
         let () = Printexc.record_backtrace true in
         let run s = Lwt_main.run @@ Lwt_result.catch
             (fun () -> UpdateServiceI.run_step s) in
         let state_seq = Queue.create () in
         let state_seq_to_str state_seq =
-            (String.concat " -> " @@ (List.map statefmt @@
+            (String.concat " -> " @@ (List.map Helpers.statefmt @@
                 List.of_seq (Queue.to_seq state_seq)
             ))
         in

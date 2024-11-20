@@ -1,21 +1,21 @@
 (library
-  (name update_test_helpers)
+  (name helpers)
   (wrapped false)
-  (modules update_test_helpers mock_rauc mock_update_client)
+  (modules helpers mock_rauc mock_update_client)
   (libraries update alcotest alcotest-lwt str)
   (preprocess (pps lwt_ppx ppx_sexp_conv))
 )
 
 (test
  (name update_prop_tests)
- (libraries update_test_helpers qcheck qcheck-alcotest)
+ (libraries helpers qcheck qcheck-alcotest)
  (modules update_prop_tests)
  (preprocess (pps lwt_ppx ppx_sexp_conv))
 )
 
 (test
  (name update_tests)
- (libraries update_test_helpers)
+ (libraries helpers)
  (modules update_tests)
  (preprocess (pps lwt_ppx ppx_sexp_conv))
 )

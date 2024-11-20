@@ -96,9 +96,9 @@ let setup_mocks_from_system_slot_spec {rauc; update_client} case =
 
 (* ==== Test data and data generation ==== *)
 
-let semver_v1 = Semver.of_string "1.0.0" |> Option.get
-let semver_v2 = Semver.of_string "2.0.0" |> Option.get
-let semver_v3 = Semver.of_string "3.0.0" |> Option.get
+let v1 = Semver.of_string "1.0.0" |> Option.get
+let v2 = Semver.of_string "2.0.0" |> Option.get
+let v3 = Semver.of_string "3.0.0" |> Option.get
 
 let flatten_tuple (a, (b, c)) = (a, b, c)
 
@@ -111,7 +111,7 @@ let product3 l1 l2 l3 =
     product l1 (product l2 l3) |>
         List.map flatten_tuple
 
-let possible_versions = [semver_v1; semver_v2; semver_v3]
+let possible_versions = [v1; v2; v3]
 let possible_booted_slots = [Rauc.Slot.SystemA; Rauc.Slot.SystemB]
 let possible_primary_slots =
     None :: List.map (Option.some) possible_booted_slots
