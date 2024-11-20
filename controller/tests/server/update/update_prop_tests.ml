@@ -1,5 +1,3 @@
-open Update
-
 (* Converts a (random) sequence of bool elements into a
    function that on n-th invocation returns the n-th element, which indicates
    whether to inject ([true]) a failure or not ([false]).
@@ -62,8 +60,8 @@ let test_random_failure_case =
         let failure_gen_upd = failure_seq_to_f seq_upd in
         let failure_gen_rauc = failure_seq_to_f seq_rauc in
         let test_config = {
-          error_backoff_duration = 0.001;
-          check_for_updates_interval = 0.002;
+          Update.error_backoff_duration = 0.001;
+          Update.check_for_updates_interval = 0.002;
         } in
         let mocks = Helpers.init_test_deps
             ~failure_gen_upd
@@ -98,8 +96,8 @@ let test_random_failure_case =
                         (Printexc.get_backtrace ())
                         (state_seq_to_str state_seq)
 
-                | (Ok GettingVersionInfo) ->
-                        Queue.push GettingVersionInfo state_seq;
+                | (Ok Update.GettingVersionInfo) ->
+                        Queue.push Update.GettingVersionInfo state_seq;
                         true
                 | (Ok state) ->
                         if (c < loop_lim) then
@@ -112,7 +110,7 @@ let test_random_failure_case =
                                 loop_lim
                                (state_seq_to_str state_seq)
         in
-        do_while 5 GettingVersionInfo
+        do_while 5 Update.GettingVersionInfo
     in
     QCheck2.Test.make
          ~count:10_000
