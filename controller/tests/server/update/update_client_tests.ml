@@ -1,149 +1,15 @@
 (**
-   Tests Update_client using a stub/mock HTTP server. Since Update_client is
+   Tests Update_client using a mock HTTP server. Since Update_client is
    invoking Curl via a subprocess, this is more of an integration test than a
    pure unit test.
-
-   The stub HTTP server simulates the dist server and provides
-       1) a /latest endpoint for the latest version specified
-       2) bundle files for the versions added
-   It also supports download resuming via HTTP range requests.
 
    Most tests are run twice: once with Update_client configured without a proxy
    and then again with a proxy. Note: there is no actual HTTP proxy used,
    the proxy scenario is realized by setting an invalid dist server URL and
-   using the stub server as a proxy.
+   using the mock server as a proxy.
 *)
-open Opium.Std
-open Lwt
 open Update_client
-
-
-(* binds on port 0 and returns (loopback addr, port) pair *)
-let get_random_available_port () =
-    let protocol_id = 0 in
-    let sock = Unix.socket Unix.PF_INET Unix.SOCK_STREAM protocol_id in
-    let addr = Unix.ADDR_INET (
-        Unix.inet_addr_loopback,
-        0
-    ) in
-    let () = Unix.bind sock addr in
-    let Unix.ADDR_INET (real_addr, real_port) = Unix.getsockname sock in
-    let () = Unix.close sock in
-    (Unix.string_of_inet_addr real_addr, real_port)
-
-type state = {
-    latest_version: string;
-    available_bundles: (string, string) Hashtbl.t ;
-}
-
-type range = (int Option.t) * (int Option.t)
-
-let stub_server () = object (self)
-    val mutable state = ref {
-        latest_version = "0.0.0";
-        available_bundles = Hashtbl.create 5
-    }
-
-    method add_bundle vsn contents =
-        Hashtbl.add !state.available_bundles vsn contents
-
-    method remove_bundle vsn contents =
-        Hashtbl.remove !state.available_bundles vsn
-
-    method set_latest_version vsn =
-        state := {!state with latest_version = vsn}
-
-    method private get_latest_handler _req =
-        let resp = Response.of_string_body
-            !state.latest_version
-        in
-        Lwt.return resp
-
-    method private extract_range_bytes req : range =
-        let headers = Request.headers req in
-        let range = Cohttp.Header.get headers "Range" in
-        match range with
-            | Some range_str -> begin
-                try
-                    let regex = Str.regexp "bytes=\\([0-9]*\\)-\\([0-9]*\\)" in
-                    let m = Str.string_match regex range_str 0 in
-                    let r_str_to_opt s =
-                        if (String.length s > 0) then
-                            Some (int_of_string s)
-                        else
-                            None
-                    in
-                    if (m) then
-                        let range_start = Str.matched_group 1 range_str in
-                        let range_end = Str.matched_group 2 range_str in
-                        (r_str_to_opt range_start,
-                         r_str_to_opt range_end)
-                    else
-                        failwith @@ "Unsupported range string: " ^ range_str
-                with
-                    | e ->
-                        failwith @@
-                            "Failed to parse range headers: " ^ (Printexc.to_string e)
-                end
-            | None -> (None, None)
-
-    method private range_resp (range_start, range_end) bundle =
-        let bundle_bytes = String.to_bytes bundle in
-        let total = Bytes.length bundle_bytes in
-        let b_start = Option.value ~default:0 range_start in
-        let b_end = Option.value ~default:total range_end in
-        let bytes_trunc = Bytes.sub bundle_bytes b_start (b_end-b_start) in
-        (bytes_trunc, (b_start, b_end, total))
-
-    method private download_bundle_handler req =
-          let vsn = Router.param req "vsn" in
-          let range = self#extract_range_bytes req in
-          let bundle = Hashtbl.find_opt !state.available_bundles vsn in
-          let resp = match bundle with
-              | Some bund -> begin
-                    match range with
-                        | (None, None) -> Response.of_string_body bund
-                        | _ ->
-                            let (bundle_trunc, (b_start, b_end, b_total)) =
-                                self#range_resp range bund in
-                            let body = bundle_trunc
-                                |> Bytes.to_string
-                                |> Body.of_string
-                            in
-                            let headers = Cohttp.Header.of_list
-                                [(
-                                    "Content-Range",
-                                    (Format.sprintf
-                                        "bytes %d-%d/%d"
-                                        b_start b_end b_total
-                                    )
-                                )]
-                            in
-                            Response.create
-                                ~headers
-                                ~body
-                                ()
-              end
-              | None -> Response.of_string_body ~code:`Not_found
-                  "Bundle version not found"
-          in
-          Lwt.return resp
-
-    method run () =
-      let (addr, port) = get_random_available_port () in
-      let server_url = Format.sprintf "http://%s:%d/" addr port in
-      let server = App.empty
-      |> App.port port
-      |> App.get "/latest" self#get_latest_handler
-      |> App.get "/ready" (fun (_) -> return @@ Response.create ())
-      |> App.get "/:vsn/:bundle" self#download_bundle_handler
-      |> App.start
-      in
-      (server_url, server)
-end
-
-
-
+open Update_client_mock_server
 
 let setup_log () =
   Fmt_tty.setup_std_outputs ();
@@ -153,7 +19,7 @@ let setup_log () =
 
 type proxy_param =
     | NoProxy
-    | UseStubServer
+    | UseMockServer
     | Custom of string
 
 (* returns (proxy, server_url) pair *)
@@ -161,8 +27,8 @@ let process_proxy_spec spec server_url =
     match spec with
         | NoProxy ->
             (None, server_url)
-        | UseStubServer ->
-            (* pretend stub server is a proxy, i.e. use an invalid base_url,
+        | UseMockServer ->
+            (* pretend mock server is a proxy, i.e. use an invalid base_url,
                and the actual server_url for the proxy *)
             (
                 (server_url |> Option.some),
@@ -176,29 +42,27 @@ let process_proxy_spec spec server_url =
                 server_url
             )
 
-let rec wait_for_stub_server ?(timeout = 0.2) ?(remaining_tries = 3) url =
+let rec wait_for_mock_server ?(timeout = 0.2) ?(remaining_tries = 3) url =
     let status_endpoint = Uri.of_string (url ^ "ready") in
     let%lwt rez = Curl.request status_endpoint in
     match rez with
         | Curl.RequestSuccess _ -> Lwt.return ()
         | Curl.RequestFailure err ->
             let err_msg = (Curl.pretty_print_error err) in
-            print_endline ("StubServer not up, err was: " ^ err_msg);
+            print_endline ("MockServer not up, err was: " ^ err_msg);
             if (remaining_tries > 0) then
                 let%lwt () = Lwt_unix.sleep timeout in
-                wait_for_stub_server
+                wait_for_mock_server
                     ~timeout:(timeout *. 2.0)  (* exponential backoff *)
                     ~remaining_tries:(remaining_tries - 1) url
            else
-                let err_msg = "HTTP stub server did not become ready, last error: " ^ (Curl.pretty_print_error err) in
+                let err_msg = "HTTP mock server did not become ready, last error: " ^ (Curl.pretty_print_error err) in
                 Lwt.fail (Failure err_msg)
 
-
-
 let run_test_case ?(proxy = NoProxy) switch f =
-    let server = stub_server () in
+    let server = mock_server () in
     let (server_url, server_task) = server#run () in
-    let%lwt () = wait_for_stub_server server_url in
+    let%lwt () = wait_for_mock_server server_url in
     Lwt_switch.add_hook (Some switch)
         (fun () -> Lwt.return @@ Lwt.cancel server_task);
     let (proxy_url, base_url) =
@@ -218,7 +82,7 @@ let test_get_version_ok server (module Client : S) =
     let expected_version = "1.0.0" in
     let () = server#set_latest_version expected_version in
     let%lwt vsn = Client.get_latest_version () in
-    return @@ Alcotest.(check string)
+    Lwt.return @@ Alcotest.(check string)
         "Latest version is fetched"
         expected_version
         vsn
@@ -238,8 +102,7 @@ let test_download_bundle_ok server (module Client : S) =
         "Bundle contents are correct"
         (read_file bundle_path)
         bundle;
-    return ()
-
+    Lwt.return ()
 
 (* NOTE: This test checks that the client resumes the download
    from where it finished, but also it is an example of why naive
@@ -271,7 +134,7 @@ let test_resume_bundle_download server (module Client : S) =
         (* NOTE: this is not the same as [bundle_contents_extra], it is only
          the last bytes of it beyond the length of [bundle_contents] *)
         "BUNDLE_CONTENTS: 123999";
-    return ()
+    Lwt.return ()
 
 (* invalid proxy URL is set in the `run_test_case` function, see below *)
 let test_invalid_proxy_fail _ (module Client : S) =
@@ -319,7 +182,7 @@ let () =
              ::
              (List.map (fun (name, test_f) ->
                  Alcotest_lwt.test_case name `Quick
-                    (fun switch () -> run_test_case ~proxy:UseStubServer switch test_f))
+                    (fun switch () -> run_test_case ~proxy:UseMockServer switch test_f))
                  test_cases
               )
          );
