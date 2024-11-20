@@ -1,5 +1,4 @@
 open Update
-open Lwt
 
 (* Main test scenario: full update process *)
 let both_out_of_date ({update_client; rauc}: Helpers.test_context) =

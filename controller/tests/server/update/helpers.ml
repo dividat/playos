@@ -1,5 +1,4 @@
 open Update
-open Lwt
 
 (* ==== Misc helpers ==== *)
 

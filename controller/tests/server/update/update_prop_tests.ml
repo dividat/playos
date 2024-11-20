@@ -1,4 +1,3 @@
-open Lwt
 open Update
 
 (* Converts a (random) sequence of bool elements into a
@@ -15,9 +14,9 @@ let failure_seq_to_f seq =
         let v = Array.get a c in
         let%lwt () = Lwt_mvar.put c_mvar (c+1) in
         if (c < l) then
-            return v
+            Lwt.return v
         else
-            return false
+            Lwt.return false
     end
 
 
