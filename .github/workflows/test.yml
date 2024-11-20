@@ -77,9 +77,6 @@ jobs:
         extra_nix_config: |
           system-features = nixos-test benchmark big-parallel kvm
     - uses: DeterminateSystems/magic-nix-cache-action@v8
-      with:
-        # disables _uploading_ to GHA cache - necessary because
-        # the cache has a quota of 10 GB, while the built disk
-        # is ~7GB
-        use-gha-cache: false
+    - name: Make magic-nix-cache read-only by removing post-build-hook
+      run: sed -i '/post-build-hook = magic-nix-cache-build-hook/d' $HOME/.config/nix/nix.conf
     - run: ./build test-e2e
