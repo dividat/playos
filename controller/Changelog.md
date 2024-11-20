@@ -4,6 +4,7 @@
 
 - kiosk: Migrate to Qt6
 - kiosk: Open settings with a long press on the Menu key
+- kiosk: Add hotplugging support for HDMI screens
 - os: Improve installation device selection
 - os: Add end-to-end system tests
 - controller: Enable spatial navigation using the arrow keys
