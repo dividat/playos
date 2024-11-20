@@ -8,7 +8,7 @@ let both_out_of_date ({update_client; rauc}: Helpers.test_context) =
   let upstream_version = "10.0.2" in
 
   let expected_bundle_name vsn =
-      Mock_update_client.test_bundle_name ^ Helpers._MAGIC_PAT ^ vsn ^ Helpers._MAGIC_PAT
+      Mock_update_client.test_bundle_name ^ Helpers._WILDCARD_PAT ^ vsn ^ Helpers._WILDCARD_PAT
   in
 
   let expected_state_sequence =
@@ -24,7 +24,7 @@ let both_out_of_date ({update_client; rauc}: Helpers.test_context) =
       );
       Helpers.StateReached GettingVersionInfo;
       Helpers.StateReached (Downloading upstream_version);
-      Helpers.StateReached (Installing (Helpers._MAGIC_PAT ^ expected_bundle_name upstream_version));
+      Helpers.StateReached (Installing (Helpers._WILDCARD_PAT ^ expected_bundle_name upstream_version));
       Helpers.ActionDone
         ( "bundle was installed into secondary slot",
           fun _ ->
@@ -47,7 +47,7 @@ let delete_downloaded_bundle_on_err ({update_client; rauc}: Helpers.test_context
 
   let init_state = Downloading upstream_version in
   let expected_bundle_name vsn =
-      Mock_update_client.test_bundle_name ^ Helpers._MAGIC_PAT ^ vsn ^ Helpers._MAGIC_PAT
+      Mock_update_client.test_bundle_name ^ Helpers._WILDCARD_PAT ^ vsn ^ Helpers._WILDCARD_PAT
   in
 
   let expected_state_sequence =
@@ -60,7 +60,7 @@ let delete_downloaded_bundle_on_err ({update_client; rauc}: Helpers.test_context
         update_client#add_bundle upstream_version "CORRUPT_BUNDLE_CONTENTS"
       );
       Helpers.StateReached (Downloading upstream_version);
-      Helpers.StateReached (Installing (Helpers._MAGIC_PAT ^ expected_bundle_name upstream_version));
+      Helpers.StateReached (Installing (Helpers._WILDCARD_PAT ^ expected_bundle_name upstream_version));
       Helpers.ActionDone
         ( "bundle was deleted from path due to installation error",
           fun (Installing path) ->
@@ -72,7 +72,7 @@ let delete_downloaded_bundle_on_err ({update_client; rauc}: Helpers.test_context
                 "Downloaded corrupt bundle was deleted"
                 false (Sys.file_exists path);
             Lwt.return true );
-      Helpers.StateReached (ErrorInstalling Helpers._MAGIC_PAT);
+      Helpers.StateReached (ErrorInstalling Helpers._WILDCARD_PAT);
       Helpers.StateReached GettingVersionInfo;
     ]
   in

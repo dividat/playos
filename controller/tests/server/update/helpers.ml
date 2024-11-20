@@ -225,7 +225,7 @@ let specfmt spec = match spec with
     | ActionDone (descr, c) -> "ActionDone: " ^ descr;
     | UpdateMock _ -> "UpdateMock: <fun>"
 
-let _MAGIC_PAT = "<..>"
+let _WILDCARD_PAT = "<..>"
 
 (* string equality, but the magic pattern `<..>` is treated
   as a placeholder for any sub-string. The implementation converts the
@@ -235,7 +235,7 @@ let _MAGIC_PAT = "<..>"
 *)
 let str_match_with_magic_pat expected actual =
     let open Str in
-    let magic_pattern = regexp_string _MAGIC_PAT in
+    let magic_pattern = regexp_string _WILDCARD_PAT in
     let exp_parts = full_split magic_pattern expected in
     let exp_regexp = regexp @@ String.concat "" @@ List.map (fun (p) ->
         match p with
