@@ -156,7 +156,7 @@ with TestPrecondition("VM can reach HTTP stub server"):
 
 with TestCase("xserver and kiosk are running"):
     playos.wait_for_x()
-    playos.succeed("pgrep -f kiosk-browser > /dev/null")
+    playos.succeed("pgrep --full kiosk-browser > /dev/null")
 
 with TestCase("Kiosk's debug port open, web storage is persisted") as t:
     page = aio.run(connect_and_get_kiosk_page())
