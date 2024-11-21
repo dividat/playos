@@ -40,7 +40,7 @@ let state_matches_expected_outcome state outcome =
            and are treated as errors *)
         | (DoNothingOrProduceWarning, _) ->                         false
 
-(** Tests if the input UpdateService run with the given [system_slot_spec]
+(** Tests if the input UpdateService run with the given [Helpers.system_slot_spec]
     [case] scenario produces the expected outcome state (defined by
     [slot_spec_to_outcome] and [state_matches_expected_outcome]).
 
