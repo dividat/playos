@@ -17,8 +17,8 @@ let pretty_print_error error =
   | UnreadableStatus body ->
       Printf.sprintf "unreadable status code %s" body
 
-  | ProcessExit (_, err) ->
-      String.trim err
+  | ProcessExit (n, err) ->
+      Printf.sprintf "curl error: %s (non-zero exit code %d)" (String.trim err) n
 
   | ProcessKill n ->
       Printf.sprintf "curl killed by signal %d" n
@@ -75,7 +75,7 @@ let parse_status_code_and_body str =
 
 let request ?proxy ?(headers = []) ?data ?(options = []) url =
   let cmd =
-    "/run/current-system/sw/bin/curl",
+    "", (* path to Curl executable (uses PATH if empty string) *)
     (Array.concat
       [ [| "curl"; Uri.to_string url
          ; "--silent"
