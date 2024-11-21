@@ -1,3 +1,5 @@
+module Helpers = Update_test_helpers.Helpers
+
 (* Converts a (random) sequence of bool elements into a
    function that on n-th invocation returns the n-th element, which indicates
    whether to inject ([true]) a failure or not ([false]).

@@ -1,5 +1,6 @@
 open Update
 open Test_mocks
+open Update_test_helpers
 
 (* Main test scenario: full update process *)
 let both_out_of_date ({update_client; rauc}: Helpers.test_context) =
