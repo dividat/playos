@@ -121,7 +121,7 @@ let rec run_test_scenario (test_context: Helpers.test_context) expected_state_se
 (* NOTE: this is almost the same as the `Outcome.test_slot_spec,
          except that it expects a specific state outcome and uses the
          `run_test_scenario` machinery. *)
-let test_version_logic_case
+let scenario_from_system_spec
     ?(booted_slot=Rauc.Slot.SystemA)
     ?(primary_slot=(Some Rauc.Slot.SystemA))
     ~(input_versions:Update.version_info)

@@ -132,7 +132,7 @@ let both_newer_than_upstream =
   let expected_state =
       UpToDate input_versions
   in
-  Scenario.test_version_logic_case ~input_versions expected_state
+  Scenario.scenario_from_system_spec ~input_versions expected_state
 
 let booted_newer_secondary_older =
   let input_versions = {
@@ -143,7 +143,7 @@ let booted_newer_secondary_older =
   let expected_state =
       UpToDate input_versions
   in
-  Scenario.test_version_logic_case ~input_versions expected_state
+  Scenario.scenario_from_system_spec ~input_versions expected_state
 
 let booted_older_secondary_newer =
   let input_versions = {
@@ -154,7 +154,7 @@ let booted_older_secondary_newer =
   let expected_state =
       OutOfDateVersionSelected
   in
-  Scenario.test_version_logic_case ~input_versions expected_state
+  Scenario.scenario_from_system_spec ~input_versions expected_state
 
 let booted_current_secondary_current =
   let input_versions = {
@@ -165,7 +165,7 @@ let booted_current_secondary_current =
   let expected_state =
       UpToDate input_versions
   in
-  Scenario.test_version_logic_case ~input_versions expected_state
+  Scenario.scenario_from_system_spec ~input_versions expected_state
 
 let booted_current_secondary_older =
   let input_versions = {
@@ -176,7 +176,7 @@ let booted_current_secondary_older =
   let expected_state =
       UpToDate input_versions
   in
-  Scenario.test_version_logic_case ~input_versions expected_state
+  Scenario.scenario_from_system_spec ~input_versions expected_state
 
 let booted_older_secondary_current =
   let input_versions = {
@@ -186,7 +186,7 @@ let booted_older_secondary_current =
   } in
   let expected_state = OutOfDateVersionSelected
   in
-  Scenario.test_version_logic_case ~input_versions expected_state
+  Scenario.scenario_from_system_spec ~input_versions expected_state
 
 let () =
   Lwt_main.run
