@@ -47,7 +47,7 @@ let state_matches_expected_outcome state outcome =
     This is used to test that all possible booted/primary and version
     combinations lead to the correct install/no-install action.
 *)
-let test_slot_spec_combo_case case =
+let test_slot_spec case =
     let expected_outcome = slot_spec_to_outcome case in
     let expected_outcome_str =
             (sexp_of_expected_outcomes expected_outcome |> Sexplib.Sexp.to_string)

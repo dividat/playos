@@ -118,7 +118,7 @@ let rec run_test_scenario (test_context: Helpers.test_context) expected_state_se
     run_test_scenario test_context expected_state_sequence next_state)
   else Lwt.return ()
 
-(* NOTE: this is almost the same as the `test_slot_spec_combo_case`,
+(* NOTE: this is almost the same as the `Outcome.test_slot_spec,
          except that it expects a specific state outcome and uses the
          `run_test_scenario` machinery. *)
 let test_version_logic_case
