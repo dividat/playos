@@ -1,5 +1,3 @@
-open Lwt
-
 type state = {
     mutable latest_version: string;
     mutable available_bundles: (string, string) Hashtbl.t ;

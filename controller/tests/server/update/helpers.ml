@@ -1,3 +1,5 @@
+open Test_mocks
+
 (* === Misc helpers === *)
 
 let other_slot slot = match slot with

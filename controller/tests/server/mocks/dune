@@ -1,0 +1,5 @@
+(library
+  (name test_mocks)
+  (libraries update alcotest-lwt str)
+  (preprocess (pps lwt_ppx))
+)
