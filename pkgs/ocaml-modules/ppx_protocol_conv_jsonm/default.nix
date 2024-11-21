@@ -23,6 +23,10 @@ buildDunePackage rec {
 
   useDune2 = true;
 
+  patches = [
+    ./remove-runtime-dependency-from-ppxlib.patch
+  ];
+
   propagatedBuildInputs = [
     ppx_protocol_conv
     ezjsonm
