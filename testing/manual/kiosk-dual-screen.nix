@@ -99,7 +99,7 @@ pkgs.nixosTest {
         return int(num.strip())
 
     def get_kiosk_pid():
-        kiosk_pids = machine.succeed("pgrep kiosk-browser | sort")
+        kiosk_pids = machine.succeed("pgrep --full kiosk-browser | sort | head -1")
         return int(kiosk_pids.strip())
 
     machine.start()
