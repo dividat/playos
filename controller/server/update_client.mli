@@ -17,6 +17,6 @@ end
 
 val make_deps : ?download_dir:string -> (unit -> Uri.t option Lwt.t) -> Uri.t -> (module UpdateClientDeps)
 
-module Make (DepsI : UpdateClientDeps) : S
+module Make (_ : UpdateClientDeps) : S
 
 val build_module : Connman.Manager.t -> (module S)
