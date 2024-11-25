@@ -1,5 +1,4 @@
-(** Type containing version information.
-*)
+(** Type containing version information. *)
 type version_info =
   {(* the latest available version *)
     latest : Semver.t
@@ -12,21 +11,38 @@ type version_info =
   }
 [@@deriving sexp_of]
 
-(** State of update mechanism *)
-type state =
-  | GettingVersionInfo
+type update_error =
   | ErrorGettingVersionInfo of string
-  | UpToDate of version_info
-  | Downloading of string
   | ErrorDownloading of string
-  | Installing of string
   | ErrorInstalling of string
+[@@deriving sexp_of]
+
+type system_status =
+  | UpToDate
+  | NeedsUpdate
   | RebootRequired
   | OutOfDateVersionSelected
   | ReinstallRequired
+  | UpdateError of update_error
 [@@deriving sexp_of]
 
 type sleep_duration = float (* seconds *)
+[@@deriving sexp_of]
+
+(** State of update mechanism *)
+type process_state =
+  | Sleeping of sleep_duration
+  | GettingVersionInfo
+  | Downloading of string
+  | Installing of string
+[@@deriving sexp_of]
+
+type state = {
+    version_info: version_info option;
+    system_status: system_status;
+    process_state: process_state
+}
+[@@deriving sexp_of]
 
 type config = {
     (* time to sleep in seconds until retrying after a (Curl/HTTP) error *)
@@ -42,9 +58,13 @@ module type ServiceDeps = sig
     val config : config
 end
 
-module type UpdateService = sig
-  val run : set_state:(state -> unit) -> state -> unit Lwt.t
+(* exposed for unit testing purposes *)
+val initial_state : state
 
+module type UpdateService = sig
+  val run : (state -> unit) -> unit Lwt.t
+
+  (* exposed for unit testing purposes *)
   val run_step : state -> state Lwt.t
 end
 

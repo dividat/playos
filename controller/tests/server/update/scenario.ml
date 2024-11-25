@@ -35,7 +35,6 @@ let str_match_with_magic_pat expected actual =
     ) exp_parts in
     string_match exp_regexp actual 0
 
-let state_formatter out inp = Format.fprintf out "%s" (Helpers.statefmt inp)
 
 let testable_state =
     let state_to_str s =
@@ -43,8 +42,12 @@ let testable_state =
             (* using _hum instead of _mach, because _mach seems to remove
                whitespace between atoms in some cases *)
             |> Sexplib.Sexp.to_string_hum
-            (* remove new lines to ignore whitespace differences *)
+            (* ignore whitespace differences *)
             |> Str.global_replace (Str.regexp_string "\n") ""
+            |> Str.global_replace (Str.regexp "[ ]+") " "
+    in
+    let state_formatter out inp =
+        Format.fprintf out "%s" (state_to_str inp)
     in
     let state_eq expected actual =
         (expected == actual) || (
@@ -119,15 +122,20 @@ let rec run_test_scenario (test_context: Helpers.test_context) expected_state_se
   else Lwt.return ()
 
 (* NOTE: this is almost the same as the `Outcome.test_slot_spec,
-         except that it expects a specific state outcome and uses the
+         except that it expects only a system state outcome and uses the
          `run_test_scenario` machinery. *)
 let scenario_from_system_spec
     ?(booted_slot=Rauc.Slot.SystemA)
     ?(primary_slot=(Some Rauc.Slot.SystemA))
     ~(input_versions:Update.version_info)
-    (expected_state:Update.state) =
+    (expected_system_status:Update.system_status) =
 
-  let init_state = Update.GettingVersionInfo in
+  let init_state = Update.initial_state in
+  let expected_state: Update.state = {
+      version_info = Some input_versions;
+      system_status = expected_system_status;
+      process_state = Sleeping Helpers.default_test_config.check_for_updates_interval;
+  } in
 
   fun mocks ->
       let expected_state_sequence =
@@ -139,7 +147,7 @@ let scenario_from_system_spec
                 input_versions = input_versions
             }
           );
-          StateReached Update.GettingVersionInfo;
+          StateReached Update.initial_state;
           StateReached expected_state;
         ]
       in
