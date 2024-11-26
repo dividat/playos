@@ -17,15 +17,11 @@ buildDunePackage rec {
   src = fetchFromGitHub {
     owner = "andersfugmann";
     repo = "ppx_protocol_conv";
-    rev = "9a1c4f450cf4fc797e09296d736e5c21f6eb7c4a";
-    sha256 = "sha256-3WlpuuRJfZA6UaeuJRuYI2Z9J7Yng+/J09BDmETwy30=";
+    rev = "0a4fd698932f20345cb3ba12bab82a9eda4d9147";
+    sha256 = "sha256-gFYg0251NOPPkc01BiSU3NEj3JWGKg1fu6UgQ67BBZM=";
   };
 
   useDune2 = true;
-
-  patches = [
-    ./remove-runtime-dependency-from-ppxlib.patch
-  ];
 
   propagatedBuildInputs = [
     ppx_protocol_conv
