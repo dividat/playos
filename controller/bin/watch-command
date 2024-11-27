@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+AUTO_FORMAT=${AUTO_FORMAT:-}
+
 cd $(dirname "$0")/..
 
 clear
+
+if [ ! -z "$AUTO_FORMAT" ]; then
+    dune fmt || true
+fi
 
 if bin/build; then
 
