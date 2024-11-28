@@ -5,14 +5,15 @@
 # Run using:
 #   $(nix-build -A driverInteractive kiosk-dual-screen.nix)/bin/nixos-test-driver --no-interactive
 let
-  pkgs = import ../pkgs { };
+  pkgs = import ../../pkgs { };
   serverPort = 8080;
   kioskUrl = "http://localhost:${toString serverPort}/";
-  kiosk = import ../kiosk {
+  kiosk = import ../../kiosk {
     pkgs = pkgs;
     system_name = "PlayOS";
     system_version = "1.0.0";
   };
+  sessionName = "kiosk-browser";
   inherit (builtins) toString;
 in
 pkgs.nixosTest {
@@ -84,7 +85,7 @@ pkgs.nixosTest {
   #enableOCR = true;
 
   testScript = ''
-    ${builtins.readFile ./helpers/nixos-test-script-helpers.py}
+    ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
     import time
     import tempfile
     import diffimg # type: ignore
