@@ -36,8 +36,6 @@ let state_matches_expected_outcome state outcome =
     | (DoNothingOrProduceWarning, OutOfDateVersionSelected, Sleeping _) -> true
     | (DoNothingOrProduceWarning, RebootRequired, Sleeping _) -> true
     | (DoNothingOrProduceWarning, ReinstallRequired, Sleeping _) -> true
-    (* should not _directly_ return to GettingVersionInfo state *) (*TODO: redundant now *)
-    | (DoNothingOrProduceWarning, _, Update.GettingVersionInfo) -> false
     (* all the other state combos are treated as errors *)
     | (DoNothingOrProduceWarning, _, _) -> false
 
