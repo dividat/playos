@@ -3,12 +3,12 @@ open Lwt
 let log_src = Logs.Src.create "info"
 
 type t =
-  { app: string
-  ; version: string
+  { app : string
+  ; version : string
   ; update_url : string
   ; kiosk_url : string
-  ; machine_id: string
-  ; zerotier_address: string option
+  ; machine_id : string
+  ; zerotier_address : string option
   ; local_time : string
   }
 
@@ -17,14 +17,10 @@ include Config.System
 (** Break up a string into groups of size n *)
 let rec grouped n s =
   let l = String.length s in
-  if n <= 0 then
-    invalid_arg "Group size must be above 0"
-  else if l = 0 then
-    []
-  else if l <= n then
-    [s]
-  else
-    List.cons (String.sub s 0 n) (grouped n (String.sub s n (l - n)))
+  if n <= 0 then invalid_arg "Group size must be above 0"
+  else if l = 0 then []
+  else if l <= n then [ s ]
+  else List.cons (String.sub s 0 n) (grouped n (String.sub s n (l - n)))
 
 let get () =
   let%lwt machine_id =
@@ -33,20 +29,25 @@ let get () =
     >|= String.concat "-"
   in
   let%lwt zerotier_address =
-    (match%lwt Zerotier.get_status () with
-     | Ok status -> Some status.address |> return
-     | Error err ->
-       let%lwt () = Logs_lwt.err (fun m -> m "Error getting zerotier status: %s" (Printexc.to_string err)) in
-       return None
-    )
+    match%lwt Zerotier.get_status () with
+    | Ok status ->
+        Some status.address |> return
+    | Error err ->
+        let%lwt () =
+          Logs_lwt.err (fun m ->
+              m "Error getting zerotier status: %s" (Printexc.to_string err)
+          )
+        in
+        return None
   in
   let%lwt timedate_daemon = Timedate.daemon () in
   let%lwt current_time = Timedate.get_current_time timedate_daemon in
   let%lwt timezone =
-    (match%lwt Timedate.get_active_timezone timedate_daemon with
-     | Some tz -> return tz
-     | None -> return "No timezone"
-    )
+    match%lwt Timedate.get_active_timezone timedate_daemon with
+    | Some tz ->
+        return tz
+    | None ->
+        return "No timezone"
   in
   let local_time = current_time ^ " (" ^ timezone ^ ")" in
   { app = "PlayOS Controller"

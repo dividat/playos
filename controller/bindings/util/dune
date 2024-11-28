@@ -2,5 +2,5 @@
  (name util)
  (modules util)
  (libraries logs logs.lwt cohttp-lwt-unix sexplib fpath)
- (preprocess (pps lwt_ppx  ppx_sexp_conv)))
-
+ (preprocess
+  (pps lwt_ppx ppx_sexp_conv)))

@@ -5,71 +5,67 @@ open Protocol_conv_jsonm
 let log_src = Logs.Src.create "network"
 
 let enable_and_scan_wifi_devices ~connman =
-  Lwt_result.catch
-    (fun () ->
-      begin
-        let open Connman in
-        (* Get all available technolgies *)
-        let%lwt technologies = Manager.get_technologies connman in
-
-        (* enable all wifi devices *)
-        let%lwt () =
-          technologies
-          |> List.filter (fun (t:Technology.t) ->
-              t.type' = Technology.Wifi && not t.powered)
-          |> List.map (Technology.enable)
-          |> Lwt.join
-        in
-
-        (* and start a scan. *)
-        let%lwt () =
-          technologies
-          |> List.filter (fun (t:Technology.t) -> t.type' = Technology.Wifi)
-          |> List.map (Technology.scan)
-          |> Lwt.join
-        in
-
-        return_unit
-      end
+  Lwt_result.catch (fun () ->
+      (let open Connman in
+       (* Get all available technolgies *)
+       let%lwt technologies = Manager.get_technologies connman in
+       (* enable all wifi devices *)
+       let%lwt () =
+         technologies
+         |> List.filter (fun (t : Technology.t) ->
+                t.type' = Technology.Wifi && not t.powered
+            )
+         |> List.map Technology.enable
+         |> Lwt.join
+       in
+       (* and start a scan. *)
+       let%lwt () =
+         technologies
+         |> List.filter (fun (t : Technology.t) -> t.type' = Technology.Wifi)
+         |> List.map Technology.scan
+         |> Lwt.join
+       in
+       return_unit
+      )
       (* Add a timeout to scan *)
-      |> (fun p -> [p; Lwt_unix.timeout 30.0] |> Lwt.pick)
-    )
-
+      |> fun p -> [ p; Lwt_unix.timeout 30.0 ] |> Lwt.pick
+  )
 
 let init ~connman =
-  let%lwt () = Logs_lwt.info ~src:log_src
-    (fun m -> m "initializing network connections") in
-
+  let%lwt () =
+    Logs_lwt.info ~src:log_src (fun m -> m "initializing network connections")
+  in
   match%lwt enable_and_scan_wifi_devices ~connman with
-
   | Ok () ->
-    Lwt_result.return ()
-
+      Lwt_result.return ()
   | Error exn ->
-    let%lwt () = Logs_lwt.warn ~src:log_src
-        (fun m -> m "enabling and scanning wifi failed: %s, %s"
-            (OBus_error.name exn)
-            (Printexc.to_string exn))
-    in
-    Lwt_result.fail exn
+      let%lwt () =
+        Logs_lwt.warn ~src:log_src (fun m ->
+            m "enabling and scanning wifi failed: %s, %s" (OBus_error.name exn)
+              (Printexc.to_string exn)
+        )
+      in
+      Lwt_result.fail exn
 
 module Interface = struct
-
   type t =
-    { index: int
-    ; name: string
-    ; address: string
-    ; link_type: string
+    { index : int
+    ; name : string
+    ; address : string
+    ; link_type : string
     }
   [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
   let to_json i =
-    Ezjsonm.(dict [
-        "index", i.index |> int
-      ; "name", i.name |> string
-      ; "address", i.address |> string
-      ; "link_type", i.link_type |> string
-      ] |> value)
+    Ezjsonm.(
+      dict
+        [ ("index", i.index |> int)
+        ; ("name", i.name |> string)
+        ; ("address", i.address |> string)
+        ; ("link_type", i.link_type |> string)
+        ]
+      |> value
+    )
 
   let of_json j =
     let dict = Ezjsonm.get_dict j in
@@ -80,12 +76,11 @@ module Interface = struct
     }
 
   let get_all () =
-    let command = "/run/current-system/sw/bin/ip", [| "ip"; "-j"; "link" |] in
+    let command = ("/run/current-system/sw/bin/ip", [| "ip"; "-j"; "link" |]) in
     let%lwt json = Lwt_process.pread command in
     json
     |> Ezjsonm.from_string
     |> Ezjsonm.value
     |> Ezjsonm.get_list of_json
     |> return
-
 end

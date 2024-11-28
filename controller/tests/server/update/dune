@@ -1,29 +1,31 @@
 (library
-  (name update_test_helpers)
-  (modules helpers scenario outcome)
-  (libraries update test_mocks)
-  (preprocess (pps lwt_ppx ppx_sexp_conv))
-)
+ (name update_test_helpers)
+ (modules helpers scenario outcome)
+ (libraries update test_mocks)
+ (preprocess
+  (pps lwt_ppx ppx_sexp_conv)))
 
 (test
  (name update_prop_tests)
  (libraries update_test_helpers qcheck qcheck-alcotest)
  (modules update_prop_tests)
- (preprocess (pps lwt_ppx ppx_sexp_conv))
-)
+ (preprocess
+  (pps lwt_ppx ppx_sexp_conv)))
 
 (test
  (name update_tests)
  (libraries update_test_helpers)
  (modules update_tests)
- (preprocess (pps lwt_ppx ppx_sexp_conv))
-)
+ (preprocess
+  (pps lwt_ppx ppx_sexp_conv)))
 
 (test
  (name update_client_tests)
  (libraries update_client alcotest alcotest-lwt str cohttp-lwt-unix opium)
  (modules update_client_tests update_client_mock_server)
- (preprocess (pps lwt_ppx ppx_sexp_conv))
-)
+ (preprocess
+  (pps lwt_ppx ppx_sexp_conv)))
 
-(env (dev (flags :standard -warn-error -A -w -8-27-32-33)))
+(env
+ (dev
+  (flags :standard -warn-error -A -w -8-27-32-33)))

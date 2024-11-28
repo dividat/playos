@@ -4,44 +4,39 @@ open Tyxml.Svg
 
 let svg ?a ?stroke_width content =
   Tyxml.Html.svg
-    ~a:([ a_viewBox (0., 0., 24., 24.)
-    ; a_width (24., None)
-    ; a_height (24., None)
-    ; a_fill `None
-    ; a_stroke `CurrentColor
-    ; a_stroke_width (Option.value ~default:2. stroke_width, None)
-    ; a_stroke_linecap `Round
-    ; a_stroke_linejoin `Round
-    ] @ (Option.value ~default:[] a))
+    ~a:
+      ([ a_viewBox (0., 0., 24., 24.)
+       ; a_width (24., None)
+       ; a_height (24., None)
+       ; a_fill `None
+       ; a_stroke `CurrentColor
+       ; a_stroke_width (Option.value ~default:2. stroke_width, None)
+       ; a_stroke_linecap `Round
+       ; a_stroke_linejoin `Round
+       ]
+      @ Option.value ~default:[] a
+      )
     content
 
 let line (x1, y1) (x2, y2) =
   Tyxml.Svg.line
-    ~a:[ a_x1 (x1, None)
-    ; a_y1 (y1, None)
-    ; a_x2 (x2, None)
-    ; a_y2 (y2, None)
-    ]
+    ~a:[ a_x1 (x1, None); a_y1 (y1, None); a_x2 (x2, None); a_y2 (y2, None) ]
     []
 
 let circle (x, y) r =
-  Tyxml.Svg.circle
-    ~a:[ a_cx (x, None)
-    ; a_cy (y, None)
-    ; a_r (r, None)
-    ]
-    []
+  Tyxml.Svg.circle ~a:[ a_cx (x, None); a_cy (y, None); a_r (r, None) ] []
 
 let rect ?rx ?fill (x1, y1) (x2, y2) =
-    Tyxml.Svg.rect
-      ~a:[ a_x (x1, None)
+  Tyxml.Svg.rect
+    ~a:
+      [ a_x (x1, None)
       ; a_y (y1, None)
       ; a_width (x2 -. x1, None)
       ; a_height (y2 -. y1, None)
       ; a_rx (Option.value ~default:0. rx, None)
       ; a_fill (`Color (Option.value ~default:"transparent" fill, None))
       ]
-      []
+    []
 
 (* Icons *)
 
@@ -62,15 +57,30 @@ let wifi ?strength () =
   in
   svg
     ~a:[ a_class [ "d-WifiSignal--" ^ modifier ] ]
-    [ path ~a:[ a_class [ "d-WifiSignal__Wave--Outer" ] ; a_d "M1.42 9a16 16 0 0 1 21.16 0" ] []
-    ; path ~a:[ a_class [ "d-WifiSignal__Wave--Middle" ] ; a_d "M5 12.55a11 11 0 0 1 14.08 0" ] []
-    ; path ~a:[ a_class [ "d-WifiSignal__Wave--Inner" ] ; a_d "M8.53 16.11a6 6 0 0 1 6.95 0" ] []
+    [ path
+        ~a:
+          [ a_class [ "d-WifiSignal__Wave--Outer" ]
+          ; a_d "M1.42 9a16 16 0 0 1 21.16 0"
+          ]
+        []
+    ; path
+        ~a:
+          [ a_class [ "d-WifiSignal__Wave--Middle" ]
+          ; a_d "M5 12.55a11 11 0 0 1 14.08 0"
+          ]
+        []
+    ; path
+        ~a:
+          [ a_class [ "d-WifiSignal__Wave--Inner" ]
+          ; a_d "M8.53 16.11a6 6 0 0 1 6.95 0"
+          ]
+        []
     ; line (12., 20.) (12., 20.)
     ]
 
 let ethernet =
   svg
-    [ path ~a: [ a_d "M2 2 H22 V18 H18 V22 H6 V18 H2 Z" ] []
+    [ path ~a:[ a_d "M2 2 H22 V18 H18 V22 H6 V18 H2 Z" ] []
     ; line (6., 6.) (6., 10.)
     ; line (10., 6.) (10., 10.)
     ; line (14., 6.) (14., 10.)
@@ -81,7 +91,13 @@ let world =
   svg
     [ circle (12., 12.) 10.
     ; line (2., 12.) (22., 12.)
-    ; path ~a:[ a_d "M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" ] []
+    ; path
+        ~a:
+          [ a_d
+              "M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 \
+               1-4-10 15.3 15.3 0 0 1 4-10z"
+          ]
+        []
     ]
 
 let power =
@@ -116,14 +132,15 @@ let letter =
   svg ~stroke_width:1.
     [ rect ~rx:1. ~fill:"black" (2., 2.) (22., 22.)
     ; text
-        ~a:[ a_fill (`Color ("white", None))
-        ; a_stroke (`Color ("white", None))
-        ; a_font_size "16"
-        ; Unsafe.string_attrib "x" "50%"
-        ; Unsafe.string_attrib "y" "55%"
-        ; a_dominant_baseline `Middle
-        ; a_text_anchor `Middle
-        ]
+        ~a:
+          [ a_fill (`Color ("white", None))
+          ; a_stroke (`Color ("white", None))
+          ; a_font_size "16"
+          ; Unsafe.string_attrib "x" "50%"
+          ; Unsafe.string_attrib "y" "55%"
+          ; a_dominant_baseline `Middle
+          ; a_text_anchor `Middle
+          ]
         [ txt "A" ]
     ]
 
@@ -131,11 +148,12 @@ let copyright =
   svg
     [ circle (12., 12.) 10.
     ; text
-        ~a:[ a_font_size "10"
-        ; Unsafe.string_attrib "x" "50%"
-        ; Unsafe.string_attrib "y" "55%"
-        ; a_dominant_baseline `Middle
-        ; a_text_anchor `Middle
-        ]
+        ~a:
+          [ a_font_size "10"
+          ; Unsafe.string_attrib "x" "50%"
+          ; Unsafe.string_attrib "y" "55%"
+          ; a_dominant_baseline `Middle
+          ; a_text_anchor `Middle
+          ]
         [ txt "C" ]
     ]

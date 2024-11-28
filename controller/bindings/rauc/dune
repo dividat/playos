@@ -4,10 +4,11 @@
  (name rauc)
  (modules rauc rauc_interfaces)
  (libraries obus logs logs.lwt ezjsonm sexplib)
- (preprocess (pps lwt_ppx  ppx_sexp_conv)))
+ (preprocess
+  (pps lwt_ppx ppx_sexp_conv)))
 
 (rule
  (targets rauc_interfaces.ml rauc_interfaces.mli)
- (deps    rauc_interfaces.xml)
+ (deps rauc_interfaces.xml)
  (action
   (run obus-gen-interface -keep-common -o rauc_interfaces %{deps})))
