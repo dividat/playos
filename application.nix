@@ -104,6 +104,12 @@ rec {
         };
 
         displayManager = {
+          lightdm = {
+            enable = true;
+            greeter.enable = false;
+            autoLogin.timeout = 0;
+          };
+
           sessionCommands = ''
             ${pkgs.xorg.xrdb}/bin/xrdb -merge <<EOF
               Xcursor.theme: ${pkgs.breeze-contrast-cursor-theme.themeName}
