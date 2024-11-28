@@ -98,8 +98,8 @@ let test_random_failure_case =
                         (Printexc.get_backtrace ())
                         (state_seq_to_str state_seq)
 
-                | (Ok Update.GettingVersionInfo) ->
-                        Queue.push Update.GettingVersionInfo state_seq;
+                | Ok ({process_state = Update.GettingVersionInfo; _} as state) ->
+                        Queue.push state state_seq;
                         true
                 | (Ok state) ->
                         if (c < loop_lim) then
@@ -112,7 +112,7 @@ let test_random_failure_case =
                                 loop_lim
                                (state_seq_to_str state_seq)
         in
-        do_while 5 Update.GettingVersionInfo
+        do_while 5 Update.initial_state
     in
     QCheck2.Test.make
          ~count:10_000

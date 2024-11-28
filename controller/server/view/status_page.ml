@@ -92,21 +92,26 @@ let other_slot = let open Rauc.Slot in function
 
 let suggested_action_of_state (update:Update.state) (rauc:rauc_state) booted_slot =
     let target_slot = other_slot booted_slot in
-    match (update, rauc) with
+    match (update.system_status, rauc) with
         | (RebootRequired, _) ->
             Some (Definition.description reboot_call)
         | (OutOfDateVersionSelected, Status _) ->
             Some (Definition.description (
                 switch_to_newer_system_call target_slot
             ))
-        | (UpToDate {booted; inactive}, Status _) when booted <> inactive ->
-            Some (Definition.description (
-                switch_to_older_system_call target_slot
-            ))
         | (ReinstallRequired, _) ->
             Some (Definition.description (
                 reinstall_call target_slot
             ))
+        | (UpToDate, Status _) ->
+            Option.bind update.version_info (fun {booted; inactive; _} ->
+                if (booted <> inactive) then
+                    Some (Definition.description (
+                        switch_to_older_system_call target_slot
+                    ))
+                else
+                    None
+            )
         | _ ->
             None
 

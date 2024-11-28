@@ -424,12 +424,12 @@ module StatusGui = struct
     ) in
     reboot ()
 
-  let get_status ~health_s ~update_s ~rauc =
+  let get_status ~health_s ~(update_s:Update.state React.signal) ~rauc =
         let health_state = health_s |> Lwt_react.S.value in
         let update_state = update_s |> Lwt_react.S.value in
         let%lwt booted_slot = Rauc.get_booted_slot rauc in
         let%lwt rauc =
-          match update_state with
+          match update_state.process_state with
           (* RAUC status is not meaningful while installing
              https://github.com/rauc/rauc/issues/416
           *)

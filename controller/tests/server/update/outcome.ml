@@ -25,20 +25,19 @@ let slot_spec_to_outcome ({booted_slot; primary_slot; input_versions} : Helpers.
 (* Checks if the state returned by UpdateService matches
    the expected outcome as determined by [slot_spec_to_outcome] *)
 let state_matches_expected_outcome state outcome =
-    match (outcome, state) with
-        | (InstallVsn v1,             Update.Downloading v2) ->
-                (Semver.to_string v1) = v2
-        | (InstallVsn _,              _) ->                         false
-        | (DoNothingOrProduceWarning, Update.ErrorGettingVersionInfo _) -> true
-        | (DoNothingOrProduceWarning, Update.UpToDate _) ->                true
-        | (DoNothingOrProduceWarning, Update.OutOfDateVersionSelected) ->  true
-        | (DoNothingOrProduceWarning, Update.RebootRequired) ->            true
-        | (DoNothingOrProduceWarning, Update.ReinstallRequired) ->         true
-        (* should not _directly_ return to GettingVersionInfo state *)
-        | (DoNothingOrProduceWarning, Update.GettingVersionInfo) ->        false
-        (* all the other states are part of the installation process
-           and are treated as errors *)
-        | (DoNothingOrProduceWarning, _) ->                         false
+    let open Update in
+    match (outcome, state.system_status, state.process_state) with
+    | (InstallVsn v1, NeedsUpdate, Downloading v2) ->
+            (Semver.to_string v1) = v2 &&
+            Option.fold ~none:false ~some:(fun v -> v.latest = v1) state.version_info
+    | (InstallVsn _, _, _) -> false
+    | (DoNothingOrProduceWarning, UpdateError (ErrorGettingVersionInfo _), Sleeping _) -> true
+    | (DoNothingOrProduceWarning, UpToDate, Sleeping _) -> true
+    | (DoNothingOrProduceWarning, OutOfDateVersionSelected, Sleeping _) -> true
+    | (DoNothingOrProduceWarning, RebootRequired, Sleeping _) -> true
+    | (DoNothingOrProduceWarning, ReinstallRequired, Sleeping _) -> true
+    (* all the other state combos are treated as errors *)
+    | (DoNothingOrProduceWarning, _, _) -> false
 
 (** Tests if the input UpdateService run with the given [Helpers.system_slot_spec]
     [case] scenario produces the expected outcome state (defined by
@@ -64,7 +63,7 @@ let test_slot_spec case =
         let () = Helpers.setup_mocks_from_system_slot_spec mocks case in
 
         let module UpdateServiceI = (val mocks.update_service) in
-        let%lwt out_state = UpdateServiceI.run_step GettingVersionInfo in
+        let%lwt out_state = UpdateServiceI.run_step Update.initial_state in
         if state_matches_expected_outcome out_state expected_outcome then
             Lwt.return ()
         else

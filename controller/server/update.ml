@@ -25,25 +25,38 @@ let sexp_of_version_info v =
         List [Atom "inactive"; Atom (Semver.to_string v.inactive)];
     ])
 
-
-
-type state =
-  | GettingVersionInfo
+type update_error =
   | ErrorGettingVersionInfo of string
-  | UpToDate of version_info
-  | Downloading of string
   | ErrorDownloading of string
-  | Installing of string
   | ErrorInstalling of string
-  (* inactive system has been updated and reboot is required to boot into updated system *)
+[@@deriving sexp_of]
+
+type system_status =
+  | UpToDate
+  | NeedsUpdate
   | RebootRequired
-  (* inactive system is up to date, but current system was selected for boot *)
   | OutOfDateVersionSelected
-  (* there are no known-good systems and a reinstall is recommended *)
   | ReinstallRequired
+  | UpdateError of update_error
 [@@deriving sexp_of]
 
 type sleep_duration = float (* seconds *)
+[@@deriving sexp_of]
+
+(** State of update mechanism *)
+type process_state =
+  | Sleeping of sleep_duration
+  | GettingVersionInfo
+  | Downloading of string
+  | Installing of string
+[@@deriving sexp_of]
+
+type state = {
+    version_info: version_info option;
+    system_status: system_status;
+    process_state: process_state
+}
+[@@deriving sexp_of]
 
 type config = {
     error_backoff_duration: sleep_duration;
@@ -57,7 +70,7 @@ module type ServiceDeps = sig
 end
 
 module type UpdateService = sig
-  val run : set_state:(state -> unit) -> state -> unit Lwt.t
+  val run : (state -> unit) -> unit Lwt.t
 
   val run_step : state -> state Lwt.t
 end
@@ -72,7 +85,7 @@ let evaluate_version_info current_primary booted_slot version_info =
   (* Should not happen during the automatic update process (one partition must
      always be older than latest upstream), but can happen if e.g. a newer
      version is manually installed into one of the slots. *)
-    UpToDate version_info
+    UpToDate
   else if booted_up_to_date || inactive_up_to_date then
     match current_primary with
     | Some primary_slot ->
@@ -80,7 +93,7 @@ let evaluate_version_info current_primary booted_slot version_info =
         (* Don't care if inactive can be updated. I.e. Only update the inactive
            partition once the booted partition is outdated. This results in
            always two versions being available on the machine. *)
-        UpToDate version_info
+        UpToDate
       else
         if booted_slot = primary_slot then
           (* Inactive is up to date while booted is out of date, but booted was
@@ -95,8 +108,7 @@ let evaluate_version_info current_primary booted_slot version_info =
       ReinstallRequired
 
   else
-    (* Both systems are out of date -> update the inactive system *)
-    Downloading (Semver.to_string version_info.latest)
+    NeedsUpdate
 
 
 (** Helper to parse semver from string or fail *)
@@ -110,14 +122,14 @@ let semver_of_string string =
   | Some version ->
     version
 
+let initial_state = {
+    version_info = None;
+    system_status = UpToDate; (* start with assuming a good state *)
+    process_state = GettingVersionInfo;
+}
+
 module Make(Deps : ServiceDeps) : UpdateService = struct
     open Deps
-
-    let sleep_error_backoff () =
-        Lwt_unix.sleep config.error_backoff_duration
-
-    let sleep_update_check () =
-        Lwt_unix.sleep config.check_for_updates_interval
 
     (** Get version information *)
     let get_version_info () =
@@ -142,10 +154,13 @@ module Make(Deps : ServiceDeps) : UpdateService = struct
             |> return
 
 (* Update mechanism process *)
-    (** perform a single state transition from given state *)
+    (** Perform a single state transition from given state
+
+        Note: the action performed depends _only_ on the input
+        state.process_state.
+     *)
     let run_step (state:state) : state Lwt.t =
-       let set = Lwt.return in
-       match (state) with
+      match (state.process_state) with
       | GettingVersionInfo ->
         (* get version information and decide what to do *)
         let%lwt resp = Lwt_result.catch (fun () ->
@@ -156,82 +171,84 @@ module Make(Deps : ServiceDeps) : UpdateService = struct
         ) in
         (match resp with
             | Ok (slot_p, slot_b, version_info) ->
-                evaluate_version_info slot_p slot_b version_info
-            | Error e ->
-                ErrorGettingVersionInfo (Printexc.to_string e)
-        ) |> set
+                let system_status = evaluate_version_info slot_p slot_b version_info in
+                let next_proc_state = match system_status with
+                    | NeedsUpdate -> Downloading (Semver.to_string version_info.latest)
+                    | _ -> Sleeping (config.check_for_updates_interval)
+                in
+                return {
+                    process_state = next_proc_state;
+                    version_info = Some version_info;
+                    system_status = system_status
+                }
+            | Error exn ->
+                let exn_str = Printexc.to_string exn in
+                let%lwt () = Logs_lwt.err ~src:log_src
+                    (fun m -> m "failed to get version information: %s" exn_str)
+                in
+                return {
+                    process_state = Sleeping (config.error_backoff_duration);
+                    (* unsetting version_info to indicate we are unclear about
+                       current system state *)
+                    version_info = None;
+                    system_status = UpdateError (ErrorGettingVersionInfo exn_str);
+                }
+        )
 
-      | ErrorGettingVersionInfo msg ->
-        (* handle error while getting version information *)
-        let%lwt () =
-          Logs_lwt.err ~src:log_src
-            (fun m -> m "failed to get version information: %s" msg)
-        in
-        (* sleep and retry *)
-        let%lwt () = sleep_error_backoff () in
-        set GettingVersionInfo
+      | Sleeping duration ->
+        let%lwt () = Lwt_unix.sleep duration in
+        return {state with process_state = GettingVersionInfo}
 
       | Downloading version ->
         (* download latest version *)
         (match%lwt Lwt_result.catch (fun () -> ClientI.download version) with
          | Ok bundle_path ->
-           Installing bundle_path
-           |> set
+            return {state with process_state = Installing bundle_path}
          | Error exn ->
-           ErrorDownloading (Printexc.to_string exn)
-           |> set
+            let exn_str = Printexc.to_string exn in
+            let%lwt () = Logs_lwt.err ~src:log_src
+                (fun m -> m "failed to download RAUC bundle: %s" exn_str)
+            in
+            return { state with
+                process_state = Sleeping config.error_backoff_duration;
+                system_status = UpdateError (ErrorDownloading exn_str);
+            }
         )
-
-      | ErrorDownloading msg ->
-        (* handle error while downloading bundle *)
-        let%lwt () =
-          Logs_lwt.err ~src:log_src
-            (fun m -> m "failed to download RAUC bundle: %s" msg)
-        in
-        (* sleep and retry *)
-        let%lwt () = sleep_error_backoff () in
-        set GettingVersionInfo
 
       | Installing bundle_path ->
         (* install bundle via RAUC *)
         (match%lwt Lwt_result.catch (fun () -> RaucI.install bundle_path) with
          | Ok () ->
-           let%lwt () =
-             Logs_lwt.info (fun m -> m "succesfully installed update (%s)" bundle_path)
+           let%lwt () = Logs_lwt.info
+                (fun m -> m "succesfully installed update (%s)" bundle_path)
            in
-           RebootRequired
-           |> set
+           return { state with
+             (* unsetting version_info, because it is now stale *)
+             version_info = None;
+             (* going back to GettingVersionInfo to update version_info *)
+             process_state = GettingVersionInfo;
+           }
          | Error exn ->
            let () = try Sys.remove bundle_path with
              | _ -> ()
            in
-           ErrorInstalling (Printexc.to_string exn)
-           |> set
+           let exn_str = Printexc.to_string exn in
+           let%lwt () =
+             Logs_lwt.err ~src:log_src
+               (fun m -> m "failed to install RAUC bundle: %s" exn_str)
+           in
+           return { state with
+                process_state = Sleeping config.error_backoff_duration;
+                system_status = UpdateError (ErrorInstalling exn_str);
+           }
         )
 
-      | ErrorInstalling msg ->
-        (* handle installation error *)
-        let%lwt () =
-          Logs_lwt.err ~src:log_src
-            (fun m -> m "failed to install RAUC bundle: %s" msg)
-        in
-        (* sleep and retry *)
-        let%lwt () = sleep_error_backoff () in
-        set GettingVersionInfo
-
-      | UpToDate _
-      | RebootRequired
-      | OutOfDateVersionSelected
-      | ReinstallRequired ->
-        (* sleep and recheck for new updates *)
-        let%lwt () = sleep_update_check () in
-        set GettingVersionInfo
-
-    (** Finite state machine handling updates *)
-    let rec run ~set_state state =
+    let rec run_rec set_state state =
       let%lwt next_state = run_step state in
         set_state next_state;
-        run ~set_state next_state
+        run_rec set_state next_state
+
+    let run set_state = run_rec set_state initial_state
 end
 
 let default_config : config = {
@@ -255,7 +272,6 @@ let build_deps ~connman ~(rauc : Rauc.t) :
   Lwt.return (module Deps : ServiceDeps)
 
 let start ~connman ~(rauc : Rauc.t) =
-  let initial_state = GettingVersionInfo in
   let state_s, set_state = Lwt_react.S.create initial_state in
   let () = Logs.info ~src:log_src
     (fun m -> m "update URL: %s" Config.System.update_url) in
@@ -263,7 +279,7 @@ let start ~connman ~(rauc : Rauc.t) =
   let service = begin
       let%lwt deps = build_deps ~connman ~rauc in
       let module UpdateServiceI = Make(val deps) in
-      UpdateServiceI.run ~set_state initial_state
+      UpdateServiceI.run set_state
   end in
 
   let () = Logs.info ~src:log_src (fun m -> m "Started") in
