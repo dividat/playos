@@ -56,9 +56,12 @@ pkgs.testers.runNixOSTest {
     playos = { config, lib, pkgs, ... }:
     {
       imports = [
-        (import ../../virtualisation-config.nix { inherit overlayPath; })
+        ../../virtualisation-config.nix
       ];
-      virtualisation.vlans = [ 1 ];
+      config = {
+        playos.e2e-tests.overlayPath = overlayPath;
+        virtualisation.vlans = [ 1 ];
+      };
     };
     # runs an HTTP proxy and a mock HTTP update/bundle server
     sidekick = { config, nodes, lib, pkgs, ... }:
