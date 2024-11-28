@@ -1,4 +1,3 @@
 (library
  (name config)
- (modules config)
-)
+ (modules config))

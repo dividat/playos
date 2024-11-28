@@ -4,7 +4,8 @@
  (name systemd)
  (modules systemd systemd_interfaces)
  (libraries obus logs logs.lwt ezjsonm sexplib)
- (preprocess (pps lwt_ppx  ppx_sexp_conv)))
+ (preprocess
+  (pps lwt_ppx ppx_sexp_conv)))
 
 (rule
  (targets systemd_interfaces.ml systemd_interfaces.mli)

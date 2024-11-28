@@ -1,0 +1,13 @@
+version = 0.26.1
+
+profile = ocamlformat
+
+break-infix = wrap-or-vertical
+doc-comments = before
+field-space = loose
+indicate-multiline-delimiters = closing-on-separate-line
+space-around-arrays = true
+space-around-lists = true
+space-around-records = true
+space-around-variants = true
+type-decl = sparse

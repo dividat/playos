@@ -5,7 +5,6 @@ module Unit : sig
 end
 
 module Manager : sig
-
   type t
 
   (** connect with systemd D-Bus API *)
@@ -55,5 +54,4 @@ module Manager : sig
 
    *)
   val stop_unit : t -> string -> unit Lwt.t
-
 end

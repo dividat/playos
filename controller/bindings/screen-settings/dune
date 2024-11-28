@@ -2,4 +2,5 @@
  (name screen_settings)
  (modules screen_settings)
  (libraries lwt logs logs.fmt logs.lwt lwt.unix util base)
- (preprocess (pps lwt_ppx)))
+ (preprocess
+  (pps lwt_ppx)))

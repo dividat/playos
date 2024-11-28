@@ -1,3 +1,1 @@
-val html :
-  Info.t
-  -> [> Html_types.html ] Tyxml.Html.elt
+val html : Info.t -> [> Html_types.html ] Tyxml.Html.elt

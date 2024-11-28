@@ -2,4 +2,5 @@
  (name curl)
  (modules curl)
  (libraries cohttp-lwt-unix uri base config)
- (preprocess (pps lwt_ppx)))
+ (preprocess
+  (pps lwt_ppx)))

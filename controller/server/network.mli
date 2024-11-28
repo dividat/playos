@@ -1,17 +1,15 @@
 open Protocol_conv_jsonm
 
 (** Initialize Network connectivity *)
-val init
-  : connman : Connman.Manager.t
-  -> (unit,exn) Lwt_result.t
+val init : connman:Connman.Manager.t -> (unit, exn) Lwt_result.t
 
 module Interface : sig
   (** Network interface *)
   type t =
-    { index: int
-    ; name: string
-    ; address: string
-    ; link_type: string
+    { index : int
+    ; name : string
+    ; address : string
+    ; link_type : string
     }
   [@@deriving sexp, protocol ~driver:(module Jsonm)]
 
@@ -22,5 +20,4 @@ module Interface : sig
       This uses the Linux `ip` utility.
   *)
   val get_all : unit -> t list Lwt.t
-
 end
