@@ -36,8 +36,7 @@ pkgs.nixosTest {
           "d ${config.services.static-web-server.root} 0777 root root -"
       ];
 
-      services.xserver = let sessionName = "kiosk-browser";
-      in {
+      services.xserver = {
         enable = true;
 
         desktopManager = {
@@ -65,14 +64,16 @@ pkgs.nixosTest {
             greeter.enable = false;
             autoLogin.timeout = 0;
           };
-
-          autoLogin = {
-            enable = true;
-            user = "alice";
-          };
-
-          defaultSession = sessionName;
         };
+     };
+     services.displayManager = {
+       # Always automatically log in play user
+       autoLogin = {
+         enable = true;
+         user = "alice";
+       };
+
+       defaultSession = sessionName;
      };
   };
 
