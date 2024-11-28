@@ -59,9 +59,8 @@ let reboot_call =
 
 let switch_to_newer_system_call target_slot =
   [ note
-      "This machine has an out of date PlayOS version selected as the\n\
-      \              default. You can switch to the new version (requires a \
-       reboot)."
+      "This machine has an out of date PlayOS version selected as the default. \
+       You can switch to the new version (requires a reboot)."
   ; action_form
       ("/system/switch/" ^ slot_fmt target_slot)
       "Switch to newer version and reboot"
@@ -69,8 +68,8 @@ let switch_to_newer_system_call target_slot =
 
 let switch_to_older_system_call target_slot =
   [ note
-      "You are running the latest version of PlayOS, but you can still\n\
-      \              switch back to the older version (requires a reboot)."
+      "You are running the latest version of PlayOS, but you can still switch \
+       back to the older version (requires a reboot)."
   ; action_form
       ("/system/switch/" ^ slot_fmt target_slot)
       "Switch to older version and reboot"
@@ -78,11 +77,9 @@ let switch_to_older_system_call target_slot =
 
 let reinstall_call target_slot =
   [ note
-      "The PlayOS installation appears to be faulty, manual system\n\
-      \              reinstallation is recommended. Please contact support. \
-       You can\n\
-      \              attempt to switch to another system slot (requires \
-       reboot)."
+      "The PlayOS installation appears to be faulty, manual system \
+       reinstallation is recommended. Please contact support. You can attempt \
+       to switch to another system slot (requires reboot)."
   ; action_form
       ("/system/switch/" ^ slot_fmt target_slot)
       "Switch to other slot and reboot"
@@ -93,12 +90,10 @@ let factory_reset_call =
     "This will wipe all configuration and login data. Proceed?"
   in
   [ note
-      "WARNING: Clears all user data and reboots the machine, resulting in a\n\
-      \              fresh install state. Will require to manually reconfigure \
-       network,\n\
-      \              localization and all other settings. Any active sessions \
-       and/or\n\
-      \              logins will be expired."
+      "WARNING: Clears all user data and reboots the machine, resulting in a \
+       fresh install state. Will require to manually reconfigure network, \
+       localization and all other settings. Any active sessions and/or logins \
+       will be expired."
   ; action_form ~confirm_msg "/system/factory-reset" "⚠ Factory Reset"
   ]
 

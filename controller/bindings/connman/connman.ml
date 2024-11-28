@@ -684,14 +684,11 @@ module Service = struct
         Lwt.fail_with
           (Printf.sprintf
              "Connection failed, unknown error reported by manager: %s\n\
-             \                 DBus connect exception: %s" err
-             (Printexc.to_string exn)
+              DBus connect exception: %s" err (Printexc.to_string exn)
           )
     | Error exn, Some (AgentError err) ->
         Lwt.fail_with
-          (Printf.sprintf
-             "Connection failed. %s\n\
-             \                 DBus connect exception: %s"
+          (Printf.sprintf "Connection failed. %s\nDBus connect exception: %s"
              (Agent.agent_error_msg err)
              (Printexc.to_string exn)
           )
@@ -700,9 +697,8 @@ module Service = struct
           (Printf.sprintf
              "Connection failed, none of the available authentication \
               protocols are supported.\n\
-             \                Available protocols: %s\n\
-             \                Supported protocols: %s\n\
-             \               "
+              Available protocols: %s\n\
+              Supported protocols: %s"
              (String.concat ", " @@ List.map string_of_security service.security)
              (String.concat ", "
              @@ List.map string_of_security supported_security_protocols
@@ -719,8 +715,7 @@ module Service = struct
     | Error exn, None ->
         Lwt.fail_with
           (Printf.sprintf
-             "Connection to network failed.\n\
-             \                 DBus connect exception: %s"
+             "Connection to network failed.\nDBus connect exception: %s"
              (Printexc.to_string exn)
           )
 
