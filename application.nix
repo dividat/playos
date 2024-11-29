@@ -66,6 +66,9 @@ rec {
       # System-wide packages
       environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme ];
 
+      # Avoid bloating system image size
+      services.speechd.enable = false;
+
       # Kiosk session
       services.xserver = {
         enable = true;
