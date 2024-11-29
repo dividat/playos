@@ -171,6 +171,8 @@ rec {
       };
 
       # Audio
+      services.pipewire.enable = false;
+
       hardware.pulseaudio = {
         enable = true;
         extraConfig = ''
