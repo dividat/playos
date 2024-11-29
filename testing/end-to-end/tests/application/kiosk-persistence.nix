@@ -152,7 +152,7 @@ with TestPrecondition("PlayOS is booted, controller is running"):
     playos.wait_for_unit('playos-controller.service')
 
 with TestPrecondition("VM can reach HTTP stub server"):
-    playos.succeed("curl --fail '${kioskUrl}'")
+    playos.succeed("curl --fail '${kioskUrl}'", timeout=3)
 
 with TestCase("xserver and kiosk are running"):
     playos.wait_for_x()
