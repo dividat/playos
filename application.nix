@@ -180,7 +180,7 @@ rec {
           set-card-profile 0 output:hdmi-stereo
           # Respond to changes in connected outputs
           load-module module-switch-on-port-available
-          load-module module-switch-on-connect
+          load-module module-switch-on-connect blacklist=""
         '';
       };
 
