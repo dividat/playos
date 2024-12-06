@@ -109,6 +109,9 @@ with pkgs; stdenv.mkDerivation {
   + lib.optionalString buildLive ''
     ln -s ${components.live}/iso/playos-live-${version}.iso $out/playos-live-${version}.iso
   ''
+  + lib.optionalString buildDisk ''
+    ln -s ${components.disk} $out/${components.safeProductName}-disk-${components.version}.img
+  ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
     ln -s ${components.installer}/iso/playos-installer-${version}.iso $out/playos-installer-${version}.iso
