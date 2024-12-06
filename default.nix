@@ -144,6 +144,9 @@ with pkgs; stdenv.mkDerivation {
   + lib.optionalString buildLive ''
     ln -s ${components.live}/iso/${components.safeProductName}-live-${components.version}.iso $out/${components.safeProductName}-live-${components.version}.iso
   ''
+  + lib.optionalString buildDisk ''
+    ln -s ${components.disk} $out/${components.safeProductName}-disk-${components.version}.img
+  ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
     ln -s ${components.installer}/iso/${components.safeProductName}-installer-${components.version}.iso $out/${components.safeProductName}-installer-${components.version}.iso
