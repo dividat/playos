@@ -105,6 +105,7 @@ pkgs.testers.runNixOSTest {
           # note: do not change this to wlan1 or other id, weird failures appear
           radios.wlan0 = {
             band = "2g";
+            channel = 7;
             countryCode = "US";
             networks = {
               wlan0 = {

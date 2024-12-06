@@ -152,11 +152,11 @@ with TestPrecondition("PlayOS is booted, controller is running"):
     playos.wait_for_unit('playos-controller.service')
 
 with TestPrecondition("VM can reach HTTP stub server"):
-    playos.succeed("curl --fail '${kioskUrl}'")
+    playos.succeed("curl --fail '${kioskUrl}'", timeout=3)
 
 with TestCase("xserver and kiosk are running"):
     playos.wait_for_x()
-    playos.succeed("pgrep -f kiosk-browser > /dev/null")
+    playos.succeed("pgrep --full kiosk-browser > /dev/null")
 
 with TestCase("Kiosk's debug port open, web storage is persisted") as t:
     page = aio.run(connect_and_get_kiosk_page())

@@ -5,14 +5,15 @@
 # Run using:
 #   $(nix-build -A driverInteractive kiosk-dual-screen.nix)/bin/nixos-test-driver --no-interactive
 let
-  pkgs = import ../pkgs { };
+  pkgs = import ../../pkgs { };
   serverPort = 8080;
   kioskUrl = "http://localhost:${toString serverPort}/";
-  kiosk = import ../kiosk {
+  kiosk = import ../../kiosk {
     pkgs = pkgs;
     system_name = "PlayOS";
     system_version = "1.0.0";
   };
+  sessionName = "kiosk-browser";
   inherit (builtins) toString;
 in
 pkgs.nixosTest {
@@ -35,8 +36,7 @@ pkgs.nixosTest {
           "d ${config.services.static-web-server.root} 0777 root root -"
       ];
 
-      services.xserver = let sessionName = "kiosk-browser";
-      in {
+      services.xserver = {
         enable = true;
 
         desktopManager = {
@@ -64,14 +64,16 @@ pkgs.nixosTest {
             greeter.enable = false;
             autoLogin.timeout = 0;
           };
-
-          autoLogin = {
-            enable = true;
-            user = "alice";
-          };
-
-          defaultSession = sessionName;
         };
+     };
+     services.displayManager = {
+       # Always automatically log in play user
+       autoLogin = {
+         enable = true;
+         user = "alice";
+       };
+
+       defaultSession = sessionName;
      };
   };
 
@@ -84,7 +86,7 @@ pkgs.nixosTest {
   #enableOCR = true;
 
   testScript = ''
-    ${builtins.readFile ./helpers/nixos-test-script-helpers.py}
+    ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
     import time
     import tempfile
     import diffimg # type: ignore
@@ -98,7 +100,7 @@ pkgs.nixosTest {
         return int(num.strip())
 
     def get_kiosk_pid():
-        kiosk_pids = machine.succeed("pgrep kiosk-browser | sort")
+        kiosk_pids = machine.succeed("pgrep --full kiosk-browser | sort | head -1")
         return int(kiosk_pids.strip())
 
     machine.start()
