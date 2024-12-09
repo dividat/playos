@@ -12,6 +12,14 @@
 #
 # Can be run non-interactively, but for debugging you will definitely need
 # visible output since there are no logs :-)
+let
+    diskImageURLs = {
+        "2024.7.0" = {
+            url = "http://snaildog:8000/disk.zstd5.img";
+            hash = "sha256-yeRLR9JrkBWzVzvZcFXz44HFuDeqSQuQjR2QfPJr2jY=";
+        };
+    };
+in
 {
     pkgs ? import ../pkgs { },
 
@@ -28,20 +36,12 @@
     # PlayOS system we are updating from
     baseSystemVersion ? "2024.7.0",
 
-    # The disk image could be a downloadable URL, which would allow easily
-    # testing multiple earlier releases.
-    #
-    # Latest buildDisk compresses from 9.40 GiB to 2.95 GiB with `zstd -10`
-    # which is ~6 minutes over a 100 Mbs connection - faster than building from
-    # scratch.
-    #
-    # Using the current system for now to setup the workflow
-    baseSystemDiskImage ? (pkgs.callPackage ../default.nix {
-        updateUrl = "http://${updateUrlDomain}/";
-        kioskUrl = "http://${kioskUrlDomain}/";
-        buildDisk = true;
-        versionOverride = baseSystemVersion;
-    }).components.disk,
+    # A downloadable URL containing a zstd compressed disk image
+    baseSystemDiskImage ? (pkgs.fetchurl diskImageURLs.${baseSystemVersion})
+        .overrideAttrs {
+            __structuredAttrs = true;
+            unsafeDiscardReferences.out = true;
+        },
 
     # PlayOS version we are updating into.
     # Only used in the stub update server, not set in the bundle, etc.
@@ -49,15 +49,15 @@
 
     # PlayOS bundle for the next update
     nextSystemBundlePath ? (pkgs.callPackage ../default.nix {
-        updateUrl = "http://${updateUrlDomain}/"; # irrelevant
+        updateUrl = "http://${updateUrlDomain}/";
         kioskUrl = "http://${kioskUrlDomain}/";
         # This override is not needed if application.version is "already" newer
-        # then base
+        # than base
         versionOverride = nextSystemVersion;
     }).components.unsignedRaucBundle,
 }:
 let
-    overlayPath = "/tmp/disk-overlay.qcow2";
+    overlayPath = "/tmp/release-validation-disk.raw";
 in
 with pkgs.lib;
 pkgs.testers.runNixOSTest {
@@ -119,7 +119,7 @@ pkgs.testers.runNixOSTest {
         # Note: this has to be at least 2x bundle size, otherwise
         # the bundle download will not fit into /tmp (which is defined
         # as 50% of RAM)!
-        virtualisation.memorySize = lib.mkForce 3072;
+        virtualisation.memorySize = lib.mkForce 4096;
 
         virtualisation.vlans = [ 1 ];
 
@@ -147,6 +147,20 @@ ${builtins.readFile ./end-to-end/tests/base/proxy-and-update-helpers.py}
 import tesserocr # type: ignore
 import tempfile
 import time
+import atexit
+import os
+
+# Note #1: extracting the compressed disk in the test rather than in a
+# derivation to avoid bloating nix store with a 10GB file
+# Note #2: no need to create a COW overlay, since we can write to the temp disk
+# image directly
+def extract_base_system_disk(compressed_disk, target_path):
+    eprint("Extracting compressed disk image, this will take a while...")
+    subprocess.run(["rm", "-f", target_path])
+    subprocess.run(['${pkgs.zstd}/bin/unzstd', compressed_disk, '-o', target_path],
+        check=True)
+    os.chmod(target_path, 0o666)
+    atexit.register(os.remove, target_path)
 
 product_name = "${safeProductName}"
 next_version = "${nextSystemVersion}"
@@ -154,7 +168,7 @@ next_version = "${nextSystemVersion}"
 http_root = "${nodes.sidekick.services.static-web-server.root}"
 http_local_url = "http://127.0.0.1"
 
-create_overlay("${baseSystemDiskImage}", "${overlayPath}")
+extract_base_system_disk("${baseSystemDiskImage}", "${overlayPath}")
 playos.start(allow_reboot=True)
 sidekick.start()
 
