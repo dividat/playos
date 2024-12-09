@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
+SKIP_MANUAL=${SKIP_MANUAL:-}
+
 # Integration tests
 
 INTEGRATION_TEST_DIR="$(dirname "$(realpath "$0")")/integration"
@@ -8,6 +10,19 @@ INTEGRATION_TEST_DIR="$(dirname "$(realpath "$0")")/integration"
 for TEST_DEF in $(ls "$INTEGRATION_TEST_DIR"/*.nix); do
   NIXPKGS_ALLOW_UNFREE=1 nix-build "$TEST_DEF"
 done
+
+# Manual integration tests
+
+MANUAL_TEST_DIR="$(dirname "$(realpath "$0")")/manual"
+
+if [ -z "$SKIP_MANUAL" ]; then
+    for TEST_DEF in $(ls "$MANUAL_TEST_DIR"/*.nix); do
+        outDir=$(nix-build -A driverInteractive "$TEST_DEF")
+        "${outDir}/bin/nixos-test-driver" --no-interactive
+    done
+else
+    echo "Skipping manual tests"
+fi
 
 # Kiosk browser
 
