@@ -99,6 +99,19 @@ elif [ "$TARGET" == "shed-key" ]; then
     --arg buildBundle false \
     --arg buildDisk false)
 
+# builds a disk to be used as a base image in ./testing/release-validation.nix
+elif [ "$TARGET" == "release-disk" ]; then
+
+  (set -x; nix-build \
+      --arg kioskUrl "http://kiosk-server.local/" \
+      --arg updateUrl "http://update-server.local/" \
+      --arg buildVm false \
+      --arg buildInstaller false \
+      --arg buildBundle false \
+      --arg buildLive false \
+      --arg buildDisk true
+  )
+
 elif [ "$TARGET" == "default" ]; then
 
   (set -x; nix-build)
