@@ -23,6 +23,8 @@ rec {
 
     module = { config, lib, pkgs, ... }:
     let
+      sessionName = "kiosk-browser";
+
       selectDisplay = pkgs.writeShellApplication {
         name = "select-display";
         runtimeInputs = with pkgs; [
@@ -64,9 +66,11 @@ rec {
       # System-wide packages
       environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme ];
 
+      # Avoid bloating system image size
+      services.speechd.enable = false;
+
       # Kiosk session
-      services.xserver = let sessionName = "kiosk-browser";
-      in {
+      services.xserver = {
         enable = true;
 
         desktopManager = {
@@ -103,19 +107,11 @@ rec {
         };
 
         displayManager = {
-          # Always automatically log in play user
           lightdm = {
             enable = true;
             greeter.enable = false;
             autoLogin.timeout = 0;
           };
-
-          autoLogin = {
-            enable = true;
-            user = "play";
-          };
-
-          defaultSession = sessionName;
 
           sessionCommands = ''
             ${pkgs.xorg.xrdb}/bin/xrdb -merge <<EOF
@@ -123,6 +119,15 @@ rec {
             EOF
           '';
         };
+      };
+      services.displayManager = {
+        # Always automatically log in play user
+        autoLogin = {
+          enable = true;
+          user = "play";
+        };
+
+        defaultSession = sessionName;
       };
 
       # Firewall configuration
@@ -166,7 +171,8 @@ rec {
       };
 
       # Audio
-      sound.enable = true;
+      services.pipewire.enable = false;
+
       hardware.pulseaudio = {
         enable = true;
         extraConfig = ''
@@ -174,7 +180,7 @@ rec {
           set-card-profile 0 output:hdmi-stereo
           # Respond to changes in connected outputs
           load-module module-switch-on-port-available
-          load-module module-switch-on-connect
+          load-module module-switch-on-connect blacklist=""
         '';
       };
 
