@@ -17,7 +17,7 @@ let
     diskImageURLs = {
         "1.0.0-TEST" = {
             url = "${baseS3URL}/playos-disk-1.0.0-TEST.img.zst";
-            hash = "sha256-yeRLR9JrkBWzVzvZcFXz44HFuDeqSQuQjR2QfPJr2jY=";
+            hash = "sha256-7cyStGfsxVyQ2ugkI9XRFnNrnPhd5QRf+oAQxLu3ovM=";
         };
     };
 in
