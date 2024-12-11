@@ -13,9 +13,10 @@
 # Can be run non-interactively, but for debugging you will definitely need
 # visible output since there are no logs :-)
 let
+    baseS3URL = "https://dividat-playos-test-disks.s3.amazonaws.com/by-tag";
     diskImageURLs = {
-        "2024.7.0" = {
-            url = "http://snaildog:8000/disk.zstd5.img";
+        "1.0.0-TEST" = {
+            url = "${baseS3URL}/playos-disk-1.0.0-TEST.img.zst";
             hash = "sha256-yeRLR9JrkBWzVzvZcFXz44HFuDeqSQuQjR2QfPJr2jY=";
         };
     };
@@ -34,7 +35,7 @@ in
     kioskUrlDomain ? "kiosk-server.local",
 
     # PlayOS system we are updating from
-    baseSystemVersion ? "2024.7.0",
+    baseSystemVersion ? "1.0.0-TEST",
 
     # A downloadable URL containing a zstd compressed disk image
     baseSystemDiskImage ? (pkgs.fetchurl diskImageURLs.${baseSystemVersion})
