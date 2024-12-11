@@ -1,5 +1,5 @@
 # Build an installable system image assuming a disk layout of a full A/B installation
-{pkgs, lib, updateCert, kioskUrl, playos-controller, application }:
+{pkgs, lib, updateCert, kioskUrl, playos-controller, application, extraModules ? [ ] }:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
@@ -13,7 +13,7 @@ let nixos = pkgs.importFromNixos ""; in
 
       # Application-specific module
       application.module
-    ];
+    ] ++ extraModules;
 
     # Storage
     fileSystems = {

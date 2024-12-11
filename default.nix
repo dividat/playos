@@ -16,6 +16,9 @@ in
 
 , applicationPath ? ./application.nix
 
+# extra modules to include in the systemImage, used in ./build release-disk
+, extraModules ? [ ]
+
   ##### Allow disabling the build of unused artifacts when developing/testing #####
 , buildInstaller ? true
 , buildBundle ? true
@@ -55,7 +58,10 @@ let
     updateCert = copyPathToStore updateCert;
 
     # System image as used in full installation
-    systemImage = callPackage ./system-image { application = application; };
+    systemImage = callPackage ./system-image {
+        application = application;
+        extraModules = extraModules;
+    };
 
     # USB live system
     live = callPackage ./live { application = application; };
