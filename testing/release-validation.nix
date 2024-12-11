@@ -279,9 +279,10 @@ with TestCase("controller has downloaded and installed the bundle") as t:
         screen_text = screenshot_and_ocr(playos)
         t.assertIn("RebootRequired", screen_text)
 
-    # controller takes at least 2 minutes for the download
-    # (1.2GB @ 10 MB/s), so allow up to 5 minutes for the download+install
-    wait_until_passes(t_check, retries=30, sleep=10)
+    # controller can take up to 5 minutes for the bundle download
+    # (1.2GB @ 10 MB/s = 2 mins) and extra time for the extract+install,
+    # so generously allow up to 10 minutes for the download+install
+    wait_until_passes(t_check, retries=30, sleep=20)
 
 # Reboot to new system
 playos.send_monitor_command("system_reset")
