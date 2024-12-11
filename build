@@ -109,7 +109,8 @@ elif [ "$TARGET" == "release-disk" ]; then
       --arg buildInstaller false \
       --arg buildBundle false \
       --arg buildLive false \
-      --arg buildDisk true
+      --arg buildDisk true \
+      --arg extraModules '[ ./testing/system/passwordless-root.nix ]'
   )
 
 elif [ "$TARGET" == "default" ]; then

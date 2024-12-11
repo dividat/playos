@@ -1,5 +1,5 @@
 # Build NixOS system
-{pkgs, lib, version, updateCert, kioskUrl, playos-controller, greeting }:
+{pkgs, lib, version, updateCert, kioskUrl, playos-controller, greeting, extraModules ? [ ] }:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
@@ -10,7 +10,7 @@ let nixos = pkgs.importFromNixos ""; in
 
       # system configuration
       ./configuration.nix
-    ];
+    ] ++ extraModules;
   };
   system = "x86_64-linux";
 }).config.system.build.toplevel
