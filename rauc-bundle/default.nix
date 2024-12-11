@@ -13,33 +13,6 @@ let
   testingCert = ../pki/dummy/cert.pem;
 
   systemClosureInfo = closureInfo { rootPaths = [ systemImage ]; };
-
-  # TODO: Create tar ball used for RAUC bundle in one derivation. This will reduce disk space usage as the tarball alone is not (unnecessarily) stored in the nix store.
-  systemTarball = (importFromNixos "lib/make-system-tarball.nix") {
-    inherit stdenv perl pixz pathsFromGraph;
-
-    fileName = "system";
-
-    contents = [
-      {
-        source = systemImage + "/initrd";
-        target = "/initrd";
-      }
-      {
-        source = systemImage + "/kernel";
-        target = "/kernel";
-      }
-      {
-        source = systemImage + "/init" ;
-        target = "/init";
-      }
-    ];
-
-    storeContents = [{
-        object = systemImage;
-        symlink = "/run/current-system";
-      }];
-  } + "/tarball/system.tar.xz";
 in
 stdenv.mkDerivation {
   name = "bundle-${version}.raucb";
