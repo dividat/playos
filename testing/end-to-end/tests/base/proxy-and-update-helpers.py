@@ -21,7 +21,6 @@ class UpdateServer:
         path = self.bundle_path(version)
         self.vm.succeed(f"mkdir -p {self.http_root}/{version}")
         if filepath:
-            self.vm.succeed(f"mv {filepath} {path}")
-            self.vm.succeed(f"chmod a+rwx {path}")
+            self.vm.succeed(f"ln -s {filepath} {path}")
         else:
             self.vm.succeed(f"echo -n 'FAKE_BUNDLE' > {path}")
