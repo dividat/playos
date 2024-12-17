@@ -117,7 +117,7 @@ def title_line(
         font-size: 16px;
     """)
 
-    button = QtWidgets.QPushButton("❌", dialog)
+    button = QtWidgets.QPushButton("×", dialog)
     button.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
     button.setStyleSheet("""
         QPushButton {
