@@ -1,0 +1,68 @@
+name: Release Tag
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Make more space available on the runner
+        run: |
+          sudo rm -rf /usr/share/dotnet \
+                      /usr/local/lib/android \
+                      /opt/ghc \
+                      /opt/hostedtoolcache/CodeQL
+
+      - uses: ./.github/actions/prep-build-env
+
+      - name: Make magic-nix-cache read-only by removing post-build-hook
+        run: sed -i '/post-build-hook = magic-nix-cache-build-hook/d' $HOME/.config/nix/nix.conf
+
+      - name: Validate tag
+        run: |
+          app_vsn="$(nix eval --raw -f application.nix 'version')"
+          if [ "$app_vsn" != "$GITHUB_REF_NAME" ]; then
+            echo "Git tag ($GITHUB_REF_NAME) does not match version in application.nix ($app_vsn), aborting!"
+            exit 1
+          fi
+
+      - name: Build release disk
+        run: ./build release-disk
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id:  ${{ secrets.TEST_DISKS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.TEST_DISKS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Publish to S3
+        run: ./.github/workflows/upload-test-disk.sh "$GITHUB_REF_NAME"
+
+      - name: Create Release summary
+        run: ./.github/workflows/gen-release-summary.sh "$GITHUB_REF_NAME" > ./release-notes.md
+
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          extra_args=""
+          if [[ "$GITHUB_REF_NAME" == *VALIDATION ]]; then
+            extra_args="--prerelease"
+          elif [[ "$GITHUB_REF_NAME" == *TEST ]]; then
+            extra_args="--draft"
+          fi
+
+          gh release create --verify-tag \
+            -F ./release-notes.md \
+            $extra_args \
+            "$GITHUB_REF_NAME"
