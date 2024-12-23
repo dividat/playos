@@ -10,8 +10,8 @@
 # base system in it, interacting via "physical" inputs (mouse, keyboard using
 # QEMU's QMP) and observing the results via screenshots+OCR.
 #
-# The test be run non-interactively, but for debugging you will definitely need
-# visible output since there are no logs. This can be done using:
+# The test can be run non-interactively, but for debugging you will definitely
+# need visible output since there are no logs. This can be done using:
 #
 #   nix-build -A driverInteractive testing/release-validation.nix
 #   ./result/bin/nixos-test-driver
