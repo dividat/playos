@@ -17,7 +17,7 @@ jobs:
         echo "integration_tests=${FILES_JSON}" >> $GITHUB_OUTPUT
     - id: set-matrix-manual
       run: |
-        FILES=$(find testing/manual -name '*.nix' -printf '"%p",')
+        FILES=$(find testing/release-validation.nix testing/manual -name '*.nix' -printf '"%p",')
         FILES_JSON="[${FILES%,}]"
         echo "manual_tests=${FILES_JSON}" >> $GITHUB_OUTPUT
 
