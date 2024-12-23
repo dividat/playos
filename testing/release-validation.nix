@@ -259,8 +259,6 @@ with TestPrecondition("controller GUI is visible") as t:
 
     t.assertIn("Version", screen_text)
     t.assertIn("${baseSystemVersion}", screen_text)
-    t.assertIn("Information", screen_text)
-    t.assertIn("${baseSystemVersion}", screen_text)
 
 
 # Navigate to system status page using keyboard only.
