@@ -3,6 +3,21 @@ set -euo pipefail
 
 RELEASE_TAG="$1"
 
+# find the previous "proper" release (i.e. not VALIDATION) tag
+prev_tag="$(git tag \
+    | sort \
+    | grep -B10000 "$RELEASE_TAG" \
+    | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
+    | head -n -1 \
+    | tail -1)" || echo ""
+
+if [[ -z "$prev_tag" ]]; then
+    echo "Error: failed to determine previous release tag, are you sure input tag $RELEASE_TAG exists?"
+    exit 1
+else
+    echo "Previous proper release tag is: $prev_tag" >&2
+fi
+
 echo -e "
 # Release $RELEASE_TAG
 
@@ -14,11 +29,7 @@ echo -e "
 
 "
 
-earlier_rels=3 # include VALIDATION changelog in final release
-
-if [[ "$RELEASE_TAG" == *"-VALIDATION" ]]; then
-    earlier_rels=2
-fi
-
-# get changelogs up to previous $earlier_rels-1
-grep -m ${earlier_rels} -B10000 '^# ' ./Changelog.md | head -n -1 | sed -E 's/#+/\0#/'
+# print changelog since $prev_tag (exclusive)
+grep -E -B10000 "^# \[$prev_tag\]" ./Changelog.md \
+    | head -n -1 \
+    | sed -E 's/#+/\0#/'
