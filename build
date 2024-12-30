@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 {vm|develop|validation|master|stuck|lab-key|shed-key|test-e2e|all}"
+  echo "Usage: $0 {vm|develop|validation|master|stuck|lab-key|shed-key|test-e2e|release-disk|all}"
   exit 1
 }
 
@@ -131,6 +131,20 @@ elif [ "$TARGET" == "test-e2e" ]; then
   echo "Running e2e tests..."
   (set -x; nix-build $test_flags -A tests -o test-output)
   exit $(cat test-output/status)
+
+# builds a disk to be used as a base image in ./testing/release-validation.nix
+elif [ "$TARGET" == "release-disk" ]; then
+
+  (set -x; nix-build \
+      --arg kioskUrl "http://kiosk-server.local/" \
+      --arg updateUrl "http://update-server.local/" \
+      --arg buildVm false \
+      --arg buildInstaller false \
+      --arg buildBundle false \
+      --arg buildLive false \
+      --arg buildDisk true \
+      --arg extraModules '[ ./testing/system/passwordless-root.nix ]'
+  )
 
 elif [ "$TARGET" == "all" ]; then
 
