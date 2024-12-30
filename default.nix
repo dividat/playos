@@ -14,6 +14,8 @@ in
   # url where kiosk points
 , kioskUrl ? "https://play.dividat.com"
 
+, versionOverride ? null
+
 , applicationPath ? ./application.nix
 
   ##### Allow disabling the build of unused artifacts when developing/testing #####
@@ -27,7 +29,8 @@ in
 
 let
 
-  application = import applicationPath;
+  application = import applicationPath //
+    bootstrap.lib.optionalAttrs (versionOverride != null) { version = versionOverride; };
 
   pkgs = import ./pkgs (with application; {
     applicationOverlays = application.overlays;
@@ -162,4 +165,6 @@ with pkgs; stdenv.mkDerivation {
   '';
 
   passthru.tests = testComponents.tests.run;
+
+  passthru.components = components;
 }
