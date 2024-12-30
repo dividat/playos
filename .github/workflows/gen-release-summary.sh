@@ -32,4 +32,4 @@ echo -e "
 # print changelog since $prev_tag (exclusive)
 grep -E -B10000 "^# \[$prev_tag\]" ./Changelog.md \
     | head -n -1 \
-    | sed -E 's/#+/\0#/'
+    | sed -E 's/#+/\0##/'
