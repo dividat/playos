@@ -3,9 +3,11 @@ set -euo pipefail
 
 RELEASE_TAG="$1"
 
-# find the previous "proper" release (i.e. not VALIDATION) tag
+# Find the previous "proper" release (i.e. not VALIDATION) tag.
+# Note: `--version-sort` incorrectly sorts semver pre-releases, but
+# these get filtered out later, so it does not matter.
 prev_tag="$(git tag \
-    | sort \
+    | sort --version-sort \
     | grep -B10000 "$RELEASE_TAG" \
     | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
     | head -n -1 \
