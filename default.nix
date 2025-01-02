@@ -16,13 +16,11 @@ in
 
 , applicationPath ? ./application.nix
 
-# extra modules to include in the systemImage, used in ./build release-disk
-, extraModules ? [ ]
-
   ##### Allow disabling the build of unused artifacts when developing/testing #####
 , buildInstaller ? true
 , buildBundle ? true
 , buildDisk ? true
+, buildReleaseDisk ? false
 , buildLive ? true
 }:
 
@@ -34,8 +32,9 @@ let
     applicationOverlays = application.overlays;
   });
 
-  # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
-  components = with pkgs; lib.makeScope newScope (self: with self; {
+  # lib.makeScope returns consistent set of packages that depend on each other
+  mkComponents = { application, extraModules ? [ ], rescueSystemOpts ? {}, diskBuildEnabled ? buildDisk }:
+  (with pkgs; lib.makeScope newScope (self: with self; {
 
     inherit updateUrl deployUrl kioskUrl;
     inherit (application) version safeProductName fullProductName;
@@ -92,8 +91,18 @@ let
     # Script for spinning up VMs
     run-in-vm = callPackage ./testing/run-in-vm {};
 
-  });
+  }));
 
+  components = mkComponents { inherit application; };
+
+  releaseDiskComponents = mkComponents {
+    inherit application;
+    extraModules = [ ./testing/system/passwordless-root.nix ];
+  };
+
+  releaseDisk = pkgs.callPackage ./testing/disk/release.nix {
+    inherit (releaseDiskComponents) install-playos;
+  };
 in
 
 with pkgs; stdenv.mkDerivation {
@@ -123,6 +132,9 @@ with pkgs; stdenv.mkDerivation {
   ''
   + lib.optionalString buildDisk ''
     ln -s ${components.disk} $out/${components.safeProductName}-disk-${components.version}.img
+  ''
+  + lib.optionalString buildReleaseDisk ''
+    ln -s ${releaseDisk} $out/${components.safeProductName}-release-disk-${components.version}.img.zst
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
