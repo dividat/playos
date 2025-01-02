@@ -14,6 +14,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Ensure KVM is usable by nix-build
         run: sudo chmod a+rwx /dev/kvm
