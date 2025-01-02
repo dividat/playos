@@ -135,6 +135,13 @@ elif [ "$TARGET" == "test-e2e" ]; then
 # builds a disk to be used as a base image in ./testing/release-validation.nix
 elif [ "$TARGET" == "release-disk" ]; then
 
+  echo -e "
+Building release disk image for release validation tests.
+
+Note: requires around 30GiB of free space for storing the intermediate disk
+images. The final compressed disk image is much smaller (~4 GiB).
+"
+
   (set -x; nix-build \
       --arg kioskUrl "http://kiosk-server.local/" \
       --arg updateUrl "http://update-server.local/" \
@@ -142,8 +149,8 @@ elif [ "$TARGET" == "release-disk" ]; then
       --arg buildInstaller false \
       --arg buildBundle false \
       --arg buildLive false \
-      --arg buildDisk true \
-      --arg extraModules '[ ./testing/system/passwordless-root.nix ]'
+      --arg buildDisk false \
+      --arg buildReleaseDisk true
   )
 
 elif [ "$TARGET" == "all" ]; then

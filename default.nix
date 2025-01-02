@@ -18,14 +18,12 @@ in
 
 , applicationPath ? ./application.nix
 
-# extra modules to include in the systemImage, used in ./build release-disk
-, extraModules ? [ ]
-
   ##### Allow disabling the build of unused artifacts when developing/testing #####
 , buildVm ? true
 , buildInstaller ? true
 , buildBundle ? true
 , buildDisk ? true
+, buildReleaseDisk ? false
 , buildLive ? true
 , buildTest ? false
 }:
@@ -40,7 +38,8 @@ let
   });
 
   # lib.makeScope returns consistent set of packages that depend on each other
-  mkComponents = { application, rescueSystemOpts ? {}, diskBuildEnabled ? buildDisk }: (with pkgs; lib.makeScope newScope (self: with self; {
+  mkComponents = { application, extraModules ? [ ], rescueSystemOpts ? {}, diskBuildEnabled ? buildDisk }:
+  (with pkgs; lib.makeScope newScope (self: with self; {
 
     inherit updateUrl deployUrl kioskUrl;
     inherit (application) version safeProductName fullProductName;
@@ -111,19 +110,19 @@ let
 
   testComponents = mkComponents {
     diskBuildEnabled = true;
-    application = {
-      inherit (application) safeProductName fullProductName greeting overlays;
-      version = "${application.version}-TEST";
-      module = {
-        imports = [
-          application.module
-          ./testing/end-to-end/profile.nix
-        ];
-      };
-    };
+    application = application // { version = "${application.version}-TEST"; };
+    extraModules = [ ./testing/end-to-end/profile.nix ];
     rescueSystemOpts = { squashfsCompressionOpts = "-no-compression"; };
   };
 
+  releaseDiskComponents = mkComponents {
+    inherit application;
+    extraModules = [ ./testing/system/passwordless-root.nix ];
+  };
+
+  releaseDisk = pkgs.callPackage ./testing/disk/release.nix {
+    inherit (releaseDiskComponents) install-playos;
+  };
 in
 
 with pkgs; stdenv.mkDerivation {
@@ -153,6 +152,9 @@ with pkgs; stdenv.mkDerivation {
   ''
   + lib.optionalString buildDisk ''
     ln -s ${components.disk} $out/${components.safeProductName}-disk-${components.version}.img
+  ''
+  + lib.optionalString buildReleaseDisk ''
+    ln -s ${releaseDisk} $out/${components.safeProductName}-release-disk-${components.version}.img.zst
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
