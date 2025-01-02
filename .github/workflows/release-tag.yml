@@ -36,21 +36,21 @@ jobs:
             exit 1
           fi
 
-      - name: Build release disk
-        run: ./build release-disk
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id:  ${{ secrets.TEST_DISKS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.TEST_DISKS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
-
-      - name: Publish to S3
-        run: ./.github/workflows/upload-test-disk.sh "$GITHUB_REF_NAME"
+#      - name: Build release disk
+#        run: ./build release-disk
+#
+#      - name: Configure AWS credentials
+#        uses: aws-actions/configure-aws-credentials@v3
+#        with:
+#          aws-access-key-id:  ${{ secrets.TEST_DISKS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.TEST_DISKS_SECRET_ACCESS_KEY }}
+#          aws-region: eu-central-1
+#
+#      - name: Publish to S3
+#        run: ./.github/workflows/upload-test-disk.sh "$GITHUB_REF_NAME"
 
       - name: Create Release summary
-        run: ./.github/workflows/gen-release-summary.sh "$GITHUB_REF_NAME" > ./release-notes.md
+        run: bash -x ./.github/workflows/gen-release-summary.sh "$GITHUB_REF_NAME" > ./release-notes.md
 
       - name: Create Release
         env:
