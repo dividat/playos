@@ -71,7 +71,7 @@ in
     }).components.unsignedRaucBundle,
 }:
 let
-    overlayPath = "/tmp/release-validation-disk.raw";
+    overlayPath = "/tmp/release-validation-disk.img";
 in
 with pkgs.lib;
 pkgs.testers.runNixOSTest {
