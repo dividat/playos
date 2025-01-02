@@ -18,6 +18,7 @@
 , buildInstaller ? true
 , buildBundle ? true
 , buildDisk ? true
+, buildReleaseDisk ? false
 , buildLive ? true
 }:
 
@@ -26,8 +27,9 @@ let
 
   pkgs = import ./pkgs { inherit version updateUrl kioskUrl; };
 
-  # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
-  components = with pkgs; lib.makeScope newScope (self: with self; {
+  # lib.makeScope returns consistent set of packages that depend on each other
+  mkComponents = { extraModules ? [ ], rescueSystemOpts ? {}, diskBuildEnabled ? buildDisk }:
+  (with pkgs; lib.makeScope newScope (self: with self; {
 
     greeting = label: ''
                                          _
@@ -85,8 +87,17 @@ let
     # Script for spinning up VMs
     run-playos-in-vm = callPackage ./testing/run-playos-in-vm {};
 
-  });
+  }));
 
+  components = mkComponents { };
+
+  releaseDiskComponents = mkComponents {
+    extraModules = [ ./testing/system/passwordless-root.nix ];
+  };
+
+  releaseDisk = pkgs.callPackage ./testing/disk/release.nix {
+    inherit (releaseDiskComponents) install-playos;
+  };
 in
 
 with pkgs; stdenv.mkDerivation {
@@ -115,7 +126,10 @@ with pkgs; stdenv.mkDerivation {
     ln -s ${components.live}/iso/playos-live-${version}.iso $out/playos-live-${version}.iso
   ''
   + lib.optionalString buildDisk ''
-    ln -s ${components.disk} $out/${components.safeProductName}-disk-${components.version}.img
+    ln -s ${components.disk} $out/playos-disk-${components.version}.img
+  ''
+  + lib.optionalString buildReleaseDisk ''
+    ln -s ${releaseDisk} $out/playos-release-disk-${components.version}.img.zst
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''

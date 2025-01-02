@@ -25,7 +25,7 @@ echo -e "
 
 ## Artifacts
 
-- Test disk: [https://dividat-playos-test-disks.s3.amazonaws.com/by-tag/playos-disk-$RELEASE_TAG.img.zst](https://dividat-playos-test-disks.s3.amazonaws.com/by-tag/playos-disk-$RELEASE_TAG.img.zst)
+- Test disk: [https://dividat-playos-test-disks.s3.amazonaws.com/by-tag/playos-release-disk-$RELEASE_TAG.img.zst](https://dividat-playos-test-disks.s3.amazonaws.com/by-tag/playos-release-disk-$RELEASE_TAG.img.zst)
 
 ## Changelog
 
