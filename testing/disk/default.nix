@@ -25,7 +25,7 @@ let
 
   bootPartSizeMiB = computeImageSizeMiB rescueSystem;
   systemPartSizeMiB = computeImageSizeMiB systemImage;
-  diskSizeMiB = 10 + bootPartSizeMiB + dataPartSizeMiB + systemPartSizeMiB*2;
+  diskSizeMiB = 8 + bootPartSizeMiB + dataPartSizeMiB + systemPartSizeMiB*2 + 1;
 in vmTools.runInLinuxVM (
   runCommand "build-playos-disk"
     {
