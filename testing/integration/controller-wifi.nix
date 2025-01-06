@@ -246,7 +246,7 @@ with TestPrecondition("Test APs are setup and visible to connman"):
     # In particular the `bad-ap-blocked` seems to take an extra 10 seconds to
     # appear.
     for ap in all_simulated_aps:
-        playos.wait_until_succeeds(f"connmanctl services | grep {ap}", timeout=30)
+        playos.wait_until_succeeds(f"connmanctl services | grep {ap}", timeout=60)
 
 # === sanity check
 
