@@ -684,7 +684,8 @@ module Service = struct
         Lwt.fail_with
           (Printf.sprintf
              "Connection failed, unknown error reported by manager: %s\n\
-              DBus connect exception: %s" err (Printexc.to_string exn)
+              DBus connect exception: %s"
+             err (Printexc.to_string exn)
           )
     | Error exn, Some (AgentError err) ->
         Lwt.fail_with
