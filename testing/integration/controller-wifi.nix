@@ -48,8 +48,6 @@ pkgs.testers.runNixOSTest {
         services.connman.networkInterfaceBlacklist =
             allSimulatedAPInterfaces;
 
-        systemd.services."connman".after = [ "hostapd.service" ];
-
         # allow accesing controller GUI from the test runner
         networking.firewall.enable = mkForce false;
         virtualisation.forwardPorts = [
@@ -98,6 +96,10 @@ pkgs.testers.runNixOSTest {
 
         # enable 802.11 simulation
         boot.kernelModules = [ "mac80211_hwsim" ];
+
+        systemd.services.hostapd = {
+            preStart = "${pkgs.util-linux}/bin/rfkill unblock all";
+        };
 
         # wireless access points
         services.hostapd = {

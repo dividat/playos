@@ -20,10 +20,12 @@ in
     # tell connman not to touch the simulated APs
     services.connman.networkInterfaceBlacklist = simulatedAPInterfaces;
 
-    systemd.services."connman".after = [ "hostapd.service" ];
-
     # enable 802.11 simulation
     boot.kernelModules = [ "mac80211_hwsim" ];
+
+    systemd.services.hostapd = {
+        preStart = "${pkgs.util-linux}/bin/rfkill unblock all";
+    };
 
     services.hostapd = {
       enable = true;
