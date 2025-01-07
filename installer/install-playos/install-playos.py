@@ -12,8 +12,8 @@ import configparser
 import re
 from datetime import datetime
 
-PARTITION_SIZE_GB_SYSTEM = 10
-PARTITION_SIZE_GB_DATA = 5
+PARTITION_SIZE_GB_SYSTEM = 9
+PARTITION_SIZE_GB_DATA = 1
 
 GRUB_CFG = "@grubCfg@"
 GRUB_ENV = '/mnt/boot/grub/grubenv'
