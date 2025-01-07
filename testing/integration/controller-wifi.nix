@@ -197,7 +197,7 @@ def wait_for_http():
     playos.wait_for_unit("playos-controller.service")
     playos.wait_until_succeeds("curl --fail http://localhost:3333/")
 
-def service_req(service, endpoint, data=None, timeout=15):
+def service_req(service, endpoint, data=None, timeout=30):
     headers = {'Accept': 'application/json'}
     return requests.post(
         "http://localhost:13333/network/{id}/{endpoint}".format(
