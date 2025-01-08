@@ -19,7 +19,7 @@
 }:
 
 let
-  version = "2020.7.0";
+  version = "2020.7.0-DISK";
 
   pkgs = import ./pkgs { inherit version updateUrl kioskUrl; };
 
