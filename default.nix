@@ -20,6 +20,7 @@ in
 , buildInstaller ? true
 , buildBundle ? true
 , buildDisk ? true
+, buildReleaseDisk ? false
 , buildLive ? true
 }:
 
@@ -31,8 +32,9 @@ let
     applicationOverlays = application.overlays;
   });
 
-  # lib.makeScope returns consistent set of packages that depend on each other (and is my new favorite nixpkgs trick)
-  components = with pkgs; lib.makeScope newScope (self: with self; {
+  # lib.makeScope returns consistent set of packages that depend on each other
+  mkComponents = { application, extraModules ? [ ], rescueSystemOpts ? {}, diskBuildEnabled ? buildDisk }:
+  (with pkgs; lib.makeScope newScope (self: with self; {
 
     inherit updateUrl deployUrl kioskUrl;
     inherit (application) version safeProductName fullProductName;
@@ -55,7 +57,10 @@ let
     updateCert = copyPathToStore updateCert;
 
     # System image as used in full installation
-    systemImage = callPackage ./system-image { application = application; };
+    systemImage = callPackage ./system-image {
+        application = application;
+        extraModules = extraModules;
+    };
 
     # USB live system
     live = callPackage ./live { application = application; };
@@ -86,8 +91,18 @@ let
     # Script for spinning up VMs
     run-in-vm = callPackage ./testing/run-in-vm {};
 
-  });
+  }));
 
+  components = mkComponents { inherit application; };
+
+  releaseDiskComponents = mkComponents {
+    inherit application;
+    extraModules = [ ./testing/system/passwordless-root.nix ];
+  };
+
+  releaseDisk = pkgs.callPackage ./testing/disk/release.nix {
+    inherit (releaseDiskComponents) install-playos;
+  };
 in
 
 with pkgs; stdenv.mkDerivation {
@@ -114,6 +129,12 @@ with pkgs; stdenv.mkDerivation {
 
   + lib.optionalString buildLive ''
     ln -s ${components.live}/iso/${components.safeProductName}-live-${components.version}.iso $out/${components.safeProductName}-live-${components.version}.iso
+  ''
+  + lib.optionalString buildDisk ''
+    ln -s ${components.disk} $out/${components.safeProductName}-disk-${components.version}.img
+  ''
+  + lib.optionalString buildReleaseDisk ''
+    ln -s ${releaseDisk} $out/${components.safeProductName}-release-disk-${components.version}.img.zst
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
