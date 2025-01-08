@@ -150,20 +150,23 @@ pkgs.testers.runNixOSTest {
     "-monitor" "vc"
   ];
 
-  enableOCR = true;
-
   extraPythonPackages = ps: [
     ps.colorama
     ps.types-colorama
     ps.requests
     ps.types-requests
     ps.tesserocr
+    ps.pillow
+    ps.types-pillow
   ];
 
   testScript = {nodes}: ''
 ${builtins.readFile ./helpers/nixos-test-script-helpers.py}
 ${builtins.readFile ./end-to-end/tests/base/proxy-and-update-helpers.py}
 import tesserocr # type: ignore
+import PIL.Image
+import PIL.ImageEnhance
+import PIL.ImageOps
 import tempfile
 import time
 import atexit
@@ -191,13 +194,17 @@ extract_base_system_disk("${baseSystemDiskImage}", "${overlayPath}")
 playos.start(allow_reboot=True)
 sidekick.start()
 
-# Less accurate, but much faster OCR than NixOS `get_screen_text`,
-# which takes almost 20 seconds per call.
-# Fails to identify white text on dark backgrounds.
+# Faster OCR than NixOS `get_screen_text`, which takes almost 20 seconds per
+# call. Fails to identify white text on dark backgrounds.
 def screenshot_and_ocr(vm):
     with tempfile.TemporaryDirectory() as d:
         vm.screenshot(d + "/screenshot.png")
-        return tesserocr.file_to_text(d + "/screenshot.png")
+        im = PIL.Image.open(d + "/screenshot.png")
+        im = PIL.ImageOps.grayscale(im)
+        im = PIL.ImageEnhance.Brightness(im).enhance(1.5)
+        im = PIL.ImageEnhance.Contrast(im).enhance(4.0)
+        return tesserocr.image_to_text(im)
+
 
 def wait_until_passes(test, retries=10, sleep=1):
     while True:
