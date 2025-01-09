@@ -105,11 +105,17 @@ Building a complete system takes time, so it is a good idea to test at the compo
 
 ### Automated Testing
 
-There are 3 types of tests:
+There are 4 types of automated tests:
 
 - unit tests (used in kiosk and controller)
-- subcomponent integration tests (see below)
-- end-to-end system level tests (see below)
+- subcomponent integration tests
+- end-to-end system level tests
+- release validation tests
+
+All but the last are run on each commit via Github Actions.
+
+See subsections below for more details on each test type.
+
 
 #### Subcomponent (integration) tests
 
@@ -149,6 +155,35 @@ by `nixbld` users will not able to utilize KVM acceleration and everything will
 run 10x slower. If you see `failed to initialize KVM` in the console logs, it
 means there's a problem. See [this (outdated) Github issue](https://github.com/NixOS/nixpkgs/issues/124371#issue-900719073)
 for more details.
+
+
+#### Release validation (self-update) test
+
+The release validation test is used to perform the final _automated_ checks before
+manually testing and officially publishing a release.
+
+Currently it tests only one critical path: the self-update scenario from an
+earlier release (the 'base' system) to the current/upcoming release (the 'next'
+system).
+
+The test does not alter the configuration of the base or next systems' in any way
+(e.g. no test-instrumentation.nix extras, which are present in end-to-end
+tests).
+
+To run the tests against the previous release, execute:
+
+    nix-build testing/release-validation.nix
+
+To test against a specific base system (e.g. `2023.9.1-DISK`), add the flag
+`--arg baseSystemVersion '"2023.9.1-DISK"'`.
+
+Compressed base system disk images are created for every tagged release using
+`./build release-disk` and the [release](.github/workflows/release-tag.yml)
+Github workflow. See the "Test disk" links in [release
+summaries](https://github.com/dividat/playos/releases).
+
+For more details, see the comments in
+[testing/release-validation.nix](testing/release-validation.nix).
 
 ## Deployment
 
