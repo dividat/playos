@@ -18,6 +18,14 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Make more space available on the runner
+        run: |
+          sudo rm -rf /usr/share/dotnet \
+                      /usr/local/lib/android \
+                      /opt/ghc \
+                      /opt/hostedtoolcache/CodeQL
+
+
       - name: Ensure KVM is usable by nix-build
         run: sudo chmod a+rwx /dev/kvm
         shell: bash
