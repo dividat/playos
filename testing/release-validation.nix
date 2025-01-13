@@ -24,13 +24,22 @@
 #   - execute "sendkey ctrl-shift-f1" (switch to TTY1)
 #   - login with "root"
 let
-    baseS3URL = "https://dividat-playos-test-disks.s3.amazonaws.com/by-tag";
+    # Note: we use HTTP instead of HTTPS, because pkgs.fetchurl fails
+    # when __structuredAttrs is enabled (due to mysterious OpenSSL/TLS errors)
+    # and also fails when __structuredAttrs is disabled (due to
+    # https://github.com/NixOS/nixpkgs/issues/177660).
+    # HTTP usage is fine since the output hash is fixed and verifies the download.
+    baseS3URL = "http://dividat-playos-test-disks.s3.amazonaws.com/by-tag";
     # Generated via ./build release-disk and .github/workflows/release-tag.yml
     # See https://github.com/dividat/playos/releases
     diskImageURLs = {
-        "1.0.0-TEST" = {
-            url = "${baseS3URL}/playos-disk-1.0.0-TEST.img.zst";
-            hash = "sha256-7cyStGfsxVyQ2ugkI9XRFnNrnPhd5QRf+oAQxLu3ovM=";
+        "2023.9.1-DISK" = {
+            url = "${baseS3URL}/playos-release-disk-2023.9.1-DISK.img.zst";
+            hash = "sha256-eTyNcDkYSsMUsUHToZJ4tEKag9WSi8gA2SAihFFCqH0=";
+        };
+        "2024.7.0-DISK" = {
+            url = "${baseS3URL}/playos-release-disk-2024.7.0-DISK.img.zst";
+            hash = "sha256-vJDB99ICt0W1PmONikNY5wwIF7oQU388DzYRgPqkooY=";
         };
     };
 in
@@ -48,9 +57,9 @@ in
     kioskUrlDomain ? "kiosk-server.local",
 
     # PlayOS system we are updating from
-    baseSystemVersion ? "1.0.0-TEST",
+    baseSystemVersion ? "2024.7.0-DISK",
 
-    # A downloadable URL containing a zstd compressed disk image
+    # A zstd-compressed PlayOS disk image
     baseSystemDiskImage ? (pkgs.fetchurl diskImageURLs.${baseSystemVersion})
         .overrideAttrs {
             __structuredAttrs = true;
@@ -150,20 +159,23 @@ pkgs.testers.runNixOSTest {
     "-monitor" "vc"
   ];
 
-  enableOCR = true;
-
   extraPythonPackages = ps: [
     ps.colorama
     ps.types-colorama
     ps.requests
     ps.types-requests
     ps.tesserocr
+    ps.pillow
+    ps.types-pillow
   ];
 
   testScript = {nodes}: ''
 ${builtins.readFile ./helpers/nixos-test-script-helpers.py}
 ${builtins.readFile ./end-to-end/tests/base/proxy-and-update-helpers.py}
 import tesserocr # type: ignore
+import PIL.Image
+import PIL.ImageEnhance
+import PIL.ImageOps
 import tempfile
 import time
 import atexit
@@ -191,13 +203,17 @@ extract_base_system_disk("${baseSystemDiskImage}", "${overlayPath}")
 playos.start(allow_reboot=True)
 sidekick.start()
 
-# Less accurate, but much faster OCR than NixOS `get_screen_text`,
-# which takes almost 20 seconds per call.
-# Fails to identify white text on dark backgrounds.
+# Faster OCR than NixOS `get_screen_text`, which takes almost 20 seconds per
+# call. Fails to identify white text on dark backgrounds.
 def screenshot_and_ocr(vm):
     with tempfile.TemporaryDirectory() as d:
         vm.screenshot(d + "/screenshot.png")
-        return tesserocr.file_to_text(d + "/screenshot.png")
+        im = PIL.Image.open(d + "/screenshot.png")
+        im = PIL.ImageOps.grayscale(im)
+        im = PIL.ImageEnhance.Brightness(im).enhance(1.5)
+        im = PIL.ImageEnhance.Contrast(im).enhance(4.0)
+        return tesserocr.image_to_text(im)
+
 
 def wait_until_passes(test, retries=10, sleep=1):
     while True:
