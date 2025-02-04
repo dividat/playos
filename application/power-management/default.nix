@@ -60,7 +60,7 @@ in {
 
   systemd.services.power-button-shutdown = {
     enable = true;
-    description = "Detect Power Button key presses, by Power Button device only and not remote controls, then shutdown computer";
+    description = "Handle Power Button device key presses.";
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
       ExecStart = "${power-button-shutdown}/bin/power-button-shutdown";

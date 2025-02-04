@@ -2,22 +2,58 @@
 
 import evdev
 import logging
-import os
+import subprocess
 import sys
+import threading
 
 logging.basicConfig(level=logging.INFO)
 
-devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
-device_names = ', '.join([d.name for d in devices])
-logging.info(f'Found devices: {device_names}')
+def handle_device(device):
+    """Handle power key presses for the given input device by invoking poweroff."""
 
-power_off_device = next((d for d in devices if d.name == 'Power Button'), None)
-if power_off_device is None:
-  logging.error(f'Power Button device not found')
-  sys.exit(1)
+    logging.info(f'Listening to Power Button on device {device.path}')
+    try:
+        for event in device.read_loop():
+            if event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.KEY_POWER and event.value:
+                logging.info(f'KEY_POWER detected on {device.path}, shutting down')
+                subprocess.run(['systemctl', 'start', 'poweroff.target'], check=True)
+    except Exception as e:
+        logging.error(f'Error handling {device.path}: {e}')
 
-logging.info(f'Listening to Power Button on device {power_off_device.path}')
-for event in power_off_device.read_loop():
-  if event.type == evdev.ecodes.EV_KEY and evdev.ecodes.KEY[event.code] == 'KEY_POWER' and event.value:
-    logging.info('KEY_POWER detected on Power Button device, shutting down')
-    os.system('systemctl start poweroff.target')
+def get_power_button_devices():
+    """Get all input devices which identify as 'Power Button' and have a power key."""
+
+    devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
+
+    power_button_devices = []
+    for device in devices:
+        try:
+            capabilities = device.capabilities()
+            if device.name == 'Power Button' and evdev.ecodes.EV_KEY in capabilities and evdev.ecodes.KEY_POWER in capabilities[evdev.ecodes.EV_KEY]:
+                power_button_devices.append(device)
+        except Exception as e:
+            logging.warning(f'Failed to inspect {device.path}: {e}')
+
+    return power_button_devices
+
+# Identify Power Button devices
+power_button_devices = get_power_button_devices()
+if not power_button_devices:
+    logging.error('No Power Button devices found')
+    sys.exit(1)
+logging.info(f'Found {len(power_button_devices)} Power Button device(s)')
+
+# Start a thread with a handler for each identified device
+handler_threads = []
+for device in power_button_devices:
+    thread = threading.Thread(target=handle_device, args=(device,))
+    thread.start()
+    handler_threads.append(thread)
+
+# Exit gracefully if a handler executes
+try:
+    for thread in handler_threads:
+        thread.join()
+except KeyboardInterrupt:
+    sys.exit(0)
+
