@@ -17,6 +17,7 @@
 - controller: Suppress password prompt for open WiFi networks
 - controller: Explicitly mark WiFi networks with unsupported authentication methods
 - controller: Improve error messages when connecting to WiFi networks fails
+- os: Extend Power Button handling to multiple devices
 
 ## Removed
 
