@@ -28,9 +28,10 @@ def get_power_button_devices():
     power_button_devices = []
     for device in devices:
         try:
-            capabilities = device.capabilities()
-            if device.name == 'Power Button' and evdev.ecodes.EV_KEY in capabilities and evdev.ecodes.KEY_POWER in capabilities[evdev.ecodes.EV_KEY]:
-                power_button_devices.append(device)
+            if device.name == 'Power Button':
+                ev_capabilities = device.capabilities().get(evdev.ecodes.EV_KEY, [])
+                if evdev.ecodes.KEY_POWER in ev_capabilities:
+                    power_button_devices.append(device)
         except Exception as e:
             logging.warning(f'Failed to inspect {device.path}: {e}')
 
