@@ -43,6 +43,18 @@ rec {
         ./application/limit-vtes.nix
       ];
 
+      boot.blacklistedKernelModules = [
+        # Blacklist NFC modules conflicting with CCID/PCSC
+        # https://ludovicrousseau.blogspot.com/2013/11/linux-nfc-driver-conflicts-with-ccid.html
+        "pn533_usb"
+        "pn533"
+        "nfc"
+
+        # Disable any USB sound cards to create a closed world where the audio
+        # landscape on the standard devices is completely predictable.
+        "snd_usb_audio"
+      ];
+
       # Kiosk runs as a non-privileged user
       users.users.play = {
         isNormalUser = true;
@@ -189,8 +201,6 @@ rec {
 
       # Enable pcscd for smart card identification
       services.pcscd.enable = true;
-      # Blacklist NFC modules conflicting with CCID (https://ludovicrousseau.blogspot.com/2013/11/linux-nfc-driver-conflicts-with-ccid.html)
-      boot.blacklistedKernelModules = [ "pn533_usb" "pn533" "nfc" ];
       # Allow play user to access pcsc
       security.polkit.extraConfig = ''
         polkit.addRule(function(action, subject) {
