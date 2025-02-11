@@ -8,6 +8,9 @@ pkgs.testers.runNixOSTest {
     client = { config, pkgs, ... }: {
       imports = [ ../../base/self-update ];
       config = {
+        # We need a /boot partition for our test
+        virtualisation.useBootLoader = true;
+
         playos.selfUpdate = {
           enable = true;
           updateCert = pkgs.writeText "dummy.pem"  "";

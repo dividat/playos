@@ -64,13 +64,17 @@ pkgs.testers.runNixOSTest {
         # produces the reboot/shutdown log messages used in `wait_for_console_text`
         playos.wait_for_unit("systemd-logind.service")
 
+    # Executes curl without waiting for it to complete or return an exit status.
+    # This avoids issues with test-driver choking on non-decodable output.
+    def curl_POST_ignore_output(url):
+        playos.execute(f"curl -X POST {url} >&2", check_output = False)
 
     playos.start(allow_reboot=True)
     wait_for_http()
 
     # ===== Reboot works
     with subtest("Reboot works"):
-        playos.succeed("curl -X POST http://localhost:3333/system/reboot >&2")
+        curl_POST_ignore_output("http://localhost:3333/system/reboot")
         playos.wait_for_console_text("systemd.*The system will reboot now!")
 
     manual_restart()
@@ -84,7 +88,7 @@ pkgs.testers.runNixOSTest {
                 --property ActiveState \
                 playos-wipe-persistent-data.service | grep 'ActiveState=inactive'
         """)
-        playos.succeed("curl -X POST http://localhost:3333/system/factory-reset >&2")
+        curl_POST_ignore_output("http://localhost:3333/system/factory-reset")
         playos.wait_for_console_text("systemd.*Starting playos-wipe-persistent-data.service.")
         playos.wait_for_console_text("systemd.*The system will reboot now!")
 
@@ -93,7 +97,7 @@ pkgs.testers.runNixOSTest {
     # ===== Switch slot works
 
     with subtest("Switch slot works"):
-        playos.succeed("curl -X POST http://localhost:3333/system/switch/system.b >&2")
+        curl_POST_ignore_output("http://localhost:3333/system/switch/system.b")
         playos.wait_for_console_text("rauc mark: activated slot system.b")
         playos.wait_for_console_text("systemd.*The system will reboot now!")
 
@@ -101,7 +105,7 @@ pkgs.testers.runNixOSTest {
 
     # ===== Shutdown works
     with subtest("Shutdown works"):
-        playos.succeed("curl -X POST http://localhost:3333/system/shutdown >&2")
+        curl_POST_ignore_output("http://localhost:3333/system/shutdown")
         playos.wait_for_console_text("systemd.*System is powering down.")
         playos.crash() # avoids "Broken pipe" test failure
   '';

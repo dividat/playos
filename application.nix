@@ -23,6 +23,8 @@ rec {
 
     module = { config, lib, pkgs, ... }:
     let
+      sessionName = "kiosk-browser";
+
       selectDisplay = pkgs.writeShellApplication {
         name = "select-display";
         runtimeInputs = with pkgs; [
@@ -39,6 +41,18 @@ rec {
         ./application/playos-status.nix
         ./application/power-management/default.nix
         ./application/limit-vtes.nix
+      ];
+
+      boot.blacklistedKernelModules = [
+        # Blacklist NFC modules conflicting with CCID/PCSC
+        # https://ludovicrousseau.blogspot.com/2013/11/linux-nfc-driver-conflicts-with-ccid.html
+        "pn533_usb"
+        "pn533"
+        "nfc"
+
+        # Disable any USB sound cards to create a closed world where the audio
+        # landscape on the standard devices is completely predictable.
+        "snd_usb_audio"
       ];
 
       # Kiosk runs as a non-privileged user
@@ -64,9 +78,11 @@ rec {
       # System-wide packages
       environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme ];
 
+      # Avoid bloating system image size
+      services.speechd.enable = false;
+
       # Kiosk session
-      services.xserver = let sessionName = "kiosk-browser";
-      in {
+      services.xserver = {
         enable = true;
 
         desktopManager = {
@@ -103,19 +119,11 @@ rec {
         };
 
         displayManager = {
-          # Always automatically log in play user
           lightdm = {
             enable = true;
             greeter.enable = false;
             autoLogin.timeout = 0;
           };
-
-          autoLogin = {
-            enable = true;
-            user = "play";
-          };
-
-          defaultSession = sessionName;
 
           sessionCommands = ''
             ${pkgs.xorg.xrdb}/bin/xrdb -merge <<EOF
@@ -123,6 +131,15 @@ rec {
             EOF
           '';
         };
+      };
+      services.displayManager = {
+        # Always automatically log in play user
+        autoLogin = {
+          enable = true;
+          user = "play";
+        };
+
+        defaultSession = sessionName;
       };
 
       # Firewall configuration
@@ -166,7 +183,8 @@ rec {
       };
 
       # Audio
-      sound.enable = true;
+      services.pipewire.enable = false;
+
       hardware.pulseaudio = {
         enable = true;
         extraConfig = ''
@@ -174,7 +192,7 @@ rec {
           set-card-profile 0 output:hdmi-stereo
           # Respond to changes in connected outputs
           load-module module-switch-on-port-available
-          load-module module-switch-on-connect
+          load-module module-switch-on-connect blacklist=""
         '';
       };
 
@@ -183,8 +201,6 @@ rec {
 
       # Enable pcscd for smart card identification
       services.pcscd.enable = true;
-      # Blacklist NFC modules conflicting with CCID (https://ludovicrousseau.blogspot.com/2013/11/linux-nfc-driver-conflicts-with-ccid.html)
-      boot.blacklistedKernelModules = [ "pn533_usb" "pn533" "nfc" ];
       # Allow play user to access pcsc
       security.polkit.extraConfig = ''
         polkit.addRule(function(action, subject) {

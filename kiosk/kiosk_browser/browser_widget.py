@@ -145,7 +145,7 @@ class BrowserWidget(QtWidgets.QWidget):
 
 def user_agent_with_system(user_agent, system_name, system_version):
     """Inject a specific system into a user agent string"""
-    pattern = re.compile('(Mozilla/5.0) \(([^\)]*)\)(.*)')
+    pattern = re.compile(r'(Mozilla/5.0) \(([^\)]*)\)(.*)')
     m = pattern.match(user_agent)
 
     if m == None:

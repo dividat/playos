@@ -4,6 +4,7 @@ import requests
 import asyncio
 import pyppeteer # type: ignore
 import tempfile
+import atexit
 
 # Forward external `port` to 127.0.0.1:port and add firewall exception to allow
 # external access to internal services in PlayOS
@@ -46,9 +47,10 @@ async def retry_until_no_exception(func, retries=3, sleep=3.0):
 # due to nix sandboxing, network access is isolated, so
 # we run a minimal HTTP server for opening in the kiosk
 def run_stub_server(port):
-    d = tempfile.TemporaryDirectory()
+    d = tempfile.TemporaryDirectory(delete=False)
+    atexit.register(d.cleanup)
     with open(f"{d.name}/index.html", "w") as f:
-        f.write("Hello world")
+        f.write("Hello world\n")
 
     class Handler(http.server.SimpleHTTPRequestHandler):
         def __init__(self, *args, **kwargs):
