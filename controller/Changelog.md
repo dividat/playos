@@ -7,6 +7,7 @@
 - kiosk: Add hotplugging support for HDMI screens
 - os: Improve installation device selection
 - os: Add end-to-end system tests
+- os: Hide mouse cursor when idle
 - controller: Enable spatial navigation using the arrow keys
 - controller: Add factory reset button to System Status page
 - controller: Add system switch calls to System Status page
