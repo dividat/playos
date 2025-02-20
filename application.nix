@@ -141,6 +141,13 @@ rec {
 
         defaultSession = sessionName;
       };
+      # Hide mouse cursor when not in use
+      services.unclutter-xfixes = {
+        enable = true;
+        timeout = 10;
+        threshold = 1;
+        extraOptions = [ "start-hidden" ];
+      };
 
       # Firewall configuration
       networking.firewall = {
