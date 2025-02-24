@@ -1,0 +1,10 @@
+name: "Release Validation"
+on:
+  workflow_dispatch:
+jobs:
+  release-validation-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/prep-build-env
+    - run: NIXPKGS_ALLOW_UNFREE=1 nix-build testing/release-validation.nix
