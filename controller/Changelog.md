@@ -1,4 +1,4 @@
-# [UNRELEASED]
+# [2025.3.0-VALIDATION] - 2025-03-20
 
 ## Added
 
