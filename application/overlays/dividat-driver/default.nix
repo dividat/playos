@@ -2,7 +2,7 @@
 
 let
 
-  version = "2.5.0";
+  version = "3.0.0-12bit";
 
 in buildGoModule rec {
 
@@ -12,8 +12,8 @@ in buildGoModule rec {
   src = fetchFromGitHub {
     owner = "dividat";
     repo = "driver";
-    rev = version;
-    sha256 = "sha256-Xf65d3lqhqOjF+II66BhyCxINngvK5rSvSxifOlMpoY=";
+    rev = "4344c15750dde9c91b92169cd0783866527f81d0";
+    sha256 = "sha256-pRjNLElBUp0289BNd+DXYCyqLq92z9YlS4fPPBDyBH0=";
   };
 
   vendorHash = "sha256-Jj6aI85hZXGeWhJ8wq9MgI9uTm11tJZUdVwI90Pio4s=";
