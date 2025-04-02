@@ -38,46 +38,16 @@ You can switch virtual consoles in the guest via QEMU monitor (ctrl-alt-2), send
 - Graphical system: ctrl-alt-f7
 "
 
-elif [ "$TARGET" == "develop" ]; then
+elif [ "$TARGET" == "prohealth" ]; then
 
   scripts/info-branch-commit
   scripts/confirm-or-abort
 
   (set -x; nix-build \
-    --arg updateCert ./pki/develop/cert.pem \
-    --arg updateUrl https://dist.dividat.com/releases/playos/develop/ \
-    --arg deployUrl s3://dist.dividat.ch/releases/playos/develop/ \
-    --arg kioskUrl https://dev-play.dividat.com/ \
-    --arg buildDisk false)
-
-  echo
-  echo "Run ./result/bin/deploy-update to deploy."
-
-elif [ "$TARGET" == "validation" ]; then
-
-  scripts/info-branch-commit
-  scripts/confirm-or-abort
-
-  (set -x; nix-build \
-    --arg updateCert ./pki/validation/cert.pem \
-    --arg updateUrl https://dist.dividat.com/releases/playos/validation/ \
-    --arg deployUrl s3://dist.dividat.ch/releases/playos/validation/ \
-    --arg kioskUrl https://val-play.dividat.com/ \
-    --arg buildDisk false)
-
-  echo
-  echo "Run ./result/bin/deploy-update to deploy."
-
-elif [ "$TARGET" == "master" ]; then
-
-  scripts/info-branch-commit
-  scripts/confirm-or-abort
-
-  (set -x; nix-build \
-    --arg updateCert ./pki/master/cert.pem \
-    --arg updateUrl https://dist.dividat.com/releases/playos/master/ \
-    --arg deployUrl s3://dist.dividat.ch/releases/playos/master/ \
-    --arg kioskUrl https://play.dividat.com/ \
+    --arg updateCert ./pki/prohealth/cert.pem \
+    --arg updateUrl https://dist.dividat.com/releases/playos/prohealth/ \
+    --arg deployUrl s3://dist.dividat.ch/releases/playos/prohealth/ \
+    --arg kioskUrl https://lab.dividat.ch/e/hlJrhOP8G/play.html \
     --arg buildDisk false)
 
   echo
