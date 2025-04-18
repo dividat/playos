@@ -69,7 +69,7 @@ in
   systemd.services."connman".after = wpaSupplicantServices;
   # Issue 2: Restart wpa_supplicant (and thereby connman) after rfkill unblock of wlan
   #          This addresses the problem of wpa_supplicant with connman not seeing any
-  #          networks if wlan was initially soft blocked. (https://01.org/jira/browse/CM-670)
+  #          networks if wlan was initially soft blocked. (https://web.archive.org/web/20191211094135/https://01.org/jira/browse/CM-670)
   services.udev.packages = [ pkgs.rfkill_udev ];
   environment.etc."rfkill.hook".source = pkgs.writeShellScript "rfkill.hook" ''
     # States: 1 - normal, 0 - soft-blocked, 2 - hardware-blocked
