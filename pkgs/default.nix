@@ -25,6 +25,7 @@ let
             ./ocaml-modules/ppx_protocol_conv_jsonm {};
       });
 
+      connman = (import ./connman) super;
     };
 
 in
