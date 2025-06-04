@@ -180,9 +180,6 @@ import tesserocr # type: ignore
 import PIL.Image
 import PIL.ImageEnhance
 import PIL.ImageOps
-import tempfile
-import time
-import atexit
 import os
 
 # Note #1: extracting the compressed disk in the test rather than in a
@@ -218,17 +215,6 @@ def screenshot_and_ocr(vm):
         im = PIL.ImageEnhance.Contrast(im).enhance(4.0)
         return tesserocr.image_to_text(im)
 
-
-def wait_until_passes(test, retries=10, sleep=1):
-    while True:
-        try:
-            return test()
-        except Exception as e:
-            if retries > 0:
-                time.sleep(sleep)
-                retries -= 1
-            else:
-                raise e
 
 ### === Stub Update server setup
 

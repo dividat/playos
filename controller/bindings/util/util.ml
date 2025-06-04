@@ -60,3 +60,12 @@ let run_cmd_no_stdout cmd =
       return_unit
   | _ ->
       Lwt.fail_with (Format.sprintf "%s failed" cmd.(0))
+
+(* Equivalent of `mkdir -p $(dirname $path)` *)
+let rec ensure_parent_dir ?(permissions = 0o755) path =
+  let basedir = String.sub path 0 (String.rindex path '/') in
+  let%lwt basedir_exists = Lwt_unix.file_exists basedir in
+  if basedir_exists then Lwt.return ()
+  else
+    let%lwt () = ensure_parent_dir basedir ~permissions in
+    Lwt_unix.mkdir basedir permissions

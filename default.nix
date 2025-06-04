@@ -13,6 +13,7 @@ in
 
   # url where kiosk points
 , kioskUrl ? "https://play.dividat.com"
+, watchdogUrls ? [ "https://play.dividat.com" ]
 
 , versionOverride ? null
 
@@ -41,7 +42,7 @@ let
   mkComponents = { application, extraModules ? [ ], rescueSystemOpts ? {}, diskBuildEnabled ? buildDisk }:
   (with pkgs; lib.makeScope newScope (self: with self; {
 
-    inherit updateUrl deployUrl kioskUrl;
+    inherit updateUrl deployUrl kioskUrl watchdogUrls;
     inherit (application) version safeProductName fullProductName;
 
     greeting = lib.attrsets.attrByPath [ "greeting" ] (label: label) application;

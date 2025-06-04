@@ -1,0 +1,6 @@
+(library
+ (name network_watchdog)
+ (modules network_watchdog)
+ (libraries lwt logs logs.fmt logs.lwt lwt.unix util base systemd)
+ (preprocess
+  (pps lwt_ppx)))

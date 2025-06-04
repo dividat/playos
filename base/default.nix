@@ -9,6 +9,7 @@ with lib;
 {
   imports = [
     (import ./networking/default.nix { hostName = safeProductName; inherit lib pkgs config; })
+    ./networking/watchdog
     ./hardening.nix
     ./localization.nix
     ./remote-maintenance.nix

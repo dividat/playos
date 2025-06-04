@@ -18,7 +18,6 @@ pkgs.testers.runNixOSTest {
   testScript = {nodes}:
 ''
 ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
-import time
 
 with TestPrecondition("Power Button has been recognized"):
     machine.start()
