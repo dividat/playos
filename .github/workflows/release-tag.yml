@@ -27,9 +27,6 @@ jobs:
 
       - uses: ./.github/actions/prep-build-env
 
-      - name: Make magic-nix-cache read-only by removing post-build-hook
-        run: sed -i '/post-build-hook = magic-nix-cache-build-hook/d' $HOME/.config/nix/nix.conf
-
       - name: Validate tag
         run: |
           app_vsn="$(nix eval --raw -f application.nix 'version')"
