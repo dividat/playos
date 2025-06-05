@@ -1,5 +1,9 @@
 # [UNRELEASED]
 
+## Changed
+
+- os: Downgrade connman to 1.42 to prevent known network issue
+
 # [2025.3.0-VALIDATION] - 2025-03-20
 
 ## Added
