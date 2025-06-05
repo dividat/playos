@@ -10,4 +10,3 @@ runs:
       nix_path: nixpkgs=channel:nixos-unstable
       extra_nix_config: |
         system-features = nixos-test benchmark big-parallel kvm
-  - uses: DeterminateSystems/magic-nix-cache-action@v8
