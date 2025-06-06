@@ -3,6 +3,7 @@
 ## Changed
 
 - os: Downgrade connman to 1.42 to prevent known network issue
+- driver: Upgrade to 2.6.0 for Flex v5 support
 
 # [2025.3.0-VALIDATION] - 2025-03-20
 
