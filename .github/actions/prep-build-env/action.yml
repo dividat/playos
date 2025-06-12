@@ -31,6 +31,7 @@ runs:
       echo "${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}" > ${{ env.NIX_STORE_PRIVATE_KEY_FILE }}
 
   - name: Creates AWS credentials and config for profile
+    shell: bash
     run: |
       mkdir -p ~/.aws
 
