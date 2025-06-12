@@ -25,10 +25,10 @@ inputs:
     default: "dividat-ci-nix-cache-1:vhWwMmDRyiG7ICbeWWpC03k1XsRs2fIQB461il3EL3U="
 
   NIX_STORE_PUBLIC_KEY_FILE:
-    default: "/etc/nix/key.public"
+    default: "~/.nix-key.public"
 
   NIX_STORE_PRIVATE_KEY_FILE:
-    default: "/etc/nix/key.private"
+    default: "~/.nix-key.private"
 runs:
   using: "composite"
   steps:
@@ -39,7 +39,6 @@ runs:
   - name: Write public and private keys to file
     shell: bash
     run: |
-      sudo mkdir -p /etc/nix
       echo "${{ inputs.NIX_STORE_PUBLIC_KEY }}" > "${{ inputs.NIX_STORE_PUBLIC_KEY_FILE }}"
       echo "${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}" > "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}"
 
