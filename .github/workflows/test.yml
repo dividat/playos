@@ -13,5 +13,5 @@ jobs:
         NIX_CACHE_SECRET_ACCESS_KEY: ${{ secrets.NIX_CACHE_SECRET_ACCESS_KEY }}
         NIX_BINARY_CACHE_PRIVATE_KEY: ${{ secrets.NIX_BINARY_CACHE_PRIVATE_KEY }}
 
-    - run: nix copy $(nix-build --expr '(import <nixpkgs> {}).writeText "example" (builtins.toString builtins.currentTime)') --to 's3://dividat-ci-nix-cache?profile=nixcache'
+    - run: nix copy $(nix-build --expr '(import <nixpkgs> {}).writeText "example" (builtins.toString builtins.currentTime)') --to file:///tmp/nix-store-tmp
     #- run: NIXPKGS_ALLOW_UNFREE=1 nix-build testing/integration/rauc-statusfile-recovery.nix
