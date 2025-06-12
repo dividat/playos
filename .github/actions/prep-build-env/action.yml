@@ -33,6 +33,12 @@ runs:
     run: sudo chmod a+rwx /dev/kvm
     shell: bash
 
+  - name: Install task-spooler
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y task-spooler
+    shell: bash
+
   - name: Write private key to file
     shell: bash
     run: |
