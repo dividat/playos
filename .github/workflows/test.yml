@@ -13,4 +13,5 @@ jobs:
         NIX_CACHE_SECRET_ACCESS_KEY: ${{ secrets.NIX_CACHE_SECRET_ACCESS_KEY }}
         NIX_BINARY_CACHE_PRIVATE_KEY: ${{ secrets.NIX_BINARY_CACHE_PRIVATE_KEY }}
 
+    - run: nix copy nixpkgs.hello --to 's3://dividat-ci-nix-cache?profile=nixcache'
     - run: NIXPKGS_ALLOW_UNFREE=1 nix-build testing/integration/rauc-statusfile-recovery.nix
