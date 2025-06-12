@@ -1,12 +1,51 @@
 name: "Prepare nix build environment"
 runs:
   using: "composite"
+  env:
+    NIX_CACHE_S3_BUCKET: dividat-ci-nix-cache
+    NIX_CACHE_S3_PROFILE: nixcache
+    NIX_CACHE_S3_REGION: eu-central-1
+    NIX_STORE_PUBLIC_KEY: "dividat-ci-nix-cache-1:vhWwMmDRyiG7ICbeWWpC03k1XsRs2fIQB461il3EL3U="
+    NIX_STORE_PUBLIC_KEY_FILE: "/etc/nix/key.public"
+    NIX_STORE_PRIVATE_KEY_FILE: "/etc/nix/key.private"
+
   steps:
   - name: Ensure KVM is usable by nix-build
     run: sudo chmod a+rwx /dev/kvm
     shell: bash
+
+  - name: Write public and private keys to file
+    shell: bash
+    run: |
+      echo "${{ env.NIX_STORE_PUBLIC_KEY }}" > ${{ env.NIX_STORE_PUBLIC_KEY_FILE }}
+      echo "${{ secrets.NIX_BINARY_CACHE_PRIVATE_KEY }}" > ${{ env.NIX_STORE_PRIVATE_KEY_FILE }}
+
+  - name: Creates AWS credentials and config for profile
+    run: |
+      mkdir -p ~/.aws
+
+      echo "[${{ env.NIX_CACHE_S3_PROFILE }}]" > ~/.aws/credentials
+      echo "aws_access_key_id=${{ secrets.NIX_CACHE_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+      echo "aws_secret_access_key=${{ secrets.NIX_CACHE_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+
+      echo "[profile ${{ env.NIX_CACHE_S3_PROFILE }}]" > ~/.aws/config
+      echo "region=${{ env.NIX_CACHE_S3_REGION }}" > ~/.aws/config
+
+  - name: Install post-run action
+    uses: gacts/run-and-post-run@v1
+    with:
+      post: |
+        echo "Waiting for cache uploads to finish"
+        tsp -w
+        tsp -l
+
+
   - uses: cachix/install-nix-action@v18
     with:
       nix_path: nixpkgs=channel:nixos-unstable
       extra_nix_config: |
         system-features = nixos-test benchmark big-parallel kvm
+        substituters = https://cache.nixos.org/ s3://${{ env.NIX_CACHE_S3_BUCKET }}?profile=${{ env.NIX_CACHE_S3_PROFILE }}
+        trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${{ env.NIX_CACHE_PUBLIC_KEY }}
+        secret-key-files = ${{ env.NIX_STORE_PRIVATE_KEY_FILE }}
+        post-build-hook = ${{ github.workspace }}/.github/workflows/upload-to-s3-cache.sh
