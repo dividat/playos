@@ -39,6 +39,7 @@ runs:
   - name: Write public and private keys to file
     shell: bash
     run: |
+      mkdir -p /etc/nix
       echo "${{ inputs.NIX_STORE_PUBLIC_KEY }}" > "${{ inputs.NIX_STORE_PUBLIC_KEY_FILE }}"
       echo "${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}" > "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}"
 
