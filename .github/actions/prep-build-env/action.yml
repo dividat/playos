@@ -1,11 +1,4 @@
 name: "Prepare nix build environment"
-env:
-  NIX_CACHE_S3_BUCKET: dividat-ci-nix-cache
-  NIX_CACHE_S3_PROFILE: nixcache
-  NIX_CACHE_S3_REGION: eu-central-1
-  NIX_STORE_PUBLIC_KEY: "dividat-ci-nix-cache-1:vhWwMmDRyiG7ICbeWWpC03k1XsRs2fIQB461il3EL3U="
-  NIX_STORE_PUBLIC_KEY_FILE: "/etc/nix/key.public"
-  NIX_STORE_PRIVATE_KEY_FILE: "/etc/nix/key.private"
 
 inputs:
   NIX_CACHE_ACCESS_KEY_ID:
@@ -17,6 +10,25 @@ inputs:
   NIX_BINARY_CACHE_PRIVATE_KEY:
     required: true
 
+  # these are not intended to be configurable, but there's simply no way
+  # to have constants/envs in a composite action
+  NIX_CACHE_S3_BUCKET:
+    default: dividat-ci-nix-cache
+
+  NIX_CACHE_S3_PROFILE:
+    default: nixcache
+
+  NIX_CACHE_S3_REGION:
+    default: eu-central-1
+
+  NIX_STORE_PUBLIC_KEY:
+    default: "dividat-ci-nix-cache-1:vhWwMmDRyiG7ICbeWWpC03k1XsRs2fIQB461il3EL3U="
+
+  NIX_STORE_PUBLIC_KEY_FILE:
+    default: "/etc/nix/key.public"
+
+  NIX_STORE_PRIVATE_KEY_FILE:
+    default: "/etc/nix/key.private"
 runs:
   using: "composite"
   steps:
@@ -27,20 +39,20 @@ runs:
   - name: Write public and private keys to file
     shell: bash
     run: |
-      echo "${{ env.NIX_STORE_PUBLIC_KEY }}" > ${{ env.NIX_STORE_PUBLIC_KEY_FILE }}
-      echo "${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}" > ${{ env.NIX_STORE_PRIVATE_KEY_FILE }}
+      echo "${{ inputs.NIX_STORE_PUBLIC_KEY }}" > "${{ inputs.NIX_STORE_PUBLIC_KEY_FILE }}"
+      echo "${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}" > "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}"
 
   - name: Creates AWS credentials and config for profile
     shell: bash
     run: |
       mkdir -p ~/.aws
 
-      echo "[${{ env.NIX_CACHE_S3_PROFILE }}]" > ~/.aws/credentials
+      echo "[${{ inputs.NIX_CACHE_S3_PROFILE }}]" > ~/.aws/credentials
       echo "aws_access_key_id=${{ inputs.NIX_CACHE_ACCESS_KEY_ID }}" >> ~/.aws/credentials
       echo "aws_secret_access_key=${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
 
-      echo "[profile ${{ env.NIX_CACHE_S3_PROFILE }}]" > ~/.aws/config
-      echo "region=${{ env.NIX_CACHE_S3_REGION }}" > ~/.aws/config
+      echo "[profile ${{ inputs.NIX_CACHE_S3_PROFILE }}]" > ~/.aws/config
+      echo "region=${{ inputs.NIX_CACHE_S3_REGION }}" > ~/.aws/config
 
   - name: Install post-run action
     uses: gacts/run-and-post-run@v1
@@ -56,7 +68,7 @@ runs:
       nix_path: nixpkgs=channel:nixos-unstable
       extra_nix_config: |
         system-features = nixos-test benchmark big-parallel kvm
-        substituters = https://cache.nixos.org/ s3://${{ env.NIX_CACHE_S3_BUCKET }}?profile=${{ env.NIX_CACHE_S3_PROFILE }}
-        trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${{ env.NIX_CACHE_PUBLIC_KEY }}
-        secret-key-files = ${{ env.NIX_STORE_PRIVATE_KEY_FILE }}
+        substituters = https://cache.nixos.org/ s3://${{ inputs.NIX_CACHE_S3_BUCKET }}?profile=${{ inputs.NIX_CACHE_S3_PROFILE }}
+        trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${{ inputs.NIX_CACHE_PUBLIC_KEY }}
+        secret-key-files = ${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}
         post-build-hook = ${{ github.workspace }}/.github/workflows/upload-to-s3-cache.sh
