@@ -43,7 +43,7 @@ runs:
     shell: bash
     run: |
       sudo mkdir -p $(dirname "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}")
-      echo "${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}" | sudo tee "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}"
+      echo -n "${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}" | sudo tee "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}"
 
   - name: Creates AWS credentials and config for profile
     shell: bash
