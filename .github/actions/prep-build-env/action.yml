@@ -72,6 +72,6 @@ runs:
       extra_nix_config: |
         system-features = nixos-test benchmark big-parallel kvm
         substituters = https://cache.nixos.org/ s3://${{ inputs.NIX_CACHE_S3_BUCKET }}?profile=${{ inputs.NIX_CACHE_S3_PROFILE }}
-        trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${{ inputs.NIX_CACHE_PUBLIC_KEY }}
+        trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${{ inputs.NIX_STORE_PUBLIC_KEY }}
         secret-key-files = ${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}
         post-build-hook = ${{ github.workspace }}/.github/workflows/upload-to-s3-cache.sh
