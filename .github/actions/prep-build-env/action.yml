@@ -24,11 +24,8 @@ inputs:
   NIX_STORE_PUBLIC_KEY:
     default: "dividat-ci-nix-cache-1:vhWwMmDRyiG7ICbeWWpC03k1XsRs2fIQB461il3EL3U="
 
-  NIX_STORE_PUBLIC_KEY_FILE:
-    default: "~/.nix-key.public"
-
   NIX_STORE_PRIVATE_KEY_FILE:
-    default: "~/.nix-key.private"
+    default: "/etc/nix/key.private"
 runs:
   using: "composite"
   steps:
@@ -36,11 +33,11 @@ runs:
     run: sudo chmod a+rwx /dev/kvm
     shell: bash
 
-  - name: Write public and private keys to file
+  - name: Write private key to file
     shell: bash
     run: |
-      echo "${{ inputs.NIX_STORE_PUBLIC_KEY }}" > "${{ inputs.NIX_STORE_PUBLIC_KEY_FILE }}"
-      echo "${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}" > "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}"
+      sudo mkdir -p $(dirname "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}")
+      echo "${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}" | sudo tee "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}"
 
   - name: Creates AWS credentials and config for profile
     shell: bash
