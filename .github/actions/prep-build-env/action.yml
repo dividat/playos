@@ -7,16 +7,15 @@ env:
   NIX_STORE_PUBLIC_KEY_FILE: "/etc/nix/key.public"
   NIX_STORE_PRIVATE_KEY_FILE: "/etc/nix/key.private"
 
-  #with:
-  #  secrets:
-  #    NIX_CACHE_ACCESS_KEY_ID:
-  #      required: true
-  #
-  #    NIX_CACHE_SECRET_ACCESS_KEY:
-  #      required: true
-  #
-  #    NIX_BINARY_CACHE_PRIVATE_KEY:
-  #      required: true
+inputs:
+  NIX_CACHE_ACCESS_KEY_ID:
+    required: true
+
+  NIX_CACHE_SECRET_ACCESS_KEY:
+    required: true
+
+  NIX_BINARY_CACHE_PRIVATE_KEY:
+    required: true
 
 runs:
   using: "composite"
@@ -29,15 +28,15 @@ runs:
     shell: bash
     run: |
       echo "${{ env.NIX_STORE_PUBLIC_KEY }}" > ${{ env.NIX_STORE_PUBLIC_KEY_FILE }}
-      echo "${{ secrets.NIX_BINARY_CACHE_PRIVATE_KEY }}" > ${{ env.NIX_STORE_PRIVATE_KEY_FILE }}
+      echo "${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}" > ${{ env.NIX_STORE_PRIVATE_KEY_FILE }}
 
   - name: Creates AWS credentials and config for profile
     run: |
       mkdir -p ~/.aws
 
       echo "[${{ env.NIX_CACHE_S3_PROFILE }}]" > ~/.aws/credentials
-      echo "aws_access_key_id=${{ secrets.NIX_CACHE_ACCESS_KEY_ID }}" >> ~/.aws/credentials
-      echo "aws_secret_access_key=${{ secrets.NIX_CACHE_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+      echo "aws_access_key_id=${{ inputs.NIX_CACHE_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+      echo "aws_secret_access_key=${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
 
       echo "[profile ${{ env.NIX_CACHE_S3_PROFILE }}]" > ~/.aws/config
       echo "region=${{ env.NIX_CACHE_S3_REGION }}" > ~/.aws/config
