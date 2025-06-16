@@ -9,7 +9,7 @@ with lib;
 {
   imports = [
     (import ./networking/default.nix { hostName = safeProductName; inherit lib pkgs config; })
-    ./networking/watchdog.nix
+    ./networking/watchdog
     ./hardening.nix
     ./localization.nix
     ./remote-maintenance.nix
@@ -52,8 +52,7 @@ with lib;
 
     playos.networking.watchdog = {
         enable = true;
-        checkUrl = kioskUrl;
-        altCheckUrl = "https://api.dividat.com";
+        checkURLs = [ kioskUrl "https://api.dividat.com" ];
     };
 
     # 'Welcome Screen'
