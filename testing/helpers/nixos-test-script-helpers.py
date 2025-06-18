@@ -53,18 +53,35 @@ class TestCase(AbstractTestCheck):
     def __init__(self, test_descr):
         super().__init__("TestCase", test_descr)
 
-def wait_for_logs(vm, regex, unit=None, timeout=10):
+# TODO: document return
+def wait_for_logs(vm, regex, unit=None, after_cursor=None, timeout=10):
     maybe_unit = f"--unit={unit}" if unit else ""
-    journal_cmd = f"journalctl {maybe_unit}"
-    full_cmd = f"{journal_cmd} | grep '{regex}'"
+    maybe_after_cursor = f"--after-cursor '{after_cursor}'" if after_cursor else ""
+
+    journal_cmd_base = f"journalctl -q --grep '{regex}' {maybe_unit} {maybe_after_cursor}"
+
+    # TODO: explain why this is done the way it is done...
+    # TODO: warn about -n / --lines
+    # Note: there's a tiny chance that something of relevance might happen
+    # between the above command and the cursor inserted below.
+    full_cmd = f"""{journal_cmd_base} --show-cursor \
+            || ((({journal_cmd_base} --follow || true) | head -1 | grep .) && journalctl -n 0 --show-cursor)
+    """
     try:
-        vm.wait_until_succeeds(full_cmd, timeout=timeout)
+        out = vm.succeed(full_cmd, timeout=timeout)
+        #cursor = vm.succeed("journalctl -n 0 --show-cursor -q")
+        cursor = out.strip().split("\n")[-1]
+        return cursor.strip().split("cursor:")[-1].strip()
     except Exception as e:
         eprint(f"wait_for_logs ({full_cmd}) failed after {timeout} seconds")
         eprint("Last VM logs:\n")
-        _, output = vm.execute(f"{journal_cmd} | tail -30")
+        _, output = vm.execute(f"{journal_cmd_base} | tail -30")
         eprint(output)
-        raise e
+        raise RuntimeError("wait_for_logs failed") from e
+
+
+def get_first_connman_service_name(vm):
+    return vm.succeed("connmanctl services | head -1 | awk '{print $3}'").strip()
 
 
 def configure_proxy(vm, proxy_url):

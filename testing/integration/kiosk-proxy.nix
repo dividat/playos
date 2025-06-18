@@ -127,7 +127,7 @@ pkgs.nixosTest {
     client.wait_for_unit("connman.service")
 
     with TestCase('kiosk-browser uses configured proxy') as t:
-      service_name = client.succeed("connmanctl services | head -1 | awk '{print $3}'").strip(' \t\n\r')
+      service_name = get_first_connman_service_name(client)
       client.succeed(f"connmanctl config {service_name} proxy manual http://user:p4ssw0rd@theproxy:${toString proxyPort}")
 
       _, kiosk_result = client.execute(

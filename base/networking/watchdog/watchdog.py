@@ -15,20 +15,38 @@ import threading
 CLIENT_HEADERS = {'User-Agent': 'PlayOS watchdog 1.0'}
 CONNMAN_RESTART_COMMAND = "systemctl restart connman.service"
 
+DEBUG = False
+
+def log(msg):
+    print(msg)
+
+
+def debug(msg):
+    if DEBUG:
+        print(f"[DEBUG] {msg}")
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description="PlayOS network watchdog",
         epilog="See the nix watchdog module for extra documentation"
     )
-    parser.add_argument('--check-url', dest="check_urls", nargs='+', action='append', required=True)
+    parser.add_argument('--check-url', dest="check_urls", action='append', required=True,
+                        help="Flag can be repeated multiple times")
     parser.add_argument('--check-interval', type=int, required=True)
     parser.add_argument('--max-num-failures', type=int, required=True)
     parser.add_argument('--setting-change-delay', type=int, required=True)
+    parser.add_argument('--debug', action='store_true')
     return parser.parse_args()
 
 
-class State(enum.StrEnum):
+class UpperStrEnum(enum.StrEnum):
+    @staticmethod
+    def _generate_next_value_(name, *args):
+        return name.upper()
+
+
+class State(UpperStrEnum):
     NEVER_CONNECTED = auto()
     ONCE_CONNECTED = auto()
     DISCONNECTED = auto()
@@ -46,6 +64,11 @@ def perform_single_url_check(url):
             failure = RuntimeError(f"Bad HTTP status code: {r.status_code}")
     except Exception as e:
         failure = RuntimeError(f"Failed to connect: {e}")
+
+    if failure:
+        debug(f"URL check for {url} failed with {failure}")
+    else:
+        debug(f"URL check for {url} succeeded!")
 
     return failure
 
@@ -71,86 +94,96 @@ def check_sleep(cfg):
 def run_state_never_connected(cfg) -> State:
     err = perform_url_checks(cfg.check_urls)
     if err:
-        print(f"Check URL failed: {err}, sleeping for {cfg.check_interval} seconds")
+        log(f"Check URL failed for all URLs, sleeping for {cfg.check_interval} seconds")
         check_sleep(cfg)
         return State.NEVER_CONNECTED
     else:
-        print(f"Detected successful connection to {cfg.check_url}")
+        log(f"Detected successful internet connection")
         return State.ONCE_CONNECTED
 
 
 def run_state_once_connected(cfg, remain_attempts) -> Tuple[State, int]:
     if remain_attempts > 0:
-        err = perform_url_checks(cfg.check_url)
+        err = perform_url_checks(cfg.check_urls)
         if err:
-            print(f"Check URL failed: {err}")
             remain_attempts -= 1
+            log(f"Check URLs failed, remaining attempts: {remain_attempts}")
+            check_sleep(cfg)
+            return (State.ONCE_CONNECTED, remain_attempts)
         else:
-            print("Check URL successful")
+            log("Check URL successful, ")
             remain_attempts = cfg.max_num_failures
+            check_sleep(cfg)
+            return (State.ONCE_CONNECTED, remain_attempts)
 
-        check_sleep(cfg)
-
-    return (State.DISCONNECTED, 0)
+    else:
+        log(f"Check URLs failed {cfg.max_num_failures} times, internet connection considered lost.")
+        return (State.DISCONNECTED, 0)
 
 
 def run_state_disconnected(cfg) -> State:
+    log("Restarting connman")
     subprocess.run(CONNMAN_RESTART_COMMAND, shell=True, check=False)
 
     return State.NEVER_CONNECTED
 
 
-def run_state_setting_change_delay(cfg, change_time) -> State:
-    elasped_time = datetime.datetime.now() - change_time
-    remaining_sleep_seconds = cfg.setting_change_delay - elasped_time.total_seconds()
+def run_state_setting_change_delay(cfg, elasped_time) -> State:
+    remaining_sleep_seconds = cfg.setting_change_delay - round(elasped_time.total_seconds())
     if remaining_sleep_seconds > 0:
+        debug(f"Sleeping for {remaining_sleep_seconds} seconds after connman update")
         time.sleep(remaining_sleep_seconds)
 
     return State.NEVER_CONNECTED
 
 
-def start_dbus_monitor_thread(on_changed):
-    DBusGMainLoop(set_as_default=True)
+class ConnmanDbusMonitor:
+    def __init__(self):
+        DBusGMainLoop(set_as_default=True)
+        self._bus = dbus.SystemBus()
+        self._thread = None
+        self.last_update = datetime.datetime.fromtimestamp(0)
 
-    bus = dbus.SystemBus()
+    def start_monitoring(self):
+        def monitor():
+            debug("Starting DBus monitoring thread")
 
-    def monitor():
-        bus.add_signal_receiver(
-            handler_function=on_changed,
-            bus_name='net.connman.Service',
-            member_keyword='PropertyChanged'
-        )
-        loop = GLib.MainLoop()
-        loop.run()
+            self._bus.add_signal_receiver(
+                handler_function=self._mark_update,
+                bus_name='net.connman',
+                dbus_interface='net.connman.Service',
+                signal_name='PropertyChanged',
+            )
+            loop = GLib.MainLoop()
+            loop.run()
 
-    thread = threading.Thread(target=monitor, args=[])
-    thread.daemon = True
-    thread.start()
+        thread = threading.Thread(target=monitor)
+        thread.daemon = True
+        thread.start()
+        self._thread = thread
 
+    def _mark_update(self, *args, **kwargs):
+        now = datetime.datetime.now()
+        debug(f"connman setting change, setting last_update to {now}")
+        self.last_update = now
 
+    
 def run(cfg):
     state = State.NEVER_CONNECTED
     remain_attempts = cfg.max_num_failures
-    last_connman_setting_change = datetime.datetime.now() - datetime.timedelta(seconds=cfg.setting_change_delay + 1)
 
-    def update_last_connman_setting_change(*args, **kwargs):
-        # TODO: is this necessary?
-        global last_connman_setting_change
-        last_connman_setting_change = datetime.datetime.now()
-        print(f"{last_connman_setting_change=}")
-
-    start_dbus_monitor_thread(update_last_connman_setting_change)
+    monitor = ConnmanDbusMonitor()
+    monitor.start_monitoring()
 
     while True:
-        now = datetime.datetime.now()
+        time_since_update = datetime.datetime.now() - monitor.last_update
 
-        print(f"IN MAIN: {last_connman_setting_change=}")
-
-        if (now - last_connman_setting_change).total_seconds() < cfg.setting_change_delay:
+        if time_since_update.total_seconds() < cfg.setting_change_delay:
             # override state, because there are recent connman changes
+            log("Connman service properties changed, will sleep.")
             state = State.SETTING_CHANGE_DELAY
 
-        print(f"Watchdog state: {state}")
+        debug(f"Current state: {state}")
         match state:
             case State.NEVER_CONNECTED:
                 state = run_state_never_connected(cfg)
@@ -163,11 +196,16 @@ def run(cfg):
                 state = run_state_disconnected(cfg)
 
             case State.SETTING_CHANGE_DELAY:
-                state = run_state_setting_change_delay(cfg, last_connman_setting_change)
+                state = run_state_setting_change_delay(cfg, time_since_update)
 
 
 def main():
+    global DEBUG
+
     args = parse_args()
+    if args.debug:
+        DEBUG = True
+
     run(args)
 
 

@@ -50,6 +50,12 @@ in
         type = types.ints.positive;
         description = "How many seconds to pause the watchdog for after any connman (service) setting changes (e.g. user has changed the wifi passphrase).";
       };
+
+      debug = mkOption {
+        default = false;
+        type = types.bool;
+        description = "Run watchdog in debug mode (verbose logging)";
+      };
     };
   };
 
@@ -57,8 +63,7 @@ in
     systemd.services."playos-network-watchdog" = {
       description = "PlayOS network watchdog";
 
-      after = [ "network.target" ];
-      requires = [ "connman.service" ]; # TODO: wpa_supplicant?
+      after = [ "network.target" "connman.service" ];
       wantedBy = [ "multi-user.target" ];
 
 
@@ -68,13 +73,14 @@ in
         Environment = "PYTHONUNBUFFERED=1";
         ExecStart =
             let
-                checkURLflags = lib.strings.concatMapStrings (url: "--check-url '${url}'") cfg.checkURLs;
+                checkURLflags = lib.strings.concatMapStrings (url: " --check-url '${url}'") cfg.checkURLs;
             in
             ''${watchdog}/bin/playos-network-watchdog \
                  ${checkURLflags} \
                 --max-num-failures ${toString cfg.maxNumFailures} \
                 --check-interval ${toString cfg.checkInterval} \
-                --setting-change-delay ${toString cfg.settingChangeDelay}'';
+                --setting-change-delay ${toString cfg.settingChangeDelay}''
+                + (lib.optionalString cfg.debug " --debug");
         User = "root";
         RestartSec = "10s"; # TODO: ??
         Restart = "always"; # TODO: ?? - either the watchdog can exit and expected to be restarted or run forever
