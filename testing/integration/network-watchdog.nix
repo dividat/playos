@@ -1,9 +1,15 @@
 let
   pkgs = import ../../pkgs { };
 
+  proxyPort = 8888;
+  proxyUser = "user";
+  proxyPassword = "muchsecure";
+  proxyURI = "http://${proxyUser}:${proxyPassword}@127.0.0.1:${toString proxyPort}/";
+
   checkServerIP = "10.0.2.88";
   checkServerPort = 13838;
   checkBaseURL = "http://${checkServerIP}:${toString checkServerPort}";
+
   primaryCheckUrl = "${checkBaseURL}/check-primary.html";
   secondaryCheckUrl = "${checkBaseURL}/check-secondary.html";
 in
@@ -30,6 +36,30 @@ pkgs.testers.runNixOSTest {
             }
         ];
         networking.firewall.enable = false;
+
+        # use in place of checkServer when proxy is enabled
+        systemd.services.always-ok-http-service = {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "network.target" ];
+          serviceConfig = {
+            ExecStart =
+              let
+                respond = ''echo "HTTP/1.1 200 OK"'';
+              in
+              "${pkgs.nmap}/bin/ncat -lk -p 9999 -c '${respond}'";
+            Restart = "always";
+          };
+        };
+
+        services.tinyproxy = {
+          enable = true;
+          settings = {
+            Listen = "0.0.0.0";
+            Port = proxyPort;
+            BasicAuth = "${proxyUser} ${proxyPassword}";
+            Upstream = ''http ${checkServerIP}:${toString checkServerPort} "127.0.0.1:9999"'';
+          };
+        };
 
         services.connman = {
           enable = pkgs.lib.mkOverride 0 true; # disabled in runNixOSTest by default
@@ -58,7 +88,6 @@ pkgs.testers.runNixOSTest {
   testScript = {nodes}:
 ''
 ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
-import time
 import pathlib
 from enum import auto, StrEnum
 import datetime
@@ -147,6 +176,19 @@ def expect_connman_restart_increment(t):
     t.assertEqual(connman_restarts + 1, get_connman_restarts())
     connman_restarts += 1
 
+
+def wait_for_connman_restart(t):
+    wait_until_passes(
+        lambda: expect_connman_restart_increment(t),
+        sleep=1,
+        retries=3
+    )
+
+
+def configure_connman(flags):
+    service = get_first_connman_service_name(playos)
+    playos.succeed(f"connmanctl config {service} {flags}")
+
 ## == Setup
 
 stub = StubServer()
@@ -161,10 +203,13 @@ with TestPrecondition("Stub HTTP server is functional"):
 with TestPrecondition("PlayOS is booted and services are running "):
     playos.wait_for_unit('connman.service')
     playos.wait_for_unit('playos-network-watchdog.service')
+    playos.wait_for_unit('tinyproxy.service')
+    playos.wait_for_unit('always-ok-http-service.service')
 
 with TestPrecondition("PlayOS can reach the check URLs"):
     playos.succeed("curl --fail ${primaryCheckUrl}")
     playos.succeed("curl --fail ${secondaryCheckUrl}")
+    playos.succeed("curl --proxy ${proxyURI} --fail ${primaryCheckUrl}")
 
 
 ## == Test cases
@@ -172,6 +217,29 @@ with TestPrecondition("PlayOS can reach the check URLs"):
 with TestCase("watchdog reaches ONCE_CONNECTED state") as t:
     wait_for_watchdog_state('ONCE_CONNECTED')
     expect_no_new_connman_restarts(t)
+
+with TestCase("watchdog detects configured proxy and uses it") as t:
+    stub.make_all_bad()
+    wait_for_watchdog_state('DISCONNECTED')
+    wait_for_connman_restart(t)
+    wait_for_watchdog_state('NEVER_CONNECTED')
+
+    configure_connman("--proxy manual ${proxyURI}")
+    wait_for_watchdog_state('SETTING_CHANGE_DELAY')
+    # proxy redirects check URLs to always-ok-http-service, so it works
+    wait_for_watchdog_state('ONCE_CONNECTED')
+
+
+with TestCase("watchdog responds to proxy removal") as t:
+    configure_connman("--proxy direct")
+    wait_for_watchdog_state('SETTING_CHANGE_DELAY')
+    # stub is still in make_all_bad, so we get disconnected
+    wait_for_watchdog_state('DISCONNECTED')
+    wait_for_connman_restart(t)
+    wait_for_watchdog_state('NEVER_CONNECTED')
+    stub.make_all_ok()
+    wait_for_watchdog_state('ONCE_CONNECTED')
+
 
 # Note: SETTING_CHANGE_DELAY possible here if connman receives DHCP updates _after_ the
 # watchdog has determined ONCE_CONNECTED. We don't care about it.
@@ -181,8 +249,7 @@ stub.make_all_bad()
 
 with TestCase("watchdog reaches DISCONNECTED state and triggers restart") as t:
     wait_for_watchdog_state('DISCONNECTED')
-    time.sleep(1)
-    expect_connman_restart_increment(t)
+    wait_for_connman_restart(t)
 
 # Note: SETTING_CHANGE_DELAY will happend here due to the connman restart.
 # We ignore it.
@@ -210,8 +277,7 @@ with TestCase("watchdog restarts connman to recover from external ip setting cor
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     wait_for_watchdog_state('ONCE_CONNECTED')
     wait_for_watchdog_state('DISCONNECTED')
-    time.sleep(1)
-    expect_connman_restart_increment(t)
+    wait_for_connman_restart(t)
     wait_for_watchdog_state('ONCE_CONNECTED')
 
 
@@ -220,8 +286,7 @@ with TestCase("watchdog recovers after ip route flush") as t:
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     wait_for_watchdog_state('ONCE_CONNECTED')
     wait_for_watchdog_state('DISCONNECTED')
-    time.sleep(1)
-    expect_connman_restart_increment(t)
+    wait_for_connman_restart(t)
     wait_for_watchdog_state('ONCE_CONNECTED')
 
 
@@ -234,8 +299,7 @@ with TestCase("if connman gets misconfigured, watchdog remains disconnected afte
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     wait_for_watchdog_state('ONCE_CONNECTED')
     wait_for_watchdog_state('DISCONNECTED')
-    time.sleep(1)
-    expect_connman_restart_increment(t)
+    wait_for_connman_restart(t)
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     wait_for_watchdog_state('NEVER_CONNECTED')
 

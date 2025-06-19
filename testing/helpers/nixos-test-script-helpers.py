@@ -7,6 +7,8 @@ import http.server
 import multiprocessing as mp
 import tempfile
 import atexit
+import time
+
 
 # HACK: create writable cow disk overlay (same as in ./run-in-vm --disk)
 def create_overlay(disk, overlay_path):
@@ -128,3 +130,15 @@ def run_stub_server(port):
     http_p = mp.Process(target=server.serve_forever, daemon=True)
     http_p.start()
     return d.name
+
+
+def wait_until_passes(test, retries=10, sleep=1):
+    while True:
+        try:
+            return test()
+        except Exception as e:
+            if retries > 0:
+                time.sleep(sleep)
+                retries -= 1
+            else:
+                raise e
