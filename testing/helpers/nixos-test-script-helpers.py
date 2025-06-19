@@ -3,6 +3,10 @@ import unittest
 from colorama import Fore, Style
 import re
 import sys
+import http.server
+import multiprocessing as mp
+import tempfile
+import atexit
 
 # HACK: create writable cow disk overlay (same as in ./run-in-vm --disk)
 def create_overlay(disk, overlay_path):
@@ -101,3 +105,24 @@ def configure_proxy(vm, proxy_url):
             t.fail("Unable to find default interface among connman services")
 
         vm.succeed(f"connmanctl config {default_service} --proxy manual {proxy_url}")
+
+
+def run_stub_server(port):
+    d = tempfile.TemporaryDirectory(delete=False)
+    atexit.register(d.cleanup)
+    with open(f"{d.name}/index.html", "w") as f:
+        f.write("Hello world\n")
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=d.name, **kwargs)
+
+    server = http.server.HTTPServer(
+        ("", port),
+        Handler
+    )
+    print(f"Starting HTTP server on port {port}")
+    # Running as a separate process to avoid GIL
+    http_p = mp.Process(target=server.serve_forever, daemon=True)
+    http_p.start()
+    return d.name

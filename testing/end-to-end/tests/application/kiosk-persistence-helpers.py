@@ -1,10 +1,6 @@
-import http.server
-import multiprocessing as mp
 import requests
 import asyncio
 import pyppeteer # type: ignore
-import tempfile
-import atexit
 
 # Forward external `port` to 127.0.0.1:port and add firewall exception to allow
 # external access to internal services in PlayOS
@@ -44,28 +40,6 @@ async def retry_until_no_exception(func, retries=3, sleep=3.0):
                 print(f"Func failed with {e}, giving up after {total_retries}")
                 raise e
 
-# due to nix sandboxing, network access is isolated, so
-# we run a minimal HTTP server for opening in the kiosk
-def run_stub_server(port):
-    d = tempfile.TemporaryDirectory(delete=False)
-    atexit.register(d.cleanup)
-    with open(f"{d.name}/index.html", "w") as f:
-        f.write("Hello world\n")
-
-    class Handler(http.server.SimpleHTTPRequestHandler):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, directory=d.name, **kwargs)
-
-    server = http.server.HTTPServer(
-        ("", port),
-        Handler
-    )
-    print(f"Starting HTTP server on port {port}")
-    # Running as a separate process to avoid GIL
-    http_p = mp.Process(target=server.serve_forever, daemon=True)
-    http_p.start()
-
-
 async def connect_to_kiosk_debug_engine(vm, guest_cdp_port=None, host_cdp_port=None):
     expose_local_port(vm, guest_cdp_port)
 
@@ -80,4 +54,3 @@ async def connect_to_kiosk_debug_engine(vm, guest_cdp_port=None, host_cdp_port=N
     # Sometimes try_connect fails with connection reset by peer,
     # probably due to firewall restart when doing `expose_local_port`?
     return await retry_until_no_exception(try_connect)
-

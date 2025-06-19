@@ -11,6 +11,7 @@ import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib
 import threading
+import math
 
 CLIENT_HEADERS = {'User-Agent': 'PlayOS watchdog 1.0'}
 CONNMAN_RESTART_COMMAND = "systemctl restart connman.service"
@@ -129,10 +130,11 @@ def run_state_disconnected(cfg) -> State:
 
 
 def run_state_setting_change_delay(cfg, elasped_time) -> State:
-    remaining_sleep_seconds = cfg.setting_change_delay - round(elasped_time.total_seconds())
-    if remaining_sleep_seconds > 0:
-        debug(f"Sleeping for {remaining_sleep_seconds} seconds after connman update")
-        time.sleep(remaining_sleep_seconds)
+    remaining_delay = cfg.setting_change_delay - elasped_time.total_seconds()
+    if remaining_delay > 0:
+        sleep_seconds = math.ceil(remaining_delay)
+        debug(f"Sleeping for {sleep_seconds} seconds after connman update")
+        time.sleep(sleep_seconds)
 
     return State.NEVER_CONNECTED
 
@@ -167,7 +169,7 @@ class ConnmanDbusMonitor:
         debug(f"connman setting change, setting last_update to {now}")
         self.last_update = now
 
-    
+
 def run(cfg):
     state = State.NEVER_CONNECTED
     remain_attempts = cfg.max_num_failures
