@@ -62,6 +62,8 @@ def wait_for_logs(vm, regex, unit=None, since=None, timeout=10):
     maybe_unit = f"--unit={unit}" if unit else ""
     maybe_since = f"--since='{since}'" if since else ""
 
+    # Note: it would be better to use short-monotonic or at least
+    # short-iso-precise, but TODO explain
     journal_cmd_base = f"journalctl -o short-precise -q --grep '{regex}' {maybe_unit} {maybe_since}"
 
     # TODO: explain why this is done the way it is done...

@@ -43,7 +43,7 @@ pkgs.testers.runNixOSTest {
             ];
             maxNumFailures = 3;
             checkInterval = 1;
-            settingChangeDelay = 5;
+            settingChangeDelay = 3;
             debug = true;
         };
       };
@@ -61,6 +61,13 @@ ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
 import time
 import pathlib
 from enum import auto, StrEnum
+import datetime
+
+## == Config vars
+
+check_interval = ${toString nodes.playos.playos.networking.watchdog.checkInterval}
+retries = ${toString nodes.playos.playos.networking.watchdog.maxNumFailures}
+setting_change_delay = ${toString nodes.playos.playos.networking.watchdog.settingChangeDelay}
 
 ## == Helpers
 
@@ -111,11 +118,25 @@ def wait_for_watchdog_log(regex, since=None, timeout=10):
         timeout=timeout
     )
 
-def wait_for_watchdog_state(state, since=None, timeout=10):
-    return wait_for_watchdog_log(
+checkpoint = None
+
+# TODO: explain
+def wait_for_watchdog_state(state, timeout=setting_change_delay*2 + (retries+1)*(check_interval+3)):
+    global checkpoint
+    timestamp = wait_for_watchdog_log(
         f'Current state: {state}',
-        since=since,
+        since=checkpoint,
         timeout=timeout)
+
+    # Add 1 microsecond to ensure the next `since=` will be looking strictly
+    # into the future, this is crucial! Locale/timezone are ignored.
+    fmt = '%b %d %H:%M:%S.%f' # journalctl --output short-precise format: Jun 19 12:21:02.068866
+    time = datetime.datetime.strptime(timestamp, fmt)
+    new_time = time + datetime.timedelta(microseconds=1)
+    checkpoint = new_time.strftime(fmt)
+    return checkpoint
+
+
 ## == Setup
 
 stub = StubServer()
@@ -135,40 +156,80 @@ with TestPrecondition("PlayOS can reach the check URLs"):
     playos.succeed("curl --fail ${primaryCheckUrl}")
     playos.succeed("curl --fail ${secondaryCheckUrl}")
 
+
 ## == Test cases
 
 with TestCase("watchdog reaches ONCE_CONNECTED state") as t:
-    checkpoint = wait_for_watchdog_state('ONCE_CONNECTED', timeout=20)
+    wait_for_watchdog_state('ONCE_CONNECTED')
     t.assertEqual(0, get_connman_restarts())
 
-# it's possible that connman receives DHCP updates _after_ the watchdog
-# has determined ONCE_CONNECTED and this will now cause a SETTING_CHANGE_DELAY.
-# We sleep until the delay is done if that's the case
-try:
-    checkpoint = wait_for_watchdog_state('SETTING_CHANGE_DELAY', since=checkpoint, timeout=5)
-    time.sleep(${toString nodes.playos.playos.networking.watchdog.settingChangeDelay})
-except RuntimeError:
-    # no SETTING_CHANGE_DELAY happened, so we just continue
-    pass
+# Note: SETTING_CHANGE_DELAY possible here if connman receives DHCP updates _after_ the
+# watchdog has determined ONCE_CONNECTED. We don't care about it.
 
 stub.make_all_bad()
 
 with TestCase("watchdog reaches DISCONNECTED state and triggers restart"):
-    checkpoint = wait_for_watchdog_state('DISCONNECTED', since=checkpoint)
+    wait_for_watchdog_state('DISCONNECTED')
     time.sleep(1)
     t.assertEqual(1, get_connman_restarts())
+
+# Note: SETTING_CHANGE_DELAY will happend here due to the connman restart.
+# We ignore it.
 
 stub.make_ok(Endpoint.SECONDARY)
 
 with TestCase("watchdog reaches ONCE_CONNECTED state with only secondary URL good"):
-    checkpoint = wait_for_watchdog_state('ONCE_CONNECTED', since=checkpoint)
-
+    wait_for_watchdog_state('ONCE_CONNECTED')
 
 with TestCase("watchdog goes into SETTING_CHANGE_DELAY after connman changes"):
     service = get_first_connman_service_name(playos)
     playos.succeed(f"connmanctl config {service} --domains whatever.local")
 
-    checkpoint = wait_for_watchdog_state('SETTING_CHANGE_DELAY', since=checkpoint)
-    checkpoint = wait_for_watchdog_state('ONCE_CONNECTED', since=checkpoint)
+    wait_for_watchdog_state('SETTING_CHANGE_DELAY')
+    wait_for_watchdog_state('ONCE_CONNECTED')
+    t.assertEqual(1, get_connman_restarts())
+
+# This test case is inspired by a real-world scenario, see:
+# https://www.notion.so/dividat/PlayOS-network-connectivity-debugging-1fc6ed7e60528050a268f84009197715?source=copy_link#1fc6ed7e60528091b282f3dbfaf7db98
+with TestCase("watchdog restarts connman to recover from external ip setting corruption") as t:
+    playos.succeed("ip address flush dev eth0")
+    wait_for_watchdog_state('SETTING_CHANGE_DELAY')
+    wait_for_watchdog_state('ONCE_CONNECTED')
+    wait_for_watchdog_state('DISCONNECTED')
+    time.sleep(1)
+    t.assertEqual(2, get_connman_restarts())
+    wait_for_watchdog_state('ONCE_CONNECTED')
+
+with TestCase("watchdog recovers after ip route flush") as t:
+    playos.succeed("ip route flush dev eth0")
+    wait_for_watchdog_state('SETTING_CHANGE_DELAY')
+    wait_for_watchdog_state('ONCE_CONNECTED')
+    wait_for_watchdog_state('DISCONNECTED')
+    time.sleep(1)
+    t.assertEqual(3, get_connman_restarts())
+    wait_for_watchdog_state('ONCE_CONNECTED')
+
+
+# test case for false positives
+with TestCase("if connman gets misconfigured, watchdog remains disconnected after restarting connman") as t:
+    service = get_first_connman_service_name(playos)
+    # invalid static IP config, should make checkServerIP unreachable
+    playos.succeed(f"connmanctl config {service} --ipv4 manual 172.33.33.33 255.255.255.0 172.33.33.1")
+
+    wait_for_watchdog_state('SETTING_CHANGE_DELAY')
+    wait_for_watchdog_state('ONCE_CONNECTED')
+    wait_for_watchdog_state('DISCONNECTED')
+    time.sleep(1)
+    t.assertEqual(4, get_connman_restarts())
+    wait_for_watchdog_state('SETTING_CHANGE_DELAY')
+    wait_for_watchdog_state('NEVER_CONNECTED')
+
+    try:
+        wait_for_watchdog_state('ONCE_CONNECTED', timeout=check_interval*2)
+    except RuntimeError:
+        # all good, we were not supposed to reach this state
+        pass
+    else:
+        t.fail("Did not expect to reach ONCE_CONNECTED state!")
 '';
 }

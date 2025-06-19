@@ -58,9 +58,11 @@ class State(UpperStrEnum):
 def perform_single_url_check(url):
     # TODO: lookup proxy in connman if configured
     failure = None
+    # TODO: should this be configurable
+    timeout = 3 # seconds
     try:
         # stream=True avoids downloading the content, which we don't care about
-        r = requests.get(url, headers=CLIENT_HEADERS, stream=True, allow_redirects=True)
+        r = requests.get(url, headers=CLIENT_HEADERS, timeout=timeout, stream=True, allow_redirects=True)
         if r.status_code != 200:
             failure = RuntimeError(f"Bad HTTP status code: {r.status_code}")
     except Exception as e:
@@ -172,6 +174,7 @@ class ConnmanDbusMonitor:
 
 def run(cfg):
     state = State.NEVER_CONNECTED
+    prev_state = state
     remain_attempts = cfg.max_num_failures
 
     monitor = ConnmanDbusMonitor()
@@ -180,16 +183,22 @@ def run(cfg):
     while True:
         time_since_update = datetime.datetime.now() - monitor.last_update
 
+        if state != State.SETTING_CHANGE_DELAY:
+            prev_state = state
+
         if time_since_update.total_seconds() < cfg.setting_change_delay:
             # override state, because there are recent connman changes
             log("Connman service properties changed, will sleep.")
             state = State.SETTING_CHANGE_DELAY
 
+        # TODO: deal with this more gracefully?
+        if state != State.ONCE_CONNECTED:
+            remain_attempts = cfg.max_num_failures
+
         debug(f"Current state: {state}")
         match state:
             case State.NEVER_CONNECTED:
                 state = run_state_never_connected(cfg)
-                remain_attempts = cfg.max_num_failures
 
             case State.ONCE_CONNECTED:
                 state, remain_attempts = run_state_once_connected(cfg, remain_attempts)
@@ -198,7 +207,8 @@ def run(cfg):
                 state = run_state_disconnected(cfg)
 
             case State.SETTING_CHANGE_DELAY:
-                state = run_state_setting_change_delay(cfg, time_since_update)
+                run_state_setting_change_delay(cfg, time_since_update)
+                state = prev_state
 
 
 def main():
