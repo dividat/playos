@@ -137,6 +137,16 @@ def wait_for_watchdog_state(state, timeout=setting_change_delay*2 + (retries+1)*
     return checkpoint
 
 
+connman_restarts = 0
+
+def expect_no_new_connman_restarts(t):
+    t.assertEqual(connman_restarts, get_connman_restarts())
+
+def expect_connman_restart_increment(t):
+    global connman_restarts
+    t.assertEqual(connman_restarts + 1, get_connman_restarts())
+    connman_restarts += 1
+
 ## == Setup
 
 stub = StubServer()
@@ -161,33 +171,37 @@ with TestPrecondition("PlayOS can reach the check URLs"):
 
 with TestCase("watchdog reaches ONCE_CONNECTED state") as t:
     wait_for_watchdog_state('ONCE_CONNECTED')
-    t.assertEqual(0, get_connman_restarts())
+    expect_no_new_connman_restarts(t)
 
 # Note: SETTING_CHANGE_DELAY possible here if connman receives DHCP updates _after_ the
 # watchdog has determined ONCE_CONNECTED. We don't care about it.
 
 stub.make_all_bad()
 
-with TestCase("watchdog reaches DISCONNECTED state and triggers restart"):
+
+with TestCase("watchdog reaches DISCONNECTED state and triggers restart") as t:
     wait_for_watchdog_state('DISCONNECTED')
     time.sleep(1)
-    t.assertEqual(1, get_connman_restarts())
+    expect_connman_restart_increment(t)
 
 # Note: SETTING_CHANGE_DELAY will happend here due to the connman restart.
 # We ignore it.
 
 stub.make_ok(Endpoint.SECONDARY)
 
+
 with TestCase("watchdog reaches ONCE_CONNECTED state with only secondary URL good"):
     wait_for_watchdog_state('ONCE_CONNECTED')
 
-with TestCase("watchdog goes into SETTING_CHANGE_DELAY after connman changes"):
+
+with TestCase("watchdog goes into SETTING_CHANGE_DELAY after connman changes") as t:
     service = get_first_connman_service_name(playos)
     playos.succeed(f"connmanctl config {service} --domains whatever.local")
 
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     wait_for_watchdog_state('ONCE_CONNECTED')
-    t.assertEqual(1, get_connman_restarts())
+    expect_no_new_connman_restarts(t)
+
 
 # This test case is inspired by a real-world scenario, see:
 # https://www.notion.so/dividat/PlayOS-network-connectivity-debugging-1fc6ed7e60528050a268f84009197715?source=copy_link#1fc6ed7e60528091b282f3dbfaf7db98
@@ -197,8 +211,9 @@ with TestCase("watchdog restarts connman to recover from external ip setting cor
     wait_for_watchdog_state('ONCE_CONNECTED')
     wait_for_watchdog_state('DISCONNECTED')
     time.sleep(1)
-    t.assertEqual(2, get_connman_restarts())
+    expect_connman_restart_increment(t)
     wait_for_watchdog_state('ONCE_CONNECTED')
+
 
 with TestCase("watchdog recovers after ip route flush") as t:
     playos.succeed("ip route flush dev eth0")
@@ -206,11 +221,11 @@ with TestCase("watchdog recovers after ip route flush") as t:
     wait_for_watchdog_state('ONCE_CONNECTED')
     wait_for_watchdog_state('DISCONNECTED')
     time.sleep(1)
-    t.assertEqual(3, get_connman_restarts())
+    expect_connman_restart_increment(t)
     wait_for_watchdog_state('ONCE_CONNECTED')
 
 
-# test case for false positives
+# test case for false positives - a bit synthetic
 with TestCase("if connman gets misconfigured, watchdog remains disconnected after restarting connman") as t:
     service = get_first_connman_service_name(playos)
     # invalid static IP config, should make checkServerIP unreachable
@@ -220,7 +235,7 @@ with TestCase("if connman gets misconfigured, watchdog remains disconnected afte
     wait_for_watchdog_state('ONCE_CONNECTED')
     wait_for_watchdog_state('DISCONNECTED')
     time.sleep(1)
-    t.assertEqual(4, get_connman_restarts())
+    expect_connman_restart_increment(t)
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     wait_for_watchdog_state('NEVER_CONNECTED')
 

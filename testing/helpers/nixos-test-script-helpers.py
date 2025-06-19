@@ -64,23 +64,26 @@ def wait_for_logs(vm, regex, unit=None, since=None, timeout=10):
 
     # Note: it would be better to use short-monotonic or at least
     # short-iso-precise, but TODO explain
-    journal_cmd_base = f"journalctl -o short-precise -q --grep '{regex}' {maybe_unit} {maybe_since}"
+    journal_cmd_without_grep = f"journalctl -o short-precise -q {maybe_unit} {maybe_since}"
+    journal_cmd_base = f"{journal_cmd_without_grep} --grep '{regex}'"
 
     # TODO: explain why this is done the way it is done...
     full_cmd = f"""{journal_cmd_base} -n 1 \
             || (({journal_cmd_base} --follow || true) | head -1 | grep .)
     """
-    try:
-        out = vm.succeed(full_cmd, timeout=timeout)
+    status, out = vm.execute(full_cmd, timeout=timeout)
+    if status == 0:
         last_line = out.strip().split("\n")[-1]
         time = last_line.strip().split(f" {vm.name} ")[0].strip()
         return time
-    except Exception as e:
-        eprint(f"wait_for_logs ({full_cmd}) failed after {timeout} seconds")
-        eprint("Last VM logs:\n")
-        _, output = vm.execute(f"{journal_cmd_base} | tail -30")
+    elif status == 124: # man timeout
+        eprint(f"wait_for_logs ({journal_cmd_base}) timed out after {timeout} seconds")
+        eprint("Last logs without regex:\n")
+        _, output = vm.execute(f"{journal_cmd_without_grep} -n 30")
         eprint(output)
-        raise RuntimeError("wait_for_logs failed") from e
+        raise TimeoutError("wait_for_logs timed out")
+    else:
+        raise RuntimeError(f"wait_for_logs ({full_cmd}) exited with non-zero exit code ({status}) - invalid regex or since?")
 
 
 def get_first_connman_service_name(vm):
