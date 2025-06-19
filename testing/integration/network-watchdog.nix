@@ -102,19 +102,19 @@ def get_connman_restarts():
     """.strip())
     return int(num_starts_str.strip()) - 1
 
-def wait_for_watchdog_log(regex, after_cursor=None, timeout=10):
+def wait_for_watchdog_log(regex, since=None, timeout=10):
     return wait_for_logs(
         playos,
         regex,
         unit='playos-network-watchdog.service',
-        after_cursor=after_cursor,
+        since=since,
         timeout=timeout
     )
 
-def wait_for_watchdog_state(state, after_cursor=None, timeout=10):
+def wait_for_watchdog_state(state, since=None, timeout=10):
     return wait_for_watchdog_log(
         f'Current state: {state}',
-        after_cursor=after_cursor,
+        since=since,
         timeout=timeout)
 ## == Setup
 
@@ -138,14 +138,14 @@ with TestPrecondition("PlayOS can reach the check URLs"):
 ## == Test cases
 
 with TestCase("watchdog reaches ONCE_CONNECTED state") as t:
-    cursor = wait_for_watchdog_state('ONCE_CONNECTED', timeout=20)
+    checkpoint = wait_for_watchdog_state('ONCE_CONNECTED', timeout=20)
     t.assertEqual(0, get_connman_restarts())
 
 # it's possible that connman receives DHCP updates _after_ the watchdog
 # has determined ONCE_CONNECTED and this will now cause a SETTING_CHANGE_DELAY.
 # We sleep until the delay is done if that's the case
 try:
-    cursor = wait_for_watchdog_state('SETTING_CHANGE_DELAY', after_cursor=cursor, timeout=5)
+    checkpoint = wait_for_watchdog_state('SETTING_CHANGE_DELAY', since=checkpoint, timeout=5)
     time.sleep(${toString nodes.playos.playos.networking.watchdog.settingChangeDelay})
 except RuntimeError:
     # no SETTING_CHANGE_DELAY happened, so we just continue
@@ -154,21 +154,21 @@ except RuntimeError:
 stub.make_all_bad()
 
 with TestCase("watchdog reaches DISCONNECTED state and triggers restart"):
-    cursor = wait_for_watchdog_state('DISCONNECTED', after_cursor=cursor)
+    checkpoint = wait_for_watchdog_state('DISCONNECTED', since=checkpoint)
     time.sleep(1)
     t.assertEqual(1, get_connman_restarts())
 
 stub.make_ok(Endpoint.SECONDARY)
 
 with TestCase("watchdog reaches ONCE_CONNECTED state with only secondary URL good"):
-    cursor = wait_for_watchdog_state('ONCE_CONNECTED', after_cursor=cursor)
+    checkpoint = wait_for_watchdog_state('ONCE_CONNECTED', since=checkpoint)
 
 
 with TestCase("watchdog goes into SETTING_CHANGE_DELAY after connman changes"):
     service = get_first_connman_service_name(playos)
     playos.succeed(f"connmanctl config {service} --domains whatever.local")
 
-    cursor = wait_for_watchdog_state('SETTING_CHANGE_DELAY', after_cursor=cursor)
-    cursor = wait_for_watchdog_state('ONCE_CONNECTED', after_cursor=cursor)
+    checkpoint = wait_for_watchdog_state('SETTING_CHANGE_DELAY', since=checkpoint)
+    checkpoint = wait_for_watchdog_state('ONCE_CONNECTED', since=checkpoint)
 '';
 }

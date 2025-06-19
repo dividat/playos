@@ -58,24 +58,21 @@ class TestCase(AbstractTestCheck):
         super().__init__("TestCase", test_descr)
 
 # TODO: document return
-def wait_for_logs(vm, regex, unit=None, after_cursor=None, timeout=10):
+def wait_for_logs(vm, regex, unit=None, since=None, timeout=10):
     maybe_unit = f"--unit={unit}" if unit else ""
-    maybe_after_cursor = f"--after-cursor '{after_cursor}'" if after_cursor else ""
+    maybe_since = f"--since='{since}'" if since else ""
 
-    journal_cmd_base = f"journalctl -q --grep '{regex}' {maybe_unit} {maybe_after_cursor}"
+    journal_cmd_base = f"journalctl -o short-precise -q --grep '{regex}' {maybe_unit} {maybe_since}"
 
     # TODO: explain why this is done the way it is done...
-    # TODO: warn about -n / --lines
-    # Note: there's a tiny chance that something of relevance might happen
-    # between the above command and the cursor inserted below.
-    full_cmd = f"""{journal_cmd_base} --show-cursor \
-            || ((({journal_cmd_base} --follow || true) | head -1 | grep .) && journalctl -n 0 --show-cursor)
+    full_cmd = f"""{journal_cmd_base} -n 1 \
+            || (({journal_cmd_base} --follow || true) | head -1 | grep .)
     """
     try:
         out = vm.succeed(full_cmd, timeout=timeout)
-        #cursor = vm.succeed("journalctl -n 0 --show-cursor -q")
-        cursor = out.strip().split("\n")[-1]
-        return cursor.strip().split("cursor:")[-1].strip()
+        last_line = out.strip().split("\n")[-1]
+        time = last_line.strip().split(f" {vm.name} ")[0].strip()
+        return time
     except Exception as e:
         eprint(f"wait_for_logs ({full_cmd}) failed after {timeout} seconds")
         eprint("Last VM logs:\n")
