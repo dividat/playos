@@ -35,7 +35,7 @@ pkgs.nixosTest {
                 COUNT=$(cat $COUNTER_FILE || echo 0)
                 ((COUNT++))
                 echo $COUNT > $COUNTER_FILE
-                echo "HTTP/1.1 200 OK"
+                echo -e "HTTP/1.1 200 OK\r\n"
               '';
             in
             "${pkgs.nmap}/bin/ncat -lk -p ${toString serverPort} -c ${counter}";
