@@ -124,7 +124,7 @@ class StubServer:
         self._endpoint_file(endpoint).write_text("OK")
 
     def make_bad(self, endpoint: Endpoint):
-        self._endpoint_file(endpoint).unlink()
+        self._endpoint_file(endpoint).unlink(missing_ok=True)
 
     def make_all_ok(self):
         for e in Endpoint:
