@@ -13,19 +13,20 @@ from gi.repository import GLib # type: ignore
 import threading
 import math
 from proxy_utils import get_current_proxy
+import logging
 
 CLIENT_HEADERS = {'User-Agent': 'PlayOS watchdog 1.0'}
 CONNMAN_RESTART_COMMAND = "systemctl restart connman.service"
+logger = logging.getLogger(__name__)
 
 DEBUG = False
 
 def log(msg):
-    print(msg)
+    logger.info(msg)
 
 
 def debug(msg):
-    if DEBUG:
-        print(f"[DEBUG] {msg}")
+    logger.debug(msg)
 
 
 def parse_args():
@@ -220,11 +221,9 @@ def run(cfg):
 
 
 def main():
-    global DEBUG
-
     args = parse_args()
     if args.debug:
-        DEBUG = True
+        logging.basicConfig(level=logging.DEBUG)
 
     run(args)
 
