@@ -34,6 +34,7 @@ python3Packages.buildPythonApplication rec {
     qt6.qtbase
     requests
     types-requests
+    playos-proxy-utils
   ] ++ additional_inputs;
 
   postInstall = ''

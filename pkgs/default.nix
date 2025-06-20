@@ -26,6 +26,10 @@ let
       });
 
       connman = (import ./connman) super;
+
+      playos-proxy-utils = import ../proxy-utils {
+        pkgs = self;
+      };
     };
 
 in

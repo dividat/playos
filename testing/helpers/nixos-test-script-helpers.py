@@ -79,6 +79,7 @@ def wait_for_logs(vm, regex, unit=None, since=None, timeout=10):
         time = last_line.strip().split(f" {vm.name} ")[0].strip()
         return time
     elif status == 124: # man timeout
+        #TODO: print only in stacktrace, not by itself
         eprint(f"wait_for_logs ({journal_cmd_base}) timed out after {timeout} seconds")
         eprint("Last logs without regex:\n")
         _, output = vm.execute(f"{journal_cmd_without_grep} -n 30")

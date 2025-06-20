@@ -13,12 +13,32 @@ let
           wrapGAppsHook
       ];
 
-      flakeIgnore = [ "E731" "E501" "E741" ];
+    nativeCheckInputs = with python3Packages; [
+        types-requests
+        ruff
+        mypy
+    ];
+
+     checkPhase = ''
+        runHook preCheck
+
+        ruff check
+
+        mypy \
+            --no-color-output \
+            --pretty \
+            --exclude 'build/.*' \
+            --exclude setup.py \
+            .
+
+        runHook postCheck
+     '';
 
       propagatedBuildInputs = with python3Packages; [
           dbus-python
           pygobject3
           requests
+          playos-proxy-utils
       ];
   };
 in

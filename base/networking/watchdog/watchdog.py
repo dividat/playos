@@ -7,11 +7,12 @@ import subprocess
 from collections import deque
 from typing import Tuple
 import datetime
-import dbus
-from dbus.mainloop.glib import DBusGMainLoop
-from gi.repository import GLib
+import dbus # type: ignore
+from dbus.mainloop.glib import DBusGMainLoop # type: ignore
+from gi.repository import GLib # type: ignore
 import threading
 import math
+from proxy_utils import get_current_proxy
 
 CLIENT_HEADERS = {'User-Agent': 'PlayOS watchdog 1.0'}
 CONNMAN_RESTART_COMMAND = "systemctl restart connman.service"
@@ -55,14 +56,18 @@ class State(UpperStrEnum):
 
 
 # Returns None if successful or error message if failed
-def perform_single_url_check(url):
-    # TODO: lookup proxy in connman if configured
+def perform_single_url_check(url, proxy=None):
     failure = None
     # TODO: should this be configurable
     timeout = 3 # seconds
+    proxies = None
+    if proxy:
+        proxies = { 'http': proxy.to_url() }
+
     try:
         # stream=True avoids downloading the content, which we don't care about
-        r = requests.get(url, headers=CLIENT_HEADERS, timeout=timeout, stream=True, allow_redirects=True)
+        r = requests.get(url, headers=CLIENT_HEADERS, timeout=timeout,
+                         stream=True, allow_redirects=True, proxies=proxies)
         if r.status_code != 200:
             failure = RuntimeError(f"Bad HTTP status code: {r.status_code}")
     except Exception as e:
@@ -76,11 +81,12 @@ def perform_single_url_check(url):
     return failure
 
 
-def perform_url_checks(urls):
+def perform_url_checks(urls, bus):
+    proxy = get_current_proxy(bus)
     url_queue = deque(urls)
     while url_queue:
         next_url = url_queue.popleft()
-        check_result = perform_single_url_check(next_url)
+        check_result = perform_single_url_check(next_url, proxy=proxy)
 
         if check_result is None:
             return
@@ -94,20 +100,20 @@ def check_sleep(cfg):
     time.sleep(cfg.check_interval)
 
 
-def run_state_never_connected(cfg) -> State:
-    err = perform_url_checks(cfg.check_urls)
+def run_state_never_connected(cfg, bus) -> State:
+    err = perform_url_checks(cfg.check_urls, bus)
     if err:
         log(f"Check URL failed for all URLs, sleeping for {cfg.check_interval} seconds")
         check_sleep(cfg)
         return State.NEVER_CONNECTED
     else:
-        log(f"Detected successful internet connection")
+        log("Detected successful internet connection")
         return State.ONCE_CONNECTED
 
 
-def run_state_once_connected(cfg, remain_attempts) -> Tuple[State, int]:
+def run_state_once_connected(cfg, remain_attempts, bus) -> Tuple[State, int]:
     if remain_attempts > 0:
-        err = perform_url_checks(cfg.check_urls)
+        err = perform_url_checks(cfg.check_urls, bus)
         if err:
             remain_attempts -= 1
             log(f"Check URLs failed, remaining attempts: {remain_attempts}")
@@ -198,10 +204,12 @@ def run(cfg):
         debug(f"Current state: {state}")
         match state:
             case State.NEVER_CONNECTED:
-                state = run_state_never_connected(cfg)
+                state = run_state_never_connected(cfg, monitor._bus)
 
             case State.ONCE_CONNECTED:
-                state, remain_attempts = run_state_once_connected(cfg, remain_attempts)
+                state, remain_attempts = run_state_once_connected(cfg,
+                                                                  remain_attempts,
+                                                                  monitor._bus)
 
             case State.DISCONNECTED:
                 state = run_state_disconnected(cfg)

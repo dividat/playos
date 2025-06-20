@@ -44,7 +44,8 @@ pkgs.testers.runNixOSTest {
           serviceConfig = {
             ExecStart =
               let
-                respond = ''echo "HTTP/1.1 200 OK"'';
+                respond =
+                    ''echo -e "HTTP/1.1 200 OK\r\n" && echo "YOU_WERE_PROXIED"'';
               in
               "${pkgs.nmap}/bin/ncat -lk -p 9999 -c '${respond}'";
             Restart = "always";
@@ -57,7 +58,7 @@ pkgs.testers.runNixOSTest {
             Listen = "0.0.0.0";
             Port = proxyPort;
             BasicAuth = "${proxyUser} ${proxyPassword}";
-            Upstream = ''http ${checkServerIP}:${toString checkServerPort} "127.0.0.1:9999"'';
+            Upstream = ''http 127.0.0.1:9999''; # "${checkServerIP}/32"'';
           };
         };
 
@@ -206,10 +207,11 @@ with TestPrecondition("PlayOS is booted and services are running "):
     playos.wait_for_unit('tinyproxy.service')
     playos.wait_for_unit('always-ok-http-service.service')
 
-with TestPrecondition("PlayOS can reach the check URLs"):
+with TestPrecondition("PlayOS can reach the check URLs") as t: 
     playos.succeed("curl --fail ${primaryCheckUrl}")
     playos.succeed("curl --fail ${secondaryCheckUrl}")
-    playos.succeed("curl --proxy ${proxyURI} --fail ${primaryCheckUrl}")
+    out = playos.succeed("curl --proxy ${proxyURI} --fail ${primaryCheckUrl}")
+    t.assertEqual(out.strip(), "YOU_WERE_PROXIED")
 
 
 ## == Test cases
@@ -305,7 +307,7 @@ with TestCase("if connman gets misconfigured, watchdog remains disconnected afte
 
     try:
         wait_for_watchdog_state('ONCE_CONNECTED', timeout=check_interval*2)
-    except RuntimeError:
+    except TimeoutError:
         # all good, we were not supposed to reach this state
         pass
     else:
