@@ -166,7 +166,7 @@ def run_state_setting_change_delay(cfg, elasped_time, next_state: State) -> Stat
     remaining_delay = cfg.setting_change_delay - elasped_time.total_seconds()
     if remaining_delay > 0:
         sleep_seconds = math.ceil(remaining_delay)
-        debug(f"Sleeping for {sleep_seconds} seconds after connman update")
+        log(f"Sleeping for {sleep_seconds} seconds after connman setting changes")
         time.sleep(sleep_seconds)
     return next_state
 
