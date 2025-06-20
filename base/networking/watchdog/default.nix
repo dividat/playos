@@ -92,7 +92,6 @@ in
       after = [ "network.target" "connman.service" ];
       wantedBy = [ "multi-user.target" ];
 
-
       serviceConfig = {
         StandardOutput = "journal";
         StandardError = "inherit";
@@ -109,13 +108,10 @@ in
                 --setting-change-delay ${toString cfg.settingChangeDelay}''
                 + (lib.optionalString cfg.debug " --debug");
         User = "root";
-        RestartSec = "10s"; # TODO: ??
-        Restart = "always"; # TODO: ?? - either the watchdog can exit and expected to be restarted or run forever
+        RestartSec = "10s";
+        Restart = "always";
       };
     };
 
-
   };
 }
-
-
