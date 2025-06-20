@@ -73,7 +73,7 @@ pkgs.testers.runNixOSTest {
             ];
             maxNumFailures = 3;
             checkInterval = 1;
-            settingChangeDelay = 2;
+            settingChangeDelay = 3;
             checkUrlTimeout = 0.2;
             debug = true;
         };
@@ -216,7 +216,7 @@ with TestPrecondition("PlayOS is booted and services are running "):
     playos.wait_for_unit('tinyproxy.service')
     playos.wait_for_unit('always-ok-http-service.service')
 
-with TestPrecondition("PlayOS can reach the check URLs") as t: 
+with TestPrecondition("PlayOS can reach the check URLs") as t:
     playos.succeed("curl --fail ${primaryCheckUrl}")
     playos.succeed("curl --fail ${secondaryCheckUrl}")
     out = playos.succeed("curl --proxy ${proxyURI} --fail ${primaryCheckUrl}")
@@ -234,23 +234,43 @@ with TestCase("watchdog reaches ONCE_CONNECTED state") as t:
 
 stub.make_all_bad()
 
-with TestCase("watchdog reaches DISCONNECTED state and triggers restart") as t:
+with TestCase("watchdog eventually reaches DISCONNECTED state and triggers restart") as t:
     wait_for_watchdog_state('DISCONNECTED')
     wait_for_connman_restart(t)
 
-# Note: SETTING_CHANGE_DELAY will happend here and later due to the connman
-# restarts. It's expected and we ignore it.
+# Note: SETTING_CHANGE_DELAY will happen here (and later due) to the connman restarts.
 
 stub.make_ok(Endpoint.SECONDARY)
 
 with TestCase("watchdog reaches ONCE_CONNECTED state with only secondary URL good"):
     wait_for_watchdog_state('ONCE_CONNECTED')
 
+
 with TestCase("watchdog goes into SETTING_CHANGE_DELAY after connman changes") as t:
     configure_connman("--domains whatever.local")
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     wait_for_watchdog_state('ONCE_CONNECTED')
     expect_no_new_connman_restarts(t)
+
+
+# Note: this test case is "here" in the sequence, because by we know connman is
+# done with configuration and there should be no more SETTING_CHANGE_DELAYs that
+# affect the test timing.
+with TestCase("watchdog retries with sleep according to config") as t:
+    stub.make_all_bad()
+    try:
+        wait_for_watchdog_state('DISCONNECTED', timeout=check_interval*(retries-1))
+    except TimeoutError:
+        # all good, should not have reached DISCONNECTED yet
+        pass
+    else:
+        t.fail("Reached DISCONNECTED state too soon!")
+
+    wait_for_watchdog_state('DISCONNECTED', timeout=check_interval+1)
+    wait_for_connman_restart(t)
+    wait_for_watchdog_state('SETTING_CHANGE_DELAY')
+    stub.make_all_ok()
+    wait_for_watchdog_state('ONCE_CONNECTED')
 
 
 # This test case is inspired by a real-world scenario, see:
@@ -274,8 +294,9 @@ with TestCase("watchdog recovers after ip route flush") as t:
 
 ## Proxy tests
 
+stub.make_all_bad()
+
 with TestCase("watchdog detects configured proxy and uses it") as t:
-    stub.make_all_bad()
     wait_for_watchdog_state('DISCONNECTED')
     wait_for_connman_restart(t)
     wait_for_watchdog_state('NEVER_CONNECTED')
