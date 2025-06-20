@@ -215,17 +215,6 @@ def screenshot_and_ocr(vm):
         return tesserocr.image_to_text(im)
 
 
-def wait_until_passes(test, retries=10, sleep=1):
-    while True:
-        try:
-            return test()
-        except Exception as e:
-            if retries > 0:
-                time.sleep(sleep)
-                retries -= 1
-            else:
-                raise e
-
 ### === Stub Update server setup
 
 with TestPrecondition("Stub update server is started"):
