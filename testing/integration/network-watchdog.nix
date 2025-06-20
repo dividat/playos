@@ -14,7 +14,7 @@ let
   secondaryCheckUrl = "${checkBaseURL}/check-secondary.html";
 in
 pkgs.testers.runNixOSTest {
-  name = "TODO";
+  name = "network watchdog integration tests";
 
   nodes = {
     playos = { config, nodes, pkgs, lib, ... }: {
@@ -24,10 +24,9 @@ pkgs.testers.runNixOSTest {
         })
       ];
 
-
       config = {
         virtualisation.forwardPorts = [
-            # Forward check server IP from VM to build sandbox
+            # Forward check server IP from (guest) VM to build sandbox (host)
             {   from = "guest";
                 guest.address = checkServerIP;
                 guest.port = checkServerPort;
@@ -138,14 +137,14 @@ class StubServer:
 
 def get_connman_restarts():
     # This counts both systemd and user-initiated restarts, unlike NRestarts from
-    # `systemctl show`
-    # once updated to systemd v257, can be simplified to `journalctl --list-invocations`
+    # `systemctl show`. Once updated to systemd v257, can be simplified to `journalctl --list-invocations`
     num_starts_str = playos.succeed("""
         journalctl -o json --unit connman.service \
             | grep -o -P '"_SYSTEMD_INVOCATION_ID":.*?,' \
             | sort | uniq | wc -l
     """.strip())
     return int(num_starts_str.strip()) - 1
+
 
 def wait_for_watchdog_log(regex, since=None, timeout=10):
     return wait_for_logs(
@@ -156,14 +155,18 @@ def wait_for_watchdog_log(regex, since=None, timeout=10):
         timeout=timeout
     )
 
-checkpoint = None
+CURRENT_CHECKPOINT = None
 
-# TODO: explain
+# Waits for watchdog to announce that it has reached `state` since
+# CURRENT_CHECKPOINT checkpoint and updates CURRENT_CHECKPOINT if it does.
+# Each call to this function ensures that the reached state is new, i.e.
+# was reached after the previous call to `wait_for_watchdog_state`.
+# Note that this will skip/ignore intermediate states.
 def wait_for_watchdog_state(state, timeout=max_state_change_time):
-    global checkpoint
+    global CURRENT_CHECKPOINT
     timestamp = wait_for_watchdog_log(
         f'Current state: {state}',
-        since=checkpoint,
+        since=CURRENT_CHECKPOINT,
         timeout=timeout)
 
     # Add 1 microsecond to ensure the next `since=` will be looking strictly
@@ -171,19 +174,18 @@ def wait_for_watchdog_state(state, timeout=max_state_change_time):
     fmt = '%b %d %H:%M:%S.%f' # journalctl --output short-precise format: Jun 19 12:21:02.068866
     time = datetime.datetime.strptime(timestamp, fmt)
     new_time = time + datetime.timedelta(microseconds=1)
-    checkpoint = new_time.strftime(fmt)
-    return checkpoint
+    CURRENT_CHECKPOINT = new_time.strftime(fmt)
 
 
-connman_restarts = 0
+CONNMAN_RESTARTS = 0
 
 def expect_no_new_connman_restarts(t):
-    t.assertEqual(connman_restarts, get_connman_restarts())
+    t.assertEqual(CONNMAN_RESTARTS, get_connman_restarts())
 
 def expect_connman_restart_increment(t):
-    global connman_restarts
-    t.assertEqual(connman_restarts + 1, get_connman_restarts())
-    connman_restarts += 1
+    global CONNMAN_RESTARTS
+    t.assertEqual(CONNMAN_RESTARTS + 1, get_connman_restarts())
+    CONNMAN_RESTARTS += 1
 
 
 def wait_for_connman_restart(t):
@@ -192,7 +194,6 @@ def wait_for_connman_restart(t):
         sleep=1,
         retries=3
     )
-
 
 def configure_connman(flags):
     service = get_first_connman_service_name(playos)
@@ -228,53 +229,25 @@ with TestCase("watchdog reaches ONCE_CONNECTED state") as t:
     wait_for_watchdog_state('ONCE_CONNECTED')
     expect_no_new_connman_restarts(t)
 
-with TestCase("watchdog detects configured proxy and uses it") as t:
-    stub.make_all_bad()
-    wait_for_watchdog_state('DISCONNECTED')
-    wait_for_connman_restart(t)
-    wait_for_watchdog_state('NEVER_CONNECTED')
-
-    configure_connman("--proxy manual ${proxyURI}")
-    wait_for_watchdog_state('SETTING_CHANGE_DELAY')
-    # proxy redirects check URLs to always-ok-http-service, so it works
-    wait_for_watchdog_state('ONCE_CONNECTED')
-
-
-with TestCase("watchdog responds to proxy removal") as t:
-    configure_connman("--proxy direct")
-    wait_for_watchdog_state('SETTING_CHANGE_DELAY')
-    # stub is still in make_all_bad, so we get disconnected
-    wait_for_watchdog_state('DISCONNECTED')
-    wait_for_connman_restart(t)
-    wait_for_watchdog_state('NEVER_CONNECTED')
-    stub.make_all_ok()
-    wait_for_watchdog_state('ONCE_CONNECTED')
-
-
 # Note: SETTING_CHANGE_DELAY possible here if connman receives DHCP updates _after_ the
 # watchdog has determined ONCE_CONNECTED. We don't care about it.
 
 stub.make_all_bad()
 
-
 with TestCase("watchdog reaches DISCONNECTED state and triggers restart") as t:
     wait_for_watchdog_state('DISCONNECTED')
     wait_for_connman_restart(t)
 
-# Note: SETTING_CHANGE_DELAY will happend here due to the connman restart.
-# We ignore it.
+# Note: SETTING_CHANGE_DELAY will happend here and later due to the connman
+# restarts. It's expected and we ignore it.
 
 stub.make_ok(Endpoint.SECONDARY)
-
 
 with TestCase("watchdog reaches ONCE_CONNECTED state with only secondary URL good"):
     wait_for_watchdog_state('ONCE_CONNECTED')
 
-
 with TestCase("watchdog goes into SETTING_CHANGE_DELAY after connman changes") as t:
-    service = get_first_connman_service_name(playos)
-    playos.succeed(f"connmanctl config {service} --domains whatever.local")
-
+    configure_connman("--domains whatever.local")
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     wait_for_watchdog_state('ONCE_CONNECTED')
     expect_no_new_connman_restarts(t)
@@ -297,6 +270,29 @@ with TestCase("watchdog recovers after ip route flush") as t:
     wait_for_watchdog_state('ONCE_CONNECTED')
     wait_for_watchdog_state('DISCONNECTED')
     wait_for_connman_restart(t)
+    wait_for_watchdog_state('ONCE_CONNECTED')
+
+## Proxy tests
+
+with TestCase("watchdog detects configured proxy and uses it") as t:
+    stub.make_all_bad()
+    wait_for_watchdog_state('DISCONNECTED')
+    wait_for_connman_restart(t)
+    wait_for_watchdog_state('NEVER_CONNECTED')
+
+    configure_connman("--proxy manual ${proxyURI}")
+    wait_for_watchdog_state('SETTING_CHANGE_DELAY')
+    # proxy redirects check URLs to always-ok-http-service, so it works
+    wait_for_watchdog_state('ONCE_CONNECTED')
+
+with TestCase("watchdog responds to proxy removal") as t:
+    configure_connman("--proxy direct")
+    wait_for_watchdog_state('SETTING_CHANGE_DELAY')
+    # stub is still in make_all_bad, so we get disconnected
+    wait_for_watchdog_state('DISCONNECTED')
+    wait_for_connman_restart(t)
+    wait_for_watchdog_state('NEVER_CONNECTED')
+    stub.make_all_ok()
     wait_for_watchdog_state('ONCE_CONNECTED')
 
 
