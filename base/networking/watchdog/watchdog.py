@@ -50,7 +50,10 @@ def perform_single_url_check(url, timeout, proxy=None):
     failure = None
     proxies = None
     if proxy:
-        proxies = { 'http': proxy.to_url() }
+        proxies = {
+            'http': proxy.to_url(),
+            'https': proxy.to_url()
+        }
 
     try:
         # stream=True avoids downloading the content, which we don't care about
