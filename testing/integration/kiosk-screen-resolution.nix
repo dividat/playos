@@ -82,8 +82,6 @@ pkgs.nixosTest {
 
   testScript = ''
     ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
-    import time
-    import tempfile
     from collections import Counter
     from PIL import Image, ImageChops
 
