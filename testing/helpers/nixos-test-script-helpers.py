@@ -59,32 +59,54 @@ class TestCase(AbstractTestCheck):
     def __init__(self, test_descr):
         super().__init__("TestCase", test_descr)
 
-# TODO: document return
+# Wait until journactl contains a log entry with a message matching the `regex`
+# or time out. Can be optionally filtered by `since` and `unit, with the same
+# semantics as the journactl flags.
+#
+# On success, returns the timestamp of the _latest_ journactl entry matching the
+# query, which can be used for filter further queries with `since`.
+#
+# WARNING: Note that `journactl` is left-inclusive, so if you have a journal like this:
+#
+#       timestamp=1 A
+#       timestamp=1 B
+#       timestamp=2 C
+#
+#  then
+#
+#       ts = wait_for_logs(vm, 'B')      # succeeds, ts=1
+#       wait_for_logs(vm, 'A', since=ts) # succeeds, even though event A _does not follow event B_
+#
+# even with microsecond precision, this can happen if log entries are produced
+# rapidly.
 def wait_for_logs(vm, regex, unit=None, since=None, timeout=10):
     maybe_unit = f"--unit={unit}" if unit else ""
     maybe_since = f"--since='{since}'" if since else ""
 
     # Note: it would be better to use short-monotonic or at least
-    # short-iso-precise, but TODO explain
+    # short-iso-precise, but `journalctl --since` ONLY accepts this format...
     journal_cmd_without_grep = f"journalctl -o short-precise -q {maybe_unit} {maybe_since}"
     journal_cmd_base = f"{journal_cmd_without_grep} --grep '{regex}'"
 
-    # TODO: explain why this is done the way it is done...
+    # This is done in awkward way since using both -n and --grep implies
+    # --reverse in journalctl, which combined with --follow makes no sense at
+    # all.
+    # The `|| true` avoids a pipefail when --follow is closed by head.
+    # The `grep .` is to ensure exit code is non-zero if output is empty
     full_cmd = f"""{journal_cmd_base} -n 1 \
-            || (({journal_cmd_base} --follow || true) | head -1 | grep .)
+                || (({journal_cmd_base} --follow || true) | head -1 | grep .)
     """
     status, out = vm.execute(full_cmd, timeout=timeout)
     if status == 0:
         last_line = out.strip().split("\n")[-1]
         time = last_line.strip().split(f" {vm.name} ")[0].strip()
         return time
-    elif status == 124: # man timeout
-        #TODO: print only in stacktrace, not by itself
-        eprint(f"wait_for_logs ({journal_cmd_base}) timed out after {timeout} seconds")
-        eprint("Last logs without regex:\n")
+    elif status == 124: # specified in timeout man pages
         _, output = vm.execute(f"{journal_cmd_without_grep} -n 30")
-        eprint(output)
-        raise TimeoutError("wait_for_logs timed out")
+        error_message = f"wait_for_logs ({journal_cmd_base}) timed out after {timeout} seconds"
+        last_logs_message = f"Last logs without regex:\n{output}"
+        full_err_message = f"{error_message}\n{last_logs_message}"
+        raise TimeoutError(full_err_message)
     else:
         raise RuntimeError(f"wait_for_logs ({full_cmd}) exited with non-zero exit code ({status}) - invalid regex or since?")
 
