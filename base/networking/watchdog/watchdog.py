@@ -131,7 +131,7 @@ def run_state_never_connected(cfg, url_check) -> State:
         check_sleep(cfg)
         return StateNeverConnected()
     else:
-        log("Detected successful internet connection")
+        log("Detected a working internet connection!")
         return StateOnceConnected(cfg.max_num_failures)
 
 
@@ -144,7 +144,7 @@ def run_state_once_connected(cfg, url_check, remain_attempts) -> State:
             check_sleep(cfg)
             return StateOnceConnected(remain_attempts)
         else:
-            log("Check URL successful, ")
+            debug("Check URL successful.")
             check_sleep(cfg)
             return StateOnceConnected(cfg.max_num_failures)
 
@@ -250,6 +250,8 @@ def main():
     args = parse_args()
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     run(args)
 
