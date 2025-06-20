@@ -50,25 +50,31 @@ in
       checkURLs = mkOption {
         example = [ "https://play.dividat.com" "https://api.dividat.com" ];
         type = types.nonEmptyListOf types.str;
-        description = "List of URLs to determine if internet is reachable. If at least one URL is reachable, then we believe internet is reachable. URLs are tried sequentially";
+        description = "List of URLs to determine if internet is reachable. If at least one URL is reachable, then we believe internet is reachable. URLs are tried sequentially.";
       };
 
       maxNumFailures = mkOption {
         default = 3;
         type = types.ints.positive;
-        description = "How many times to check before determining that internet connectivity is “lost”. Total wait time is `maxNumFailures * checkInterval`";
+        description = "How many times to check before determining that internet connectivity is “lost”. Total wait time is `maxNumFailures * checkInterval` plus a worst-case factor `len(checkURLs) * checkUrlTimeout`";
       };
 
       checkInterval = mkOption {
-        type = types.ints.positive;
+        type = types.numbers.positive;
         description = "Interval for checking `checkUrl` in seconds";
         default = 60*3;
       };
 
       settingChangeDelay = mkOption {
         default = 60*5;
-        type = types.ints.positive;
+        type = types.numbers.positive;
         description = "How many seconds to pause the watchdog for after any connman (service) setting changes (e.g. user has changed the wifi passphrase).";
+      };
+
+      checkUrlTimeout = mkOption {
+        default = 5;
+        type = types.numbers.positive;
+        description = "Timeout in seconds for the individual HTTP request.";
       };
 
       debug = mkOption {
@@ -99,6 +105,7 @@ in
                  ${checkURLflags} \
                 --max-num-failures ${toString cfg.maxNumFailures} \
                 --check-interval ${toString cfg.checkInterval} \
+                --check-url-timeout ${toString cfg.checkUrlTimeout} \
                 --setting-change-delay ${toString cfg.settingChangeDelay}''
                 + (lib.optionalString cfg.debug " --debug");
         User = "root";

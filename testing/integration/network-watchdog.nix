@@ -58,7 +58,7 @@ pkgs.testers.runNixOSTest {
             Listen = "0.0.0.0";
             Port = proxyPort;
             BasicAuth = "${proxyUser} ${proxyPassword}";
-            Upstream = ''http 127.0.0.1:9999''; # "${checkServerIP}/32"'';
+            Upstream = ''http 127.0.0.1:9999'';
           };
         };
 
@@ -74,7 +74,8 @@ pkgs.testers.runNixOSTest {
             ];
             maxNumFailures = 3;
             checkInterval = 1;
-            settingChangeDelay = 3;
+            settingChangeDelay = 2;
+            checkUrlTimeout = 0.2;
             debug = true;
         };
       };
@@ -87,6 +88,9 @@ pkgs.testers.runNixOSTest {
   ];
 
   testScript = {nodes}:
+let
+    watchdogCfg = nodes.playos.playos.networking.watchdog;
+in
 ''
 ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
 import pathlib
@@ -95,9 +99,13 @@ import datetime
 
 ## == Config vars
 
-check_interval = ${toString nodes.playos.playos.networking.watchdog.checkInterval}
-retries = ${toString nodes.playos.playos.networking.watchdog.maxNumFailures}
-setting_change_delay = ${toString nodes.playos.playos.networking.watchdog.settingChangeDelay}
+check_interval = ${toString watchdogCfg.checkInterval}
+retries = ${toString watchdogCfg.maxNumFailures}
+setting_change_delay = ${toString watchdogCfg.settingChangeDelay}
+watchdog_http_req_timeout = ${toString watchdogCfg.checkUrlTimeout}
+
+# Worst case delay: once or twice delayed due to connman setting changes + retries exhausted
+max_state_change_time = setting_change_delay*2 + (retries+1)*(check_interval+watchdog_http_req_timeout)
 
 ## == Helpers
 
@@ -151,7 +159,7 @@ def wait_for_watchdog_log(regex, since=None, timeout=10):
 checkpoint = None
 
 # TODO: explain
-def wait_for_watchdog_state(state, timeout=setting_change_delay*2 + (retries+1)*(check_interval+3)):
+def wait_for_watchdog_state(state, timeout=max_state_change_time):
     global checkpoint
     timestamp = wait_for_watchdog_log(
         f'Current state: {state}',
