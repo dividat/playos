@@ -104,7 +104,7 @@ setting_change_delay = ${toString watchdogCfg.settingChangeDelay}
 watchdog_http_req_timeout = ${toString watchdogCfg.checkUrlTimeout}
 
 # Worst case delay: once or twice delayed due to connman setting changes + retries exhausted
-max_state_change_time = setting_change_delay*2 + (retries+1)*(check_interval+watchdog_http_req_timeout)
+max_state_change_time = setting_change_delay*2 + (retries-1)*(check_interval+watchdog_http_req_timeout*2) + 1
 
 ## == Helpers
 
@@ -259,7 +259,7 @@ with TestCase("watchdog goes into SETTING_CHANGE_DELAY after connman changes") a
 with TestCase("watchdog retries with sleep according to config") as t:
     stub.make_all_bad()
     try:
-        wait_for_watchdog_state('DISCONNECTED', timeout=check_interval*(retries-1))
+        wait_for_watchdog_state('DISCONNECTED', timeout=check_interval*(retries-2))
     except TimeoutError:
         # all good, should not have reached DISCONNECTED yet
         pass

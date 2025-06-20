@@ -56,7 +56,7 @@ in
       maxNumFailures = mkOption {
         default = 3;
         type = types.ints.positive;
-        description = "How many times to check before determining that internet connectivity is “lost”. Total wait time is `maxNumFailures * checkInterval` plus a worst-case factor `len(checkURLs) * checkUrlTimeout`";
+        description = "How many times to check before determining that internet connectivity is “lost”. Total wait time is `(maxNumFailures - 1) * checkInterval` plus a worst-case factor `(maxNumFailures - 1) *len(checkURLs) * checkUrlTimeout`";
       };
 
       checkInterval = mkOption {

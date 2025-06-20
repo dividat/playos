@@ -136,21 +136,23 @@ def run_state_never_connected(cfg, url_check) -> State:
 
 
 def run_state_once_connected(cfg, url_check, remain_attempts) -> State:
-    if remain_attempts > 0:
-        err = url_check()
-        if err:
-            remain_attempts -= 1
+    err = url_check()
+    if err:
+        remain_attempts -= 1
+        if remain_attempts > 0:
             log(f"Check URLs failed, remaining attempts: {remain_attempts}")
             check_sleep(cfg)
             return StateOnceConnected(remain_attempts)
+
         else:
-            debug("Check URL successful.")
-            check_sleep(cfg)
-            return StateOnceConnected(cfg.max_num_failures)
+            log(f"Check URLs failed {cfg.max_num_failures} times, internet connection considered lost.")
+            return StateDisconnected()
 
     else:
-        log(f"Check URLs failed {cfg.max_num_failures} times, internet connection considered lost.")
-        return StateDisconnected()
+        debug("Check URL successful.")
+        check_sleep(cfg)
+        return StateOnceConnected(cfg.max_num_failures)
+
 
 
 def run_state_disconnected(cfg) -> State:
