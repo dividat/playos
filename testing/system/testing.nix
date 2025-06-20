@@ -30,6 +30,13 @@
 
     networking.hostName = lib.mkForce "playos-test";
 
+    # run a little bit faster for easier testing
+    playos.networking.watchdog = {
+        maxNumFailures = 3;
+        checkInterval = 10;
+        settingChangeDelay = 15;
+    };
+
   };
 
 }
