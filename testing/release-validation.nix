@@ -176,9 +176,6 @@ import tesserocr # type: ignore
 import PIL.Image
 import PIL.ImageEnhance
 import PIL.ImageOps
-import tempfile
-import time
-import atexit
 import os
 
 # Note #1: extracting the compressed disk in the test rather than in a
