@@ -57,10 +57,9 @@ def perform_single_url_check(url, timeout, proxy=None):
 
     try:
         # stream=True avoids downloading the content, which we don't care about
-        r = requests.get(url, headers=CLIENT_HEADERS, timeout=timeout,
-                         stream=True, allow_redirects=True, proxies=proxies)
-        if r.status_code != 200:
-            failure = RuntimeError(f"Bad HTTP status code: {r.status_code}")
+        with requests.get(url, headers=CLIENT_HEADERS, timeout=timeout,
+                         stream=True, allow_redirects=True, proxies=proxies) as r:
+            r.raise_for_status()
     except Exception as e:
         failure = RuntimeError(f"Failed to connect: {e}")
 
