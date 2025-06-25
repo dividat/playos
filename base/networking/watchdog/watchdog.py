@@ -17,6 +17,9 @@ import enum
 
 CLIENT_HEADERS = {'User-Agent': 'PlayOS watchdog 1.0'}
 CONNMAN_RESTART_COMMAND = "systemctl restart connman.service"
+CONNMAN_SIGNAL_IGNORELIST = [
+    "Strength", # each wifi scan updates this
+]
 
 logger = logging.getLogger(__name__)
 
@@ -202,10 +205,13 @@ class ConnmanDbusMonitor:
         thread.start()
         self._thread = thread
 
-    def _mark_update(self, *args, **kwargs):
-        now = datetime.datetime.now()
-        debug(f"connman setting change, setting last_update to {now}")
-        self.last_update = now
+    def _mark_update(self, name, _value):
+        if name in CONNMAN_SIGNAL_IGNORELIST:
+            debug(f"Ignoring connman setting ({name}) update.")
+        else:
+            now = datetime.datetime.now()
+            debug(f"connman setting ({name}) change, setting last_update to {now}")
+            self.last_update = now
 
     def get_current_proxy(self):
         return proxy_utils.get_current_proxy(self._bus)
