@@ -27,11 +27,11 @@ let
 
       connman = (import ./connman) super;
 
-      playos-proxy-utils = import ../proxy-utils {
-        pkgs = self;
-      };
-    };
+      python3Packages = super.python3Packages.overrideScope (self: super: {
+        playos-proxy-utils = self.callPackage ../proxy-utils {};
+      });
 
+    };
 in
 
 import nixpkgs {
