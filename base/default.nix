@@ -50,11 +50,6 @@ with lib;
 
     playos = { inherit version kioskUrl; };
 
-    playos.networking.watchdog = {
-        enable = true;
-        checkURLs = [ kioskUrl "https://api.dividat.com" ];
-    };
-
     # 'Welcome Screen'
     services.getty = {
       greetingLine = greeting "${fullProductName} (${version})";

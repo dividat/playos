@@ -1,5 +1,5 @@
 # Test machinery
-{lib, pkgs, ...}:
+{lib, pkgs, kioskUrl, ...}:
 
 {
   imports = [
@@ -32,6 +32,8 @@
 
     # run a little bit faster for easier testing
     playos.networking.watchdog = {
+        enable = true;
+        checkURLs = [ kioskUrl ];
         maxNumFailures = 3;
         checkInterval = 10;
         settingChangeDelay = 15;
