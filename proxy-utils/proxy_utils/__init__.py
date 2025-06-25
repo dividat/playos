@@ -1,3 +1,11 @@
+"""
+This module contains helpers for obtaining the currently configured proxy
+from connman service properties via DBus.
+
+The main entrypoint is `get_current_proxy`. The caller is expected
+to set up a DBus system session, see `kiosk_browser/proxy.py` or `wachdog.py` for
+examples.
+"""
 from urllib.parse import quote, unquote, urlparse
 import dbus # type: ignore
 import logging
