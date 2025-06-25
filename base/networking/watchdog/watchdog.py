@@ -45,8 +45,8 @@ def debug(msg):
     logger.debug(msg)
 
 
-# Returns None if successful or error message if failed
-def perform_single_url_check(url, timeout, proxy=None):
+# returned None signals success
+def perform_single_url_check(url, timeout, proxy=None) -> None | RuntimeError:
     failure = None
     proxies = None
     if proxy:
@@ -71,18 +71,21 @@ def perform_single_url_check(url, timeout, proxy=None):
     return failure
 
 
-def perform_url_checks(urls, timeout, proxy: proxy_utils.ProxyConf | None):
+# returned None signals success
+def perform_url_checks(urls, timeout, proxy: proxy_utils.ProxyConf | None) -> None | ExceptionGroup:
     url_queue = deque(urls)
+    errs = []
     while url_queue:
         next_url = url_queue.popleft()
-        check_result = perform_single_url_check(next_url, timeout, proxy=proxy)
+        err = perform_single_url_check(next_url, timeout, proxy=proxy)
 
-        if check_result is None:
-            return
+        if err is None:
+            return None
         else:
+            errs.append(err)
             continue
 
-    return RuntimeError("Connectivity check failed for all URLs")
+    return ExceptionGroup("Connectivity check failed for all URLs", errs)
 
 
 def check_sleep(cfg):
