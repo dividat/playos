@@ -25,6 +25,9 @@ pkgs.testers.runNixOSTest {
       ];
 
       config = {
+        # we run a single node
+        virtualisation.vlans = [ ];
+
         virtualisation.forwardPorts = [
             # Forward check server IP from (guest) VM to build sandbox (host)
             {   from = "guest";
