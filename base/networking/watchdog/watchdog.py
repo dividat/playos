@@ -261,10 +261,9 @@ def run(cfg):
 
 def main():
     args = parse_args()
+    logging.basicConfig(level=logging.INFO)
     if args.debug:
-        logging.basicConfig(level=logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
+        logger.setLevel(logging.DEBUG)
 
     run(args)
 
