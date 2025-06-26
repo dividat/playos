@@ -196,6 +196,7 @@ class ConnmanDbusMonitor:
                 bus_name='net.connman',
                 dbus_interface='net.connman.Service',
                 signal_name='PropertyChanged',
+                path_keyword='path',
             )
             loop = GLib.MainLoop()
             loop.run()
@@ -205,12 +206,12 @@ class ConnmanDbusMonitor:
         thread.start()
         self._thread = thread
 
-    def _mark_update(self, name, _value):
+    def _mark_update(self, name, _value, path=None):
         if name in CONNMAN_SIGNAL_IGNORELIST:
-            debug(f"Ignoring connman setting ({name}) update.")
+            debug(f"Ignoring connman setting ({name}) update for path ({path})")
         else:
             now = datetime.datetime.now()
-            debug(f"connman setting ({name}) change, setting last_update to {now}")
+            debug(f"connman setting ({name}) change for ({path}), setting last_update to {now}")
             self.last_update = now
 
     def get_current_proxy(self):
