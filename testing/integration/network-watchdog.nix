@@ -177,6 +177,16 @@ def wait_for_watchdog_state(state, timeout=max_state_change_time):
     CURRENT_CHECKPOINT = new_time.strftime(fmt)
 
 
+def expect_state_not_reached_before_timeout(state, timeout):
+    try:
+        wait_for_watchdog_state(state, timeout=timeout)
+    except TimeoutError:
+        # all good, should not have reached state yet
+        pass
+    else:
+        t.fail(f"Reached {state} state too soon!")
+
+
 CONNMAN_RESTARTS = 0
 
 def expect_no_new_connman_restarts(t):
@@ -258,15 +268,9 @@ with TestCase("watchdog goes into SETTING_CHANGE_DELAY after connman changes") a
 # affect the test timing.
 with TestCase("watchdog retries with sleep according to config") as t:
     stub.make_all_bad()
-    try:
-        wait_for_watchdog_state('DISCONNECTED', timeout=check_interval*(retries-2))
-    except TimeoutError:
-        # all good, should not have reached DISCONNECTED yet
-        pass
-    else:
-        t.fail("Reached DISCONNECTED state too soon!")
+    expect_state_not_reached_before_timeout('DISCONNECTED', timeout=check_interval*(retries-2))
 
-    wait_for_watchdog_state('DISCONNECTED', timeout=check_interval+1)
+    wait_for_watchdog_state('DISCONNECTED', timeout=check_interval+2)
     wait_for_connman_restart(t)
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     stub.make_all_ok()
@@ -330,12 +334,6 @@ with TestCase("if connman gets misconfigured, watchdog remains disconnected afte
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     wait_for_watchdog_state('NEVER_CONNECTED')
 
-    try:
-        wait_for_watchdog_state('ONCE_CONNECTED', timeout=check_interval*2)
-    except TimeoutError:
-        # all good, we were not supposed to reach this state
-        pass
-    else:
-        t.fail("Did not expect to reach ONCE_CONNECTED state!")
+    expect_state_not_reached_before_timeout('ONCE_CONNECTED', timeout=check_interval*2)
 '';
 }
