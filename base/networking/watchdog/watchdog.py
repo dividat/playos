@@ -14,6 +14,7 @@ import proxy_utils
 import logging
 from dataclasses import dataclass
 import enum
+from typing import List
 
 CLIENT_HEADERS = {'User-Agent': 'PlayOS watchdog 1.0'}
 CONNMAN_RESTART_COMMAND = "systemctl restart connman.service"
@@ -48,8 +49,17 @@ def debug(msg):
     logger.debug(msg)
 
 
+@dataclass
+class URLCheckError:
+    url: str
+    reason: str
+
+    def __str__(self):
+        return f"URL check for {self.url} failed: {self.reason}"
+
+
 # returned None signals success
-def perform_single_url_check(url, timeout, proxy=None) -> None | RuntimeError:
+def perform_single_url_check(url, timeout, proxy=None) -> None | URLCheckError:
     failure = None
     proxies = None
     if proxy:
@@ -64,10 +74,10 @@ def perform_single_url_check(url, timeout, proxy=None) -> None | RuntimeError:
                          stream=True, allow_redirects=True, proxies=proxies) as r:
             r.raise_for_status()
     except Exception as e:
-        failure = RuntimeError(f"Failed to connect: {e}")
+        failure = URLCheckError(url=url, reason=str(e))
 
     if failure:
-        debug(f"URL check for {url} failed with {failure}")
+        debug(failure)
     else:
         debug(f"URL check for {url} succeeded!")
 
@@ -75,7 +85,7 @@ def perform_single_url_check(url, timeout, proxy=None) -> None | RuntimeError:
 
 
 # returned None signals success
-def perform_url_checks(urls, timeout, proxy: proxy_utils.ProxyConf | None) -> None | ExceptionGroup:
+def perform_url_checks(urls, timeout, proxy: proxy_utils.ProxyConf | None) -> None | List[URLCheckError]:
     url_queue = deque(urls)
     errs = []
     while url_queue:
@@ -88,7 +98,7 @@ def perform_url_checks(urls, timeout, proxy: proxy_utils.ProxyConf | None) -> No
             errs.append(err)
             continue
 
-    return ExceptionGroup("Connectivity check failed for all URLs", errs)
+    return errs
 
 
 def check_sleep(cfg):
@@ -134,7 +144,7 @@ State = StateNeverConnected | StateOnceConnected | StateDisconnected | StateSett
 
 def run_state_never_connected(cfg, url_check) -> State:
     err = url_check()
-    if err:
+    if err is not None:
         log(f"Check URL failed for all URLs, sleeping for {cfg.check_interval} seconds")
         check_sleep(cfg)
         return StateNeverConnected()
@@ -145,7 +155,7 @@ def run_state_never_connected(cfg, url_check) -> State:
 
 def run_state_once_connected(cfg, url_check, remain_attempts) -> State:
     err = url_check()
-    if err:
+    if err is not None:
         remain_attempts -= 1
         if remain_attempts > 0:
             log(f"Check URLs failed, remaining attempts: {remain_attempts}")
@@ -153,7 +163,9 @@ def run_state_once_connected(cfg, url_check, remain_attempts) -> State:
             return StateOnceConnected(remain_attempts)
 
         else:
+            errs_brief = "\n".join([f"- {e.url}: {e.reason}" for e in err])
             log(f"Check URLs failed {cfg.max_num_failures} times, internet connection considered lost.")
+            log(f"Errors from last check:\n{errs_brief}")
             return StateDisconnected()
 
     else:
