@@ -69,10 +69,13 @@ def perform_single_url_check(url, timeout, proxy=None) -> None | URLCheckError:
         }
 
     try:
-        # stream=True avoids downloading the content, which we don't care about
-        with requests.get(url, headers=CLIENT_HEADERS, timeout=timeout,
-                         stream=True, allow_redirects=True, proxies=proxies) as r:
-            r.raise_for_status()
+        r = requests.get(url,
+                 headers=CLIENT_HEADERS, # identify ourselves to server
+                 timeout=timeout,
+                 stream=True, # avoid downloading the content, which we don't care about
+                 allow_redirects=False, # we also don't care about response code
+                 proxies=proxies)
+        r.close()
     except Exception as e:
         failure = URLCheckError(url=url, reason=str(e))
 

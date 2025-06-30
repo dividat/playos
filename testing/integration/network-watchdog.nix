@@ -7,11 +7,11 @@ let
   proxyURI = "http://${proxyUser}:${proxyPassword}@127.0.0.1:${toString proxyPort}/";
 
   checkServerIP = "10.0.2.88";
-  checkServerPort = 13838;
-  checkBaseURL = "http://${checkServerIP}:${toString checkServerPort}";
+  primaryCheckServerPort = 13838;
+  secondaryCheckServerPort = 13939;
 
-  primaryCheckUrl = "${checkBaseURL}/check-primary.html";
-  secondaryCheckUrl = "${checkBaseURL}/check-secondary.html";
+  primaryCheckUrl = "http://${checkServerIP}:${toString primaryCheckServerPort}/check";
+  secondaryCheckUrl = "http://${checkServerIP}:${toString secondaryCheckServerPort}/check";
 in
 pkgs.testers.runNixOSTest {
   name = "network watchdog integration tests";
@@ -32,9 +32,15 @@ pkgs.testers.runNixOSTest {
             # Forward check server IP from (guest) VM to build sandbox (host)
             {   from = "guest";
                 guest.address = checkServerIP;
-                guest.port = checkServerPort;
+                guest.port = primaryCheckServerPort;
                 host.address = "127.0.0.1";
-                host.port = checkServerPort;
+                host.port = primaryCheckServerPort;
+            }
+            {   from = "guest";
+                guest.address = checkServerIP;
+                guest.port = secondaryCheckServerPort;
+                host.address = "127.0.0.1";
+                host.port = secondaryCheckServerPort;
             }
         ];
         networking.firewall.enable = false;
@@ -95,8 +101,6 @@ let
 in
 ''
 ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
-import pathlib
-from enum import auto, StrEnum
 import datetime
 
 ## == Config vars
@@ -105,37 +109,14 @@ check_interval = ${toString watchdogCfg.checkInterval}
 retries = ${toString watchdogCfg.maxNumFailures}
 setting_change_delay = ${toString watchdogCfg.settingChangeDelay}
 watchdog_http_req_timeout = ${toString watchdogCfg.checkUrlTimeout}
+timeout_for_all_urls = watchdog_http_req_timeout * 2
 
+# Worst case when we don't expect any SETTING_CHANGE_DELAY to happen
+max_state_change_time_without_delay = (retries-1)*check_interval + retries*timeout_for_all_urls
 # Worst case delay: once or twice delayed due to connman setting changes + retries exhausted
-max_state_change_time = setting_change_delay*2 + (retries-1)*(check_interval+watchdog_http_req_timeout*2) + 1
+max_state_change_time = setting_change_delay*2 + max_state_change_time_without_delay
 
 ## == Helpers
-
-class Endpoint(StrEnum):
-    PRIMARY = auto()
-    SECONDARY = auto()
-
-
-class StubServer:
-    def __init__(self):
-        self.http_root = run_stub_server(${toString checkServerPort})
-
-    def _endpoint_file(self, endpoint: Endpoint):
-        return pathlib.Path(f"{self.http_root}/check-{endpoint}.html")
-
-    def make_ok(self, endpoint: Endpoint):
-        self._endpoint_file(endpoint).write_text("OK")
-
-    def make_bad(self, endpoint: Endpoint):
-        self._endpoint_file(endpoint).unlink(missing_ok=True)
-
-    def make_all_ok(self):
-        for e in Endpoint:
-            self.make_ok(e)
-
-    def make_all_bad(self):
-        for e in Endpoint:
-            self.make_bad(e)
 
 
 def get_connman_restarts():
@@ -165,7 +146,7 @@ CURRENT_CHECKPOINT = None
 # Each call to this function ensures that the reached state is new, i.e.
 # was reached after the previous call to `wait_for_watchdog_state`.
 # Note that this will skip/ignore intermediate states.
-def wait_for_watchdog_state(state, timeout=max_state_change_time):
+def wait_for_watchdog_state(state, timeout=max_state_change_time + 1):
     global CURRENT_CHECKPOINT
     timestamp = wait_for_watchdog_log(
         f'Current state: {state}',
@@ -214,24 +195,37 @@ def configure_connman(flags):
 
 ## == Setup
 
-stub = StubServer()
-playos.start()
+STUB1 = HTTPStubServer(${toString primaryCheckServerPort})
+STUB2 = HTTPStubServer(${toString secondaryCheckServerPort})
 
-with TestPrecondition("Stub HTTP server is functional"):
-    stub.make_all_ok()
-    playos.wait_for_unit("network-online.target")
-    playos.succeed("curl --fail ${primaryCheckUrl}")
-    playos.succeed("curl --fail ${secondaryCheckUrl}")
+def stop_all_stubs():
+    STUB1.stop()
+    STUB2.stop()
+
+def start_all_stubs():
+    STUB1.start()
+    STUB2.start()
+
+playos.start()
+start_all_stubs()
 
 with TestPrecondition("PlayOS is booted and services are running "):
     playos.wait_for_unit('connman.service')
     playos.wait_for_unit('playos-network-watchdog.service')
     playos.wait_for_unit('tinyproxy.service')
     playos.wait_for_unit('always-ok-http-service.service')
+    playos.wait_for_unit("network-online.target")
 
-with TestPrecondition("PlayOS can reach the check URLs") as t:
-    playos.succeed("curl --fail ${primaryCheckUrl}")
-    playos.succeed("curl --fail ${secondaryCheckUrl}")
+with TestPrecondition("PlayOS can reach HTTPStubServer`s"):
+    # assert we can reach the stub servers...
+    playos.succeed("curl ${primaryCheckUrl}")
+    playos.succeed("curl ${secondaryCheckUrl}")
+    # ...but they return an HTTP status code >=400
+    playos.fail("curl --fail ${primaryCheckUrl}")
+    playos.fail("curl --fail ${secondaryCheckUrl}")
+
+with TestPrecondition("Proxy and always-ok-http-service works") as t:
+    # proxied URL returns 200 status code
     out = playos.succeed("curl --proxy ${proxyURI} --fail ${primaryCheckUrl}")
     t.assertEqual(out.strip(), "YOU_WERE_PROXIED")
 
@@ -245,7 +239,7 @@ with TestCase("watchdog reaches ONCE_CONNECTED state") as t:
 # Note: SETTING_CHANGE_DELAY possible here if connman receives DHCP updates _after_ the
 # watchdog has determined ONCE_CONNECTED. We don't care about it.
 
-stub.make_all_bad()
+stop_all_stubs()
 
 with TestCase("watchdog eventually reaches DISCONNECTED state and triggers restart") as t:
     wait_for_watchdog_state('DISCONNECTED')
@@ -253,7 +247,7 @@ with TestCase("watchdog eventually reaches DISCONNECTED state and triggers resta
 
 # Note: SETTING_CHANGE_DELAY will happen here (and later due) to the connman restarts.
 
-stub.make_ok(Endpoint.SECONDARY)
+STUB2.start()
 
 with TestCase("watchdog reaches ONCE_CONNECTED state with only secondary URL good"):
     wait_for_watchdog_state('ONCE_CONNECTED')
@@ -270,13 +264,15 @@ with TestCase("watchdog goes into SETTING_CHANGE_DELAY after connman changes") a
 # done with configuration and there should be no more SETTING_CHANGE_DELAYs that
 # affect the test timing.
 with TestCase("watchdog retries with sleep according to config") as t:
-    stub.make_all_bad()
-    expect_state_not_reached_before_timeout('DISCONNECTED', timeout=check_interval*(retries-2))
+    stop_all_stubs()
+    # when stubs are stopped, all the requests will time out, therefore the time
+    # it takes to transition to DISCONNECTED should be exactly max_state_change_time_without_delay
+    expect_state_not_reached_before_timeout('DISCONNECTED', timeout=max_state_change_time_without_delay - 1)
 
-    wait_for_watchdog_state('DISCONNECTED', timeout=check_interval+2)
+    wait_for_watchdog_state('DISCONNECTED', timeout=3)
     wait_for_connman_restart(t)
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
-    stub.make_all_ok()
+    start_all_stubs()
     wait_for_watchdog_state('ONCE_CONNECTED')
 
 
@@ -301,7 +297,7 @@ with TestCase("watchdog recovers after ip route flush") as t:
 
 ## Proxy tests
 
-stub.make_all_bad()
+stop_all_stubs()
 
 with TestCase("watchdog detects configured proxy and uses it") as t:
     wait_for_watchdog_state('DISCONNECTED')
@@ -316,11 +312,11 @@ with TestCase("watchdog detects configured proxy and uses it") as t:
 with TestCase("watchdog responds to proxy removal") as t:
     configure_connman("--proxy direct")
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
-    # stub is still in make_all_bad, so we get disconnected
+    # stubs are still stopped, so we get disconnected
     wait_for_watchdog_state('DISCONNECTED')
     wait_for_connman_restart(t)
     wait_for_watchdog_state('NEVER_CONNECTED')
-    stub.make_all_ok()
+    start_all_stubs()
     wait_for_watchdog_state('ONCE_CONNECTED')
 
 

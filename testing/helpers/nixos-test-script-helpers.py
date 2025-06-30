@@ -134,25 +134,39 @@ def configure_proxy(vm, proxy_url):
         vm.succeed(f"connmanctl config {default_service} --proxy manual {proxy_url}")
 
 
-def run_stub_server(port):
-    d = tempfile.TemporaryDirectory(delete=False)
-    atexit.register(d.cleanup)
-    with open(f"{d.name}/index.html", "w") as f:
-        f.write("Hello world\n")
+class HTTPStubServer:
+    def __init__(self, port):
+        d = tempfile.TemporaryDirectory(delete=False)
+        atexit.register(d.cleanup)
+        with open(f"{d.name}/index.html", "w") as f:
+            f.write("Hello world\n")
 
-    class Handler(http.server.SimpleHTTPRequestHandler):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, directory=d.name, **kwargs)
+        class Handler(http.server.SimpleHTTPRequestHandler):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, directory=d.name, **kwargs)
 
-    server = http.server.HTTPServer(
-        ("", port),
-        Handler
-    )
-    print(f"Starting HTTP server on port {port}")
-    # Running as a separate process to avoid GIL
-    http_p = mp.Process(target=server.serve_forever, daemon=True)
-    http_p.start()
-    return d.name
+        self._server = http.server.HTTPServer(
+            ("", port),
+            Handler
+        )
+        self.port = port
+        self.http_root = d.name
+        self._process = None
+
+    def is_running(self):
+        return self._process is not None and self._process.is_alive()
+
+    def stop(self):
+        if self.is_running():
+            self._process.terminate()
+            self._process.join()
+
+    def start(self):
+        if not self.is_running():
+            print(f"Starting HTTP server on port {self.port}")
+            # Running as a separate process to avoid GIL
+            self._process = mp.Process(target=self._server.serve_forever, daemon=True)
+            self._process.start()
 
 
 def wait_until_passes(test, retries=10, sleep=1):
