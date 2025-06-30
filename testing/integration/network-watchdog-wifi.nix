@@ -111,6 +111,8 @@ with TestPrecondition("PlayOS is booted and services are running "):
 with TestPrecondition("connman sees the wifi AP"):
     playos.succeed("rfkill unblock all")
     playos.succeed("sleep 3 && systemctl restart wpa_supplicant-wlan1.service")
+    # attempt to trigger an early rescan for faster test AP discovery
+    playos.execute("sleep 5 && connmanctl scan wifi")
     # this can take a while
     playos.wait_until_succeeds("connmanctl services | grep test-ap-sae", timeout=60)
 
