@@ -136,7 +136,7 @@ class StateDisconnected:
 
 @dataclass(frozen=True)
 class StateSettingChangeDelay:
-    time_since_update: datetime.timedelta
+    remaining_delay: datetime.timedelta
     next_state: State
     def __str__(self):
         return StateNames.SETTING_CHANGE_DELAY
@@ -185,12 +185,10 @@ def run_state_disconnected(cfg) -> State:
     return StateNeverConnected()
 
 
-def run_state_setting_change_delay(cfg, elasped_time, next_state: State) -> State:
-    remaining_delay = cfg.setting_change_delay - elasped_time.total_seconds()
-    if remaining_delay > 0:
-        sleep_seconds = math.ceil(remaining_delay)
-        log(f"Sleeping for {sleep_seconds} seconds after connman setting changes")
-        time.sleep(sleep_seconds)
+def run_state_setting_change_delay(cfg, remaining_delay, next_state: State) -> State:
+    sleep_seconds = math.ceil(remaining_delay)
+    log(f"Sleeping for {sleep_seconds} seconds after connman setting changes")
+    time.sleep(sleep_seconds)
     return next_state
 
 ## Connman monitor
@@ -239,11 +237,12 @@ def make_url_checker(cfg, proxy: None | proxy_utils.ProxyConf):
 
 def override_state_if_connman_properties_changed(cfg, current_state, last_update) -> State:
     time_since_update = datetime.datetime.now() - last_update
+    remaining_delay = cfg.setting_change_delay - time_since_update.total_seconds()
 
-    if time_since_update.total_seconds() < cfg.setting_change_delay:
+    if remaining_delay > 0:
         # override state, because there are recent connman changes
         debug("Connman service properties changed recently, overriding current state.")
-        return StateSettingChangeDelay(time_since_update, next_state=current_state)
+        return StateSettingChangeDelay(remaining_delay, next_state=current_state)
     else:
         return current_state
 
@@ -271,8 +270,8 @@ def run(cfg):
             case StateDisconnected():
                 state = run_state_disconnected(cfg)
 
-            case StateSettingChangeDelay(time_since_update, next_state):
-                state = run_state_setting_change_delay(cfg, time_since_update, next_state)
+            case StateSettingChangeDelay(remaining_delay, next_state):
+                state = run_state_setting_change_delay(cfg, remaining_delay, next_state)
 
 
 def main():
