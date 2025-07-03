@@ -132,12 +132,12 @@ let watchdog_controls watchdog_disabled =
     if watchdog_disabled then
       [ explanation
       ; note "Network watchdog is currently DISABLED."
-      ; action_form "/watchdog/enable" "Enable"
+      ; action_form "/watchdog/enable" "Enable watchdog"
       ]
     else
       [ explanation
       ; note "Network watchdog is currently enabled."
-      ; action_form "/watchdog/disable" "Disable"
+      ; action_form "/watchdog/disable" "Disable watchdog"
       ]
   in
   [ Definition.term [ txt "Network watchdog" ]; Definition.description body ]
