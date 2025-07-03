@@ -92,6 +92,9 @@ in
       after = [ "network.target" "connman.service" ];
       wantedBy = [ "multi-user.target" ];
 
+      # allow to persistently disable using controller UI
+      unitConfig.ConditionPathExists = "!/home/play/.config/watchdog/disabled";
+
       serviceConfig = {
         StandardOutput = "journal";
         StandardError = "inherit";

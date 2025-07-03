@@ -25,6 +25,7 @@
   logs
   logs.fmt
   logs.lwt
+  network_watchdog
   fpath
   cohttp-lwt-unix
   logging
