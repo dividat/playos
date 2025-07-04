@@ -51,7 +51,6 @@ pkgs.testers.runNixOSTest {
 ${builtins.readFile ../../../helpers/nixos-test-script-helpers.py}
 ${builtins.readFile ./kiosk-persistence-helpers.py}
 import json
-import time
 from enum import StrEnum, auto
 
 # ===== Test settings
@@ -142,7 +141,7 @@ def wait_for_dm_restart():
 # ===== Test scenario
 
 aio = asyncio.Runner()
-run_stub_server(${toString hostKioskURLport})
+HTTPStubServer(${toString hostKioskURLport}).start()
 
 create_overlay("${disk}", "${overlayPath}")
 playos.start(allow_reboot=True)

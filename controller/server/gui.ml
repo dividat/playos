@@ -468,6 +468,7 @@ module StatusGui = struct
   let get_status ~health_s ~(update_s : Update.state React.signal) ~rauc =
     let health_state = health_s |> Lwt_react.S.value in
     let update_state = update_s |> Lwt_react.S.value in
+    let%lwt watchdog_disabled = Network_watchdog.is_disabled () in
     let%lwt booted_slot = Rauc.get_booted_slot rauc in
     let%lwt rauc =
       match update_state.process_state with
@@ -482,7 +483,12 @@ module StatusGui = struct
                 ~ok:(fun s -> Status_page.Status s)
                 ~error:(fun e -> Status_page.Error (Printexc.to_string e))
     in
-    { health = health_state; update = update_state; rauc; booted_slot }
+    { health = health_state
+    ; update = update_state
+    ; rauc
+    ; booted_slot
+    ; watchdog_disabled
+    }
     |> return
 
   let exec_and_resp_ok f req = f req >|= (fun _ -> `String "Ok") >|= respond
@@ -498,6 +504,14 @@ module StatusGui = struct
               switch_slot rauc (param req "slot" |> Rauc.Slot.t_of_string)
           )
          )
+    |> post "/watchdog/enable" (fun _req ->
+           let%lwt () = Network_watchdog.enable systemd in
+           redirect' (Uri.of_string "/status")
+       )
+    |> post "/watchdog/disable" (fun _req ->
+           let%lwt () = Network_watchdog.disable systemd in
+           redirect' (Uri.of_string "/status")
+       )
     |> get "/status" (fun _req ->
            let%lwt status = get_status ~update_s ~health_s ~rauc in
            Lwt.return (page (Status_page.html status))

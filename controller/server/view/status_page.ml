@@ -12,6 +12,7 @@ type params =
   ; update : Update.state
   ; rauc : rauc_state
   ; booted_slot : Rauc.Slot.t
+  ; watchdog_disabled : bool
   }
 
 let definition term description =
@@ -121,7 +122,27 @@ let suggested_action_of_state (update : Update.state) (rauc : rauc_state)
   | _ ->
       None
 
-let html { health; booted_slot; update; rauc } =
+let watchdog_controls watchdog_disabled =
+  let explanation =
+    note
+      "The network watchdog monitors internet connectivity and will attempt to \
+       reset the connection in case of unexpected loss."
+  in
+  let body =
+    if watchdog_disabled then
+      [ explanation
+      ; note "Network watchdog is currently DISABLED."
+      ; action_form "/watchdog/enable" "Enable watchdog"
+      ]
+    else
+      [ explanation
+      ; note "Network watchdog is currently enabled."
+      ; action_form "/watchdog/disable" "Disable watchdog"
+      ]
+  in
+  [ Definition.term [ txt "Network watchdog" ]; Definition.description body ]
+
+let html { health; booted_slot; update; rauc; watchdog_disabled } =
   let opt_action = suggested_action_of_state update rauc booted_slot in
   Page.html ~current_page:Page.SystemStatus
     ~header:(Page.header_title ~icon:Icon.screen [ txt "System Status" ])
@@ -130,6 +151,7 @@ let html { health; booted_slot; update; rauc } =
        @ definition "Update State" (update_fmt update)
        @ opt_elem opt_action
        @ definition "RAUC" (rauc_fmt rauc)
+       @ watchdog_controls watchdog_disabled
        @ [ Definition.term [ txt "Factory reset" ]
          ; Definition.description factory_reset_call
          ]
