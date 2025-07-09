@@ -41,6 +41,8 @@ pkgs.testers.runNixOSTest {
         networking.wireless.enable = mkOverride 0 true;
         services.connman.enable = mkOverride 0 true;
 
+        virtualisation.vlans = mkOverride 0 [ ];
+
         # wlan1 is the client interface, wlan0* are the simulated APs
         networking.wireless.interfaces = [ "wlan1" ];
 
