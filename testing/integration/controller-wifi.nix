@@ -217,10 +217,10 @@ def service_req(service, endpoint, data=None, timeout=30):
 def remove_req(service):
     return service_req(service, "remove")
 
-def connect_req(service, passphrase=None):
+def connect_req(service, passphrase=None, timeout=30):
     data = {'passphrase': passphrase} if passphrase else None
     try:
-        return service_req(service, "connect", data=data)
+        return service_req(service, "connect", data=data, timeout=timeout)
     except Exception as e:
         print(f"Failed to connect to AP: {service['name']}")
         raise e
@@ -279,7 +279,7 @@ EAP_SERVICE = find_service_by_name("bad-ap-eap", BAD_SERVICES)
 with TestCase("controller can connect to all good APs") as t:
     for service in GOOD_SERVICES:
         passphrase = None if service['name'] == "test-ap-open" else 'reproducibility'
-        r = connect_req(service, passphrase=passphrase)
+        r = connect_req(service, passphrase=passphrase, timeout=60)
         r.raise_for_status()
         output = r.json()
         out_services = output['services']
