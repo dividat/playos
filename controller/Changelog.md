@@ -1,3 +1,9 @@
+# [UNRELEASED]
+
+## Added
+
+- os: Add network watchdog
+
 # [2025.3.1] - 2025-07-04
 
 # [2025.3.1-VALIDATION] - 2025-06-06
