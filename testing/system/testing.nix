@@ -1,10 +1,13 @@
 # Test machinery
-{lib, pkgs, kioskUrl, ...}:
+{lib, pkgs, config, modulesPath, ...}:
 
 {
   imports = [
-    (pkgs.importFromNixos "modules/profiles/qemu-guest.nix")
-    (pkgs.importFromNixos "modules/testing/test-instrumentation.nix")
+    "${modulesPath}/profiles/qemu-guest.nix"
+    "${modulesPath}/testing/test-instrumentation.nix"
+    ./testing-wifi.nix # comment out to disable simulated wifi APs
+    ./fake-rauc-boot.nix # comment out to disable RAUC/self-update
+    ./stub-update-server.nix # comment out to disable stub-update-server
   ];
 
   config = {
@@ -33,7 +36,7 @@
     # run a little bit faster for easier testing
     playos.networking.watchdog = {
         enable = true;
-        checkURLs = [ kioskUrl ];
+        checkURLs = [ config.playos.kioskUrl ];
         maxNumFailures = 3;
         checkInterval = 10;
         settingChangeDelay = 15;
