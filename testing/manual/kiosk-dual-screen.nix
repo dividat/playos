@@ -87,8 +87,6 @@ pkgs.nixosTest {
 
   testScript = ''
     ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
-    import time
-    import tempfile
     import diffimg # type: ignore
 
     def xrandr(output, params):

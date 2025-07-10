@@ -26,8 +26,12 @@ let
       });
 
       connman = (import ./connman) super;
-    };
 
+      python3Packages = super.python3Packages.overrideScope (self: super: {
+        playos-proxy-utils = self.callPackage ../proxy-utils {};
+      });
+
+    };
 in
 
 import nixpkgs {

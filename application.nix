@@ -43,6 +43,14 @@ rec {
         ./application/limit-vtes.nix
       ];
 
+      assertions = with lib; [
+        { assertion = lists.any
+            (persistentFolder: strings.hasPrefix persistentFolder config.playos.networking.watchdog.configDir)
+            (builtins.attrNames config.playos.storage.persistentFolders);
+          message = "playos.networking.watchdog.configDir must be a sub-folder of one of playos.storage.persistentFolders";
+        }
+      ];
+
       boot.blacklistedKernelModules = [
         # Blacklist NFC modules conflicting with CCID/PCSC
         # https://ludovicrousseau.blogspot.com/2013/11/linux-nfc-driver-conflicts-with-ccid.html

@@ -1,5 +1,5 @@
 # Build an installable system image assuming a disk layout of a full A/B installation
-{pkgs, lib, updateCert, kioskUrl, playos-controller, application, extraModules ? [ ] }:
+{pkgs, lib, updateCert, kioskUrl, watchdogUrls, playos-controller, application, extraModules ? [ ] }:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
@@ -29,6 +29,11 @@ let nixos = pkgs.importFromNixos ""; in
         options = [ "ro" ];
       };
       persistentDataPartition.device = "/dev/disk/by-label/data";
+    };
+
+    playos.networking.watchdog = {
+      enable = true;
+      checkURLs = watchdogUrls;
     };
 
     playos.selfUpdate = {

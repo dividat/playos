@@ -135,7 +135,15 @@ recommended or available user actions, which include:
 - ~Switch to other slot and reboot~: displayed when running a faulty
   installation and system versions cannot be determined.
 
-All of these actions will trigger a system reboot.
+All of the actions above will trigger a system reboot.
+
+*** Network watchdog
+
+The network watchdog monitors internet connectivity and will attempt to reset
+the connection in case of unexpected loss. It is enabled by default, but can be
+disabled if needed.
+
+*** Factory reset
 
 An option to wipe all configuration and login data is available via the
 ~⚠ Factory Reset~ button. Read more in [[#wiping-user-data][Wiping user data]].
