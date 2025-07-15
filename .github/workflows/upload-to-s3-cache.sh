@@ -5,6 +5,8 @@ export IFS=' '
 
 export S3_BUCKET=${S3_BUCKET:-dividat-ci-nix-cache}
 export S3_BUCKET_PARAMS=${S3_BUCKET_PARAMS:-compression=zstd&profile=nixcache}
+export AWS_SHARED_CREDENTIALS_FILE=/root/.aws/credentials
+export AWS_CONFIG_FILE=/root/.aws/config
 
 # how many uploads to perform in parallel
 export TS_SLOTS=10
