@@ -62,7 +62,7 @@ runs:
     with:
       post: |
         echo "Waiting for cache uploads to finish"
-        tsp -w
+        tsp -w || true
         tsp -l
 
 
