@@ -2,6 +2,7 @@
 set -euo pipefail
 set -f # disable globbing
 export IFS=' '
+set -x
 
 export S3_BUCKET=${S3_BUCKET:-dividat-ci-nix-cache}
 export S3_BUCKET_PARAMS=${S3_BUCKET_PARAMS:-compression=zstd&profile=nixcache&region=eu-central-1}
