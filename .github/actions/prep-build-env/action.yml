@@ -58,6 +58,18 @@ runs:
       echo "[profile ${{ inputs.NIX_CACHE_S3_PROFILE }}]" > ~/.aws/config
       echo "region=${{ inputs.NIX_CACHE_S3_REGION }}" >> ~/.aws/config
 
+  - name: Creates AWS credentials and config for profile
+    shell: bash
+    run: |
+      mkdir -p ~/.aws
+
+      echo "[${{ inputs.NIX_CACHE_S3_PROFILE }}]" >> ~/.aws/credentials
+      echo "aws_access_key_id=${{ inputs.NIX_CACHE_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+      echo "aws_secret_access_key=${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+
+      echo "[profile ${{ inputs.NIX_CACHE_S3_PROFILE }}]" > ~/.aws/config
+      echo "region=${{ inputs.NIX_CACHE_S3_REGION }}" >> ~/.aws/config
+
   - name: Install post-run action
     uses: gacts/run-and-post-run@v1
     with:
