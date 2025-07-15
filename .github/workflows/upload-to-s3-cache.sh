@@ -4,7 +4,7 @@ set -f # disable globbing
 export IFS=' '
 
 export S3_BUCKET=${S3_BUCKET:-dividat-ci-nix-cache}
-export S3_BUCKET_PARAMS=${S3_BUCKET_PARAMS:-compression=zstd&profile=nixcache}
+export S3_BUCKET_PARAMS=${S3_BUCKET_PARAMS:-compression=zstd&profile=nixcache&region=eu-central-1}
 export AWS_SHARED_CREDENTIALS_FILE=/root/.aws/credentials
 export AWS_CONFIG_FILE=/root/.aws/config
 
