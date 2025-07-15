@@ -10,7 +10,7 @@ export S3_BUCKET_PARAMS=${S3_BUCKET_PARAMS:-compression=zstd&profile=nixcache}
 export TS_SLOTS=10
 
 echo "Queuing cache upload of: $OUT_PATHS"
-#tsp nix copy --to "s3://${S3_BUCKET}?${S3_BUCKET_PARAMS}" $OUT_PATHS
+tsp nix copy --to "s3://${S3_BUCKET}?${S3_BUCKET_PARAMS}" $OUT_PATHS
 # noop for now
 # TODO: how to prevent uploads of large packages?
-tsp echo $OUT_PATHS
+#tsp echo $OUT_PATHS
