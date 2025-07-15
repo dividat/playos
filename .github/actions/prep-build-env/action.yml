@@ -48,6 +48,7 @@ runs:
   - name: Creates AWS credentials and config for profile
     shell: bash
     run: |
+      sudo su
       mkdir -p ~/.aws
 
       echo "[${{ inputs.NIX_CACHE_S3_PROFILE }}]" >> ~/.aws/credentials
