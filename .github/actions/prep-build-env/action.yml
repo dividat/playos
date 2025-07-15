@@ -56,8 +56,6 @@ runs:
 
       echo "[profile ${{ inputs.NIX_CACHE_S3_PROFILE }}]" > ~/.aws/config
       echo "region=${{ inputs.NIX_CACHE_S3_REGION }}" >> ~/.aws/config
-  - run: aws configure list --profile ${{ inputs.NIX_CACHE_S3_PROFILE }}
-    shell: bash
 
   - name: Install post-run action
     uses: gacts/run-and-post-run@v1
