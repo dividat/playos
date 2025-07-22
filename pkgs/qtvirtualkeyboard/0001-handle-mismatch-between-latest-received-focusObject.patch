@@ -1,0 +1,48 @@
+From 46e7908e226ce6cc5be5c4a9d2e83137d2dde245 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Ignas=20Vy=C5=A1niauskas?= <ignas@dividat.ch>
+Date: Thu, 14 Aug 2025 11:16:22 +0300
+Subject: [PATCH] Handle mismatch between latest received focusObject and qApp
+ focusObject
+
+Debugging reveals that in certain situations QGuiApplication fails to
+call `PlatformInputContext::setFocusObject` and hence the `focusObject`
+held by the virtualkeyboard becomes stale.
+
+The workaround comes from the one used in QIOSInputContext.
+
+More context:
+https://github.com/qt/qtbase/commit/80bbaf6fad7376a94bc460eb6e98031bb5266ce1
+https://bugreports.qt.io/browse/QTBUG-138256
+---
+ src/virtualkeyboard/platforminputcontext.cpp | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/src/virtualkeyboard/platforminputcontext.cpp b/src/virtualkeyboard/platforminputcontext.cpp
+index 0a98e7fc..8aed5d24 100644
+--- a/src/virtualkeyboard/platforminputcontext.cpp
++++ b/src/virtualkeyboard/platforminputcontext.cpp
+@@ -69,6 +69,21 @@ void PlatformInputContext::commit()
+ 
+ void PlatformInputContext::update(Qt::InputMethodQueries queries)
+ {
++    // Workaround copied from QIOSInputContext::update, see
++    //      https://github.com/qt/qtbase/commit/80bbaf6fad7376a94bc460eb6e98031bb5266ce1
++    //      https://bugreports.qt.io/browse/QTBUG-138256
++    //
++    // Changes to the focus object should always result in a call to setFocusObject(),
++    // triggering a reset() which will update all the properties based on the new
++    // focus object. We try to detect code paths that fail this assertion and smooth
++    // over the situation by doing a manual update of the focus object.
++    if (qApp->focusObject() != m_focusObject && queries != Qt::ImQueryAll) {
++        VIRTUALKEYBOARD_WARN() << "stale focus object" << static_cast<void *>(m_focusObject)
++                               << ", doing manual update";
++        setFocusObject(qApp->focusObject());
++        return;
++    }
++
+     VIRTUALKEYBOARD_DEBUG() << "PlatformInputContext::update():" << queries;
+     const bool enabled = inputMethodAccepted();
+ #ifdef QT_VIRTUALKEYBOARD_DESKTOP
+-- 
+2.39.5
+

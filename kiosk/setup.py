@@ -17,5 +17,7 @@ setuptools.setup(
     classifiers=[
         "Programming Language :: Python :: 3",
     ],
+    package_data={'kiosk_browser': ['*.qml']},
+    include_package_data=True
 )
 

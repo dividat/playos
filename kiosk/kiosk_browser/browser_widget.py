@@ -61,6 +61,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.setUrl(url)
         self._view(Status.LOADING)
         self._webview.loadFinished.connect(self._load_finished)
+        self.setFocusProxy(self._webview)
 
         # Shortcut to manually reload
         QtGui.QShortcut('CTRL+R', self).activated.connect(self.reload)

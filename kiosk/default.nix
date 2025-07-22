@@ -26,16 +26,21 @@ python3Packages.buildPythonApplication rec {
     wrapGAppsHook
   ];
 
-  propagatedBuildInputs = with python3Packages; [
-    dbus-python
-    pygobject3
-    pyqt6-webengine
-    pytest
-    qt6.qtbase
-    requests
-    types-requests
-    playos-proxy-utils
-  ] ++ additional_inputs;
+  propagatedBuildInputs =
+      [
+        qt6.qtbase
+        qt6.qtvirtualkeyboard
+      ]
+      ++ (with python3Packages; [
+        dbus-python
+        pygobject3
+        pyqt6-webengine
+        pytest
+        requests
+        types-requests
+        playos-proxy-utils
+      ])
+      ++ additional_inputs;
 
   postInstall = ''
     cp -r images/ $out/images
