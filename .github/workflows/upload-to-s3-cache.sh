@@ -11,22 +11,31 @@ export PATH=$PATH:/nix/var/nix/profiles/default/bin
 # how many uploads to perform in parallel
 export TS_SLOTS=10
 
-# exclude closures larger than 3GB to avoid polluting the cache
-SMALL_OUT_PATHS="$(nix path-info -S $OUT_PATHS | awk '{if ($2 < 10 ^ 9 * 3) print $1;}')"
-BIG_PATHS=$(comm -23 \
-    <(tr ' ' '\n' <<<"$OUT_PATHS" | sort) \
-    <(tr ' ' '\n' <<<"$SMALL_OUT_PATHS" | sort) \
-        | tr '\n' ' ')
+# max size of single (!) closure dependency
+MAX_CLOSURE_DEP_SIZE=$((10 ** 9)) # 1GB
 
-if ! [[ -z "$BIG_PATHS" ]]; then
+OUT_PATHS_SMALL=""
+OUT_PATHS_BIG=""
+
+# sort closures in those that have big dependencies and those that don't
+for path in $OUT_PATHS; do
+    largest_size_in_closure=$(nix path-info --recursive --size "$path" | cut -f2 | sort -n | tail -1)
+    if [[ $largest_size_in_closure -gt $MAX_CLOSURE_DEP_SIZE ]]; then
+        OUT_PATHS_BIG="${OUT_PATHS_BIG} ${path}"
+    else
+        OUT_PATHS_SMALL="${OUT_PATHS_SMALL} ${path}"
+    fi
+done
+
+if ! [[ -z "$OUT_PATHS_BIG" ]]; then
     echo "Skipping large paths:"
-    nix path-info -Sh $BIG_PATHS
+    nix path-info -Sh $OUT_PATHS_BIG
 fi
 
-if ! [[ -z "$SMALL_OUT_PATHS" ]]; then
-    echo "Queuing cache upload of: $SMALL_OUT_PATHS"
+if ! [[ -z "$OUT_PATHS_SMALL" ]]; then
+    echo "Queuing cache upload of: $OUT_PATHS_SMALL"
     # Running with `sudo -i` to ensure `tsp` is sharing a single queue owned by root
-    sudo -i tsp nix copy --to "s3://${S3_BUCKET}?${S3_BUCKET_PARAMS}" $SMALL_OUT_PATHS
+    sudo -i tsp nix copy --to "s3://${S3_BUCKET}?${S3_BUCKET_PARAMS}" $OUT_PATHS_SMALL
 else
     echo "Nothing to upload after filtering!"
 fi
