@@ -1,12 +1,85 @@
 name: "Prepare nix build environment"
+
+inputs:
+  NIX_CACHE_ACCESS_KEY_ID:
+    description: AWS S3 bucket access key ID
+    required: false
+
+  NIX_CACHE_SECRET_ACCESS_KEY:
+    description: AWS S3 bucket secret access key
+    required: false
+
+  NIX_BINARY_CACHE_PRIVATE_KEY:
+    description: private key used for signing store paths for the nix cache
+    required: false
+
+  # these are not intended to be configurable, but there's simply no way
+  # to have constants/envs in a composite action
+  NIX_CACHE_S3_BUCKET:
+    default: dividat-ci-nix-cache
+
+  NIX_CACHE_S3_PROFILE:
+    default: nixcache
+
+  NIX_CACHE_S3_REGION:
+    default: eu-central-1
+
+  NIX_STORE_PUBLIC_KEY:
+    default: "dividat-ci-nix-cache-1:vhWwMmDRyiG7ICbeWWpC03k1XsRs2fIQB461il3EL3U="
+
+  NIX_STORE_PRIVATE_KEY_FILE:
+    default: "/etc/nix/key.private"
 runs:
   using: "composite"
   steps:
   - name: Ensure KVM is usable by nix-build
     run: sudo chmod a+rwx /dev/kvm
     shell: bash
+
+  - name: Install task-spooler
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y task-spooler
+    shell: bash
+
+  - name: Write private key to file
+    shell: bash
+    if: ${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}
+    run: |
+      sudo mkdir -p $(dirname "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}")
+      echo -n "${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}" | sudo tee "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}"
+
+  - name: Create AWS credentials and config for profile
+    shell: bash
+    if: ${{ inputs.NIX_CACHE_ACCESS_KEY_ID && inputs.NIX_CACHE_SECRET_ACCESS_KEY }}
+    run: |
+      sudo -i aws configure set aws_access_key_id ${{ inputs.NIX_CACHE_ACCESS_KEY_ID }} --profile ${{ inputs.NIX_CACHE_S3_PROFILE}}
+      sudo -i aws configure set aws_secret_access_key ${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY }} --profile ${{ inputs.NIX_CACHE_S3_PROFILE}}
+      sudo -i aws configure set region ${{ inputs.NIX_CACHE_S3_REGION }} --profile ${{ inputs.NIX_CACHE_S3_PROFILE}}
+      # Allow any user to access the AWS credentials and provide it both for
+      # current user and root, since it's tricky to ensure different nix
+      # commands (nix-build, nix copy) read from the right locations, see:
+      # https://github.com/NixOS/nix/issues/2161
+      sudo chmod -R a+rx /root/.aws
+      sudo chmod a+rx /root/
+      cp -r /root/.aws ~/.aws
+
+
+  - name: Install post-run action
+    uses: yfyf/run-and-post-run@main
+    with:
+      post: |
+        echo "Waiting for cache uploads to finish"
+        sudo -i tsp -w || true
+        sudo -i tsp -l
+
+
   - uses: cachix/install-nix-action@v18
     with:
       nix_path: nixpkgs=channel:nixos-unstable
       extra_nix_config: |
         system-features = nixos-test benchmark big-parallel kvm
+        substituters = https://cache.nixos.org/ https://${{ inputs.NIX_CACHE_S3_BUCKET }}.s3.${{ inputs.NIX_CACHE_S3_REGION }}.amazonaws.com
+        trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${{ inputs.NIX_STORE_PUBLIC_KEY }}
+        ${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY && format('post-build-hook = {0}/.github/workflows/upload-to-s3-cache.sh', github.workspace) || '' }}
+        ${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY && format('secret-key-files = {0}', inputs.NIX_STORE_PRIVATE_KEY_FILE) || '' }}
