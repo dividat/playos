@@ -60,6 +60,6 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
 def parseUrl(url):
     parsed_url = QUrl(url)
     if not parsed_url.isValid():
-        raise InvalidUrl('Failed to parse URL "%s"' % url) from Exception
+        raise ValueError('Failed to parse URL "%s"' % url)
     else:
         return parsed_url
