@@ -125,7 +125,7 @@ module LocalizationGui = struct
     let langs =
       [ ("cs_CZ.UTF-8", "Czech")
       ; ("nl_NL.UTF-8", "Dutch")
-      ; ("en_UK.UTF-8", "English (UK)")
+      ; ("en_GB.UTF-8", "English (UK)")
       ; ("en_US.UTF-8", "English (US)")
       ; ("fi_FI.UTF-8", "Finnish")
       ; ("fr_FR.UTF-8", "French")
