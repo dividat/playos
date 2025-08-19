@@ -112,6 +112,7 @@ class OpenMessage(QtWidgets.QWidget):
 
         label = QtWidgets.QLabel('You must log in to this network before you can access the Internet.')
 
+        # TODO: button not focusable/reachable with remote control when webview is focused
         button = QtWidgets.QPushButton('Open Network Login Page')
         button.clicked.connect(on_open)
         button.setDefault(True)

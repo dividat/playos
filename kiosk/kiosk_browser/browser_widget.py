@@ -64,8 +64,10 @@ class BrowserWidget(QtWidgets.QWidget):
         self.setFocusProxy(self._webview)
 
         # Shortcut to manually reload
+        # TODO: not usable with remote control
         QtGui.QShortcut('CTRL+R', self).activated.connect(self.reload)
         # Shortcut to perform a hard refresh
+        # TODO: not usable with remote control
         QtGui.QShortcut('CTRL+SHIFT+R', self).activated.connect(self._hard_refresh)
 
         # Prepare reload timer

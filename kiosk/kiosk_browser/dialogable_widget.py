@@ -41,6 +41,7 @@ class DialogableWidget(QtWidgets.QWidget):
         self.setLayout(self._layout)
 
         # Shortcuts
+        # TODO: not usable with remote control
         QtGui.QShortcut('ESC', self).activated.connect(self._on_escape)
 
     def inner_widget(self):
@@ -118,6 +119,8 @@ def title_line(
         font-size: 16px;
     """)
 
+    # TODO: close button not reachable/focusable with remote control (also not
+    # intuitive, poorly highlighted when focused)
     button = QtWidgets.QPushButton("×", dialog)
     button.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
     button.setStyleSheet("""
