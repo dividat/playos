@@ -211,11 +211,13 @@ class MainWidget(QtWidgets.QWidget):
                     self._menu_press_since = time.time()
                 elif self._menu_press_since is not None and time.time() - self._menu_press_since > self._menu_press_delay_seconds:
                     self._menu_press_since = None
+                    # TODO: should return True / event.accept() here?
                     self._toggle_settings()
         elif event.type() == QtCore.QEvent.Type.KeyRelease:
             if event.key() == QtCore.Qt.Key.Key_Menu and not event.isAutoRepeat():
                 self._menu_press_since = None
 
+        # TODO: This should just return False?
         return super(MainWidget, self).eventFilter(source, event)
 
     def handle_screen_change(self, new_primary):
