@@ -1,0 +1,88 @@
+import importlib.resources
+from PyQt6.QtCore import QUrl, Qt, QPoint, QSize
+from PyQt6.QtQuickWidgets import QQuickWidget
+from PyQt6.QtWidgets import QApplication
+
+class KeyboardWidget(QQuickWidget):
+    def _make_transparent(self):
+        # A semi-hack to make the QQuickWidget have transparent background, see:
+        # https://doc.qt.io/qt-6/qquickwidget.html#limitations
+        self.setAttribute(Qt.WidgetAttribute.WA_AlwaysStackOnTop)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setClearColor(Qt.GlobalColor.transparent)
+
+    def __init__(self, parent):
+        super(KeyboardWidget, self).__init__(parent)
+
+        input_panel_qml = importlib.resources.files('kiosk_browser').joinpath('inputpanel.qml')
+        with importlib.resources.as_file(input_panel_qml) as f:
+            widget_qml = QUrl.fromLocalFile(str(f))
+            self.setSource(widget_qml)
+            if self.status() == QQuickWidget.Status.Error:
+                raise RuntimeError(f"Failed to initialize inputpanel.qml: {self.errors()}")
+
+        # needed for keyboardBackgroundNumeric to work, see inputpanel.qml
+        self._make_transparent()
+
+        # in case someone tries to use this on an actual touch device
+        self.setAttribute(Qt.WidgetAttribute.WA_AcceptTouchEvents)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
+        self.setResizeMode(QQuickWidget.ResizeMode.SizeRootObjectToView);
+
+        self._input_method = QApplication.inputMethod()
+
+        # Note: The interleaving of cursorRectangleChanged and visibleChanged events
+        # seems to depend on the input field focus sequence, so we simply respond to both
+        self._input_method.cursorRectangleChanged.connect(self._reposition)
+        self._input_method.visibleChanged.connect(self._reposition)
+        self._reposition()
+
+    # The QQuickWidget holding the virtual keyboard is sized and positioned
+    # explicitly w.r.t. the parent window (see _reposition).
+    #
+    # An alternative approach would be to make the QQuickWidget take the size of
+    # the whole window, enable transparency (see _make_transparent), make the
+    # InputPanel a sub-element and move the positioning of the keyboard logic to
+    # QML. However, this would prevent interaction with the page items
+    # underneath the keyboard (until it is hidden) and might have other
+    # unexpected consequences.
+    def _visibleWidth(self):
+        return self.window().width() / 2
+
+    def _visibleHeight(self):
+        # Hard-coded keyboardDesignHeight / keyboardDesignWidth values from
+        # qtvirtualkeyboard's default/style.qml
+        # Would be better to somehow read them from `QtQuick.VirtualKeyboard.Styles`?
+        return round(self._visibleWidth() * 800 / 2560)
+
+    # Move the virtual keyboard to the top or bottom of the screen depending on
+    # where the text input cursor is currently and resize the widget holding it.
+    #
+    # Note 1: Manually controlling the widget size with visibleWidth and
+    # visibleHeight, because there are strange race conditions which lead to
+    # self.width()/height() == 0.
+    #
+    # Note 2: cursorRectangle seems to be updated later than isVisible becomes
+    # True, therefore the keyboard visibly jumps from bottom to the top. Some
+    # form of debouncing could be used here to avoid it?
+    def _reposition(self):
+        if not self._input_method.isVisible():
+            self.resize(QSize(0, 0))
+            return
+
+        cursorTop = self._input_method.cursorRectangle().top()
+
+        # Note: could also shift left/right using cursorRectangle().left() here
+        kbdX = round((self.window().width() - self._visibleWidth()) / 2)
+
+        if cursorTop > (self.window().height() / 2):
+            # move to the top
+            kbdY = 0
+        else:
+            # move to bottom
+            kbdY = round(self.window().height() - self._visibleHeight())
+
+        self.move(QPoint(kbdX, kbdY))
+        self.resize(QSize(round(self._visibleWidth()), round(self._visibleHeight())))
+
