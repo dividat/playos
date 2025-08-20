@@ -19,7 +19,8 @@ class KeyboardWidget(QQuickWidget):
             widget_qml = QUrl.fromLocalFile(str(f))
             self.setSource(widget_qml)
             if self.status() == QQuickWidget.Status.Error:
-                raise RuntimeError(f"Failed to initialize inputpanel.qml: {self.errors()}")
+                errors_str = "\n".join([e.toString() for e in self.errors()])
+                raise RuntimeError(f"Failed to initialize inputpanel.qml:\n {errors_str}")
 
         # needed for keyboardBackgroundNumeric to work, see inputpanel.qml
         self._make_transparent()
