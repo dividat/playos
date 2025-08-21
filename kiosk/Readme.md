@@ -12,6 +12,12 @@ Then, start the kiosk browser with, for example:
 bin/kiosk-browser http://localhost:8080/play.html http://localhost:3333
 ```
 
+If running on non-nixOS systems, you might need the
+[nixGL](https://github.com/nix-community/nixGL) wrapper to ensure OpenGL works.
+See https://github.com/NixOS/nixpkgs/issues/9415 for context.
+
+You can pass `--no-fullscreen` to run the kiosk windowed.
+
 ## Testing
 
         bin/test

@@ -21,6 +21,7 @@ parser.add_argument(
     'Keyboard combination to toggle settings. (Default: "%s")'
     % default_toggle_settings_key)
 
+parser.add_argument('--fullscreen', default=True, action=argparse.BooleanOptionalAction)
 parser.add_argument('kiosk_url', help='Kiosk URL')
 parser.add_argument('settings_url', help='Settings URL')
 
@@ -29,4 +30,5 @@ args = parser.parse_args()
 # Go to root directory of the kiosk to give relative access to assets
 os.chdir(f'{os.path.dirname(__file__)}/..')
 
-kiosk_browser.start(args.kiosk_url, args.settings_url, args.toggle_settings_key)
+kiosk_browser.start(args.kiosk_url, args.settings_url, args.toggle_settings_key,
+                    fullscreen=args.fullscreen)

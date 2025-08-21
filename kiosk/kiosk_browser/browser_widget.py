@@ -2,7 +2,6 @@ from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui,
 from enum import Enum, auto
 import logging
 import re
-import time
 
 from kiosk_browser import system
 
