@@ -2,6 +2,13 @@ import importlib.resources
 from PyQt6.QtCore import QUrl, Qt, QPoint, QSize
 from PyQt6.QtQuickWidgets import QQuickWidget
 from PyQt6.QtWidgets import QApplication
+import json
+import logging
+import os
+
+PLAYOS_LANGUAGES_CONFIG = "/etc/playos/languages.json"
+# for easier testing, semicolon separated, e.g. de_DE;fr_FR
+PLAYOS_LANGUAGES_EXTRA = os.getenv("PLAYOS_LANGUAGES_EXTRA", "")
 
 class KeyboardWidget(QQuickWidget):
     def _make_transparent(self):
@@ -11,8 +18,32 @@ class KeyboardWidget(QQuickWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setClearColor(Qt.GlobalColor.transparent)
 
+
+    def _configure_supported_languages(self):
+        locales = []
+        try:
+            with open(PLAYOS_LANGUAGES_CONFIG, "r") as f:
+                locales_json = json.load(f)
+                locales += [l['locale'].split(".")[0] for l in locales_json]
+        except FileNotFoundError:
+            logging.warning(f"Locale file {PLAYOS_LANGUAGES_CONFIG} not found.")
+
+        # ensure en_US always present and is the first element to act as fallback
+        if "en_US" in locales:
+            locales.remove("en_US")
+        locales = ["en_US"] + locales
+
+        # extra custom locales for testing
+        extra_locales = PLAYOS_LANGUAGES_EXTRA.split(";")
+        locales += extra_locales
+
+        self.rootContext().setContextProperty("activeLocales", ";".join(locales))
+
+
     def __init__(self, parent):
         super(KeyboardWidget, self).__init__(parent)
+
+        self._configure_supported_languages()
 
         input_panel_qml = importlib.resources.files('kiosk_browser').joinpath('inputpanel.qml')
         with importlib.resources.as_file(input_panel_qml) as f:

@@ -15,23 +15,8 @@ InputPanel {
     z: 99
 
     Component.onCompleted: {
-        // TODO: unify with langs / keymaps in controller/server/gui.ml ?
-        VirtualKeyboardSettings.activeLocales = [
-             // first item seems to be used as fallback if system locale
-             // cannot be determined
-            "en_US",
-
-            "cs_CZ",
-            "de_CH",
-            "de_DE",
-            "en_GB",
-            "es_ES",
-            "fi_FI",
-            "fr_FR",
-            "it_IT",
-            "nl_NL",
-            "pl_PL"
-        ];
+        // Note: activeLocales is provided via setContextProperty by parent
+        VirtualKeyboardSettings.activeLocales = activeLocales.split(";");
         VirtualKeyboardSettings.closeOnReturn = true; // TODO: yes, temporarily?
         VirtualKeyboardSettings.handwritingModeDisabled = true;
         VirtualKeyboardSettings.defaultDictionaryDisabled = true;
