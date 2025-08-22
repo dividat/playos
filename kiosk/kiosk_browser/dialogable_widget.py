@@ -40,10 +40,6 @@ class DialogableWidget(QtWidgets.QWidget):
         self._layout.addWidget(self._inner_widget)
         self.setLayout(self._layout)
 
-        # Shortcuts
-        # TODO: not usable with remote control
-        QtGui.QShortcut('ESC', self).activated.connect(self._on_escape)
-
     def inner_widget(self):
         return self._inner_widget
 
@@ -65,6 +61,12 @@ class DialogableWidget(QtWidgets.QWidget):
         return self._is_decorated
 
     # Private
+
+    def keyReleaseEvent(self, event):
+        if event.key() == QtCore.Qt.Key.Key_Escape:
+            self._on_close()
+        else:
+            super().keyReleaseEvent(event)
 
     def _on_escape(self):
         if self._is_decorated:

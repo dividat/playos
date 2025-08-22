@@ -99,16 +99,6 @@ class MainWidget(QtWidgets.QWidget):
                 self._is_captive_portal_open = False
 
     def eventFilter(self, source, event):
-        # Hide virtual keyboard with Escape or Back key
-        # TODO: Play still receives the Escape key causing an exit from Play Settings
-        if event.type() == QtCore.QEvent.Type.ShortcutOverride:
-            if event.key() in [ QtCore.Qt.Key.Key_Escape, QtCore.Qt.Key.Key_Back ]:
-                if QApplication.inputMethod().isVisible():
-                    QApplication.inputMethod().hide()
-                    # prevent further processing
-                    event.accept()
-                    return True
-
         # Toggle settings with a long press on the Menu key
         if event.type() == QtCore.QEvent.Type.ShortcutOverride:
             if event.key() == QtCore.Qt.Key.Key_Menu:

@@ -1,4 +1,5 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
+from PyQt6.QtWidgets import QApplication
 from enum import Enum, auto
 import logging
 import re
@@ -74,6 +75,12 @@ class BrowserWidget(QtWidgets.QWidget):
         self._reload_timer = QtCore.QTimer(self)
         self._reload_timer.setSingleShot(True)
         self._reload_timer.timeout.connect(self._webview.reload)
+
+    def keyReleaseEvent(self, event):
+        if event.key() == QtCore.Qt.Key.Key_Escape and QApplication.inputMethod().isVisible():
+            QApplication.inputMethod().hide()
+        else:
+            super().keyReleaseEvent(event)
 
     def reload(self):
         """ Show kiosk browser loading URL.
