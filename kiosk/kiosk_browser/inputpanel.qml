@@ -17,11 +17,14 @@ InputPanel {
     Component.onCompleted: {
         // TODO: unify with langs / keymaps in controller/server/gui.ml ?
         VirtualKeyboardSettings.activeLocales = [
+             // first item seems to be used as fallback if system locale
+             // cannot be determined
+            "en_US",
+
             "cs_CZ",
             "de_CH",
             "de_DE",
             "en_GB",
-            "en_US",
             "es_ES",
             "fi_FI",
             "fr_FR",
