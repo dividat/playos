@@ -60,9 +60,6 @@ class MainWidget(QtWidgets.QWidget):
         # Shortcuts
         QtGui.QShortcut(toggle_settings_key, self).activated.connect(self._toggle_settings)
 
-        # Look at events with the eventFilter function
-        self.installEventFilter(self)
-
 
     def closeEvent(self, event):
         event.accept()
@@ -98,7 +95,7 @@ class MainWidget(QtWidgets.QWidget):
             if self._is_captive_portal_open:
                 self._is_captive_portal_open = False
 
-    def eventFilter(self, source, event):
+    def event(self,  event):
         # Toggle settings with a long press on the Menu key
         if event.type() == QtCore.QEvent.Type.ShortcutOverride:
             if event.key() == QtCore.Qt.Key.Key_Menu:
@@ -106,14 +103,15 @@ class MainWidget(QtWidgets.QWidget):
                     self._menu_press_since = time.time()
                 elif self._menu_press_since is not None and time.time() - self._menu_press_since > self._menu_press_delay_seconds:
                     self._menu_press_since = None
-                    # TODO: should return True / event.accept() here?
                     self._toggle_settings()
+
+                return True
+
         elif event.type() == QtCore.QEvent.Type.KeyRelease:
             if event.key() == QtCore.Qt.Key.Key_Menu and not event.isAutoRepeat():
                 self._menu_press_since = None
 
-        # TODO: This should just return False?
-        return super(MainWidget, self).eventFilter(source, event)
+        return super().event(event)
 
     def handle_screen_change(self, new_primary):
         logging.info(f"Primary screen changed to {new_primary.name()}")
