@@ -121,8 +121,6 @@ def title_line(
         font-size: 16px;
     """)
 
-    # TODO: close button not reachable/focusable with remote control (also not
-    # intuitive, poorly highlighted when focused)
     button = QtWidgets.QPushButton("×", dialog)
     button.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
     button.setStyleSheet("""
