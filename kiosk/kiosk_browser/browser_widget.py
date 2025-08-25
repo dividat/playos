@@ -64,6 +64,11 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.loadFinished.connect(self._load_finished)
         self.setFocusProxy(self._webview)
 
+        # Work-around to virtual keyboard input not working after idle time + window refocus.
+        # Probably only needed for development, since PlayOS runs without a
+        # window manager and so we don't expect window focus changes
+        QApplication.instance().focusWindowChanged.connect(lambda _: self._restore_webview_focus())
+
         # Shortcut to manually reload
         QtGui.QShortcut('CTRL+R', self).activated.connect(self.reload)
         # Shortcut to perform a hard refresh
@@ -79,6 +84,11 @@ class BrowserWidget(QtWidgets.QWidget):
             QApplication.inputMethod().hide()
         else:
             super().keyReleaseEvent(event)
+
+    def _restore_webview_focus(self):
+        if self.isActiveWindow():
+            self._webview.clearFocus()
+            self._webview.setFocus()
 
     def reload(self):
         """ Show kiosk browser loading URL.
@@ -146,9 +156,8 @@ class BrowserWidget(QtWidgets.QWidget):
             self._loading_page.hide()
             self._network_error_page.hide()
             self._webview.show()
-            # Set focus by clearing first, otherwise focus is lost after using CTRL+R
-            self._webview.clearFocus()
-            self._webview.setFocus()
+            # focus is lost after using CTRL+R
+            self._restore_webview_focus()
 
 def user_agent_with_system(user_agent, system_name, system_version):
     """Inject a specific system into a user agent string"""
