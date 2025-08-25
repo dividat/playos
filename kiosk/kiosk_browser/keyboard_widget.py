@@ -1,4 +1,5 @@
 import importlib.resources
+from PyQt6 import QtCore
 from PyQt6.QtCore import QUrl, Qt, QPoint, QSize
 from PyQt6.QtQuickWidgets import QQuickWidget
 from PyQt6.QtWidgets import QApplication
@@ -9,6 +10,51 @@ import os
 PLAYOS_LANGUAGES_CONFIG = "/etc/playos/languages.json"
 # for easier testing, semicolon separated, e.g. de_DE;fr_FR
 PLAYOS_LANGUAGES_EXTRA = os.getenv("PLAYOS_LANGUAGES_EXTRA", "")
+
+# Prevent Escape key from reaching focus object when virtual keyboard is
+# activated and instead hide the virtual keyboard.
+# Both KeyPress and the following KeyRelease are handled.
+class EscapeKeyFilter(QtCore.QObject):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self._focus_object = None
+        self._last_keypress_closed_vkb = False
+
+        QApplication.instance().focusObjectChanged.connect(self._update_focus_object)
+
+    def _update_focus_object(self, new_focus_object):
+        if self._focus_object is not None:
+            self._focus_object.removeEventFilter(self)
+
+        # Workaround to QTBUG-138256, see also patch in pkgs/qtvirtualkeyboard/
+        if new_focus_object != QApplication.focusObject():
+            new_focus_object = QApplication.focusObject()
+
+        if new_focus_object is None:
+            return
+
+        new_focus_object.installEventFilter(self)
+
+        self._focus_object = new_focus_object
+
+
+    def eventFilter(self, source, event):
+        if event.type() == QtCore.QEvent.Type.KeyPress:
+            self._last_keypress_closed_vkb = False
+
+            if event.key() == QtCore.Qt.Key.Key_Escape:
+                if QApplication.inputMethod().isVisible():
+                    QApplication.inputMethod().hide()
+                    self._last_keypress_closed_vkb = True
+                    return True
+
+        elif event.type() == QtCore.QEvent.Type.KeyRelease:
+            # stop KeyRelease propagation too if we just closed the keyboard
+            if event.key() == QtCore.Qt.Key.Key_Escape and self._last_keypress_closed_vkb:
+                    return True
+
+        return False
 
 class KeyboardWidget(QQuickWidget):
     def _make_transparent(self):
@@ -61,6 +107,8 @@ class KeyboardWidget(QQuickWidget):
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         self.setResizeMode(QQuickWidget.ResizeMode.SizeRootObjectToView);
+
+        self._escape_key_filter = EscapeKeyFilter(self)
 
         self._input_method = QApplication.inputMethod()
 
