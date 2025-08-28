@@ -3,6 +3,7 @@
 ## Added
 
 - os: Add network watchdog
+- kiosk: Add virtual keyboard
 
 # [2025.3.1] - 2025-07-04
 
