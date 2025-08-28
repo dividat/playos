@@ -241,6 +241,14 @@ pkgs.nixosTest {
         # qtwebengine bug: re-focusing an input element with populated text
         # causes the input keyboard not to come up, because there is no
         # cursorRectangleChanged event produced.
+        # See: https://bugreports.qt.io/browse/QTBUG-139601
+        #
+        # Note: this will NOT happen when using focus-shift + arrow keys for
+        # navigation (i.e. with the remote control), because the focus change
+        # does not cause the text to be selected (unlike when Tab key is used).
+        # This means it will not happen in Play/controller, but can still
+        # happen if (in the future) we use Tab-navigation for the captive
+        # portal or if Tab-navigation is introduced through some other means.
 
         ## # - unfocus the text field
         ## machine.send_key("shift-tab")
@@ -257,7 +265,7 @@ pkgs.nixosTest {
         ## t.assertLess(
         ##     num_diff_pixels(screen4, screen6),
         ##     ERR_PIXELS,
-        ##     "Virtual keyboard was not restored after navigation!"
+        ##     "Virtual keyboard was not restored after re-focus!"
         ## )
 '';
 }
