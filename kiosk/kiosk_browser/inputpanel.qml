@@ -13,7 +13,6 @@ InputPanel {
     x: 0
     y: 0
     z: 99
-    property var plainInputMethod: PlainInputMethod {}
 
     Component.onCompleted: {
         // Note: activeLocales is provided via setContextProperty by parent
@@ -22,9 +21,9 @@ InputPanel {
         // the input form, it will also submit the form (if all required fields
         // are populated).
         VirtualKeyboardSettings.closeOnReturn = true;
+        // we only use PlainInputMethod
         VirtualKeyboardSettings.handwritingModeDisabled = true;
         VirtualKeyboardSettings.defaultDictionaryDisabled = true;
-        // we only use PlainInputMethod
         VirtualKeyboardSettings.defaultInputMethodDisabled = true;
 
         // we do not use selectionList and this is needed for keyboardBackgroundNumeric
@@ -45,16 +44,6 @@ InputPanel {
             anchors.fill: parent
             anchors.leftMargin: (Window.width - keyboard.style.keyboardHeight) / 2
             anchors.rightMargin: (Window.width - keyboard.style.keyboardHeight) / 2
-        }
-    }
-
-    Connections {
-        target: Qt.inputMethod
-        // Workaround to "input method is not set" error which happens when
-        // keyboard is hidden while shifting between input fields of different types
-        function onKeyboardRectangleChanged() {
-            InputContext.inputEngine.inputMethod = null;
-            InputContext.inputEngine.inputMethod = plainInputMethod;
         }
     }
 

@@ -136,3 +136,7 @@ class MainWidget(QtWidgets.QWidget):
         else:
             self.resize(QtCore.QSize(round(screen_size.width() / 2), round(screen_size.height() / 2)))
             self.show()
+
+    def resizeEvent(self, event):
+        self._keyboardWidget._resize()
+        return super().resizeEvent(event)

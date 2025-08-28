@@ -119,7 +119,7 @@ class KeyboardWidget(QQuickWidget):
         self._reposition()
 
     # The QQuickWidget holding the virtual keyboard is sized and positioned
-    # explicitly w.r.t. the parent window (see _reposition).
+    # explicitly w.r.t. the parent window (see _resize and _reposition).
     #
     # An alternative approach would be to make the QQuickWidget take the size of
     # the whole window, enable transparency (see _make_transparent), make the
@@ -127,6 +127,9 @@ class KeyboardWidget(QQuickWidget):
     # QML. However, this would prevent interaction with the page items
     # underneath the keyboard (until it is hidden) and might have other
     # unexpected consequences.
+    def _resize(self):
+        self.resize(QSize(round(self._visibleWidth()), round(self._visibleHeight())))
+
     def _visibleWidth(self):
         return self.window().width() / 2
 
@@ -137,18 +140,11 @@ class KeyboardWidget(QQuickWidget):
         return round(self._visibleWidth() * 800 / 2560)
 
     # Move the virtual keyboard to the top or bottom of the screen depending on
-    # where the text input cursor is currently and resize the widget holding it.
-    #
-    # Note 1: Manually controlling the widget size with visibleWidth and
-    # visibleHeight, because there are strange race conditions which lead to
-    # self.width()/height() == 0.
-    #
-    # Note 2: cursorRectangle seems to be updated later than isVisible becomes
-    # True, therefore the keyboard visibly jumps from bottom to the top. Some
-    # form of debouncing could be used here to avoid it?
+    # where the text input cursor is currently, hide the keyboard if no input is
+    # requested.
     def _reposition(self):
         if not self._input_method.isVisible():
-            self.resize(QSize(0, 0))
+            self.hide()
             return
 
         cursorTop = self._input_method.cursorRectangle().top()
@@ -164,5 +160,4 @@ class KeyboardWidget(QQuickWidget):
             kbdY = round(self.window().height() - self._visibleHeight())
 
         self.move(QPoint(kbdX, kbdY))
-        self.resize(QSize(round(self._visibleWidth()), round(self._visibleHeight())))
-
+        self.show()
