@@ -28,6 +28,9 @@
     --font-size-rhino: 3.375rem;
     --font-size-elephant: 4.25rem;
     --font-size-mammoth: 5.25rem;
+
+    /* Common styles */
+    --box-radius: 0.4rem;
 }
 
 /* Layout */
@@ -427,11 +430,10 @@ html {
 }
 
 .d-Markdown code {
-    background-color: gray;
     padding: .2rem .5rem;
     background: #f1f1f1;
     border: 1px solid #e1e1e1;
-    border-radius: 4px;
+    border-radius: var(--box-radius);
 }
 
 /* Loading */
@@ -472,7 +474,7 @@ html {
     background-color: #F1F1F1;
     color: #606060;
     border: 0.1rem solid #E1E1E1;
-    border-radius: 0.4rem;
+    border-radius: var(--box-radius);
     padding: 0.2rem 0.5rem;
 }
 
