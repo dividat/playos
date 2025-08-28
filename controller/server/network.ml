@@ -68,13 +68,23 @@ module Interface = struct
     )
 
   let of_json j =
-    let dict = Ezjsonm.get_dict j in
-    { index = dict |> List.assoc "ifindex" |> Ezjsonm.get_int
-    ; name = dict |> List.assoc "ifname" |> Ezjsonm.get_string
-    ; address = dict |> List.assoc "address" |> Ezjsonm.get_string
-    ; link_type = dict |> List.assoc "link_type" |> Ezjsonm.get_string
-    }
+    try
+      let dict = Ezjsonm.get_dict j in
+      Some
+        { index = dict |> List.assoc "ifindex" |> Ezjsonm.get_int
+        ; name = dict |> List.assoc "ifname" |> Ezjsonm.get_string
+        ; address = dict |> List.assoc "address" |> Ezjsonm.get_string
+        ; link_type = dict |> List.assoc "link_type" |> Ezjsonm.get_string
+        }
+    with _ -> None
 
+  (** Get a list of network interfaces.
+
+      NOTE `ip link` can output varying fields depending on link type.
+      Interfaces with missing fields are omitted from the list, as we are only
+      interested in link types where all fields are present (Ethernet, WLAN).
+
+  *)
   let get_all () =
     let command = ("/run/current-system/sw/bin/ip", [| "ip"; "-j"; "link" |]) in
     let%lwt json = Lwt_process.pread command in
@@ -82,5 +92,6 @@ module Interface = struct
     |> Ezjsonm.from_string
     |> Ezjsonm.value
     |> Ezjsonm.get_list of_json
+    |> List.filter_map (fun x -> x)
     |> return
 end

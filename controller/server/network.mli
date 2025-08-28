@@ -15,9 +15,5 @@ module Interface : sig
 
   val to_json : t -> Ezjsonm.value
 
-  (** Get all available interfaces.
-
-      This uses the Linux `ip` utility.
-  *)
   val get_all : unit -> t list Lwt.t
 end
