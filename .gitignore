@@ -1,7 +1,3 @@
 result
 work/
 release/
-*.merlin
-*.install
-*/_build
-controller/Changelog.html
