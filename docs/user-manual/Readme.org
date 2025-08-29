@@ -53,7 +53,7 @@ layout can be changed by clicking the Globe icon (lower left).
 The keyboard can also be closed by clicking on the Hide keyboard button (lower
 right).
 
-#+CAPTION: Virtual keyboard with layout menu open
+#+CAPTION: Virtual keyboard used in the Network settings with the layout menu open
 #+NAME: fig:virtual-keyboard
 #+attr_html: :width 800px
 [[../screenshots/virtual-keyboard.png]]
