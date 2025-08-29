@@ -17,10 +17,6 @@ InputPanel {
     Component.onCompleted: {
         // Note: activeLocales is provided via setContextProperty by parent
         VirtualKeyboardSettings.activeLocales = activeLocales.split(";");
-        // Note: slightly questionable choice, because in addition to closing
-        // the input form, it will also submit the form (if all required fields
-        // are populated).
-        VirtualKeyboardSettings.closeOnReturn = true;
         // we only use PlainInputMethod
         VirtualKeyboardSettings.handwritingModeDisabled = true;
         VirtualKeyboardSettings.defaultDictionaryDisabled = true;
