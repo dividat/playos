@@ -69,6 +69,7 @@ rec {
         home = "/home/play";
         extraGroups = [
           "dialout" # Access to serial ports for the Senso flex
+          "input" # Access to /dev/input for detecting keyboards in kiosk
         ];
       };
 

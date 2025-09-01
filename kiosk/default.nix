@@ -33,6 +33,8 @@ python3Packages.buildPythonApplication rec {
       ]
       ++ (with python3Packages; [
         dbus-python
+        evdev
+        pyudev
         pygobject3
         pyqt6-webengine
         pytest

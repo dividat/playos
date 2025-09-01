@@ -30,8 +30,11 @@ args = parser.parse_args()
 # Go to root directory of the kiosk to give relative access to assets
 os.chdir(f'{os.path.dirname(__file__)}/..')
 
-# enable virtual keyboard
+# enable virtual keyboard..
 os.putenv("QT_IM_MODULE", "qtvirtualkeyboard")
+# ..but ensure desktop integration is disabled
+os.putenv("QT_VIRTUALKEYBOARD_DESKTOP_DISABLE", "1")
+
 
 kiosk_browser.start(args.kiosk_url, args.settings_url, args.toggle_settings_key,
                     fullscreen=args.fullscreen)
