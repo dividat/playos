@@ -115,6 +115,8 @@ class KeyboardWidget(QQuickWidget):
 
         self._input_method = QApplication.inputMethod()
 
+        self._resize()
+
         # Note: The interleaving of cursorRectangleChanged and visibleChanged events
         # seems to depend on the input field focus sequence, so we simply respond to both
         self._input_method.cursorRectangleChanged.connect(self._reposition)
