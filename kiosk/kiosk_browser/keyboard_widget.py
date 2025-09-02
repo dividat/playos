@@ -1,5 +1,5 @@
 import importlib.resources
-from PyQt6 import QtCore
+from PyQt6 import QtCore, sip
 from PyQt6.QtCore import QUrl, Qt, QPoint, QSize
 from PyQt6.QtQuickWidgets import QQuickWidget
 from PyQt6.QtWidgets import QApplication
@@ -25,7 +25,10 @@ class EscapeKeyFilter(QtCore.QObject):
 
     def _update_focus_object(self, new_focus_object):
         if self._focus_object is not None:
-            self._focus_object.removeEventFilter(self)
+            # prevent crashes when underlying C++ object gets destroyed, but we
+            # are still holding onto the reference
+            if not sip.isdeleted(self._focus_object):
+                self._focus_object.removeEventFilter(self)
 
         # Workaround to QTBUG-138256, see also patch in pkgs/qtvirtualkeyboard/
         if new_focus_object != QApplication.focusObject():
