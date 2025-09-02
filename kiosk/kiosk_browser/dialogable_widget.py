@@ -40,9 +40,6 @@ class DialogableWidget(QtWidgets.QWidget):
         self._layout.addWidget(self._inner_widget)
         self.setLayout(self._layout)
 
-        # Shortcuts
-        QtGui.QShortcut('ESC', self).activated.connect(self._on_escape)
-
     def inner_widget(self):
         return self._inner_widget
 
@@ -51,6 +48,7 @@ class DialogableWidget(QtWidgets.QWidget):
             self._inner_widget.setParent(None)
             self._dialog = dialog(self, title, self._inner_widget, self._on_close)
             self._layout.addWidget(self._dialog)
+            self._inner_widget.setFocus()
             self._is_decorated = True
 
     def undecorate(self):
@@ -63,6 +61,12 @@ class DialogableWidget(QtWidgets.QWidget):
         return self._is_decorated
 
     # Private
+
+    def keyReleaseEvent(self, event):
+        if event.key() == QtCore.Qt.Key.Key_Escape:
+            self._on_close()
+        else:
+            super().keyReleaseEvent(event)
 
     def _on_escape(self):
         if self._is_decorated:

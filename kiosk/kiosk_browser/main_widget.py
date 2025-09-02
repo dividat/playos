@@ -1,8 +1,10 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
+from PyQt6.QtWidgets import QApplication
 import time
 import logging
 
 from kiosk_browser import browser_widget, captive_portal, dialogable_widget, proxy as proxy_module
+from kiosk_browser.keyboard_widget import KeyboardWidget
 
 class MainWidget(QtWidgets.QWidget):
     """ Show website from kiosk_url.
@@ -53,11 +55,11 @@ class MainWidget(QtWidgets.QWidget):
         self._layout.addWidget(self._dialogable_browser)
         self.setLayout(self._layout)
 
+        self._keyboardWidget = KeyboardWidget(self)
+
         # Shortcuts
         QtGui.QShortcut(toggle_settings_key, self).activated.connect(self._toggle_settings)
 
-        # Look at events with the eventFilter function
-        self.installEventFilter(self)
 
     def closeEvent(self, event):
         event.accept()
@@ -93,7 +95,7 @@ class MainWidget(QtWidgets.QWidget):
             if self._is_captive_portal_open:
                 self._is_captive_portal_open = False
 
-    def eventFilter(self, source, event):
+    def event(self,  event):
         # Toggle settings with a long press on the Menu key
         if event.type() == QtCore.QEvent.Type.ShortcutOverride:
             if event.key() == QtCore.Qt.Key.Key_Menu:
@@ -102,11 +104,14 @@ class MainWidget(QtWidgets.QWidget):
                 elif self._menu_press_since is not None and time.time() - self._menu_press_since > self._menu_press_delay_seconds:
                     self._menu_press_since = None
                     self._toggle_settings()
+
+                return True
+
         elif event.type() == QtCore.QEvent.Type.KeyRelease:
             if event.key() == QtCore.Qt.Key.Key_Menu and not event.isAutoRepeat():
                 self._menu_press_since = None
 
-        return super(MainWidget, self).eventFilter(source, event)
+        return super().event(event)
 
     def handle_screen_change(self, new_primary):
         logging.info(f"Primary screen changed to {new_primary.name()}")
@@ -131,3 +136,7 @@ class MainWidget(QtWidgets.QWidget):
         else:
             self.resize(QtCore.QSize(round(screen_size.width() / 2), round(screen_size.height() / 2)))
             self.show()
+
+    def resizeEvent(self, event):
+        self._keyboardWidget._resize()
+        return super().resizeEvent(event)

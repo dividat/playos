@@ -31,6 +31,33 @@ The system may be shut down by pressing the power button on the computer or alte
 
 When a remote control with a power button is connected, the system may be shut down by long-pressing the power button.
 
+** Virtual keyboard
+
+<<virtual-keyboard>>
+PlayOS provides a virtual keyboard that can be used to input text using a remote
+control, a mouse or a touch screen.
+
+The virtual keyboard automatically appears when a text input field is focused.
+
+By default, the keyboard will use the layout according to the configured system
+language. See [[localization-and-display][Localization settings]] below. The
+layout can be changed by clicking the Globe icon (lower left).
+
+*** Using the keyboard with the remote control:
+
+- Arrow keys (Left, Right, Up, Down) are used to navigate the virtual keyboard
+  when it is visible
+- The OK (Enter) key performs a virtual key press of the selected key
+- The Back (Escape) key closes the keyboard
+
+The keyboard can also be closed by clicking on the Hide keyboard button (lower
+right).
+
+#+CAPTION: Virtual keyboard used in the Network settings with the layout menu open
+#+NAME: fig:virtual-keyboard
+#+attr_html: :width 800px
+[[../screenshots/virtual-keyboard.png]]
+
 * Administration
 
 <<administration>>A menu for system administration may be accessed with the key combination ~Ctrl-Shift-F12~, or with a long press on the Menu key.
@@ -104,12 +131,17 @@ Ethernet connections are automatically configured using DHCP or link-local addre
 
 ** Localization & Display
 
+<<localization-and-display>>
 #+CAPTION: Localization & Display
 #+NAME: fig:controller-localization
 #+attr_html: :width 800px
 [[../screenshots/controller-localization.png]]
 
 Setup timezone, language, keyboard layout, and screen resolution preferences.
+
+Note: The language setting will also determine the default layout used by the
+[[virtual-keyboard][virtual keyboard]]. The keyboard layout only applies to
+~physical~ keyboards attached to the PlayOS computer.
 
 ** System Status
 

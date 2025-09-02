@@ -17,7 +17,6 @@ def tempFixAudioIssues():
     curFlags = os.environ.get('QTWEBENGINE_CHROMIUM_FLAGS', "")
     os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = curFlags + " --disable-features=FFmpegAllowLists"
 
-
 def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
 
     logging.basicConfig(level=logging.INFO)

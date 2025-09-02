@@ -31,6 +31,9 @@ let
         playos-proxy-utils = self.callPackage ../proxy-utils {};
       });
 
+      qt6 = super.qt6.overrideScope (qtself: qtsuper: {
+        qtvirtualkeyboard = (import ./qtvirtualkeyboard) { pkgs = super; qt6 = qtsuper; };
+      });
     };
 in
 

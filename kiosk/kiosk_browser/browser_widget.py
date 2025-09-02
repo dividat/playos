@@ -1,4 +1,5 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
+from PyQt6.QtWidgets import QApplication
 from enum import Enum, auto
 import logging
 import re
@@ -61,6 +62,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.setUrl(url)
         self._view(Status.LOADING)
         self._webview.loadFinished.connect(self._load_finished)
+        self.setFocusProxy(self._webview)
 
         # Shortcut to manually reload
         QtGui.QShortcut('CTRL+R', self).activated.connect(self.reload)
@@ -71,6 +73,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._reload_timer = QtCore.QTimer(self)
         self._reload_timer.setSingleShot(True)
         self._reload_timer.timeout.connect(self._webview.reload)
+
 
     def reload(self):
         """ Show kiosk browser loading URL.
