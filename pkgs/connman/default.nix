@@ -10,5 +10,10 @@ super.connman.overrideAttrs (old: {
     };
     patches = [
       ./create-libppp-compat.h.patch
+      # Custom patch to add a ipconfig method heuristic to ConnMan,
+      # can be made to work up to ConnMan 1.45 at least. If not
+      # accepted upstream, we may want to switch to another,
+      # application-level approach for achieving the same effect.
+      ./ipconfig-method-in-sorting.patch
     ];
 })
