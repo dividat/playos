@@ -87,7 +87,10 @@ class MainWidget(QtWidgets.QWidget):
                 logging.info("No physical keyboard, enabling virtual keyboard")
                 self._keyboardWidget = KeyboardWidget(self)
             else:
-                logging.warning("Physical keyboard just detected, but KeyboardWidget already initialized - this should not happen.")
+                logging.warning(
+                    "All physical keyboards disconnected just now, "
+                    "but KeyboardWidget already initialized - this should not happen"
+                )
 
     def _toggle_settings(self):
         if self._dialogable_browser.is_decorated():
