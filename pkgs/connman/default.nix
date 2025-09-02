@@ -21,5 +21,10 @@ super.connman.overrideAttrs (old: {
         url = "https://git.kernel.org/pub/scm/network/connman/connman.git/patch/?id=d90b911f6760959bdf1393c39fe8d1118315490f";
         hash = "sha256-odkjYC/iM6dTIJx2WM/KKotXdTtgv8NMFNJMzx5+YU4=";
       })
+      # Custom patch to add a ipconfig method heuristic to ConnMan,
+      # can be made to work up to ConnMan 1.45 at least. If not
+      # accepted upstream, we may want to switch to another,
+      # application-level approach for achieving the same effect.
+      ./ipconfig-method-in-sorting.patch
     ];
 })
