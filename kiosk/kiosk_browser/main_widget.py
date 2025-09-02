@@ -76,6 +76,9 @@ class MainWidget(QtWidgets.QWidget):
         if physical_keyboard_is_available:
             if self._keyboardWidget:
                 logging.info("Physical keyboard available, disabling virtual keyboard")
+                # TODO: make it somehow visible in the GUI that the vkb is
+                # disabled? Will make it less confusing if someone forgets to
+                # unplug a keyboard and expects the vkb to come up when using the RC.
                 self._keyboardWidget.deleteLater()
                 self._keyboardWidget = None
 

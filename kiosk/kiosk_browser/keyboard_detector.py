@@ -6,7 +6,7 @@ import os
 import re
 from PyQt6.QtCore import QObject, pyqtSignal
 
-# For testing purposes: exclude devices from being considered a keyboard.
+# For testing purposes: blacklist devices from being considered a keyboard.
 # semicolon separated list of regex'es used to match evdev.InputDevice.name`s.
 #
 # Setting KEYBOARD_BLACKLIST=".*" is a way to disable detection entirely
@@ -16,14 +16,35 @@ def device_is_blacklisted(device: evdev.InputDevice) -> bool:
     return any([re.match(regex, device.name) for regex in KEYBOARD_BLACKLIST])
 
 
-# We must be conservative about labeling something as a keyboard to prevent
-# false positives that lead to disabling the virtual keyboard. E.g. my Logitech
-# mouse advertises 171 EV_KEY`s, most of which are obscure actions like
+# The remote control used currently presents itself as two devices:
+# - a mouse-like thing named "MEMS TECH", with 3 EV_KEY's
+# - a keyboard-like thing named "MEMS TECH Keyboard", with 257 (!) EV_KEY's
+#
+# This predicate is used to explicitly mark the second one as non-keyboard.
+def device_is_remote_control(device) -> bool:
+    info = device.info
+    name_matches = device.name == 'MEMS TECH Keyboard'
+    info_matches = info.vendor == 7511 and info.product == 44291
+    return name_matches or info_matches
+
+
+# Keyboard identification is very heuristic since input devices often use
+# generic drivers, which means they advertise EV_KEY's that are not physically
+# present.
+#
+# We must therefore be conservative about labeling something as a keyboard to
+# prevent false positives that lead to disabling the virtual keyboard. E.g. my
+# Logitech mouse advertises 171 EV_KEY`s, most of which are obscure actions like
 # KEY_VOICEMAIL.
-# 
-# To do so, we look at the first 68 EV_KEY codes which define the basic keys
-# and expect at least 60 of them to be defined.
+#
+# To do so, we look at the first 68 EV_KEY codes which define the most common keys
+# and expect at least 60 of them to be defined. We also explicitly exclude the
+# remote control device. Since we don't expect random input devices to be
+# plugged in, it should mostly work.
 def device_is_a_keyboard(device: evdev.InputDevice) -> bool:
+    if device_is_remote_control(device):
+        return False
+
     max_relevant_keycode = 68
     # not likely to happen in a thousand years, mostly for clarity:
     assert evdev.ecodes.KEY_F10 == max_relevant_keycode, "key enumeration changed, review this!"
@@ -31,9 +52,8 @@ def device_is_a_keyboard(device: evdev.InputDevice) -> bool:
     all_ev_keys = device.capabilities().get(evdev.ecodes.EV_KEY, [])
 
     relevant_ev_keys = [k for k in all_ev_keys if k <= max_relevant_keycode]
-    
-    return len(relevant_ev_keys) > 60
 
+    return len(relevant_ev_keys) > 60
 
 
 def find_keyboard_devices() -> evdev.InputDevice:
