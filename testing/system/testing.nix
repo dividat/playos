@@ -42,6 +42,11 @@
         settingChangeDelay = 15;
     };
 
+    # Disable the PS/2 keyboard to make kiosk's virtual keyboard enabled by default.
+    # Note: you can simulate extra input devices either 'statically' (extra qemu opts)
+    # or dynamically (e.g. `device_add usb-kbd` via qemu monitor).
+    environment.variables."PLAYOS_KEYBOARD_BLACKLIST" = "AT Translated Set 2 keyboard";
+
   };
 
 }
