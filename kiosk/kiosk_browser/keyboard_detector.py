@@ -73,7 +73,7 @@ class KeyboardDetector(QObject):
     def __init__(self, keyboard_available_changed_callback):
         super().__init__()
 
-        self._keyboard_available = None
+        self.keyboard_available = None
         # connect early to not miss the initial signal emit
         self.keyboard_available_changed.connect(keyboard_available_changed_callback)
 
@@ -94,12 +94,12 @@ class KeyboardDetector(QObject):
 
         keyboard_available = len(keyboards) > 0
 
-        if self._keyboard_available != keyboard_available:
+        if self.keyboard_available != keyboard_available:
             # status change
-            self._keyboard_available = keyboard_available
-            self.keyboard_available_changed.emit(self._keyboard_available)
+            self.keyboard_available = keyboard_available
+            self.keyboard_available_changed.emit(self.keyboard_available)
 
-            if self._keyboard_available:
+            if self.keyboard_available:
                 logging.info(f"Detected keyboard devices: {", ".join([k.name for k in keyboards])}")
             else:
                 logging.info("All keyboard devices disconnected.")

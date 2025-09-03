@@ -30,6 +30,10 @@ class MainWidget(QtWidgets.QWidget):
         self._menu_press_since = None
         self._menu_press_delay_seconds = 1.5
 
+        # Virtual keyboard
+        self._keyboardWidget = None
+        self._keyboard_detector = KeyboardDetector(self._toggle_virtual_keyboard)
+
         # Browser widget
         self._kiosk_url = kiosk_url
         self._settings_url = settings_url
@@ -39,7 +43,8 @@ class MainWidget(QtWidgets.QWidget):
                 url = kiosk_url,
                 get_current_proxy = proxy.get_current,
                 parent = self),
-            on_close = self._close_dialog)
+            on_close = self._close_dialog,
+            keyboard_detector = self._keyboard_detector)
 
         # Captive portal
         self._captive_portal_url = ''
@@ -55,10 +60,6 @@ class MainWidget(QtWidgets.QWidget):
         self._layout.addWidget(self._captive_portal_message)
         self._layout.addWidget(self._dialogable_browser)
         self.setLayout(self._layout)
-
-        self._keyboardWidget = None
-
-        self._keyboard_detector = KeyboardDetector(self._toggle_virtual_keyboard)
 
         # Shortcuts
         QtGui.QShortcut(toggle_settings_key, self).activated.connect(self._toggle_settings)
@@ -76,9 +77,6 @@ class MainWidget(QtWidgets.QWidget):
         if physical_keyboard_is_available:
             if self._keyboardWidget:
                 logging.info("Physical keyboard available, disabling virtual keyboard")
-                # TODO: make it somehow visible in the GUI that the vkb is
-                # disabled? Will make it less confusing if someone forgets to
-                # unplug a keyboard and expects the vkb to come up when using the RC.
                 self._keyboardWidget.deleteLater()
                 self._keyboardWidget = None
 
