@@ -13,6 +13,9 @@ python3Packages.buildPythonApplication rec {
     substituteInPlace kiosk_browser/system.py \
       --replace "@system_name@" "${system_name}" \
       --replace "@system_version@" "${system_version}"
+
+    substituteInPlace kiosk_browser/assets.py \
+      --replace "@focus_shift_path@" "${pkgs.focus-shift.main}" \
   '';
 
   buildInputs = [
@@ -51,6 +54,8 @@ python3Packages.buildPythonApplication rec {
   shellHook = ''
     # Give access to kiosk_browser module
     export PYTHONPATH=./:$PYTHONPATH
+
+    export FOCUS_SHIFT_PATH="${pkgs.focus-shift.main}"
 
     # Setup Qt environment
     bashdir=$(mktemp -d)

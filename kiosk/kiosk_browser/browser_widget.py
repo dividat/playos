@@ -1,10 +1,11 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
+from PyQt6.QtWebEngineCore import QWebEngineScript
 from PyQt6.QtWidgets import QApplication
 from enum import Enum, auto
 import logging
 import re
 
-from kiosk_browser import system
+from kiosk_browser import system, assets
 
 # Config
 reload_on_network_error_after = 5000 # ms
@@ -16,6 +17,17 @@ class Status(Enum):
     LOADING = auto()
     NETWORK_ERROR = auto()
     LOADED = auto()
+
+
+class FocusShiftScript(QWebEngineScript):
+    def __init__(self):
+        super().__init__()
+        self.setName("focusShift")
+        self.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentReady)
+        self.setRunsOnSubFrames(True) # TODO: ?
+        self.setWorldId(QWebEngineScript.ScriptWorldId.ApplicationWorld)
+        self.setSourceUrl(QtCore.QUrl.fromLocalFile(assets.FOCUS_SHIFT_PATH))
+
 
 class BrowserWidget(QtWidgets.QWidget):
 
@@ -34,6 +46,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._network_error_page = network_error_page(self)
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
+        self._focus_shift_script = FocusShiftScript()
 
         # Add views to layout
         self._layout.addWidget(self._loading_page)
@@ -58,10 +71,6 @@ class BrowserWidget(QtWidgets.QWidget):
         # Prevent opening context menu on right click or pressing menu
         self._webview.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.NoContextMenu)
 
-        # Load url
-        self._webview.setUrl(url)
-        self._view(Status.LOADING)
-        self._webview.loadFinished.connect(self._load_finished)
         self.setFocusProxy(self._webview)
 
         # Shortcut to manually reload
@@ -74,6 +83,15 @@ class BrowserWidget(QtWidgets.QWidget):
         self._reload_timer.setSingleShot(True)
         self._reload_timer.timeout.connect(self._webview.reload)
 
+        # Load url
+        self._webview.loadFinished.connect(self._load_finished)
+        self.load(url)
+
+    def _toggle_focus_shift_inject(self, should_enable: bool):
+        if should_enable and not self._profile.scripts().contains(self._focus_shift_script):
+            self._profile.scripts().insert(self._focus_shift_script)
+        else:
+            self._profile.scripts().remove(self._focus_shift_script)
 
     def reload(self):
         """ Show kiosk browser loading URL.
@@ -86,9 +104,10 @@ class BrowserWidget(QtWidgets.QWidget):
         if self._reload_timer.isActive():
             self._reload_timer.stop()
 
-    def load(self, url: str):
+    def load(self, url: str, inject_focus_shift=False):
         """ Load specific URL.
         """
+        self._toggle_focus_shift_inject(inject_focus_shift)
 
         self._url = url
         self.reload()
