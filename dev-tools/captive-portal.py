@@ -50,5 +50,5 @@ class requestHandler(BaseHTTPRequestHandler):
 
 port = 8000
 with HTTPServer(('127.0.0.1', port), requestHandler) as httpd:
-    print(f'Running captive portal on port {port}...')
+    print(f'Running captive portal on http://127.0.0.1:{port}/...')
     httpd.serve_forever()
