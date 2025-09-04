@@ -19,14 +19,41 @@ class Status(Enum):
     LOADED = auto()
 
 
-class FocusShiftScript(QWebEngineScript):
-    def __init__(self):
+# base class for setup
+class KioskInjectedScript(QWebEngineScript):
+    def __init__(self, name):
         super().__init__()
-        self.setName("focusShift")
+        self.setName(name)
         self.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentReady)
         self.setRunsOnSubFrames(True) # TODO: ?
         self.setWorldId(QWebEngineScript.ScriptWorldId.ApplicationWorld)
+
+class FocusShiftScript(KioskInjectedScript):
+    def __init__(self):
+        super().__init__("focusShift")
         self.setSourceUrl(QtCore.QUrl.fromLocalFile(assets.FOCUS_SHIFT_PATH))
+
+class EnableInputToggleWithEnterScript(KioskInjectedScript):
+    def __init__(self):
+        super().__init__("inputToggleWithEnter")
+        self.setSourceCode("""
+// simplified version of SpatialNavigation.ts in diviapps
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        performSyntheticClick(event)
+    }
+})
+function performSyntheticClick(event) {
+    const activeElement = document.activeElement
+    if (
+        activeElement instanceof HTMLInputElement &&
+        (activeElement.type === 'checkbox' || activeElement.type === 'radio')
+    ) {
+        activeElement.click()
+        event.preventDefault()
+    }
+}
+        """)
 
 
 class BrowserWidget(QtWidgets.QWidget):
@@ -47,6 +74,9 @@ class BrowserWidget(QtWidgets.QWidget):
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
         self._focus_shift_script = FocusShiftScript()
+        self._input_with_enter_script = EnableInputToggleWithEnterScript()
+        # enabled on all pages!
+        self._profile.scripts().insert(self._input_with_enter_script)
 
         # Add views to layout
         self._layout.addWidget(self._loading_page)
