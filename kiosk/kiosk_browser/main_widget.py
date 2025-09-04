@@ -94,6 +94,13 @@ class MainWidget(QtWidgets.QWidget):
         if self._dialogable_browser.is_decorated():
             self._close_dialog()
         else:
+            # TODO: in theory we can inject_focus_shift=True here too, which
+            # would eliminate the need to package/include focus-shift it in
+            # controller and simplify the builds.
+            # However, you will not be able to test focus-shift navigation if
+            # running controller standalone. But maybe kiosk is supposed to be
+            # in charge of dealing with RC/navigation and thus standalone
+            # testing is not very meaningful?
             self._dialogable_browser.inner_widget().load(self._settings_url)
             self._dialogable_browser.decorate("System Settings")
 

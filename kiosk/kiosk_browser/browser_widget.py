@@ -33,6 +33,9 @@ class FocusShiftScript(KioskInjectedScript):
         super().__init__("focusShift")
         self.setSourceUrl(QtCore.QUrl.fromLocalFile(assets.FOCUS_SHIFT_PATH))
 
+# TODO: currently also makes checkboxes/radio buttons work in controller GUI.
+# If we only use this for captive portals, then it makes sense to combine
+# FocusShiftScript with this into a single injection
 class EnableInputToggleWithEnterScript(KioskInjectedScript):
     def __init__(self):
         super().__init__("inputToggleWithEnter")
