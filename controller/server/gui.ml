@@ -238,7 +238,10 @@ module NetworkGui = struct
     match%lwt
       Curl.request
         ?proxy:(Option.map (Service.Proxy.to_uri ~include_userinfo:true) proxy)
-        (Uri.of_string "http://captive.dividat.com/")
+        (Sys.getenv_opt "PLAYOS_CAPTIVE_CHECK_URL"
+        |> Option.value ~default:"http://captive.dividat.com/"
+        |> Uri.of_string
+        )
     with
     | RequestSuccess (code, response) ->
         `String response |> respond ?code:(Some (`Code code)) |> Lwt.return

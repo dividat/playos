@@ -12,8 +12,9 @@ from enum import Enum, auto
 from http import HTTPStatus
 from PyQt6 import QtWidgets
 from typing import Callable
+import os
 
-check_connection_url = 'http://captive.dividat.com/'
+check_connection_url = os.getenv("PLAYOS_CAPTIVE_CHECK_URL", 'http://captive.dividat.com/')
 
 """
 Connection Status
