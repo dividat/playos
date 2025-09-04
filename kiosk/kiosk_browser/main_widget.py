@@ -1,11 +1,32 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QPushButton, QDialog, QHBoxLayout
 import time
 import logging
 
 from kiosk_browser import browser_widget, captive_portal, dialogable_widget, proxy as proxy_module
 from kiosk_browser.keyboard_widget import KeyboardWidget
 from kiosk_browser.keyboard_detector import KeyboardDetector
+
+
+class MultiActionToggleSettingsDialog(QDialog):
+    def __init__(self, parent, actions: dict):
+        super().__init__(parent)
+
+        self.setWindowTitle("Choose action")
+        layout = QHBoxLayout(self)
+
+        last_button = None
+        for action_name, action_callback in actions.items():
+            button = QPushButton(action_name)
+            button.clicked.connect(action_callback)
+            button.clicked.connect(self.accept)
+            layout.addWidget(button)
+            last_button = button
+
+        if last_button:
+            last_button.setDefault(True)
+            last_button.setFocus()
+
 
 class MainWidget(QtWidgets.QWidget):
     """ Show website from kiosk_url.
@@ -90,19 +111,41 @@ class MainWidget(QtWidgets.QWidget):
                     "but KeyboardWidget already initialized - this should not happen"
                 )
 
+    def _open_settings(self):
+        # TODO: in theory we can inject_focus_shift=True here too, which
+        # would eliminate the need to package/include focus-shift it in
+        # controller and simplify the builds.
+        # However, you will not be able to test focus-shift navigation if
+        # running controller standalone. But maybe kiosk is supposed to be
+        # in charge of dealing with RC/navigation and thus standalone
+        # testing is not very meaningful?
+        self._dialogable_browser.inner_widget().load(self._settings_url)
+        self._dialogable_browser.decorate("System Settings")
+
+
+    # By default toggles setting view, but when captive portal is detected,
+    # shows a modal dialog with several options.
     def _toggle_settings(self):
+        actions = {}
+
+        # Default actions which are always available
         if self._dialogable_browser.is_decorated():
-            self._close_dialog()
+            actions['Return to home'] = self._close_dialog
         else:
-            # TODO: in theory we can inject_focus_shift=True here too, which
-            # would eliminate the need to package/include focus-shift it in
-            # controller and simplify the builds.
-            # However, you will not be able to test focus-shift navigation if
-            # running controller standalone. But maybe kiosk is supposed to be
-            # in charge of dealing with RC/navigation and thus standalone
-            # testing is not very meaningful?
-            self._dialogable_browser.inner_widget().load(self._settings_url)
-            self._dialogable_browser.decorate("System Settings")
+            actions['Open settings'] = self._open_settings
+
+        # Additional actions:
+        if self._captive_portal_message.is_open():
+            actions['Network login'] = self._show_captive_portal
+
+        if len(actions) == 1:
+            first_action = next(iter(actions.values()))
+            first_action()
+        else:
+            dialog = MultiActionToggleSettingsDialog(self, actions)
+            dialog.exec()
+            self.activateWindow()
+
 
     def _show_captive_portal_message(self, url: str):
         self._captive_portal_url = QtCore.QUrl(url)
