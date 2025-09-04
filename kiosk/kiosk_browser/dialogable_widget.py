@@ -105,7 +105,7 @@ class KeyboardConnectedIndicator(QtWidgets.QWidget):
 
     def _scale_icon(self, size):
         self._label.setPixmap(self._pixmap.scaledToHeight(
-            round(size.height() * 0.9),
+            round(size.height() * 0.6),
             mode = QtCore.Qt.TransformationMode.SmoothTransformation
         ))
         self._label.adjustSize()
@@ -162,7 +162,7 @@ def dialog(
     # footer section
     keyboard_indicator = KeyboardConnectedIndicator(keyboard_detector)
     # note: this also sets the bottom border height
-    keyboard_indicator.setFixedSize(horizontal_margin, vertical_margin)
+    keyboard_indicator.setFixedSize(vertical_margin, vertical_margin)
 
     # set up elements on root_layout
     root_layout.addSpacing(vertical_margin) # top margin
