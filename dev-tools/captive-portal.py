@@ -22,7 +22,13 @@ class requestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         host = self.headers['host']
         if self.path == '/portal':
-            textHtml(self, '<form action="/portal" method="POST"><button>Login</button></form>')
+            textHtml(self, (
+                '<form action="/portal" method="POST">'
+                '<label>Useless input: <input type="text"></label><br>'
+                '<label>Mandatory checkbox: <input required type="checkbox"></label><br>'
+                '<button>Login</button>'
+                '</form>'
+            ))
 
         elif self.path == '/logout':
             global isAuthorized
