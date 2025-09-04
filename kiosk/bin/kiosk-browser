@@ -30,9 +30,11 @@ args = parser.parse_args()
 # Go to root directory of the kiosk to give relative access to assets
 os.chdir(f'{os.path.dirname(__file__)}/..')
 
-# enable virtual keyboard..
+# Enable virtual keyboard input method...
 os.putenv("QT_IM_MODULE", "qtvirtualkeyboard")
-# ..but ensure desktop integration is disabled
+# ...but ensure desktop integration is disabled. This prevents Qt from
+# automatically creating a window for the vkb, which we don't want since we
+# manually control when the vkb should be enabled.
 os.putenv("QT_VIRTUALKEYBOARD_DESKTOP_DISABLE", "1")
 
 
