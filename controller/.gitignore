@@ -2,3 +2,4 @@
 *.install
 _build
 Changelog.html
+gui/vendor/focus-shift.js

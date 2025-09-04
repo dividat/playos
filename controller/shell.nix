@@ -16,4 +16,6 @@ pkgs.mkShell {
         pkgs.watchexec
         pkgs.ocamlformat
       ];
+
+  shellHook = playos-controller.genAssetsHook;
 }

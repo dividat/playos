@@ -34,6 +34,8 @@ let
       qt6 = super.qt6.overrideScope (qtself: qtsuper: {
         qtvirtualkeyboard = (import ./qtvirtualkeyboard) { pkgs = super; qt6 = qtsuper; };
       });
+
+      focus-shift = self.callPackage ./focus-shift.nix {};
     };
 in
 

@@ -8,7 +8,7 @@
   (licenses/QT6 as licenses/QT6)
   (gui/reset.css as static/reset.css)
   (gui/style.css as static/style.css)
-  (gui/vendor/focus-shift-1.0.0.js as static/vendor/focus-shift.js)
+  (gui/vendor/focus-shift.js as static/vendor/focus-shift.js)
   (gui/client.js as static/client.js)))
 
 ; Disable missing-record-field-pattern warnings (partial matching),

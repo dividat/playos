@@ -10,6 +10,12 @@ ocamlPackages.buildDunePackage rec {
 
   src = ./.;
 
+  genAssetsHook = writeShellScript "gen-assets" ''
+    markdown Changelog.md > Changelog.html
+    mkdir -p gui/vendor
+    ln -sf ${focus-shift.main} gui/vendor/focus-shift.js
+  '';
+
   preConfigure = let
     subs = {
         "@PLAYOS_VERSION@" = version;
@@ -19,7 +25,7 @@ ocamlPackages.buildDunePackage rec {
     };
     in
     ''
-    markdown Changelog.md > Changelog.html
+    ${genAssetsHook}
 
     ${lib.strings.toShellVar "subs_arr" subs}
 
