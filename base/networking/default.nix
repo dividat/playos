@@ -33,14 +33,18 @@ in
       AllowHostnameUpdates=false
       AllowDomainnameUpdates=false
 
-      # Wifi will generally be used for internet, use as default route
-      PreferredTechnologies=wifi,ethernet
-
       # Allow simultaneous connection to ethernet and wifi
       SingleConnectedTechnology=false
 
-      # Enable online check to favour connected services
-      EnableOnlineCheck=true
+      # Always use WiFi and Ethernet in parallel
+      AlwaysConnectedTechnologies=ethernet,wifi
+      DefaultAutoConnectTechnologies=ethernet,wifi
+      # Use Ethernet without active user prompt (plugging cable is the prompt)
+      DefaultFavoriteTechnologies=ethernet
+
+      # Online check is disabled as one-shot mode seems unhelpful for us and
+      # only causes needless chattiness.
+      EnableOnlineCheck=false
     '';
   };
 
