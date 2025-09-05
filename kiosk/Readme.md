@@ -18,6 +18,21 @@ See https://github.com/NixOS/nixpkgs/issues/9415 for context.
 
 You can pass `--no-fullscreen` to run the kiosk windowed.
 
+## Virtual keyboard
+
+To "force" the virtual keyboard, you need to disable physical keyboard
+detection, by setting the `PLAYOS_KEYBOARD_BLACKLIST` to wildcard:
+
+```
+PLAYOS_KEYBOARD_BLACKLIST=".*" bin/kiosk-browser ...
+```
+
+You can also use the env variable to selectively blacklist devices by name for
+testing dynamic keyboard detection, see
+[kiosk_browser/keyboard_detector.py](kiosk_browser/keyboard_detector.py) for
+more details.
+
+
 ## Testing
 
         bin/test

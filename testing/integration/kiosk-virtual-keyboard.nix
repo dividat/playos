@@ -45,6 +45,9 @@ pkgs.nixosTest {
               xset s noblank
               xset -dpms
 
+              # disable physical keyboard detection
+              export PLAYOS_KEYBOARD_BLACKLIST=".*"
+
               ${kiosk}/bin/kiosk-browser \
                 ${kioskUrl} ${kioskUrl}
 

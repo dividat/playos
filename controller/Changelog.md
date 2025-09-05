@@ -4,6 +4,7 @@
 
 - os: Add network watchdog
 - kiosk: Add virtual keyboard
+- kiosk: Auto-disable virtual keyboard when real keyboard detected
 
 # [2025.3.1] - 2025-07-04
 

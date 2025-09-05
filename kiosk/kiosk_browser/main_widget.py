@@ -5,6 +5,7 @@ import logging
 
 from kiosk_browser import browser_widget, captive_portal, dialogable_widget, proxy as proxy_module
 from kiosk_browser.keyboard_widget import KeyboardWidget
+from kiosk_browser.keyboard_detector import KeyboardDetector
 
 class MainWidget(QtWidgets.QWidget):
     """ Show website from kiosk_url.
@@ -29,6 +30,10 @@ class MainWidget(QtWidgets.QWidget):
         self._menu_press_since = None
         self._menu_press_delay_seconds = 1.5
 
+        # Virtual keyboard
+        self._keyboardWidget = None
+        self._keyboard_detector = KeyboardDetector(self._toggle_virtual_keyboard)
+
         # Browser widget
         self._kiosk_url = kiosk_url
         self._settings_url = settings_url
@@ -38,7 +43,8 @@ class MainWidget(QtWidgets.QWidget):
                 url = kiosk_url,
                 get_current_proxy = proxy.get_current,
                 parent = self),
-            on_close = self._close_dialog)
+            on_close = self._close_dialog,
+            keyboard_detector = self._keyboard_detector)
 
         # Captive portal
         self._captive_portal_url = ''
@@ -55,8 +61,6 @@ class MainWidget(QtWidgets.QWidget):
         self._layout.addWidget(self._dialogable_browser)
         self.setLayout(self._layout)
 
-        self._keyboardWidget = KeyboardWidget(self)
-
         # Shortcuts
         QtGui.QShortcut(toggle_settings_key, self).activated.connect(self._toggle_settings)
 
@@ -68,6 +72,23 @@ class MainWidget(QtWidgets.QWidget):
         self._dialogable_browser.inner_widget()._webview.setPage(None)
 
     # Private
+
+    def _toggle_virtual_keyboard(self, physical_keyboard_is_available):
+        if physical_keyboard_is_available:
+            if self._keyboardWidget:
+                logging.info("Physical keyboard available, disabling virtual keyboard")
+                self._keyboardWidget.deleteLater()
+                self._keyboardWidget = None
+
+        else:
+            if self._keyboardWidget is None:
+                logging.info("No physical keyboard, enabling virtual keyboard")
+                self._keyboardWidget = KeyboardWidget(self)
+            else:
+                logging.warning(
+                    "All physical keyboards disconnected just now, "
+                    "but KeyboardWidget already initialized - this should not happen"
+                )
 
     def _toggle_settings(self):
         if self._dialogable_browser.is_decorated():
@@ -138,5 +159,6 @@ class MainWidget(QtWidgets.QWidget):
             self.show()
 
     def resizeEvent(self, event):
-        self._keyboardWidget._resize()
+        if self._keyboardWidget:
+            self._keyboardWidget._resize()
         return super().resizeEvent(event)
