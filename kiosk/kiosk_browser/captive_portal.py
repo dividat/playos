@@ -112,8 +112,8 @@ class OpenMessage(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self, parent)
 
         label = QtWidgets.QLabel(
-            'You must log in to this network before you can access the Internet. '
-            'Long press the Menu key to open the network login page.'
+            'This network requires you to log in to access the Internet. '
+            'Long press Ctrl-Shift-F12 or the Menu key to open the network login page.'
         )
 
         button = QtWidgets.QPushButton('Open Network Login Page')
