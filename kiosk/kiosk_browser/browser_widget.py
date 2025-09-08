@@ -57,6 +57,22 @@ function performSyntheticClick(event) {
         """)
 
 
+class ForceFocusedElementHighlightingScript(KioskInjectedScript):
+    def __init__(self):
+        super().__init__("ForceFocusedElementHighlightingScript")
+        self.setSourceCode("""
+const css = `
+  html body *:focus-visible:focus-visible:focus-visible:focus-visible {
+    outline: outset thick rgb(255 255 0 / 0.8) !important;
+  }
+`;
+
+const elem = document.createElement('style');
+elem.textContent = css;
+document.head.appendChild(elem);
+        """)
+
+
 class BrowserWidget(QtWidgets.QWidget):
 
     def __init__(self, url, get_current_proxy, parent):
@@ -76,6 +92,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
         self._focus_shift_script = FocusShiftScript()
         self._input_with_enter_script = EnableInputToggleWithEnterScript()
+        self._force_focused_element_highlight_script = ForceFocusedElementHighlightingScript()
 
         # Add views to layout
         self._layout.addWidget(self._loading_page)
@@ -116,16 +133,13 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.loadFinished.connect(self._load_finished)
         self.load(url)
 
-    def _toggle_spatial_navigation_scripts_inject(self, should_enable: bool):
+    def _toggle_script_inject(self, script: QWebEngineScript, should_enable: bool):
         scripts = self._profile.scripts()
         if should_enable:
-            if not scripts.contains(self._focus_shift_script):
-                scripts.insert(self._focus_shift_script)
-            if not scripts.contains(self._input_with_enter_script):
-                scripts.insert(self._input_with_enter_script)
+            if not scripts.contains(script):
+                scripts.insert(script)
         else:
-            scripts.remove(self._focus_shift_script)
-            scripts.remove(self._input_with_enter_script)
+            scripts.remove(script)
 
     def reload(self):
         """ Show kiosk browser loading URL.
@@ -138,10 +152,15 @@ class BrowserWidget(QtWidgets.QWidget):
         if self._reload_timer.isActive():
             self._reload_timer.stop()
 
-    def load(self, url: str, inject_spatial_navigation_scripts=False):
-        """ Load specific URL.
+    def load(self, url: str, inject_spatial_navigation_scripts=False, inject_focus_highlight=False):
+        """ Load specific URL, potentially injecting additional scripts into the page.
         """
-        self._toggle_spatial_navigation_scripts_inject(inject_spatial_navigation_scripts)
+        # inject_spatial_navigation_scripts toggle
+        self._toggle_script_inject(self._focus_shift_script, inject_spatial_navigation_scripts)
+        self._toggle_script_inject(self._input_with_enter_script, inject_spatial_navigation_scripts)
+
+        # inject_focus_highlight toggle
+        self._toggle_script_inject(self._force_focused_element_highlight_script, inject_focus_highlight)
 
         self._url = url
         self.reload()

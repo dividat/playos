@@ -149,7 +149,9 @@ class MainWidget(QtWidgets.QWidget):
     def _show_captive_portal(self):
         self._close_dialog()
         self._captive_portal_message.hide()
-        self._dialogable_browser.inner_widget().load(self._captive_portal_url, inject_spatial_navigation_scripts=True)
+        self._dialogable_browser.inner_widget().load(self._captive_portal_url,
+                                                     inject_spatial_navigation_scripts=True,
+                                                     inject_focus_highlight=True)
         self._dialogable_browser.decorate("Network Login")
         self._is_captive_portal_open = True
 
