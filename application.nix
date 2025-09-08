@@ -214,6 +214,8 @@ rec {
 
       # Enable avahi for Senso discovery
       services.avahi.enable = true;
+      # Mark network services with discoverable Sensos
+      playos.controller.annotateDiscoveredServices = [ "_sensoControl._tcp" "_sensoUpdate._udp" ];
 
       # Enable pcscd for smart card identification
       services.pcscd.enable = true;
