@@ -46,6 +46,10 @@ Run `nix-shell` to create a suitable development environment.
 
 Then, start the the controller with `bin/dev-server`.
 
+## Configuration in testing
+
+- To define which DNS-SD service types are used to label networks, set `PLAYOS_ANNOTATE_DISCOVERED_SERVICES` to a semicolon-separated list of service types.
+
 ## Code style
 
 - Author CSS according to the [BEM methodology](http://getbem.com/) in the format `d-Block__Element--Modifier`.

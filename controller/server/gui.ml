@@ -34,6 +34,16 @@ let with_timeout { duration; on_timeout } f =
   ]
   |> Lwt.pick
 
+let get_env_list ?(sep = ';') var =
+  match Sys.getenv_opt var with
+  | None ->
+      []
+  | Some raw ->
+      raw
+      |> String.split_on_char sep
+      |> List.map String.trim
+      |> List.filter (fun s -> s <> "")
+
 (* Pretty error printing middleware *)
 let error_handling =
   let open Opium_kernel.Rock in
@@ -203,10 +213,40 @@ end
 module NetworkGui = struct
   open Connman
 
+  (* Annotate network interfaces with instance names of DNS-SD services.
+
+     Browses for DNS-SD services with the given service types and groups them
+     by network interface.
+  *)
+  let interface_annotations interfaces =
+    let open Avahi.Service in
+    let open Network.Interface in
+    let annotated_service_types =
+      get_env_list "PLAYOS_ANNOTATE_DISCOVERED_SERVICES"
+    in
+    let%lwt annotated_services =
+      Avahi.Service.get_all ()
+      >|= List.filter (fun s -> List.mem s.service_type annotated_service_types)
+    in
+    interfaces
+    |> List.map (fun interface ->
+           ( interface.name
+           , List.filter_map
+               (fun s ->
+                 if s.interface = interface.name then Some s.service_name
+                 else None
+               )
+               annotated_services
+             |> List.sort_uniq String.compare
+           )
+       )
+    |> return
+
   let overview ~(connman : Manager.t) req =
     let%lwt all_services = Manager.get_services connman in
     let%lwt proxy = Manager.get_default_proxy connman in
     let%lwt interfaces = Network.Interface.get_all () in
+    let%lwt interface_annotations = interface_annotations interfaces in
     let pp_proxy p =
       let uri =
         p |> Service.Proxy.to_uri ~include_userinfo:false |> Uri.to_string
@@ -223,6 +263,7 @@ module NetworkGui = struct
     let params : Network_list_page.params =
       { proxy = proxy |> Option.map pp_proxy
       ; services = all_services
+      ; interface_annotations
       ; interfaces
       }
     in

@@ -220,6 +220,20 @@ html {
     background: #E0CB52;
 }
 
+.d-NetworkList__Labels {
+  margin-left: var(--spacing-cat);
+  display: inline-flex;
+  gap: var(--spacing-mouse);
+}
+
+.d-NetworkList__Label {
+  color: var(--color-hint);
+  border: 2px solid var(--color-hint);
+  border-radius: var(--box-radius);
+  padding: var(--spacing-cat);
+  font-size: small;
+}
+
 .d-NetworkList__Address {
   color: var(--color-hint);
   font-size: small;
