@@ -5,7 +5,7 @@ from enum import Enum, auto
 import logging
 import re
 
-from kiosk_browser import system, assets
+from kiosk_browser import system, injected_scripts
 
 # Config
 reload_on_network_error_after = 5000 # ms
@@ -17,60 +17,6 @@ class Status(Enum):
     LOADING = auto()
     NETWORK_ERROR = auto()
     LOADED = auto()
-
-
-# base class for setup
-class KioskInjectedScript(QWebEngineScript):
-    def __init__(self, name):
-        super().__init__()
-        self.setName(name)
-        self.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentReady)
-        self.setRunsOnSubFrames(True) # TODO: ?
-        self.setWorldId(QWebEngineScript.ScriptWorldId.ApplicationWorld)
-
-class FocusShiftScript(KioskInjectedScript):
-    def __init__(self):
-        super().__init__("focusShift")
-        self.setSourceUrl(QtCore.QUrl.fromLocalFile(assets.FOCUS_SHIFT_PATH))
-
-
-class EnableInputToggleWithEnterScript(KioskInjectedScript):
-    def __init__(self):
-        super().__init__("inputToggleWithEnter")
-        self.setSourceCode("""
-// simplified version of SpatialNavigation.ts in diviapps
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-        performSyntheticClick(event)
-    }
-})
-function performSyntheticClick(event) {
-    const activeElement = document.activeElement
-    if (
-        activeElement instanceof HTMLInputElement &&
-        (activeElement.type === 'checkbox' || activeElement.type === 'radio')
-    ) {
-        activeElement.click()
-        event.preventDefault()
-    }
-}
-        """)
-
-
-class ForceFocusedElementHighlightingScript(KioskInjectedScript):
-    def __init__(self):
-        super().__init__("ForceFocusedElementHighlightingScript")
-        self.setSourceCode("""
-const css = `
-  html body *:focus-visible:focus-visible:focus-visible:focus-visible {
-    outline: outset thick rgb(255 255 0 / 0.8) !important;
-  }
-`;
-
-const elem = document.createElement('style');
-elem.textContent = css;
-document.head.appendChild(elem);
-        """)
 
 
 class BrowserWidget(QtWidgets.QWidget):
@@ -90,9 +36,9 @@ class BrowserWidget(QtWidgets.QWidget):
         self._network_error_page = network_error_page(self)
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
-        self._focus_shift_script = FocusShiftScript()
-        self._input_with_enter_script = EnableInputToggleWithEnterScript()
-        self._force_focused_element_highlight_script = ForceFocusedElementHighlightingScript()
+        self._focus_shift_script = injected_scripts.FocusShiftScript()
+        self._input_with_enter_script = injected_scripts.EnableInputToggleWithEnterScript()
+        self._force_focused_element_highlight_script = injected_scripts.ForceFocusedElementHighlightingScript()
 
         # Add views to layout
         self._layout.addWidget(self._loading_page)
