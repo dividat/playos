@@ -9,7 +9,7 @@ class KioskInjectedScript(QWebEngineScript):
         super().__init__()
         self.setName(name)
         self.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentReady)
-        self.setRunsOnSubFrames(True) # TODO: ?
+        self.setRunsOnSubFrames(True)
         self.setWorldId(QWebEngineScript.ScriptWorldId.ApplicationWorld)
 
 class FocusShiftScript(KioskInjectedScript):
