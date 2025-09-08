@@ -9,6 +9,7 @@ with lib;
 {
   imports = [
     (import ./networking/default.nix { hostName = safeProductName; inherit lib pkgs config; })
+    (import ./controller-service.nix { inherit config lib pkgs playos-controller; })
     ./networking/watchdog
     ./hardening.nix
     ./localization.nix
@@ -53,20 +54,6 @@ with lib;
     # 'Welcome Screen'
     services.getty = {
       greetingLine = greeting "${fullProductName} (${version})";
-    };
-
-    # Start controller
-    systemd.services.playos-controller = {
-      description = "PlayOS Controller";
-      serviceConfig = {
-        ExecStart = "${playos-controller}/bin/playos-controller";
-        User = "root";
-        RestartSec = "10s";
-        Restart = "always";
-      };
-      wantedBy = [ "multi-user.target" ];
-      requires = [ "connman.service" ];
-      after = [ "rauc.service" "connman.service" ];
     };
 
   };
