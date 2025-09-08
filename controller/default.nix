@@ -12,8 +12,6 @@ ocamlPackages.buildDunePackage rec {
 
   genAssetsHook = writeShellScript "gen-assets" ''
     markdown Changelog.md > Changelog.html
-    mkdir -p gui/vendor
-    ln -sf ${focus-shift.main} gui/vendor/focus-shift.js
   '';
 
   preConfigure = let

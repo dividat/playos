@@ -33,9 +33,7 @@ class FocusShiftScript(KioskInjectedScript):
         super().__init__("focusShift")
         self.setSourceUrl(QtCore.QUrl.fromLocalFile(assets.FOCUS_SHIFT_PATH))
 
-# TODO: currently also makes checkboxes/radio buttons work in controller GUI.
-# If we only use this for captive portals, then it makes sense to combine
-# FocusShiftScript with this into a single injection
+
 class EnableInputToggleWithEnterScript(KioskInjectedScript):
     def __init__(self):
         super().__init__("inputToggleWithEnter")
@@ -78,8 +76,6 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
         self._focus_shift_script = FocusShiftScript()
         self._input_with_enter_script = EnableInputToggleWithEnterScript()
-        # enabled on all pages!
-        self._profile.scripts().insert(self._input_with_enter_script)
 
         # Add views to layout
         self._layout.addWidget(self._loading_page)
@@ -120,11 +116,16 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.loadFinished.connect(self._load_finished)
         self.load(url)
 
-    def _toggle_focus_shift_inject(self, should_enable: bool):
-        if should_enable and not self._profile.scripts().contains(self._focus_shift_script):
-            self._profile.scripts().insert(self._focus_shift_script)
+    def _toggle_spatial_navigation_scripts_inject(self, should_enable: bool):
+        scripts = self._profile.scripts()
+        if should_enable:
+            if not scripts.contains(self._focus_shift_script):
+                scripts.insert(self._focus_shift_script)
+            if not scripts.contains(self._input_with_enter_script):
+                scripts.insert(self._input_with_enter_script)
         else:
-            self._profile.scripts().remove(self._focus_shift_script)
+            scripts.remove(self._focus_shift_script)
+            scripts.remove(self._input_with_enter_script)
 
     def reload(self):
         """ Show kiosk browser loading URL.
@@ -137,10 +138,10 @@ class BrowserWidget(QtWidgets.QWidget):
         if self._reload_timer.isActive():
             self._reload_timer.stop()
 
-    def load(self, url: str, inject_focus_shift=False):
+    def load(self, url: str, inject_spatial_navigation_scripts=False):
         """ Load specific URL.
         """
-        self._toggle_focus_shift_inject(inject_focus_shift)
+        self._toggle_spatial_navigation_scripts_inject(inject_spatial_navigation_scripts)
 
         self._url = url
         self.reload()
