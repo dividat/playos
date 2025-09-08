@@ -19,8 +19,8 @@ with lib;
   config = {
     assertions = [
       {
-        assertion = !(hasAnnotatedServices && config.services.avahi.enable == false);
-        message   = "playos.controller.annotateDiscoveredServices requires avahi to be enabled.";
+        assertion = !hasAnnotatedServices || config.services.avahi.enable;
+        message = "playos.controller.annotateDiscoveredServices requires avahi to be enabled.";
       }
     ];
 
