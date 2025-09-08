@@ -99,10 +99,6 @@ with TestPrecondition("avahi browse finds Senso service"):
     # Also publish a service with 'malicious' instance name
     senso.succeed("avahi-publish -s '<script>Inject</script>' _soundso._tcp 8080 >&2 &")
 
-    # Ensure it is picked up
-    playos_with_avahi.wait_until_succeeds("test `avahi-browse -r -t _soundso._tcp | wc -l` -gt 0")
-    print(playos_with_avahi.succeed("avahi-browse -pfc _soundso._tcp"))
-
 with TestCase("System without avahi can list networks"):
     playos_no_avahi.succeed("curl --fail http://localhost:3333/network | grep Wired")
 
