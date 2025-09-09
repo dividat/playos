@@ -219,20 +219,20 @@ module NetworkGui = struct
      by network interface.
   *)
   let interface_annotations interfaces =
-    let open Avahi.Service in
-    let open Network.Interface in
     let annotated_service_types =
       get_env_list "PLAYOS_ANNOTATE_DISCOVERED_SERVICES"
     in
     let%lwt annotated_services =
       Avahi.Service.get_all ()
-      >|= List.filter (fun s -> List.mem s.service_type annotated_service_types)
+      >|= List.filter (fun (s : Avahi.Service.t) ->
+              List.mem s.service_type annotated_service_types
+          )
     in
     interfaces
-    |> List.map (fun interface ->
+    |> List.map (fun (interface : Network.Interface.t) ->
            ( interface.name
            , List.filter_map
-               (fun s ->
+               (fun (s : Avahi.Service.t) ->
                  if s.interface = interface.name then Some s.service_name
                  else None
                )
