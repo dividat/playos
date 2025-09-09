@@ -3,7 +3,8 @@ open Tyxml.Html
 open Sexplib.Std
 open Protocol_conv_jsonm
 
-let service_item get_labels ({ id; name; strength; ipv4 } as service) =
+let service_item interface_annotations ({ id; name; strength; ipv4 } as service)
+    =
   let icon =
     match strength with
     | Some s ->
@@ -18,17 +19,22 @@ let service_item get_labels ({ id; name; strength; ipv4 } as service) =
       [ "d-NetworkList__Network--Connected" ]
     else []
   in
-  let labels =
-    get_labels service
-    |> List.map (fun label_text ->
-           span ~a:[ a_class [ "d-NetworkList__Label" ] ] [ txt label_text ]
-       )
-  in
   li
     [ a
         ~a:[ a_class classes; a_href ("/network/" ^ id) ]
         [ div
-            [ txt name; span ~a:[ a_class [ "d-NetworkList__Labels" ] ] labels ]
+            [ txt name
+            ; span
+                ~a:[ a_class [ "d-NetworkList__Labels" ] ]
+                (List.assoc_opt service.ethernet.interface interface_annotations
+                |> Option.value ~default:[]
+                |> List.map (fun label_text ->
+                       span
+                         ~a:[ a_class [ "d-NetworkList__Label" ] ]
+                         [ txt label_text ]
+                   )
+                )
+            ]
         ; ( match ipv4 with
           | Some ipv4_addr ->
               div
@@ -59,10 +65,6 @@ let html { proxy; services; interfaces; interface_annotations } =
     |> [%sexp_of: Network.Interface.t list]
     |> Sexplib.Sexp.to_string_hum
   in
-  let get_labels service =
-    List.assoc_opt service.ethernet.interface interface_annotations
-    |> Option.value ~default:[]
-  in
   Page.html ~current_page:Page.Network
     ~header:
       (Page.header_title ~icon:Icon.world
@@ -76,7 +78,10 @@ let html { proxy; services; interfaces; interface_annotations } =
              section
                [ ul
                    ~a:[ a_class [ "d-NetworkList" ]; a_role [ "list" ] ]
-                   (List.map (service_item get_labels) connected_services)
+                   (List.map
+                      (service_item interface_annotations)
+                      connected_services
+                   )
                ]
          )
        ; Definition.list
@@ -108,7 +113,7 @@ let html { proxy; services; interfaces; interface_annotations } =
                else
                  ul
                    ~a:[ a_class [ "d-NetworkList" ]; a_role [ "list" ] ]
-                   (List.map (service_item (fun _ -> [])) available_services)
+                   (List.map (service_item []) available_services)
              )
            ]
        ; section
