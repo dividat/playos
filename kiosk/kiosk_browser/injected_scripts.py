@@ -41,6 +41,12 @@ function performSyntheticClick(event) {
         """)
 
 
+# Note: on pages with Content-Security-Policy enabled for styles (`style-src
+# 'self'`), this will fail with "Refused to apply inline style because it
+# violates the following Content Security Policy directive <..>".
+# There is no alternative for injecting CSS or overriding CSP in qtwebengine (as
+# of 6.9.2) and this is not major issue, so we keep it as is. A last-resort
+# workaround could be to launch a proxy that removes CSP headers from responses.
 class ForceFocusedElementHighlightingScript(KioskInjectedScript):
     def __init__(self):
         super().__init__("ForceFocusedElementHighlightingScript")
