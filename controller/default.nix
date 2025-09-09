@@ -10,6 +10,10 @@ ocamlPackages.buildDunePackage rec {
 
   src = ./.;
 
+  genAssetsHook = writeShellScript "gen-assets" ''
+    markdown Changelog.md > Changelog.html
+  '';
+
   preConfigure = let
     subs = {
         "@PLAYOS_VERSION@" = version;
@@ -19,7 +23,7 @@ ocamlPackages.buildDunePackage rec {
     };
     in
     ''
-    markdown Changelog.md > Changelog.html
+    ${genAssetsHook}
 
     ${lib.strings.toShellVar "subs_arr" subs}
 

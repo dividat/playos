@@ -12,8 +12,9 @@ from enum import Enum, auto
 from http import HTTPStatus
 from PyQt6 import QtWidgets
 from typing import Callable
+import os
 
-check_connection_url = 'http://captive.dividat.com/'
+check_connection_url = os.getenv("PLAYOS_CAPTIVE_CHECK_URL", 'http://captive.dividat.com/')
 
 """
 Connection Status
@@ -110,7 +111,10 @@ class OpenMessage(QtWidgets.QWidget):
 
         QtWidgets.QWidget.__init__(self, parent)
 
-        label = QtWidgets.QLabel('You must log in to this network before you can access the Internet.')
+        label = QtWidgets.QLabel(
+            'This network requires you to log in to access the Internet. '
+            'Long press Ctrl-Shift-F12 or the Menu key to open the network login page.'
+        )
 
         button = QtWidgets.QPushButton('Open Network Login Page')
         button.clicked.connect(on_open)

@@ -1,10 +1,11 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
+from PyQt6.QtWebEngineCore import QWebEngineScript
 from PyQt6.QtWidgets import QApplication
 from enum import Enum, auto
 import logging
 import re
 
-from kiosk_browser import system
+from kiosk_browser import system, injected_scripts
 
 # Config
 reload_on_network_error_after = 5000 # ms
@@ -16,6 +17,7 @@ class Status(Enum):
     LOADING = auto()
     NETWORK_ERROR = auto()
     LOADED = auto()
+
 
 class BrowserWidget(QtWidgets.QWidget):
 
@@ -34,6 +36,9 @@ class BrowserWidget(QtWidgets.QWidget):
         self._network_error_page = network_error_page(self)
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
+        self._focus_shift_script = injected_scripts.FocusShiftScript()
+        self._input_with_enter_script = injected_scripts.EnableInputToggleWithEnterScript()
+        self._force_focused_element_highlight_script = injected_scripts.ForceFocusedElementHighlightingScript()
 
         # Add views to layout
         self._layout.addWidget(self._loading_page)
@@ -58,10 +63,6 @@ class BrowserWidget(QtWidgets.QWidget):
         # Prevent opening context menu on right click or pressing menu
         self._webview.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.NoContextMenu)
 
-        # Load url
-        self._webview.setUrl(url)
-        self._view(Status.LOADING)
-        self._webview.loadFinished.connect(self._load_finished)
         self.setFocusProxy(self._webview)
 
         # Shortcut to manually reload
@@ -74,6 +75,17 @@ class BrowserWidget(QtWidgets.QWidget):
         self._reload_timer.setSingleShot(True)
         self._reload_timer.timeout.connect(self._webview.reload)
 
+        # Load url
+        self._webview.loadFinished.connect(self._load_finished)
+        self.load(url)
+
+    def _toggle_script_inject(self, script: QWebEngineScript, should_enable: bool):
+        scripts = self._profile.scripts()
+        if should_enable:
+            if not scripts.contains(script):
+                scripts.insert(script)
+        else:
+            scripts.remove(script)
 
     def reload(self):
         """ Show kiosk browser loading URL.
@@ -86,9 +98,15 @@ class BrowserWidget(QtWidgets.QWidget):
         if self._reload_timer.isActive():
             self._reload_timer.stop()
 
-    def load(self, url: str):
-        """ Load specific URL.
+    def load(self, url: str, inject_spatial_navigation_scripts=False, inject_focus_highlight=False):
+        """ Load specific URL, potentially injecting additional scripts into the page.
         """
+        # inject_spatial_navigation_scripts toggle
+        self._toggle_script_inject(self._focus_shift_script, inject_spatial_navigation_scripts)
+        self._toggle_script_inject(self._input_with_enter_script, inject_spatial_navigation_scripts)
+
+        # inject_focus_highlight toggle
+        self._toggle_script_inject(self._force_focused_element_highlight_script, inject_focus_highlight)
 
         self._url = url
         self.reload()
