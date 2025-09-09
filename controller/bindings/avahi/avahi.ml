@@ -83,7 +83,7 @@ module Service = struct
    *)
   let get_all ?(timeout_seconds = 0.2) () =
     let cmd =
-      [| "/run/current-system/sw/bin/avahi-browse"
+      [| "avahi-browse"
        ; "--all"
        ; "--parsable"
        ; "--cache" (* print cache and exit immediately *)
