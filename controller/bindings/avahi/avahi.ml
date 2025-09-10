@@ -73,7 +73,7 @@ module Service = struct
     | _ ->
         None
 
-  (* Gets all announced services of any type known to avahi at time of call.
+  (* Gets all services of the given type known to avahi at time of call.
 
      We race with a timeout because avahi is rumored to block even when
      only the cached table is requested: https://github.com/avahi/avahi/issues/264
@@ -81,12 +81,12 @@ module Service = struct
      In case of timeout we return an empty list of services.
 
    *)
-  let get_all ?(timeout_seconds = 0.2) () =
+  let get_service_type ?(timeout_seconds = 0.2) service_type =
     let cmd =
       [| "avahi-browse"
-       ; "--all"
        ; "--parsable"
        ; "--cache" (* print cache and exit immediately *)
+       ; service_type
       |]
     in
     let query =

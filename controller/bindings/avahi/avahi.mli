@@ -5,7 +5,7 @@ module Service : sig
     ; interface : string
     }
 
-  val get_all : ?timeout_seconds:float -> unit -> t list Lwt.t
+  val get_service_type : ?timeout_seconds:float -> string -> t list Lwt.t
 
   (* Exposed for unit tests *)
   val unescape_label : string -> string option
