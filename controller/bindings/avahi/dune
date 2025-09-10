@@ -1,0 +1,11 @@
+(library
+ (name avahi)
+ (modules avahi)
+ (libraries base config lwt lwt.unix)
+ (preprocess
+  (pps lwt_ppx)))
+
+(test
+ (name avahi_test)
+ (modules avahi_test)
+ (libraries avahi alcotest base config lwt lwt.unix))

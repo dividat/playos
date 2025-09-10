@@ -33,6 +33,7 @@
   tyxml
   rauc
   zerotier
+  avahi
   connman
   locale
   network

@@ -5,6 +5,7 @@
 - os: Add network watchdog
 - kiosk: Add virtual keyboard
 - kiosk: Auto-disable virtual keyboard when real keyboard detected
+- controller: Show a label for networks in which a Senso is found
 
 # [2025.3.1] - 2025-07-04
 
