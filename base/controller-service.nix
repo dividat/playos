@@ -60,7 +60,7 @@ with lib;
           requires = [ "avahi-daemon.service" ];
 
           serviceConfig = {
-            ExecStart = "${pkgs.avahi}/bin/avahi-browse -r ${serviceType}";
+            ExecStart = "${pkgs.avahi}/bin/avahi-browse ${serviceType}";
             Restart = "always";
             RestartSec = "5s";
           };
