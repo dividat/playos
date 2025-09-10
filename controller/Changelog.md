@@ -7,6 +7,10 @@
 - kiosk: Auto-disable virtual keyboard when real keyboard detected
 - controller: Show a label for networks in which a Senso is found
 
+## Fixed
+
+- os: Prevent the network manager from attempting to route Internet traffic to the Senso in networks with delayed DHCP
+
 # [2025.3.1] - 2025-07-04
 
 # [2025.3.1-VALIDATION] - 2025-06-06
