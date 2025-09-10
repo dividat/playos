@@ -45,7 +45,7 @@ pkgs.testers.runNixOSTest {
       config = {
         services.connman.enable = pkgs.lib.mkOverride 0 true; # disabled in runNixOSTest by default
 
-        playos.controller.annotateDiscoveredServices = [ "_soundso._tcp" ];
+        playos.controller.annotateDiscoveredServices = [ "_soundso._tcp" "_yesyes._udp" ];
 
         playos.storage = {
           persistentDataPartition = {
@@ -94,16 +94,18 @@ playos_with_avahi.wait_for_unit("playos-controller.service")
 playos_with_avahi.wait_until_succeeds("curl --fail http://localhost:3333/")
 
 with TestPrecondition("avahi browse finds Senso service"):
-    # Publish our service of interest
-    senso.succeed("avahi-publish -s 'Davidat Soundso' _soundso._tcp 8080 >&2 &")
+    # Publish our services of interest
+    senso.succeed("avahi-publish --service 'Davidat Soundso' _soundso._tcp 8080 >&2 &")
+    senso.succeed("avahi-publish --service 'Yes Man' _yesyes._udp 2233 >&2 &")
     # Also publish a service with 'malicious' instance name
-    senso.succeed("avahi-publish -s '<script>Inject</script>' _soundso._tcp 8080 >&2 &")
+    senso.succeed("avahi-publish --service '<script>Inject</script>' _soundso._tcp 8080 >&2 &")
 
 with TestCase("System without avahi can list networks"):
     playos_no_avahi.succeed("curl --fail http://localhost:3333/network | grep Wired")
 
 with TestCase("Label is applied"):
     playos_with_avahi.wait_until_succeeds("curl http://localhost:3333/network | grep 'Davidat Soundso'")
+    playos_with_avahi.wait_until_succeeds("curl http://localhost:3333/network | grep 'Yes Man'")
 
 with TestCase("Injectable label contents are escaped"):
     playos_with_avahi.wait_until_succeeds("curl http://localhost:3333/network | grep '&lt;script&gt;Inject&lt;/script&gt;'")
