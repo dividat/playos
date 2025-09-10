@@ -45,7 +45,8 @@ pkgs.testers.runNixOSTest {
       config = {
         services.connman.enable = pkgs.lib.mkOverride 0 true; # disabled in runNixOSTest by default
 
-        playos.controller.annotateDiscoveredServices = [ "_soundso._tcp" "_yesyes._udp" ];
+        # Includes non-existent "bigfoot" in services of interest, to confirm it does not break anything
+        playos.controller.annotateDiscoveredServices = [ "_soundso._tcp" "_yesyes._udp" "_bigfoot._tcp" ];
 
         playos.storage = {
           persistentDataPartition = {
