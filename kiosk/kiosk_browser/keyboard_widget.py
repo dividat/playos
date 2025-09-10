@@ -1,63 +1,81 @@
+from __future__ import annotations # allow forward references in types
+
 import importlib.resources
-from PyQt6 import QtCore, sip
+from PyQt6 import QtCore
 from PyQt6.QtCore import QUrl, Qt, QPoint, QSize
 from PyQt6.QtQuickWidgets import QQuickWidget
 from PyQt6.QtWidgets import QApplication
 import json
 import logging
 import os
+from enum import IntEnum, auto
+from typing import Optional
 
 PLAYOS_LANGUAGES_CONFIG = "/etc/playos/languages.json"
 # for easier testing, semicolon separated, e.g. de_DE;fr_FR
 PLAYOS_LANGUAGES_EXTRA = os.getenv("PLAYOS_LANGUAGES_EXTRA", "")
 
-# Prevent Escape key from reaching focus object when virtual keyboard is
-# activated and instead hide the virtual keyboard.
-# Both KeyPress and the following KeyRelease are handled.
-class EscapeKeyFilter(QtCore.QObject):
-    def __init__(self, parent):
+
+# The virtual keyboard's activation state. Used to manually control the
+# visibility of the virtual keyboard via Enter/Escape and HideKeyboardKey keys.
+#
+# For internal use only. Use QApplication.inputMethod().isVisible() for
+# situations where you just need to know if the virtual keyboard is active and
+# visible.
+class ActivationState(IntEnum):
+    # A transient state that represents an indeterminate situation.
+    # E.g. after the cursor moves, we do not know if it has moved to a new field
+    # (in which case the virtual keyboard should be hidden) or inside of the
+    # same field (in which case the virtual keyboard state remains unchanged)
+    # See KeyboardWidget._cursorMoved for more details
+    UNKNOWN = auto()
+
+    # We have "intercepted" the InputMethod::show() and undone it with a hide().
+    # Waiting for user to press Enter/OK to activate the virtual keyboard.
+    # Keyboard is not visible. Cursor is inside an input field.
+    WAITING_FOR_ACTIVATION = auto()
+
+    # User has pressed Enter/OK and we activated the virtual keyboard.
+    # Keyboard is visible (or will soon become). Cursor is inside an input field.
+    ACTIVATED = auto()
+
+
+
+# "Globally" handle Escape/Enter/Return keys for toggling keyboard visibility..
+# Prevents both the KeyPress and the following KeyRelease from reaching any Qt
+# objects if they trigger any action.
+class ActivationKeyFilter(QtCore.QObject):
+    def __init__(self, parent: KeyboardWidget):
         super().__init__(parent)
 
-        self._focus_object = None
-        self._last_keypress_closed_vkb = False
+        self._supress_next_key_release: Optional[QtCore.Qt.Key] = None
 
-        QApplication.instance().focusObjectChanged.connect(self._update_focus_object)
+        QApplication.instance().installEventFilter(self)
 
-    def _update_focus_object(self, new_focus_object):
-        if self._focus_object is not None:
-            # prevent crashes when underlying C++ object gets destroyed, but we
-            # are still holding onto the reference
-            if not sip.isdeleted(self._focus_object):
-                self._focus_object.removeEventFilter(self)
-
-        # Workaround to QTBUG-138256, see also patch in pkgs/qtvirtualkeyboard/
-        if new_focus_object != QApplication.focusObject():
-            new_focus_object = QApplication.focusObject()
-
-        if new_focus_object is None:
-            return
-
-        new_focus_object.installEventFilter(self)
-
-        self._focus_object = new_focus_object
-
-
+    # Note: installed for the top-level QApplication instance, so this is
+    # performance-sensitive.
     def eventFilter(self, source, event):
         if event.type() == QtCore.QEvent.Type.KeyPress:
-            self._last_keypress_closed_vkb = False
+            self._supress_next_key_release = None
 
-            if event.key() == QtCore.Qt.Key.Key_Escape:
+            if event.key() in [ QtCore.Qt.Key.Key_Enter, QtCore.Qt.Key.Key_Return ]:
+                if self.parent().isSuspended():
+                    self.parent().activateKeyboard()
+                    self._supress_next_key_release = event.key()
+                    return True
+
+            elif event.key() == QtCore.Qt.Key.Key_Escape:
                 if QApplication.inputMethod().isVisible():
-                    QApplication.inputMethod().hide()
-                    self._last_keypress_closed_vkb = True
+                    self.parent().suspendKeyboard()
+                    self._supress_next_key_release = event.key()
                     return True
 
         elif event.type() == QtCore.QEvent.Type.KeyRelease:
-            # stop KeyRelease propagation too if we just closed the keyboard
-            if event.key() == QtCore.Qt.Key.Key_Escape and self._last_keypress_closed_vkb:
-                    return True
+            # stop KeyRelease propagation too if we just closed or open the keyboard
+            return event.key() == self._supress_next_key_release
 
         return False
+
 
 class KeyboardWidget(QQuickWidget):
     def _make_transparent(self):
@@ -66,7 +84,6 @@ class KeyboardWidget(QQuickWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_AlwaysStackOnTop)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setClearColor(Qt.GlobalColor.transparent)
-
 
     def _configure_supported_languages(self):
         locales = []
@@ -111,20 +128,24 @@ class KeyboardWidget(QQuickWidget):
 
         self.setResizeMode(QQuickWidget.ResizeMode.SizeRootObjectToView);
 
-        self._escape_key_filter = EscapeKeyFilter(self)
+        self._activation_key_filter = ActivationKeyFilter(self)
 
         self._input_method = QApplication.inputMethod()
 
+        self._state = ActivationState.UNKNOWN
+        self.hide()
         self._resize()
 
-        # Note: The interleaving of cursorRectangleChanged and visibleChanged events
-        # seems to depend on the input field focus sequence, so we simply respond to both
-        self._input_method.cursorRectangleChanged.connect(self._reposition)
-        self._input_method.visibleChanged.connect(self._reposition)
-        self._reposition()
+        # Custom signal emitted from QML to detect hiding via user action.
+        # Note: the HideKeyboardKey automatically hides the keyboard, but we
+        # call the generic `suspendKeyboard` to not rely on the event ordering
+        self.rootObject().hideKeyboardClicked.connect(self.suspendKeyboard)
+
+        self._input_method.cursorRectangleChanged.connect(self._cursorMoved)
+        self._input_method.visibleChanged.connect(self._visibleChanged)
 
     # The QQuickWidget holding the virtual keyboard is sized and positioned
-    # explicitly w.r.t. the parent window (see _resize and _reposition).
+    # explicitly w.r.t. the parent window (see _resize and _cursorMoved).
     #
     # An alternative approach would be to make the QQuickWidget take the size of
     # the whole window, enable transparency (see _make_transparent), make the
@@ -144,13 +165,70 @@ class KeyboardWidget(QQuickWidget):
         # Would be better to somehow read them from `QtQuick.VirtualKeyboard.Styles`?
         return round(self._visibleWidth() * 800 / 2560)
 
-    # Move the virtual keyboard to the top or bottom of the screen depending on
-    # where the text input cursor is currently, hide the keyboard if no input is
-    # requested.
-    def _reposition(self):
-        if not self._input_method.isVisible():
+    # Mark keyboard as active and display it on the screen
+    def activateKeyboard(self):
+        self._state = ActivationState.ACTIVATED
+        QApplication.inputMethod().show()
+
+    # Prevent the keyboard from being displayed and mark it as waiting for (user) activation
+    def suspendKeyboard(self):
+        QApplication.inputMethod().hide()
+        # indicate the keyboard is suspended
+        self._state = ActivationState.WAITING_FOR_ACTIVATION
+
+    # Was the keyboard suspended with suspendKeyboard? (i.e. is it waiting for user activation)
+    def isSuspended(self):
+        return self._state == ActivationState.WAITING_FOR_ACTIVATION
+
+    def _visibleChanged(self):
+        if self._input_method.isVisible():
+            # User has activated the keyboard, so show ourselves
+            if self._state == ActivationState.ACTIVATED:
+                self.show()
+
+            # Something in the platform is trying to show the keyboard, but we
+            # delay until the user manually activates it.
+            else:
+                self.suspendKeyboard()
+
+        else:
+            # Handle keyboard hiding the same regardless of reason.
+            #
+            # This state will be overridden afterwards if the keyboard is being
+            # suspended or hidden via a user interaction (Esc/HideKeyboardKey),
+            # see `suspendKeyboard`
+            self._state = ActivationState.UNKNOWN
+
             self.hide()
-            return
+
+
+    # Move the virtual keyboard to the top or bottom of the screen depending on
+    # where the text input cursor is currently. Mark the ActivationState as UNKNOWN.
+    #
+    # Note: when an input field is unfocused, cursorRectangle() seems to be equal
+    # to the last/previous cursor position, instead of something like null.
+    def _cursorMoved(self):
+        # Respond to any cursor movement by setting a transitional UNKNOWN state.
+        #
+        # There are 3 possible movements:
+        #   1. Cursor moved inside a single input field.
+        #   2. Cursor moved to a different input field
+        #   3. Input field is unfocused (cursor "gone", position is stale - see Note above)
+        #
+        # In theory we only care about the last case, since we want to unset
+        # the WAITING_FOR_ACTIVATION state if the user navigates away from an
+        # input field. However, it does not seem to be possible to distinguish
+        # between the cases with the current Qt APIs, so instead we treat them
+        # all the same.
+        #
+        # We expect Qt platform to signal visibleChanged LATER, thus giving us a
+        # chance to override the state in the _visibleChanged handler. At the
+        # moment that seems to be the case: cursorRectangleChanged events are
+        # always received before visibleChanged events (which makes sense - the
+        # platform needs to know the location of input before it can determine
+        # what kind of input to request). If the event order changes in future
+        # Qt releases, this will break.
+        self._state = ActivationState.UNKNOWN
 
         cursorTop = self._input_method.cursorRectangle().top()
 
@@ -165,4 +243,3 @@ class KeyboardWidget(QQuickWidget):
             kbdY = round(self.window().height() - self._visibleHeight())
 
         self.move(QPoint(kbdX, kbdY))
-        self.show()

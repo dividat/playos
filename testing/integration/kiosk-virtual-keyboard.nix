@@ -103,9 +103,11 @@ pkgs.nixosTest {
     KEYBOARD_NUMERIC_SIZE = KEYBOARD_FULL_HEIGHT ** 2
 
     # max difference / err in pixels allowed due to:
-    # - focus highlights on elements
+    # - focus highlights on elements and vkb
+    # - text present in input fields
     # - rounding / scaling errors
-    ERR_PIXELS = SCREEN_SIZE * 0.005
+    # empirically confirmed that the diff can reach 0.7% (2437px @ 640x480)
+    ERR_PIXELS = SCREEN_SIZE * 0.015
 
     def num_diff_pixels(a, b):
         im1 = a.convert("RGB")
@@ -137,39 +139,62 @@ pkgs.nixosTest {
     machine.wait_for_file("/home/alice/.Xauthority")
     time.sleep(10) # give time for Chromium to start
 
-    with TestCase("kiosk integrates the virtual keyboard") as t,\
-            tempfile.TemporaryDirectory() as d:
+    def make_screenshot():
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as t:
+            machine.screenshot(t.name)
+            screen = Image.open(t).convert("RGB")
+
+        return screen
+
+    def assertScreenshotsSimilar(t, screen_a, screen_b, extra_msg=""):
+        t.assertLess(
+            num_diff_pixels(screen_a, screen_b),
+            ERR_PIXELS,
+            f"Screenshots not similar! {extra_msg}"
+        )
+
+
+    with TestPrecondition("kiosk displays the page") as t:
         xrandr(f"--mode {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
         time.sleep(3) # give kiosk time to resize
 
-        machine.screenshot(d + "/screen1.png")
-        screen1 = Image.open(d + "/screen1.png").convert("RGB")
+        screen_initial = make_screenshot()
 
         # sanity check: size is correct
-        t.assertEqual(screen1.size, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        t.assertEqual(screen_initial.size, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
         # keyboard is not visible, screen contains mostly white pixels
-        screen1_colors = Counter(screen1.getdata())
+        screen_initial_colors = Counter(screen_initial.getdata())
         t.assertGreater(
-            screen1_colors[(255, 255, 255)], # white
+            screen_initial_colors[(255, 255, 255)], # white
             SCREEN_SIZE - INPUT_ELEMENTS_SIZE,
             "Screen is not mostly white, is the keyboard visible?"
         )
 
+
+    with TestCase("keyboard (numeric) shows up when activated"):
         # focus first numeric input field
         machine.send_key("tab")
         time.sleep(1)
 
-        machine.screenshot(d + "/screen2.png")
-        screen2 = Image.open(d + "/screen2.png")
+        # keyboard should not show up right away
+        assertScreenshotsSimilar(t, screen_initial, make_screenshot())
+
+        # activate keyboard
+        machine.send_key("ret")
+        time.sleep(1)
+
+        screen_numeric_kbd = make_screenshot()
 
         t.assertGreater(
-            num_diff_pixels(screen1, screen2),
+            num_diff_pixels(screen_initial, screen_numeric_kbd),
             KEYBOARD_NUMERIC_SIZE - ERR_PIXELS,
             "Screenshots too similar, virtual keyboard not displayed?"
         )
 
-        # expect 3 numbers to be input
+
+    with TestCase("keyboard (numeric) accepts input"):
+        # spam a few random keys on the vkb
         machine.send_key("down")
         machine.send_key("ret")
         machine.send_key("down")
@@ -179,39 +204,63 @@ pkgs.nixosTest {
 
         # expect at least one number successfully typed
         wait_for_logs(machine, "INPUT: [0-9]", timeout=3)
+        time.sleep(1) # wait for all keys to be processed
 
+
+    with TestCase("keyboard (numeric) is hidden/shown with escape/enter") as t:
+        pre_close_screen = make_screenshot()
+
+        # close vkb
+        machine.send_key("esc")
+        time.sleep(1)
+
+        assertScreenshotsSimilar(t, screen_initial, make_screenshot(),
+            extra_msg="Virtual keyboard failed to hide with Esc?")
+
+        # reactivate vkb
+        machine.send_key("ret")
+        time.sleep(1)
+
+        assertScreenshotsSimilar(t, pre_close_screen, make_screenshot(),
+            extra_msg="Virtual keyboard not visible after reactivation with Return?")
+
+
+    with TestCase("keyboard is hidden when input field is unfocused") as t:
         # focus on button, keyboard should hide
         machine.send_key("tab")
         time.sleep(1)
 
-        machine.screenshot(d + "/screen3.png")
-        screen3 = Image.open(d + "/screen3.png")
+        assertScreenshotsSimilar(t, screen_initial, make_screenshot(),
+            extra_msg="Virtual keyboard did not hide on unfocus?")
 
-        t.assertLess(
-            num_diff_pixels(screen1, screen3),
-            ERR_PIXELS,
-            "Screenshot too different from initial view, did the keyboard fail to hide?"
-        )
 
+    with TestCase("keyboard (text) is activated on text field") as t:
         # focus on text field
         machine.send_key("tab")
         time.sleep(1)
 
-        machine.screenshot(d + "/screen4.png")
-        screen4 = Image.open(d + "/screen4.png")
+        # keyboard should not show up right away
+        assertScreenshotsSimilar(t, screen_initial, make_screenshot())
+
+        # activate keyboard
+        machine.send_key("ret")
+        time.sleep(1)
+
+        screen_full_kbd = make_screenshot()
 
         t.assertGreater(
-            num_diff_pixels(screen1, screen4),
+            num_diff_pixels(screen_initial, screen_full_kbd),
             KEYBOARD_FULL_SIZE - ERR_PIXELS,
             "Screenshots too similar, virtual keyboard not displayed?"
         )
 
         t.assertGreater(
-            num_diff_pixels(screen2, screen4),
+            num_diff_pixels(screen_numeric_kbd, screen_full_kbd),
             KEYBOARD_FULL_SIZE - KEYBOARD_NUMERIC_SIZE,
             "Screenshots too similar, virtual keyboard layout did not change?"
         )
 
+    with TestCase("keyboard (text) accepts input") as t:
         machine.send_key("down")
         machine.send_key("ret")
         machine.send_key("right")
@@ -221,24 +270,29 @@ pkgs.nixosTest {
 
         # expect at least one letter successfully typed
         wait_for_logs(machine, "INPUT: [a-z]", timeout=3)
+        time.sleep(1) # wait for all keys to be processed
 
+
+    with TestCase("keyboard (text) can be closed and reactivated") as t:
+        pre_close_screen_text = make_screenshot()
 
         # esc button - keyboard should be gone
         # due to mysterious reasons esc does not work if sent immediatelly after
         # return, the little sleep helps
         time.sleep(1)
         machine.send_key("esc")
-
         time.sleep(1)
 
-        machine.screenshot(d + "/screen5.png")
-        screen5 = Image.open(d + "/screen5.png")
+        assertScreenshotsSimilar(t, screen_initial, make_screenshot(),
+            extra_msg="Virtual keyboard failed to hide with Esc?")
 
-        t.assertLess(
-            num_diff_pixels(screen1, screen5),
-            ERR_PIXELS,
-            "Screenshot too different from initial view, did the keyboard fail to hide?"
-        )
+        # reactivate vkb
+        machine.send_key("ret")
+        time.sleep(1)
+
+        assertScreenshotsSimilar(t, pre_close_screen_text, make_screenshot(),
+            extra_msg="Virtual keyboard not visible after reactivation with Return?")
+        time.sleep(1)
 
         # The test below is disabled, because it currently fails due to a
         # qtwebengine bug: re-focusing an input element with populated text
@@ -262,11 +316,10 @@ pkgs.nixosTest {
         ## # - focus back to the text field, keyboard should become visible
         ## machine.send_key("tab")
         ## time.sleep(1)
-        ## machine.screenshot(d + "/screen6.png")
-        ## screen6 = Image.open(d + "/screen6.png")
+        ## screen_refocus = make_screenshot()
 
         ## t.assertLess(
-        ##     num_diff_pixels(screen4, screen6),
+        ##     num_diff_pixels(screen_full_kbd, screen_refocus),
         ##     ERR_PIXELS,
         ##     "Virtual keyboard was not restored after re-focus!"
         ## )
