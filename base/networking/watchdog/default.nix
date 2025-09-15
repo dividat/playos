@@ -19,7 +19,7 @@ let
         mypy
     ];
 
-     checkPhase = ''
+    checkPhase = ''
         runHook preCheck
 
         ruff check
