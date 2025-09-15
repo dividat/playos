@@ -1,5 +1,5 @@
 import dbus
-from kiosk_browser import proxy
+import proxy_utils as proxy
 
 # Mock
 
