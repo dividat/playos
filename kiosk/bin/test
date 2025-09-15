@@ -3,4 +3,4 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 mypy kiosk_browser
-python -m pytest
+python -m pytest -v
