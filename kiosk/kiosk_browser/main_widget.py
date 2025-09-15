@@ -1,11 +1,25 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
-from PyQt6.QtWidgets import QPushButton, QDialog, QHBoxLayout
+from PyQt6.QtWidgets import QPushButton, QDialog, QHBoxLayout, QApplication
+from PyQt6.QtCore import Qt
 import time
 import logging
+from dataclasses import dataclass
+from collections.abc import Callable
 
 from kiosk_browser import browser_widget, captive_portal, dialogable_widget, proxy as proxy_module
 from kiosk_browser.keyboard_widget import KeyboardWidget
 from kiosk_browser.keyboard_detector import KeyboardDetector
+from kiosk_browser.long_press import LongPressEvents, KeyCombination
+
+
+@dataclass
+class ShortcutDef:
+    name: str
+    keys: set[Qt.Key]
+    action: Callable[[], None]
+
+    def to_combo(self):
+        return KeyCombination(name=self.name, keys=frozenset(self.keys))
 
 
 class MultiActionToggleSettingsDialog(QDialog):
@@ -60,12 +74,13 @@ class MainWidget(QtWidgets.QWidget):
         # Browser widget
         self._kiosk_url = kiosk_url
         self._settings_url = settings_url
+        self._browser_widget = browser_widget.BrowserWidget(
+            url = kiosk_url,
+            get_current_proxy = proxy.get_current,
+            parent = self)
         self._dialogable_browser = dialogable_widget.DialogableWidget(
             parent = self,
-            inner_widget = browser_widget.BrowserWidget(
-                url = kiosk_url,
-                get_current_proxy = proxy.get_current,
-                parent = self),
+            inner_widget = self._browser_widget,
             on_close = self._close_dialog,
             keyboard_detector = self._keyboard_detector)
 
@@ -84,15 +99,50 @@ class MainWidget(QtWidgets.QWidget):
         self._layout.addWidget(self._dialogable_browser)
         self.setLayout(self._layout)
 
-        # Shortcuts
+        # Application shortcuts
+
+        ## Keyboard shortcuts
+
+        # Shortcut to toggle settings (CTRL+SHIFT+12 by default)
         QtGui.QShortcut(toggle_settings_key, self).activated.connect(self._toggle_settings)
+        # Shortcut to manually reload webview page
+        QtGui.QShortcut('CTRL+R', self).activated.connect(self._browser_widget.reload)
+        # Shortcut to perform a hard webview refresh
+        QtGui.QShortcut('CTRL+SHIFT+R', self).activated.connect(self._browser_widget.hard_refresh)
+
+        ## Remote Control long-press shortcuts
+        long_press_shortcuts = [
+            ShortcutDef(
+                name = "menu",
+                keys = { Qt.Key.Key_Menu },
+                action = self._toggle_settings,
+            ),
+            # close dialog (if any)
+            ShortcutDef(
+                name = "escape",
+                keys = { Qt.Key.Key_Escape },
+                action = self._close_dialog,
+            ),
+            ShortcutDef(
+                name = "hard-refresh",
+                keys = { Qt.Key.Key_Escape, Qt.Key.Key_Down },
+                action = self._browser_widget.hard_refresh
+            )
+        ]
+
+        long_press_combos = [shortcut.to_combo() for shortcut in long_press_shortcuts]
+        long_press_actions = { shortcut.name: shortcut.action for shortcut in long_press_shortcuts }
+
+        # installed on QApplication.instance() to ensure LongPressEvents gets to see all events first
+        self._long_press_events = LongPressEvents(QApplication.instance(), long_press_combos)
+        self._long_press_events.long_press_combo.connect(
+            lambda combo_name: long_press_actions[combo_name]()
+        )
 
 
     def closeEvent(self, event):
-        event.accept()
-
-        # Unset page in web view to avoid it outliving the browser profile
-        self._dialogable_browser.inner_widget()._webview.setPage(None)
+        self._browser_widget.closeEvent(event)
+        return super().closeEvent(event)
 
     # Private
 
@@ -114,8 +164,7 @@ class MainWidget(QtWidgets.QWidget):
                 )
 
     def _open_settings(self):
-        self._dialogable_browser.inner_widget().load(self._settings_url,
-                                                     inject_spatial_navigation_scripts=True)
+        self._browser_widget.load(self._settings_url, inject_spatial_navigation_scripts=True)
         self._dialogable_browser.decorate("System Settings")
 
 
@@ -151,36 +200,19 @@ class MainWidget(QtWidgets.QWidget):
     def _show_captive_portal(self):
         self._close_dialog()
         self._captive_portal_message.hide()
-        self._dialogable_browser.inner_widget().load(self._captive_portal_url,
-                                                     inject_spatial_navigation_scripts=True,
-                                                     inject_focus_highlight=True)
+        self._browser_widget.load(self._captive_portal_url,
+                                  inject_spatial_navigation_scripts=True,
+                                  inject_focus_highlight=True)
         self._dialogable_browser.decorate("Network Login")
         self._is_captive_portal_open = True
 
     def _close_dialog(self):
         if self._dialogable_browser.is_decorated():
             self._dialogable_browser.undecorate()
-            self._dialogable_browser.inner_widget().load(self._kiosk_url)
+            self._browser_widget.load(self._kiosk_url)
             if self._is_captive_portal_open:
                 self._is_captive_portal_open = False
 
-    def event(self,  event):
-        # Toggle settings with a long press on the Menu key
-        if event.type() == QtCore.QEvent.Type.ShortcutOverride:
-            if event.key() == QtCore.Qt.Key.Key_Menu:
-                if not event.isAutoRepeat():
-                    self._menu_press_since = time.time()
-                elif self._menu_press_since is not None and time.time() - self._menu_press_since > self._menu_press_delay_seconds:
-                    self._menu_press_since = None
-                    self._toggle_settings()
-
-                return True
-
-        elif event.type() == QtCore.QEvent.Type.KeyRelease:
-            if event.key() == QtCore.Qt.Key.Key_Menu and not event.isAutoRepeat():
-                self._menu_press_since = None
-
-        return super().event(event)
 
     def handle_screen_change(self, new_primary):
         logging.info(f"Primary screen changed to {new_primary.name()}")
