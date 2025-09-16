@@ -79,7 +79,7 @@ runs:
       nix_path: nixpkgs=channel:nixos-unstable
       extra_nix_config: |
         system-features = nixos-test benchmark big-parallel kvm
-        substituters = https://cache.nixos.org/ https://${{ inputs.NIX_CACHE_S3_BUCKET }}.s3.${{ inputs.NIX_CACHE_S3_REGION }}.amazonaws.com
+        substituters = https://cache.nixos.org/
         trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${{ inputs.NIX_STORE_PUBLIC_KEY }}
         ${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY && format('post-build-hook = {0}/.github/workflows/upload-to-s3-cache.sh', github.workspace) || '' }}
         ${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY && format('secret-key-files = {0}', inputs.NIX_STORE_PRIVATE_KEY_FILE) || '' }}
