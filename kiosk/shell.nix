@@ -19,9 +19,11 @@ in
 
       # Setup Qt environment.. in a hacky way
       tmpdir=$(mktemp -d)
-      makeWrapper /bin/true "$tmpdir/setupQtEnv" "''${qtWrapperArgs[@]}"
+
+      # the bin being wrapped is irrelevant, it just needs to exist and be executable
+      makeWrapper bin/kiosk-browser "$tmpdir/setupQtEnv" "''${qtWrapperArgs[@]}"
       # remove the final exec
-      sed -i '\|exec "/bin/true"|d' "$tmpdir/setupQtEnv"
+      sed -i '\|^exec |d' "$tmpdir/setupQtEnv"
       source "$tmpdir/setupQtEnv"
     '';
   }
