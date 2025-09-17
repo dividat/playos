@@ -1,4 +1,4 @@
-{ pkgs, system_name, system_version, additional_inputs ? [] }:
+{ pkgs, system_name, system_version, doCheck ? false }:
 
 with pkgs;
 
@@ -23,11 +23,26 @@ python3Packages.buildPythonApplication rec {
     makeWrapper
   ];
 
-  nativeBuildInputs = [
+  nativeCheckInputs = with python3Packages; [
     mypy
+    pytest
+    types-requests
+  ];
+
+  nativeBuildInputs = [
     qt6.wrapQtAppsHook
     wrapGAppsHook
   ];
+
+  checkPhase = ''
+    runHook preCheck
+
+    ./bin/test
+
+    runHook postCheck
+  '';
+
+  inherit doCheck;
 
   propagatedBuildInputs =
       [
@@ -40,26 +55,12 @@ python3Packages.buildPythonApplication rec {
         pyudev
         pygobject3
         pyqt6-webengine
-        pytest
         requests
-        types-requests
         playos-proxy-utils
-      ])
-      ++ additional_inputs;
+      ]);
 
   postInstall = ''
     cp -r images/ $out/images
   '';
 
-  shellHook = ''
-    # Give access to kiosk_browser module
-    export PYTHONPATH=./:$PYTHONPATH
-
-    export FOCUS_SHIFT_PATH="${pkgs.focus-shift.main}"
-
-    # Setup Qt environment
-    bashdir=$(mktemp -d)
-    makeWrapper "$(type -p bash)" "$bashdir/bash" "''${qtWrapperArgs[@]}"
-    exec "$bashdir/bash"
-  '';
 }

@@ -14,9 +14,10 @@ python3Packages.buildPythonPackage rec {
     nativeCheckInputs = with python3Packages; [
         ruff
         mypy
+        pytest
     ];
 
-     checkPhase = ''
+    checkPhase = ''
         runHook preCheck
 
         ruff check
@@ -25,8 +26,11 @@ python3Packages.buildPythonPackage rec {
             --no-color-output \
             --pretty \
             --exclude 'build/.*' \
+            --exclude 'test_.*' \
             --exclude setup.py \
             .
+
+        pytest -v
 
         runHook postCheck
      '';
