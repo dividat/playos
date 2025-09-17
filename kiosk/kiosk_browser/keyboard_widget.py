@@ -56,7 +56,12 @@ class ActivationKeyFilter(QtCore.QObject):
     # performance-sensitive.
     def eventFilter(self, source, event):
         if event.type() == QtCore.QEvent.Type.KeyPress:
-            self._supress_next_key_release = None
+            if (event.key() == self._supress_next_key_release and event.isAutoRepeat()):
+                # if this is an auto-repeat of the supressed key, filter it out
+                return True
+            else:
+                # otherwise reset
+                self._supress_next_key_release = None
 
             if event.key() in [ QtCore.Qt.Key.Key_Enter, QtCore.Qt.Key.Key_Return ]:
                 if self.parent().isSuspended():
