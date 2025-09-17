@@ -43,6 +43,42 @@ InputPanel {
         }
     }
 
+    // recursively look for a child element with a specific property value
+    function findChild(parent, propertyName, propertyValue) {
+        if (parent[propertyName] == propertyValue) {
+            return parent;
+        }
+
+        for (const child of parent.children) {
+            const result = findChild(child, propertyName, propertyValue);
+            if (result) {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
+    // extra signal for detecting user-initiated keyboard hiding
+    signal hideKeyboardClicked()
+
+    // Attach an additional click handler to the HideKeyboardKey in a slightly hacky way
+    onActiveChanged: {
+        if (inputPanel.active) {
+            // Qt.callLater needed because on "first display" the layout does
+            // not seem to be fully initialized and HideKeyboardKey is not found
+            Qt.callLater(function() {
+                // The hack: there is no id/ref that we can use, so we search by property
+                let child = findChild(inputPanel.keyboard, "keyType", QtVirtualKeyboard.KeyType.HideKeyboardKey);
+                if (child) {
+                    try { child.clicked.disconnect(inputPanel.hideKeyboardClicked) } catch (e) {};
+                    child.clicked.connect(inputPanel.hideKeyboardClicked);
+                }
+            });
+        }
+    }
+
+
     Connections {
         target: InputContext
         // Override the `ImhFormattedNumbersOnly` inputMethodHint to

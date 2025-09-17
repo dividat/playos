@@ -35,12 +35,14 @@ When a remote control with a power button is connected, the system may be shut d
 
 <<virtual-keyboard>>
 PlayOS provides a virtual keyboard that can be used to input text using a remote
-control, a mouse or a touch screen.
+control.
 
 The virtual keyboard is automatically disabled if an external (e.g. USB)
-keyboard is plugged in.
+keyboard is plugged in. In this case, a keyboard icon is displayed in the lower
+right corner.
 
-The virtual keyboard automatically appears when a text input field is focused.
+The virtual keyboard can be requested by clicking OK (Enter) while focused on a
+text input field.
 
 By default, the keyboard will use the layout according to the configured system
 language. See [[localization-and-display][Localization settings]] below. The
