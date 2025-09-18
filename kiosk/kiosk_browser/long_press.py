@@ -1,9 +1,12 @@
 from PyQt6 import QtCore
 from PyQt6.QtCore import Qt, QEvent
+from PyQt6.QtWidgets import QApplication
 import time
 
 from typing import List, NamedTuple
 from functools import reduce
+
+from kiosk_browser.focus_object_tracker import FocusObjectTracker
 
 # how long a key needs to be held to be considered a long press
 LONG_PRESS_DELAY_SECONDS = 1
@@ -44,6 +47,7 @@ class LongPressEvents(QtCore.QObject):
     long_press_combo = QtCore.pyqtSignal(str)
 
     def __init__(self, parent, combinations: List[KeyCombination],
+                 focus_object_tracker: FocusObjectTracker,
                  long_press_delay=LONG_PRESS_DELAY_SECONDS,
                  combo_compensation=MULTI_KEY_DELAY_ERROR_SECONDS):
         super().__init__(parent)
@@ -65,8 +69,14 @@ class LongPressEvents(QtCore.QObject):
         self._key_pressed_since: dict[Qt.Key, float] = {}
         self._supress_next_key_events: set[Qt.Key] = set()
 
-        # Init
-        parent.installEventFilter(self)
+        def handle_focus_object_changed(old, new):
+            if old:
+                old.removeEventFilter(self)
+            if new:
+                new.installEventFilter(self)
+
+        focus_object_tracker.focusObjectChanged.connect(handle_focus_object_changed)
+
 
     def _key_is_long_pressed(self, key, err_tolerance=0.0):
         now = time.time()
@@ -104,12 +114,8 @@ class LongPressEvents(QtCore.QObject):
         supress_explicit = key in self._supress_next_key_events
         return supress_if_repeated or supress_explicit
 
-
-    # Note: when this is installed on QApplication.instance(), it will receive
-    # the same event multiple times as they traverse the widget tree, unless
-    # this filters them out.
     def eventFilter(self, source, event):
-        if event.type() == QtCore.QEvent.Type.ShortcutOverride:
+        if event.type() in [ QtCore.QEvent.Type.ShortcutOverride, QtCore.QEvent.Type.KeyPress ]:
             key = event.key()
             if key in self._tracked_keys:
                 if not event.isAutoRepeat():
@@ -136,9 +142,6 @@ class LongPressEvents(QtCore.QObject):
 
                     return self._key_event_should_be_supressed(event)
 
-
-        elif event.type() == QtCore.QEvent.Type.KeyPress:
-            return self._key_event_should_be_supressed(event)
 
         elif event.type() == QtCore.QEvent.Type.KeyRelease:
             key = event.key()

@@ -11,6 +11,8 @@ import os
 from enum import IntEnum, auto
 from typing import Optional
 
+from kiosk_browser.focus_object_tracker import FocusObjectTracker
+
 PLAYOS_LANGUAGES_CONFIG = "/etc/playos/languages.json"
 # for easier testing, semicolon separated, e.g. de_DE;fr_FR
 PLAYOS_LANGUAGES_EXTRA = os.getenv("PLAYOS_LANGUAGES_EXTRA", "")
@@ -45,12 +47,18 @@ class ActivationState(IntEnum):
 # Prevents both the KeyPress and the following KeyRelease from reaching any Qt
 # objects if they trigger any action.
 class ActivationKeyFilter(QtCore.QObject):
-    def __init__(self, parent: KeyboardWidget):
+    def __init__(self, parent: KeyboardWidget, focus_object_tracker: FocusObjectTracker):
         super().__init__(parent)
 
         self._supress_next_key_release: Optional[QtCore.Qt.Key] = None
 
-        QApplication.instance().installEventFilter(self)
+        def handle_focus_object_changed(old, new):
+            if old:
+                old.removeEventFilter(self)
+            if new:
+                new.installEventFilter(self)
+
+        focus_object_tracker.focusObjectChanged.connect(handle_focus_object_changed)
 
     # Note: installed for the top-level QApplication instance, so this is
     # performance-sensitive.
@@ -111,7 +119,7 @@ class KeyboardWidget(QQuickWidget):
         self.rootContext().setContextProperty("activeLocales", ";".join(locales))
 
 
-    def __init__(self, parent):
+    def __init__(self, parent, focus_object_tracker: FocusObjectTracker):
         super(KeyboardWidget, self).__init__(parent)
 
         self._configure_supported_languages()
@@ -133,7 +141,7 @@ class KeyboardWidget(QQuickWidget):
 
         self.setResizeMode(QQuickWidget.ResizeMode.SizeRootObjectToView);
 
-        self._activation_key_filter = ActivationKeyFilter(self)
+        self._activation_key_filter = ActivationKeyFilter(self, focus_object_tracker)
 
         self._input_method = QApplication.inputMethod()
 
