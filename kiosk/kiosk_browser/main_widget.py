@@ -61,10 +61,6 @@ class MainWidget(QtWidgets.QWidget):
         proxy = proxy_module.Proxy()
         proxy.start_monitoring_daemon()
 
-        # Menu press
-        self._menu_press_since = None
-        self._menu_press_delay_seconds = 1.5
-
         # Virtual keyboard
         self._keyboardWidget = None
         self._keyboard_detector = KeyboardDetector(self)
