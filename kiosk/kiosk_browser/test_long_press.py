@@ -20,7 +20,7 @@ COMBINATIONS = [
 
 COMBO_PARAMS = [pytest.param(c, id=c.name) for c in COMBINATIONS]
 
-AMBIGIOUS_COMBOS = [
+AMBIGUOUS_COMBOS = [
     pytest.param(frozenset({ Qt.Key.Key_Menu, Qt.Key.Key_Escape }), id="menu-escape"),
     pytest.param(frozenset({ Qt.Key.Key_Escape, Qt.Key.Key_Down, Qt.Key.Key_Left }), id="escape-down-left"),
 ]
@@ -153,8 +153,8 @@ def test_all_in_sequence(qtbot, key_logger, long_press):
     for combo in COMBINATIONS:
         test_each_long_press(qtbot, combo, key_logger, long_press)
 
-@pytest.mark.parametrize("combo_keys", AMBIGIOUS_COMBOS)
-def test_ambigous_signals_are_not_emitted(qtbot, combo_keys, key_logger, long_press):
+@pytest.mark.parametrize("combo_keys", AMBIGUOUS_COMBOS)
+def test_ambiguous_signals_are_not_emitted(qtbot, combo_keys, key_logger, long_press):
     with qtbot.assertNotEmitted(long_press.long_press_combo):
         simulate_long_press(qtbot, key_logger, list(combo_keys))
 
