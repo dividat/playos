@@ -10,6 +10,7 @@ from kiosk_browser import browser_widget, captive_portal, dialogable_widget, pro
 from kiosk_browser.keyboard_widget import KeyboardWidget
 from kiosk_browser.keyboard_detector import KeyboardDetector
 from kiosk_browser.long_press import LongPressEvents, KeyCombination
+from kiosk_browser.focus_object_tracker import FocusObjectTracker
 
 
 @dataclass
@@ -60,6 +61,9 @@ class MainWidget(QtWidgets.QWidget):
         # Proxy
         proxy = proxy_module.Proxy()
         proxy.start_monitoring_daemon()
+
+        # FocusObjectTracker
+        self._focus_object_tracker = FocusObjectTracker(self)
 
         # Virtual keyboard
         self._keyboardWidget = None
@@ -130,7 +134,8 @@ class MainWidget(QtWidgets.QWidget):
         long_press_actions = { shortcut.name: shortcut.action for shortcut in long_press_shortcuts }
 
         # installed on QApplication.instance() to ensure LongPressEvents gets to see all events first
-        self._long_press_events = LongPressEvents(QApplication.instance(), long_press_combos)
+        self._long_press_events = LongPressEvents(
+            QApplication.instance(), long_press_combos, self._focus_object_tracker)
         self._long_press_events.long_press_combo.connect(
             lambda combo_name: long_press_actions[combo_name]()
         )
@@ -152,7 +157,7 @@ class MainWidget(QtWidgets.QWidget):
         else:
             if self._keyboardWidget is None:
                 logging.info("No physical keyboard, enabling virtual keyboard")
-                self._keyboardWidget = KeyboardWidget(self)
+                self._keyboardWidget = KeyboardWidget(self, self._focus_object_tracker)
             else:
                 logging.warning(
                     "All physical keyboards disconnected just now, "

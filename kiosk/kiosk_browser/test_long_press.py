@@ -5,6 +5,7 @@ from PyQt6.QtGui import QKeyEvent
 from typing import List
 import itertools
 
+from kiosk_browser.focus_object_tracker import FocusObjectTracker
 from kiosk_browser.long_press import LongPressEvents, KeyCombination
 
 LONG_PRESS_DURATION_MS = 300
@@ -53,6 +54,7 @@ def simulate_long_press(qtbot, widget, keys: List[Qt.Key], duration_ms=LONG_PRES
 
     # Initial press for all keys
     for key in keys:
+        # Note: current implementation can work with one or both of the event types present
         sendEvent(widget, shortcutOverrideEvent(key))
         sendEvent(widget, keyPressEvent(key))
 
@@ -115,10 +117,17 @@ def key_logger(qtbot) -> KeyLogger:
 
 
 @pytest.fixture
-def long_press(key_logger: KeyLogger) -> LongPressEvents:
+def focus_object_tracker() -> FocusObjectTracker:
+    return FocusObjectTracker()
+
+@pytest.fixture
+def long_press(key_logger: KeyLogger, focus_object_tracker: FocusObjectTracker) -> LongPressEvents:
     long_press = LongPressEvents(key_logger, COMBINATIONS,
+                              focus_object_tracker,
                               long_press_delay=LONG_PRESS_DURATION_MS/1000,
                               combo_compensation=MULTI_KEY_DELAY_ERROR_MS/1000)
+    # key_logger.setFocus does not work since there's no QWindow?
+    focus_object_tracker.focusObjectChanged.emit(None, key_logger)
     return long_press
 
 
@@ -159,12 +168,14 @@ def test_ambiguous_signals_are_not_emitted(qtbot, combo_keys, key_logger, long_p
         simulate_long_press(qtbot, key_logger, list(combo_keys))
 
 
-def test_partial_combo_keys_are_not_filtered_out(qtbot, key_logger):
+def test_partial_combo_keys_are_not_filtered_out(qtbot, key_logger, focus_object_tracker):
     qtbot.addWidget(key_logger)
     combo = KeyCombination(name='A-B', keys=frozenset({ Qt.Key.Key_A, Qt.Key.Key_B }))
     long_press = LongPressEvents(key_logger, [ combo ],
+                              focus_object_tracker,
                               long_press_delay=LONG_PRESS_DURATION_MS/1000,
                               combo_compensation=MULTI_KEY_DELAY_ERROR_MS/1000)
+    focus_object_tracker.focusObjectChanged.emit(None, key_logger)
 
     simulate_long_press(qtbot, key_logger, [ Qt.Key.Key_A ])
 
