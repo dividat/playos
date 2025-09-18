@@ -26,7 +26,8 @@ AMBIGUOUS_COMBOS = [
     pytest.param(frozenset({ Qt.Key.Key_Escape, Qt.Key.Key_Down, Qt.Key.Key_Left }), id="escape-down-left"),
 ]
 
-KEY_EVENTS = [ QEvent.Type.ShortcutOverride, QEvent.Type.KeyPress, QEvent.Type.KeyRelease ]
+# ShortcutOverride events are ignored, since we don't handle them
+KEY_EVENTS = [ QEvent.Type.KeyPress, QEvent.Type.KeyRelease ]
 
 ## Helper code for simulating long-presses
 
@@ -54,7 +55,8 @@ def simulate_long_press(qtbot, widget, keys: List[Qt.Key], duration_ms=LONG_PRES
 
     # Initial press for all keys
     for key in keys:
-        # Note: current implementation can work with one or both of the event types present
+        # Note: current implementation does not handle ShortcutOverride events,
+        # but we produce them to match Qt events anyway
         sendEvent(widget, shortcutOverrideEvent(key))
         sendEvent(widget, keyPressEvent(key))
 
