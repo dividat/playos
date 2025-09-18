@@ -115,7 +115,7 @@ class LongPressEvents(QtCore.QObject):
         return supress_if_repeated or supress_explicit
 
     def eventFilter(self, source, event):
-        if event.type() in [ QtCore.QEvent.Type.ShortcutOverride, QtCore.QEvent.Type.KeyPress ]:
+        if event.type() == QtCore.QEvent.Type.KeyPress:
             key = event.key()
             if key in self._tracked_keys:
                 if not event.isAutoRepeat():
