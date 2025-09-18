@@ -6,7 +6,7 @@ from typing import List, NamedTuple
 from functools import reduce
 
 # how long a key needs to be held to be considered a long press
-LONG_PRESS_DELAY_SECONDS = 1.5
+LONG_PRESS_DELAY_SECONDS = 1
 # When multiple keys are pressed, they will be held down for slightly different
 # durations. When detecting a combo, we require only the first key to be held
 # for LONG_PRESS_DELAY_SECONDS, while other keys can be held for "only"
