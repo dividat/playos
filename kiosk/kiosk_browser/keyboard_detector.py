@@ -70,12 +70,10 @@ class KeyboardDetector(QObject):
     # different thread. So instead we introduce a Qt signal.
     keyboard_available_changed = pyqtSignal(bool)
 
-    def __init__(self, keyboard_available_changed_callback):
-        super().__init__()
+    def __init__(self, parent):
+        super().__init__(parent)
 
         self.keyboard_available = None
-        # connect early to not miss the initial signal emit
-        self.keyboard_available_changed.connect(keyboard_available_changed_callback)
 
         context = pyudev.Context()
         self._monitor = pyudev.Monitor.from_netlink(context)

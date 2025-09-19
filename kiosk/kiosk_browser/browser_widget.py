@@ -44,11 +44,10 @@ class BrowserWidget(QtWidgets.QWidget):
         self._layout.addWidget(self._loading_page)
         self._layout.addWidget(self._network_error_page)
         self._layout.addWidget(self._webview)
+        self._get_current_proxy = get_current_proxy
 
         # Register proxy authentication handler
-        self._webview.page().proxyAuthenticationRequired.connect(
-            lambda url, auth, proxyHost: self._proxy_auth(
-                get_current_proxy, url, auth, proxyHost))
+        self._webview.page().proxyAuthenticationRequired.connect(self._proxy_auth)
 
         # Override user agent
         self._webview.page().profile().setHttpUserAgent(user_agent_with_system(
@@ -137,8 +136,8 @@ class BrowserWidget(QtWidgets.QWidget):
         self._view(Status.LOADING)
         self._reload_timer.start(250)
 
-    def _proxy_auth(self, get_current_proxy, url, auth, proxyHost):
-        proxy = get_current_proxy()
+    def _proxy_auth(self, url, auth, proxyHost):
+        proxy = self._get_current_proxy()
         if proxy is not None and proxy.credentials is not None:
             logging.info("Authenticating proxy")
             auth.setUser(proxy.credentials.username)
