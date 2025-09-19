@@ -69,14 +69,13 @@ class LongPressEvents(QtCore.QObject):
         self._key_pressed_since: dict[Qt.Key, float] = {}
         self._supress_next_key_events: set[Qt.Key] = set()
 
-        def handle_focus_object_changed(old, new):
-            if old:
-                old.removeEventFilter(self)
-            if new:
-                new.installEventFilter(self)
+        focus_object_tracker.focusObjectChanged.connect(self._handle_focus_object_changed)
 
-        focus_object_tracker.focusObjectChanged.connect(handle_focus_object_changed)
-
+    def _handle_focus_object_changed(self, old, new):
+        if old:
+            old.removeEventFilter(self)
+        if new:
+            new.installEventFilter(self)
 
     def _key_is_long_pressed(self, key, err_tolerance=0.0):
         now = time.time()
