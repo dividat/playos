@@ -44,9 +44,6 @@ class DialogableWidget(QtWidgets.QWidget):
         self._layout.addWidget(self._inner_widget)
         self.setLayout(self._layout)
 
-    def inner_widget(self):
-        return self._inner_widget
-
     def decorate(self, title: str):
         if not self._is_decorated:
             self._inner_widget.setParent(None)
@@ -64,18 +61,6 @@ class DialogableWidget(QtWidgets.QWidget):
 
     def is_decorated(self):
         return self._is_decorated
-
-    # Private
-
-    def keyReleaseEvent(self, event):
-        if event.key() == QtCore.Qt.Key.Key_Escape:
-            self._on_close()
-        else:
-            super().keyReleaseEvent(event)
-
-    def _on_escape(self):
-        if self._is_decorated:
-            self._on_close()
 
 
 class KeyboardConnectedIndicator(QtWidgets.QWidget):

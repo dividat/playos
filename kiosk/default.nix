@@ -26,8 +26,10 @@ python3Packages.buildPythonApplication rec {
   nativeCheckInputs = with python3Packages; [
     mypy
     pytest
+    pytest-qt
+    pytest-xvfb # needed for qt tests
     types-requests
-  ];
+  ] ++ [ xorg.xvfb ];
 
   nativeBuildInputs = [
     qt6.wrapQtAppsHook
