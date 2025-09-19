@@ -53,6 +53,7 @@ class ActivationKeyFilter(QtCore.QObject):
         self._supress_next_key_release: Optional[QtCore.Qt.Key] = None
 
         focus_object_tracker.focusObjectChanged.connect(self._handle_focus_object_changed)
+        self._handle_focus_object_changed(None, QApplication.focusObject())
 
     def _handle_focus_object_changed(self, old, new):
         if old:
@@ -145,6 +146,9 @@ class KeyboardWidget(QQuickWidget):
 
         self._input_method = QApplication.inputMethod()
 
+        # Prevent InputMethod from being enabled before we can handle events
+        # (e.g. after external keyboard is unplugged)
+        self._input_method.hide()
         self._state = ActivationState.UNKNOWN
         self.hide()
         self._resize()
