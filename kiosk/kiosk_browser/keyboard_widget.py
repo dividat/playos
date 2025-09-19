@@ -137,6 +137,9 @@ class KeyboardWidget(QQuickWidget):
 
         self._input_method = QApplication.inputMethod()
 
+        # Prevent InputMethod from being enabled before we can handle events
+        # (e.g. after external keyboard is unplugged)
+        self._input_method.hide()
         self._state = ActivationState.UNKNOWN
         self.hide()
         self._resize()
