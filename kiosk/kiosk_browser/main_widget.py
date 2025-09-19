@@ -53,7 +53,9 @@ class MainWidget(QtWidgets.QWidget):
 
         # Virtual keyboard
         self._keyboardWidget = None
-        self._keyboard_detector = KeyboardDetector(self._toggle_virtual_keyboard)
+        self._keyboard_detector = KeyboardDetector(self)
+        self._keyboard_detector.keyboard_available_changed.connect(self._toggle_virtual_keyboard)
+        self._toggle_virtual_keyboard(self._keyboard_detector.keyboard_available)
 
         # Browser widget
         self._kiosk_url = kiosk_url
