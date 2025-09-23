@@ -5,6 +5,8 @@ import time
 import os
 import re
 from PyQt6.QtCore import QObject, pyqtSignal
+from typing import NamedTuple, Optional
+
 
 # For testing purposes: blacklist devices from being considered a keyboard.
 # semicolon separated list of regex'es used to match evdev.InputDevice.name`s.
@@ -12,20 +14,46 @@ from PyQt6.QtCore import QObject, pyqtSignal
 # Setting KEYBOARD_BLACKLIST=".*" is a way to disable detection entirely
 KEYBOARD_BLACKLIST = [n.strip() for n in os.getenv("PLAYOS_KEYBOARD_BLACKLIST", "").split(";") if n.strip()]
 
+class RemoteControlDevice(NamedTuple):
+    # USB device vendor ID
+    vendor: int
+    # USB device product ID
+    product: int
+    name: str
+
+
+# Remote controls currently circulating in the wild.
+# The name is used for:
+#   1) documentation purposes;
+#   2) "fallback" matching in case the vendor/product IDs change (e.g. like with HAOBO).
+REMOTE_CONTROLS = frozenset({
+    # DT-007c, the "main" HAOBO RC, with the hole at bottom
+    RemoteControlDevice(name = 'HAOBO Technology USB Composite Device Keyboard', vendor = 18498, product = 1),
+    # ???????, another HAOBO prototype, unclear which
+    RemoteControlDevice(name = 'HAOBO Technology USB Composite Device Keyboard', vendor = 3136,  product = 31260),
+    # DT-009B, prototype with red Windows button on top
+    RemoteControlDevice(name = 'MEMS TECH Keyboard',                             vendor = 7511,  product = 44291),
+    # ???????, prototype with red power button and "mouse mode"
+    RemoteControlDevice(name = '000001 KbMouse System Control',                  vendor = 9354,  product = 5774),
+    # ???????, prototype with keyboard at the back.
+    # Name is also 'MemsArt MA144 RF Controller Consumer Control', same IDs
+    RemoteControlDevice(name = 'MemsArt MA144 RF Controller',                    vendor = 3141,  product = 20737)
+})
+
+
 def device_is_blacklisted(device: evdev.InputDevice) -> bool:
     return any([re.match(regex, device.name) for regex in KEYBOARD_BLACKLIST])
 
 
-# The remote control used currently presents itself as two devices:
-# - a mouse-like thing named "MEMS TECH", with 3 EV_KEY's
-# - a keyboard-like thing named "MEMS TECH Keyboard", with 257 (!) EV_KEY's
-#
-# This predicate is used to explicitly mark the second one as non-keyboard.
-def device_is_remote_control(device) -> bool:
+def input_device_matches_remote_control(device: evdev.InputDevice, remote_control: RemoteControlDevice) -> bool:
     info = device.info
-    name_matches = device.name == 'MEMS TECH Keyboard'
-    info_matches = info.vendor == 7511 and info.product == 44291
-    return name_matches or info_matches
+    info_matches = info.vendor == remote_control.vendor and info.product == remote_control.product
+    name_matches = device.name == remote_control.name
+    return info_matches or name_matches
+
+
+def find_matching_remote_control(device) -> Optional[RemoteControlDevice]:
+    return next((rc for rc in REMOTE_CONTROLS if input_device_matches_remote_control(device, rc)), None)
 
 
 # Keyboard identification is very heuristic since input devices often use
@@ -42,7 +70,9 @@ def device_is_remote_control(device) -> bool:
 # remote control device. Since we don't expect random input devices to be
 # plugged in, it should mostly work.
 def device_is_a_keyboard(device: evdev.InputDevice) -> bool:
-    if device_is_remote_control(device):
+    if rc := find_matching_remote_control(device):
+        logging.debug(f"Input device {device.name} ({device.path}) matches remote control {rc.name}"
+                      f" (vendor={rc.vendor}, product={rc.product}), not considering as a keyboard")
         return False
 
     max_relevant_keycode = 68
