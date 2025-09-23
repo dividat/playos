@@ -8,6 +8,7 @@ let
     system_name = "PlayOS";
     system_version = "1.0.0";
   };
+  hintIcon = ../../kiosk/images/vkb-activation-hint.png;
   inherit (builtins) toString;
 in
 pkgs.nixosTest {
@@ -87,7 +88,7 @@ pkgs.nixosTest {
   testScript = ''
     ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
     from collections import Counter
-    from PIL import Image, ImageChops
+    from PIL import Image, ImageChops, ImageEnhance
 
     SCREEN_WIDTH = 640
     SCREEN_HEIGHT = 480
@@ -101,6 +102,52 @@ pkgs.nixosTest {
     KEYBOARD_FULL_SIZE = KEYBOARD_FULL_WIDTH * KEYBOARD_FULL_HEIGHT
 
     KEYBOARD_NUMERIC_SIZE = KEYBOARD_FULL_HEIGHT ** 2
+
+    # must match implementation in kiosk!
+    ACTIVATION_HINT_MARGIN = 10
+    ACTIVATION_HINT_ICON_HEIGHT = 100
+    ACTIVATION_HINT_ICON = Image.open("${hintIcon}")
+    # resize preserving aspect ratio
+    ACTIVATION_HINT_ICON.thumbnail((9999, ACTIVATION_HINT_ICON_HEIGHT))
+    # remove transparency
+    white_background = Image.new("RGBA", ACTIVATION_HINT_ICON.size, (255, 255, 255))
+    ACTIVATION_HINT_ICON = Image.alpha_composite(white_background, ACTIVATION_HINT_ICON)
+
+    def quantize_to_bw(img):
+        img = img.convert("L")
+        img_bright = ImageEnhance.Brightness(img).enhance(2)
+        img_contrast = ImageEnhance.Contrast(img_bright).enhance(4)
+        return img_contrast.quantize(2)
+
+    def image_is_in_screenshot(screenshot, image) -> bool:
+        # quantize to b/w
+        scr = quantize_to_bw(screenshot)
+        tpl = quantize_to_bw(image)
+        # maximum allowed difference = 10%
+        max_diff = image.width * image.height * 0.1
+        # loop through offsets
+        for x in range(scr.width - tpl.width):
+            for y in range(scr.height - tpl.height):
+                scr_region = scr.crop((x, y, x+tpl.width, y+tpl.height))
+                diff = sum(ImageChops.difference(scr_region, tpl).getdata())
+                if diff < max_diff:
+                    return True
+
+        return False
+
+    def find_activation_hint_icon(screenshot):
+        margin_width = round((screenshot.width - ACTIVATION_HINT_ICON.width) / 2) - 1
+        # Note: this assumes activation hint is at bottom center to speed things up
+        screen_cropped = screenshot.crop(
+            (margin_width,
+             screenshot.height - ACTIVATION_HINT_ICON_HEIGHT - ACTIVATION_HINT_MARGIN + 1,
+             screenshot.width - margin_width,
+             screenshot.height
+            )
+        )
+
+        return image_is_in_screenshot(screen_cropped, ACTIVATION_HINT_ICON)
+
 
     # max difference / err in pixels allowed due to:
     # - focus highlights on elements and vkb
@@ -171,15 +218,17 @@ pkgs.nixosTest {
             "Screen is not mostly white, is the keyboard visible?"
         )
 
-
-    with TestCase("keyboard (numeric) shows up when activated"):
+    with TestCase("keyboard hint shows up when input field is focused") as t:
         # focus first numeric input field
         machine.send_key("tab")
         time.sleep(1)
 
-        # keyboard should not show up right away
-        assertScreenshotsSimilar(t, screen_initial, make_screenshot())
+        screen_with_hint = make_screenshot()
+        t.assertTrue(find_activation_hint_icon(screen_with_hint),
+            "Could not find activation hint icon in screenshot - did it show up?")
 
+
+    with TestCase("keyboard (numeric) shows up when activated"):
         # activate keyboard
         machine.send_key("ret")
         time.sleep(1)
@@ -187,7 +236,7 @@ pkgs.nixosTest {
         screen_numeric_kbd = make_screenshot()
 
         t.assertGreater(
-            num_diff_pixels(screen_initial, screen_numeric_kbd),
+            num_diff_pixels(screen_with_hint, screen_numeric_kbd),
             KEYBOARD_NUMERIC_SIZE - ERR_PIXELS,
             "Screenshots too similar, virtual keyboard not displayed?"
         )
@@ -214,7 +263,7 @@ pkgs.nixosTest {
         machine.send_key("esc")
         time.sleep(1)
 
-        assertScreenshotsSimilar(t, screen_initial, make_screenshot(),
+        assertScreenshotsSimilar(t, screen_with_hint, make_screenshot(),
             extra_msg="Virtual keyboard failed to hide with Esc?")
 
         # reactivate vkb
@@ -226,7 +275,7 @@ pkgs.nixosTest {
 
 
     with TestCase("keyboard is hidden when input field is unfocused") as t:
-        # focus on button, keyboard should hide
+        # focus on button, keyboard should hide, no hint visible
         machine.send_key("tab")
         time.sleep(1)
 
@@ -239,8 +288,8 @@ pkgs.nixosTest {
         machine.send_key("tab")
         time.sleep(1)
 
-        # keyboard should not show up right away
-        assertScreenshotsSimilar(t, screen_initial, make_screenshot())
+        # keyboard should not show up, only hint
+        assertScreenshotsSimilar(t, screen_with_hint, make_screenshot())
 
         # activate keyboard
         machine.send_key("ret")
@@ -249,7 +298,7 @@ pkgs.nixosTest {
         screen_full_kbd = make_screenshot()
 
         t.assertGreater(
-            num_diff_pixels(screen_initial, screen_full_kbd),
+            num_diff_pixels(screen_with_hint, screen_full_kbd),
             KEYBOARD_FULL_SIZE - ERR_PIXELS,
             "Screenshots too similar, virtual keyboard not displayed?"
         )
@@ -283,7 +332,7 @@ pkgs.nixosTest {
         machine.send_key("esc")
         time.sleep(1)
 
-        assertScreenshotsSimilar(t, screen_initial, make_screenshot(),
+        assertScreenshotsSimilar(t, screen_with_hint, make_screenshot(),
             extra_msg="Virtual keyboard failed to hide with Esc?")
 
         # reactivate vkb
