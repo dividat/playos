@@ -1,6 +1,5 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
 from PyQt6.QtWebEngineCore import QWebEngineScript
-from PyQt6.QtWidgets import QApplication
 from enum import Enum, auto
 import logging
 import re
@@ -65,11 +64,6 @@ class BrowserWidget(QtWidgets.QWidget):
 
         self.setFocusProxy(self._webview)
 
-        # Shortcut to manually reload
-        QtGui.QShortcut('CTRL+R', self).activated.connect(self.reload)
-        # Shortcut to perform a hard refresh
-        QtGui.QShortcut('CTRL+SHIFT+R', self).activated.connect(self._hard_refresh)
-
         # Prepare reload timer
         self._reload_timer = QtCore.QTimer(self)
         self._reload_timer.setSingleShot(True)
@@ -111,16 +105,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._url = url
         self.reload()
 
-    # Private
-
-    def _load_finished(self, success):
-        if success:
-            self._view(Status.LOADED)
-        if not success:
-            self._view(Status.NETWORK_ERROR)
-            self._reload_timer.start(reload_on_network_error_after)
-
-    def _hard_refresh(self):
+    def hard_refresh(self):
         """ Clear cache, then reload.
 
         Does not affect cookies or localstorage contents.
@@ -136,6 +121,20 @@ class BrowserWidget(QtWidgets.QWidget):
         # https://doc.qt.io/qt-6/qwebengineprofile.html#clearHttpCacheCompleted
         self._view(Status.LOADING)
         self._reload_timer.start(250)
+
+    def closeEvent(self, event):
+        # Unset page in web view to avoid it outliving the browser profile
+        self._webview.setPage(None)
+        return super().closeEvent(event)
+
+    # Private
+
+    def _load_finished(self, success):
+        if success:
+            self._view(Status.LOADED)
+        if not success:
+            self._view(Status.NETWORK_ERROR)
+            self._reload_timer.start(reload_on_network_error_after)
 
     def _proxy_auth(self, get_current_proxy, url, auth, proxyHost):
         proxy = get_current_proxy()
