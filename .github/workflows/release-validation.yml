@@ -7,4 +7,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/prep-build-env
+      with:
+        NIX_CACHE_ACCOUNT_ID: ${{ secrets.NIX_CACHE_ACCOUNT_ID }}
+        NIX_CACHE_ACCESS_KEY_ID: ${{ secrets.NIX_CACHE_ACCESS_KEY_ID }}
+        NIX_CACHE_SECRET_ACCESS_KEY: ${{ secrets.NIX_CACHE_SECRET_ACCESS_KEY }}
+        NIX_BINARY_CACHE_PRIVATE_KEY: ${{ secrets.NIX_BINARY_CACHE_PRIVATE_KEY }}
     - run: NIXPKGS_ALLOW_UNFREE=1 nix-build testing/release-validation.nix

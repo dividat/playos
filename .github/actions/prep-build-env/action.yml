@@ -1,12 +1,16 @@
 name: "Prepare nix build environment"
 
 inputs:
+  NIX_CACHE_ACCOUNT_ID:
+    description: S3 (cloudflare) account ID
+    required: false
+
   NIX_CACHE_ACCESS_KEY_ID:
-    description: AWS S3 bucket access key ID
+    description: S3 bucket access key ID
     required: false
 
   NIX_CACHE_SECRET_ACCESS_KEY:
-    description: AWS S3 bucket secret access key
+    description: S3 bucket secret access key
     required: false
 
   NIX_BINARY_CACHE_PRIVATE_KEY:
@@ -22,7 +26,7 @@ inputs:
     default: nixcache
 
   NIX_CACHE_S3_REGION:
-    default: eu-central-1
+    default: weur
 
   NIX_STORE_PUBLIC_KEY:
     default: "dividat-ci-nix-cache-1:vhWwMmDRyiG7ICbeWWpC03k1XsRs2fIQB461il3EL3U="
@@ -53,6 +57,7 @@ runs:
     shell: bash
     if: ${{ inputs.NIX_CACHE_ACCESS_KEY_ID && inputs.NIX_CACHE_SECRET_ACCESS_KEY }}
     run: |
+      sudo -i aws configure set endpoint_url https://${{ inputs.NIX_CACHE_ACCOUNT_ID }}.r2.cloudflarestorage.com/ --profile ${{ inputs.NIX_CACHE_S3_PROFILE}}
       sudo -i aws configure set aws_access_key_id ${{ inputs.NIX_CACHE_ACCESS_KEY_ID }} --profile ${{ inputs.NIX_CACHE_S3_PROFILE}}
       sudo -i aws configure set aws_secret_access_key ${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY }} --profile ${{ inputs.NIX_CACHE_S3_PROFILE}}
       sudo -i aws configure set region ${{ inputs.NIX_CACHE_S3_REGION }} --profile ${{ inputs.NIX_CACHE_S3_PROFILE}}
@@ -79,7 +84,7 @@ runs:
       nix_path: nixpkgs=channel:nixos-unstable
       extra_nix_config: |
         system-features = nixos-test benchmark big-parallel kvm
-        substituters = https://cache.nixos.org/
+        ${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY && format('substituters = https://cache.nixos.org/ s3://{0}?profile={1}&region={2}&endpoint=https://{3}.r2.cloudflarestorage.com/', inputs.NIX_CACHE_S3_BUCKET, inputs.NIX_CACHE_S3_PROFILE, inputs.NIX_CACHE_S3_REGION, inputs.NIX_CACHE_ACCOUNT_ID)  || '' }}
         trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${{ inputs.NIX_STORE_PUBLIC_KEY }}
         ${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY && format('post-build-hook = {0}/.github/workflows/upload-to-s3-cache.sh', github.workspace) || '' }}
         ${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY && format('secret-key-files = {0}', inputs.NIX_STORE_PRIVATE_KEY_FILE) || '' }}
