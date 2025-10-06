@@ -84,7 +84,7 @@ runs:
       nix_path: nixpkgs=channel:nixos-unstable
       extra_nix_config: |
         system-features = nixos-test benchmark big-parallel kvm
-        ${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY && format('substituters = https://cache.nixos.org/ s3://{0}?profile={1}&region={2}&endpoint=https://{3}.r2.cloudflarestorage.com/', inputs.NIX_CACHE_S3_BUCKET, inputs.NIX_CACHE_S3_PROFILE, inputs.NIX_CACHE_S3_REGION, inputs.NIX_CACHE_ACCOUNT_ID)  || '' }}
+        substituters = https://cache.nixos.org/ https://nix-cache.dividump.xyz/
         trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${{ inputs.NIX_STORE_PUBLIC_KEY }}
         ${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY && format('post-build-hook = {0}/.github/workflows/upload-to-s3-cache.sh', github.workspace) || '' }}
         ${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY && format('secret-key-files = {0}', inputs.NIX_STORE_PRIVATE_KEY_FILE) || '' }}
