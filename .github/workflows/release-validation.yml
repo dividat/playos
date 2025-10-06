@@ -1,4 +1,6 @@
 name: "Release Validation"
+permissions:
+  contents: read
 on:
   workflow_dispatch:
 jobs:
