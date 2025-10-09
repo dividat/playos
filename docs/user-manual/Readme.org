@@ -31,6 +31,16 @@ The system may be shut down by pressing the power button on the computer or alte
 
 When a remote control with a power button is connected, the system may be shut down by long-pressing the power button.
 
+** Remote control shortcuts
+
+When using a remote control, the following long-press shortcuts are available:
+- ~long-pressing Menu~ will toggle the [[administration][System settings]]
+- ~long-pressing Back~ will close any dialogs and return to the main kiosk view
+- ~long-pressing Back+Down~ simultaneously will trigger a [[clear-cache][cache
+  clear]]
+
+The virtual keyboard must be closed for the shortcuts to work.
+
 ** Virtual keyboard
 
 <<virtual-keyboard>>
@@ -200,7 +210,7 @@ A status screen providing a brief status report about various components of the 
 
 ** Clearing kiosk browser cache
 
-At times network issues may cause corrupted media resources to end up in the kiosk browser's cache. In this case it may be helpful to clear this cache to force all resources being downloaded again. A hard refresh can be triggered using ~Ctrl-Shift-R~, which clears the cache and then reloads the kiosk application. The hard refresh does not affect user sessions or preferences, so it can be performed without the user having to log in again.
+<<clear-cache>>At times network issues may cause corrupted media resources to end up in the kiosk browser's cache. In this case it may be helpful to clear this cache to force all resources being downloaded again. A hard refresh can be triggered using ~Ctrl-Shift-R~ (or ~long-press Down+Back~ on the remote control), which clears the cache and then reloads the kiosk application. The hard refresh does not affect user sessions or preferences, so it can be performed without the user having to log in again.
 
 ** Wiping user data
 
