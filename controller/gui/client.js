@@ -27,7 +27,6 @@ customElements.define(
       }
 
       input.type = 'password'
-      input.style = 'padding-right: 3.5rem' // Space for the button
       input.oninput = function (e) {
         if (e.target.value.length > 0) {
           button.style.visibility = 'visible'
@@ -49,7 +48,7 @@ customElements.define(
         color: #555555;
         position: absolute;
         top: 50%;
-        right: calc(${rightMargin}px + 0.5rem);
+        left: 100%;
         font-size: 65%;
         transform: translateY(-50%);
         cursor: pointer;
