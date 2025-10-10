@@ -148,6 +148,8 @@ class KeyboardActivationHint(QLabel):
 
 
 class KeyboardWidget(QQuickWidget):
+    __state: ActivationState
+
     def _make_transparent(self):
         # A semi-hack to make the QQuickWidget have transparent background, see:
         # https://doc.qt.io/qt-6/qquickwidget.html#limitations
