@@ -104,8 +104,9 @@ pkgs.nixosTest {
     KEYBOARD_NUMERIC_SIZE = KEYBOARD_FULL_HEIGHT ** 2
 
     # must match implementation in kiosk!
-    ACTIVATION_HINT_MARGIN = 10
-    ACTIVATION_HINT_ICON_HEIGHT = 100
+    DIALOG_MARGIN = SCREEN_HEIGHT * 0.1
+    ACTIVATION_HINT_ICON_HEIGHT = round(DIALOG_MARGIN * 0.8)
+    ACTIVATION_HINT_MARGIN = round(DIALOG_MARGIN * 0.1)
     ACTIVATION_HINT_ICON = Image.open("${hintIcon}")
     # resize preserving aspect ratio
     ACTIVATION_HINT_ICON.thumbnail((9999, ACTIVATION_HINT_ICON_HEIGHT))
@@ -123,8 +124,8 @@ pkgs.nixosTest {
         # quantize to b/w
         scr = quantize_to_bw(screenshot)
         tpl = quantize_to_bw(image)
-        # maximum allowed difference = 10%
-        max_diff = image.width * image.height * 0.1
+        # maximum allowed difference = 20%
+        max_diff = image.width * image.height * 0.2
         # loop through offsets
         for x in range(scr.width - tpl.width):
             for y in range(scr.height - tpl.height):

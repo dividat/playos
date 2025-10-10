@@ -10,7 +10,7 @@ import logging
 import os
 from enum import IntEnum, auto
 from typing import Optional
-from kiosk_browser.dialogable_widget import overlay_color
+from kiosk_browser.dialogable_widget import overlay_color, dialog_ratio
 
 from kiosk_browser.focus_object_tracker import FocusObjectTracker
 
@@ -97,12 +97,18 @@ class KeyboardActivationHint(QLabel):
 
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self._pixmap = QtGui.QPixmap("images/vkb-activation-hint.png")
-        self.setMargin(10)
-        self._scale_icon(100)
+        self._resize()
         self.setToolTip("Press OK to activate the virtual keyboard.")
         self.hide()
         self.setStyleSheet(f"background-color: {overlay_color};")
         QApplication.inputMethod().cursorRectangleChanged.connect(self._cursorMoved)
+
+    def _resize(self):
+        # ensure our height matches the dialogable_widget margins
+        total_height = round((1 - dialog_ratio) / 2 * self.parent().height())
+        inner_margin = round(total_height * 0.1) # 10% margin
+        self.setMargin(inner_margin)
+        self._scale_icon(total_height - (inner_margin*2) - 1)
 
     def show(self):
         self.raise_()
@@ -235,6 +241,7 @@ class KeyboardWidget(QQuickWidget):
     # unexpected consequences.
     def _resize(self):
         self.resize(QSize(round(self._visibleWidth()), round(self._visibleHeight())))
+        self._keyboard_activation_hint._resize()
 
     def _visibleWidth(self):
         # The `-10` is only to avoid a specific keyboard size on 1080p that
