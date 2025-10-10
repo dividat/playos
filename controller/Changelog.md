@@ -7,6 +7,10 @@
 - kiosk: Auto-disable virtual keyboard when real keyboard detected
 - controller: Show a label for networks in which a Senso is found
 
+## Changed
+
+- controller: Enable spatial navigation to toggle visibility in password inputs
+
 ## Fixed
 
 - os: Prevent the network manager from attempting to route Internet traffic to the Senso in networks with delayed DHCP
