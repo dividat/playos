@@ -6,6 +6,7 @@
 - kiosk: Add virtual keyboard
 - kiosk: Auto-disable virtual keyboard when real keyboard detected
 - controller: Show a label for networks in which a Senso is found
+- kiosk: Update (remote control) shortcut handling
 
 ## Changed
 
