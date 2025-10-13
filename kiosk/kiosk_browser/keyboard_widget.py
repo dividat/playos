@@ -162,7 +162,10 @@ class KeyboardWidget(QQuickWidget):
         self.resize(QSize(round(self._visibleWidth()), round(self._visibleHeight())))
 
     def _visibleWidth(self):
-        return self.window().width() / 2
+        # The `-10` is only to avoid a specific keyboard size on 1080p that
+        # triggers a bug in the virtual keyboard where it is impossible to
+        # navigate from the letter `w` down to `a` / `s`.
+        return max(0, (self.window().width() / 2) - 10)
 
     def _visibleHeight(self):
         # Hard-coded keyboardDesignHeight / keyboardDesignWidth values from
