@@ -4,13 +4,13 @@ import importlib.resources
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtCore import QUrl, Qt, QPoint, QSize
 from PyQt6.QtQuickWidgets import QQuickWidget
-from PyQt6.QtWidgets import QApplication, QLabel
+from PyQt6.QtWidgets import QApplication, QLabel, QGraphicsDropShadowEffect
 import json
 import logging
 import os
 from enum import IntEnum, auto
 from typing import Optional
-from kiosk_browser.dialogable_widget import overlay_color, dialog_ratio
+from kiosk_browser.dialogable_widget import dialog_ratio
 
 from kiosk_browser.focus_object_tracker import FocusObjectTracker
 
@@ -100,15 +100,25 @@ class KeyboardActivationHint(QLabel):
         self._resize()
         self.setToolTip("Press OK to activate the virtual keyboard.")
         self.hide()
-        self.setStyleSheet(f"background-color: {overlay_color};")
         QApplication.inputMethod().cursorRectangleChanged.connect(self._cursorMoved)
 
+
+    # resize and "restyle" the hint ensuring it fits in dialogable_widget margins
     def _resize(self):
-        # ensure our height matches the dialogable_widget margins
         total_height = round((1 - dialog_ratio) / 2 * self.parent().height())
-        inner_margin = round(total_height * 0.1) # 10% margin
-        self.setMargin(inner_margin)
-        self._scale_icon(total_height - (inner_margin*2) - 1)
+        inner_margin = round(total_height * 0.05) # 5% margin
+        self.setStyleSheet(f"""
+            background-color: white;
+            border-radius: {inner_margin}px;
+            padding: {inner_margin}px;
+            margin: {inner_margin}px;
+        """)
+        self._scale_icon(total_height - (inner_margin*4))
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setColor(QtGui.QColor.fromRgb(0, 0, 0))
+        shadow.setOffset(0, 0)
+        shadow.setBlurRadius(inner_margin*2)
+        self.setGraphicsEffect(shadow)
 
     def show(self):
         self.raise_()

@@ -103,10 +103,11 @@ pkgs.nixosTest {
 
     KEYBOARD_NUMERIC_SIZE = KEYBOARD_FULL_HEIGHT ** 2
 
-    # must match implementation in kiosk!
-    DIALOG_MARGIN = SCREEN_HEIGHT * 0.1
-    ACTIVATION_HINT_ICON_HEIGHT = round(DIALOG_MARGIN * 0.8)
-    ACTIVATION_HINT_MARGIN = round(DIALOG_MARGIN * 0.1)
+    # must match implementation in kiosk - see KeyboardActivationHint._resize(),
+    # not robust to scaling and rounding errors
+    DIALOG_MARGIN = round(SCREEN_HEIGHT * 0.1)
+    ACTIVATION_HINT_MARGIN = round(DIALOG_MARGIN * 0.05)*2
+    ACTIVATION_HINT_ICON_HEIGHT = DIALOG_MARGIN - ACTIVATION_HINT_MARGIN*2
     ACTIVATION_HINT_ICON = Image.open("${hintIcon}")
     # resize preserving aspect ratio
     ACTIVATION_HINT_ICON.thumbnail((9999, ACTIVATION_HINT_ICON_HEIGHT))
