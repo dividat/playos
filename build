@@ -2,14 +2,29 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 {vm|develop|validation|master|stuck|lab-key|shed-key|test-e2e|release-disk|all}"
+  echo "Usage: $0 [--quick] {vm|develop|validation|master|stuck|lab-key|shed-key|test-e2e|release-disk|all}"
   exit 1
 }
 
-if [ $# -eq 0 ]; then
+TARGET=""
+
+for arg in "$@"; do
+  if [[ "$arg" == "--quick" ]]; then
+    export QUICK_BUILD=1
+  else
+    if [[ -z "$TARGET" ]]; then
+        TARGET="$arg"
+    else
+        echo "Too many arguments specified: $@"
+        usage
+    fi
+  fi
+done
+
+if [[ -z "$TARGET" ]]; then
   usage
 fi
-TARGET="$1"
+
 
 # Allow unfree packages, required for zerotier using a BSL 1.1 licence
 # See https://nixos.wiki/wiki/FAQ/How_can_I_install_a_proprietary_or_unfree_package%3F

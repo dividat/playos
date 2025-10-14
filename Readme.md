@@ -51,6 +51,9 @@ The following arguments may be used to control the build outputs:
 
 For example: `nix build --arg buildInstaller false --arg buildBundle false` will only build the system toplevels and the preinstalled disk image.
 
+You can pass set the env variable `QUICK_BUILD=1` or append `--arg quickBuild true` to the nix-build argument list for a faster development build (lower compression).
+
+
 ## System Testing
 
 To test integrated portions of the PlayOS system, there are several options/levels available:
