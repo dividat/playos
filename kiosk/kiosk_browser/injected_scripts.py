@@ -17,6 +17,48 @@ class FocusShiftScript(KioskInjectedScript):
         super().__init__("focusShift")
         self.setSourceUrl(QtCore.QUrl.fromLocalFile(assets.FOCUS_SHIFT_PATH))
 
+class KeyboardDetectorBridge(KioskInjectedScript):
+    def __init__(self):
+        super().__init__("keyboardDetectorBridge")
+        self.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
+
+        # provided by QWebChannel
+        qwebchannel_js = QtCore.QFile(':/qtwebchannel/qwebchannel.js')
+        if not qwebchannel_js.open(QtCore.QIODeviceBase.OpenModeFlag.ReadOnly):
+            raise RuntimeError('Failed to load qwebchannel.js: %s' % qwebchannel_js.errorString())
+        qwebchannel_js = bytes(qwebchannel_js.readAll()).decode('utf-8')
+        libJsStr = f"""
+/// qwebchannel.js
+{qwebchannel_js}
+"""
+
+        clientJs = """
+window.addEventListener("load", () => {
+    function dispatchKeyboardAvailabilityChange(hasPhysicalKeyboard) {
+        window.dispatchEvent(new CustomEvent(
+            "kiosk:keyboardavailabilitychange",
+            { detail: { hasPhysicalKeyboard }, bubbles: false, cancelable: false}
+        ));
+    }
+
+    new QWebChannel(qt.webChannelTransport, (channel) => {
+        const keyboard_detector = channel.objects.keyboard_detector;
+
+        keyboard_detector.keyboard_available_changed.connect(dispatchKeyboardAvailabilityChange);
+
+        dispatchKeyboardAvailabilityChange(keyboard_detector.keyboard_available);
+    });
+});
+
+window.addEventListener("kiosk:keyboardavailabilitychange", (event) => {
+    document.documentElement.style.setProperty(
+        "--focus-interaction-behavior",
+        event.detail.hasPhysicalKeyboard ? "normal" : "opaque"
+    );
+});
+"""
+        self.setSourceCode(libJsStr + clientJs)
+
 
 class EnableInputToggleWithEnterScript(KioskInjectedScript):
     def __init__(self):

@@ -50,6 +50,7 @@ python3Packages.buildPythonApplication rec {
       [
         qt6.qtbase
         qt6.qtvirtualkeyboard
+        qt6.qtwebchannel
       ]
       ++ (with python3Packages; [
         dbus-python
