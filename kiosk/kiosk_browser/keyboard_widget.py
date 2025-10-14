@@ -1,15 +1,16 @@
 from __future__ import annotations # allow forward references in types
 
 import importlib.resources
-from PyQt6 import QtCore
+from PyQt6 import QtCore, QtGui
 from PyQt6.QtCore import QUrl, Qt, QPoint, QSize
 from PyQt6.QtQuickWidgets import QQuickWidget
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QLabel, QGraphicsDropShadowEffect
 import json
 import logging
 import os
 from enum import IntEnum, auto
 from typing import Optional
+from kiosk_browser.dialogable_widget import dialog_ratio
 
 from kiosk_browser.focus_object_tracker import FocusObjectTracker
 
@@ -90,8 +91,75 @@ class ActivationKeyFilter(QtCore.QObject):
 
         return False
 
+class KeyboardActivationHint(QLabel):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._pixmap = QtGui.QPixmap("images/vkb-activation-hint.png")
+        self._resize()
+        self.setToolTip("Press OK to activate the virtual keyboard.")
+        self.hide()
+        QApplication.inputMethod().cursorRectangleChanged.connect(self._cursorMoved)
+
+
+    # resize and "restyle" the hint ensuring it fits in dialogable_widget margins
+    def _resize(self):
+        total_height = round((1 - dialog_ratio) / 2 * self.parent().height())
+        inner_margin = round(total_height * 0.05) # 5% margin
+        self.setStyleSheet(f"""
+            background-color: white;
+            border-radius: {inner_margin}px;
+            padding: {inner_margin}px;
+            margin: {inner_margin}px;
+        """)
+        self._scale_icon(total_height - (inner_margin*4))
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setColor(QtGui.QColor.fromRgb(0, 0, 0))
+        shadow.setOffset(0, 0)
+        shadow.setBlurRadius(inner_margin*2)
+        self.setGraphicsEffect(shadow)
+
+    def show(self):
+        self.raise_()
+        return super().show()
+
+    def vkb_state_changed(self, state: ActivationState):
+        match state:
+            case ActivationState.UNKNOWN:
+                self.hide()
+
+            case ActivationState.WAITING_FOR_ACTIVATION:
+                self.show()
+
+            case ActivationState.ACTIVATED:
+                self.hide()
+
+    def _cursorMoved(self):
+        cursor = QApplication.inputMethod().cursorRectangle()
+
+        kbdX = round((self.parent().width() - self.width()) / 2)
+
+        # if cursor is lower than 2*self.height() from the bottom, move to top
+        if cursor.top() > (self.window().height() - self.height() * 2):
+            kbdY = 0
+        else:
+            # move to bottom
+            kbdY = round(self.parent().height() - self.height())
+        self.move(QPoint(kbdX, kbdY))
+
+
+    def _scale_icon(self, height):
+        self.setPixmap(self._pixmap.scaledToHeight(
+            height,
+            mode = QtCore.Qt.TransformationMode.SmoothTransformation
+        ))
+        self.adjustSize()
+
 
 class KeyboardWidget(QQuickWidget):
+    __state: ActivationState
+
     def _make_transparent(self):
         # A semi-hack to make the QQuickWidget have transparent background, see:
         # https://doc.qt.io/qt-6/qquickwidget.html#limitations
@@ -119,6 +187,14 @@ class KeyboardWidget(QQuickWidget):
 
         self.rootContext().setContextProperty("activeLocales", ";".join(locales))
 
+    @property
+    def _state(self) -> ActivationState:
+        return self.__state
+
+    @_state.setter
+    def _state(self, state: ActivationState):
+        self._keyboard_activation_hint.vkb_state_changed(state)
+        self.__state = state
 
     def __init__(self, parent, focus_object_tracker: FocusObjectTracker):
         super(KeyboardWidget, self).__init__(parent)
@@ -143,6 +219,11 @@ class KeyboardWidget(QQuickWidget):
         self.setResizeMode(QQuickWidget.ResizeMode.SizeRootObjectToView);
 
         self._activation_key_filter = ActivationKeyFilter(self, focus_object_tracker)
+        # Note: parent is not self, but parent, because hint is displayed in the
+        # same window as the KeyboardWidget
+        self._keyboard_activation_hint = KeyboardActivationHint(parent)
+        # Need to wrap in a lambda to avoid premature disconnect
+        self.destroyed.connect(lambda: self._keyboard_activation_hint.deleteLater())
 
         self._input_method = QApplication.inputMethod()
 
@@ -172,6 +253,7 @@ class KeyboardWidget(QQuickWidget):
     # unexpected consequences.
     def _resize(self):
         self.resize(QSize(round(self._visibleWidth()), round(self._visibleHeight())))
+        self._keyboard_activation_hint._resize()
 
     def _visibleWidth(self):
         # The `-10` is only to avoid a specific keyboard size on 1080p that
