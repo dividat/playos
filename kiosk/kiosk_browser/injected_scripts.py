@@ -17,6 +17,55 @@ class FocusShiftScript(KioskInjectedScript):
         super().__init__("focusShift")
         self.setSourceUrl(QtCore.QUrl.fromLocalFile(assets.FOCUS_SHIFT_PATH))
 
+class KeyboardDetectorBridge(KioskInjectedScript):
+    def __init__(self):
+        super().__init__("keyboardDetectorBridge")
+        self.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
+
+        # provided by QWebChannel
+        qwebchannel_js = QtCore.QFile(':/qtwebchannel/qwebchannel.js')
+        if not qwebchannel_js.open(QtCore.QIODeviceBase.OpenModeFlag.ReadOnly):
+            raise RuntimeError('Failed to load qwebchannel.js: %s' % qwebchannel_js.errorString())
+        qwebchannel_js = bytes(qwebchannel_js.readAll()).decode('utf-8')
+        libJsStr = f"""
+/// qwebchannel.js
+{qwebchannel_js}
+"""
+
+        clientJs = """
+const keyboard_available_handler = function (keyboard_available) {
+    const event = new CustomEvent("KeyboardAvailableChanged", { detail: { keyboard_available: keyboard_available }});
+    window.dispatchEvent(event);
+}
+
+window.onload = function () {
+    new QWebChannel(qt.webChannelTransport, function(channel) {
+        const keyboard_detector = channel.objects.keyboard_detector;
+
+        keyboard_detector.keyboard_available_changed.connect(keyboard_available_handler);
+
+        keyboard_available_handler(keyboard_detector.keyboard_available);
+    });
+}
+
+/// DEMO USAGE
+window.addEventListener("KeyboardAvailableChanged", (e) => {
+    const keyboard_available = e.detail.keyboard_available;
+    console.error("Got KeyboardAvailableChanged from Python, keyboard_available =", keyboard_available);
+
+    let color = keyboard_available ? "blue" : "red";
+    const css = `
+      html body {
+        background: ${color} !important;
+      }
+    `;
+    const elem = document.createElement('style');
+    elem.textContent = css;
+    document.head.appendChild(elem);
+});
+"""
+        self.setSourceCode(libJsStr + clientJs)
+
 
 class EnableInputToggleWithEnterScript(KioskInjectedScript):
     def __init__(self):

@@ -77,7 +77,8 @@ class MainWidget(QtWidgets.QWidget):
         self._browser_widget = browser_widget.BrowserWidget(
             url = kiosk_url,
             get_current_proxy = proxy.get_current,
-            parent = self)
+            parent = self,
+            keyboard_detector=self._keyboard_detector)
         self._dialogable_browser = dialogable_widget.DialogableWidget(
             parent = self,
             inner_widget = self._browser_widget,
