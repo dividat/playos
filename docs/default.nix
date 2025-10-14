@@ -37,6 +37,7 @@ stdenv.mkDerivation {
     weasyprint $out/arch.html $out/arch.pdf
 
     cd ../user-manual
+    cp ${../kiosk/images/vkb-activation-hint.png} ../screenshots/vkb-activation-hint.png
     pandoc \
         --template ../templates/default.html \
         --toc --number-sections --toc-depth=2 \

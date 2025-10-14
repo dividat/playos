@@ -52,7 +52,12 @@ keyboard is plugged in. In this case, a keyboard icon is displayed in the lower
 right corner.
 
 The virtual keyboard can be requested by clicking OK (Enter) while focused on a
-text input field.
+text input field. A hint about activation is displayed in the margins:
+
+#+CAPTION: Virtual keyboard activation hint
+#+NAME: fig:virtual-keyboard-hint
+#+attr_html: :style width: 30%
+[[../screenshots/vkb-activation-hint.png]]
 
 By default, the keyboard will use the layout according to the configured system
 language. See [[localization-and-display][Localization settings]] below. The
