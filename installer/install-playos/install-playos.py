@@ -272,7 +272,16 @@ def install_system(partitionPath, label):
             ['tar', 'xf', '-', '-C', '/mnt/system'],
             check=True,
             stdin=status.stdout)
-        read.wait()
+
+        # ensure SIGPIPE is received if next-in-pipe process exits prematurely
+        read.stdout.close()
+        status.stdout.close()
+
+        for p in [read, status]:
+            exit_code = p.wait()
+            if exit_code != 0:
+                raise RuntimeError(f"Failed while installing the filesystem in {p}")
+
 
     # Copy kernel, initrd and init
     subprocess.run(
