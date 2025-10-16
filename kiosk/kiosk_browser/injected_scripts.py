@@ -33,35 +33,28 @@ class KeyboardDetectorBridge(KioskInjectedScript):
 """
 
         clientJs = """
-const keyboard_available_handler = function (keyboard_available) {
-    const event = new CustomEvent("KeyboardAvailableChanged", { detail: { keyboard_available: keyboard_available }});
-    window.dispatchEvent(event);
-}
+window.addEventListener("load", () => {
+    function dispatchKeyboardAvailabilityChange(hasPhysicalKeyboard) {
+        window.dispatchEvent(new CustomEvent(
+            "kiosk:keyboardavailabilitychange",
+            { detail: { hasPhysicalKeyboard }, bubbles: false, cancelable: false}
+        ));
+    }
 
-window.addEventListener("load", function () {
-    new QWebChannel(qt.webChannelTransport, function(channel) {
+    new QWebChannel(qt.webChannelTransport, (channel) => {
         const keyboard_detector = channel.objects.keyboard_detector;
 
-        keyboard_detector.keyboard_available_changed.connect(keyboard_available_handler);
+        keyboard_detector.keyboard_available_changed.connect(dispatchKeyboardAvailabilityChange);
 
-        keyboard_available_handler(keyboard_detector.keyboard_available);
+        dispatchKeyboardAvailabilityChange(keyboard_detector.keyboard_available);
     });
-})
+});
 
-/// DEMO USAGE
-window.addEventListener("KeyboardAvailableChanged", (e) => {
-    const keyboard_available = e.detail.keyboard_available;
-    console.error("Got KeyboardAvailableChanged from Python, keyboard_available =", keyboard_available);
-
-    let color = keyboard_available ? "blue" : "red";
-    const css = `
-      html body {
-        background: ${color} !important;
-      }
-    `;
-    const elem = document.createElement('style');
-    elem.textContent = css;
-    document.head.appendChild(elem);
+window.addEventListener("kiosk:keyboardavailabilitychange", (event) => {
+    document.documentElement.style.setProperty(
+        "--focus-interaction-behavior",
+        event.detail.hasPhysicalKeyboard ? "normal" : "opaque"
+    );
 });
 """
         self.setSourceCode(libJsStr + clientJs)
