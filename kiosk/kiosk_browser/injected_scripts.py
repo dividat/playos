@@ -38,7 +38,7 @@ const keyboard_available_handler = function (keyboard_available) {
     window.dispatchEvent(event);
 }
 
-window.onload = function () {
+window.addEventListener("load", function () {
     new QWebChannel(qt.webChannelTransport, function(channel) {
         const keyboard_detector = channel.objects.keyboard_detector;
 
@@ -46,7 +46,7 @@ window.onload = function () {
 
         keyboard_available_handler(keyboard_detector.keyboard_available);
     });
-}
+})
 
 /// DEMO USAGE
 window.addEventListener("KeyboardAvailableChanged", (e) => {
