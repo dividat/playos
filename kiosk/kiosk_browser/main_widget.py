@@ -128,6 +128,12 @@ class MainWidget(QtWidgets.QWidget):
                 name = "hard-refresh",
                 keys = { Qt.Key.Key_Escape, Qt.Key.Key_Down },
                 action = self._browser_widget.hard_refresh
+            ),
+            # The DT-007c remote control has Escape+Down mapped to F20 in the firmware
+            ShortcutDef(
+                name = "hard-refresh-alt",
+                keys = { Qt.Key.Key_F20 },
+                action = self._browser_widget.hard_refresh
             )
         ]
 
