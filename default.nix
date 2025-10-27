@@ -27,22 +27,31 @@ in
 , buildReleaseDisk ? false
 , buildLive ? true
 , buildTest ? false
+, quickBuild ? (builtins.getEnv "QUICK_BUILD") == "1"
 }:
 
 let
 
-  application = import applicationPath //
-    bootstrap.lib.optionalAttrs (versionOverride != null) { version = versionOverride; };
+  application = import applicationPath
+    // bootstrap.lib.optionalAttrs (versionOverride != null)
+        { version = versionOverride; };
+
+  squashfsCompressionOpts =
+    if quickBuild then
+      bootstrap.lib.warn "QUICK BUILD MODE enabled!"
+        "lz4"
+    else
+       null;
 
   pkgs = import ./pkgs (with application; {
     applicationOverlays = application.overlays;
   });
 
   # lib.makeScope returns consistent set of packages that depend on each other
-  mkComponents = { application, extraModules ? [ ], rescueSystemOpts ? {}, diskBuildEnabled ? buildDisk }:
+  mkComponents = { application, extraModules ? [ ], diskBuildEnabled ? buildDisk, squashfsCompressionOpts }:
   (with pkgs; lib.makeScope newScope (self: with self; {
 
-    inherit updateUrl deployUrl kioskUrl watchdogUrls;
+    inherit updateUrl deployUrl kioskUrl watchdogUrls squashfsCompressionOpts;
     inherit (application) version safeProductName fullProductName;
 
     greeting = lib.attrsets.attrByPath [ "greeting" ] (label: label) application;
@@ -79,7 +88,7 @@ let
     # Rescue system
     rescueSystem = callPackage ./bootloader/rescue {
         application = application;
-    } // rescueSystemOpts;
+    };
 
     # Installer ISO image
     installer = callPackage ./installer {};
@@ -107,17 +116,21 @@ let
                 callPackage ./testing/end-to-end {});
   }));
 
-  components = mkComponents { inherit application; };
+  components = mkComponents {
+    inherit application;
+    inherit squashfsCompressionOpts;
+  };
 
   testComponents = mkComponents {
     diskBuildEnabled = true;
     application = application // { version = "${application.version}-TEST"; };
+    squashfsCompressionOpts = "lz4";
     extraModules = [ ./testing/end-to-end/profile.nix ];
-    rescueSystemOpts = { squashfsCompressionOpts = "-no-compression"; };
   };
 
   releaseDiskComponents = mkComponents {
     inherit application;
+    inherit squashfsCompressionOpts;
     extraModules = [ ./testing/system/passwordless-root.nix ];
   };
 
