@@ -9,6 +9,8 @@ let
       else map (i: "wpa_supplicant-${i}.service") wifiIfs;
 in
 {
+  imports = [ ./disable-wifi-powersave.nix ];
+
   # Enable non-free firmware
   hardware.enableRedistributableFirmware = true;
 

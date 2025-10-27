@@ -41,7 +41,6 @@ rec {
         ./application/playos-status.nix
         ./application/power-management/default.nix
         ./application/limit-vtes.nix
-        ./application/disable-wifi-powersave.nix
       ];
 
       boot.blacklistedKernelModules = [
