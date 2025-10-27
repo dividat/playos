@@ -1,3 +1,14 @@
+# Installs a service to disable power saving for all WiFi devices on boot.
+#
+# Unfortunately power saving has been implicated in random disconnects for some
+# of our hardware configurations and customer APs. In simple tests observing
+# consumed energy of an idle system using a Watt meter, there was no meaningful
+# difference when power saving was disabled.
+#
+# We disable power saving for all detected WiFi devices without offering a
+# documented way for the application layer to override, assuming any
+# installations are stationary and mains powered. Powersaving behavior could be
+# made configurable if use cases evolve going forward.
 { config, pkgs, ... }:
 
 let
