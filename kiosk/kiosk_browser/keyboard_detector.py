@@ -4,7 +4,7 @@ import logging
 import time
 import os
 import re
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, pyqtSignal, pyqtProperty
 from typing import NamedTuple, Optional
 
 
@@ -100,10 +100,23 @@ class KeyboardDetector(QObject):
     # different thread. So instead we introduce a Qt signal.
     keyboard_available_changed = pyqtSignal(bool)
 
+    _keyboard_available: None | bool
+
+    # Needs to be a property to be readable in QWebChannel (see kiosk.injected_scripts)
+    @pyqtProperty(bool, notify=keyboard_available_changed)
+    def keyboard_available(self):
+        return self._keyboard_available
+
+    @keyboard_available.setter # type: ignore # see https://github.com/python/mypy/issues/9911
+    def keyboard_available(self, value):
+        if self._keyboard_available != value:
+            self._keyboard_available = value
+            self.keyboard_available_changed.emit(self._keyboard_available)
+
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.keyboard_available = None
+        self._keyboard_available = None
 
         context = pyudev.Context()
         self._monitor = pyudev.Monitor.from_netlink(context)
@@ -125,7 +138,6 @@ class KeyboardDetector(QObject):
         if self.keyboard_available != keyboard_available:
             # status change
             self.keyboard_available = keyboard_available
-            self.keyboard_available_changed.emit(self.keyboard_available)
 
             if self.keyboard_available:
                 logging.info(f"Detected keyboard devices: {", ".join([k.name for k in keyboards])}")

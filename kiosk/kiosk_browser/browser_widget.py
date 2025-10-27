@@ -1,5 +1,6 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
 from PyQt6.QtWebEngineCore import QWebEngineScript
+from PyQt6.QtWebChannel import QWebChannel
 from enum import Enum, auto
 import logging
 import re
@@ -18,9 +19,9 @@ class Status(Enum):
     LOADED = auto()
 
 
-class BrowserWidget(QtWidgets.QWidget):
 
-    def __init__(self, url, get_current_proxy, parent):
+class BrowserWidget(QtWidgets.QWidget):
+    def __init__(self, url, get_current_proxy, parent, keyboard_detector):
         QtWidgets.QWidget.__init__(self, parent)
         self.setStyleSheet(f"background-color: white;")
 
@@ -30,6 +31,9 @@ class BrowserWidget(QtWidgets.QWidget):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
+        self._webchannel = QWebChannel()
+        self._webchannel.registerObject("keyboard_detector", keyboard_detector)
+
         # Init views
         self._loading_page = loading_page(self)
         self._network_error_page = network_error_page(self)
@@ -38,6 +42,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._focus_shift_script = injected_scripts.FocusShiftScript()
         self._input_with_enter_script = injected_scripts.EnableInputToggleWithEnterScript()
         self._force_focused_element_highlight_script = injected_scripts.ForceFocusedElementHighlightingScript()
+        self._keyboard_detector_bridge_script = injected_scripts.KeyboardDetectorBridge()
 
         # Add views to layout
         self._layout.addWidget(self._loading_page)
@@ -47,6 +52,10 @@ class BrowserWidget(QtWidgets.QWidget):
 
         # Register proxy authentication handler
         self._webview.page().proxyAuthenticationRequired.connect(self._proxy_auth)
+
+        # Register QWebChannel
+        self._webview.page().setWebChannel(self._webchannel)
+        self._profile.scripts().insert(self._keyboard_detector_bridge_script)
 
         # Override user agent
         self._webview.page().profile().setHttpUserAgent(user_agent_with_system(
