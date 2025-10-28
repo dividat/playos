@@ -1,5 +1,5 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
-from PyQt6.QtWidgets import QPushButton, QDialog, QHBoxLayout, QApplication
+from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt
 import time
 import logging
@@ -21,26 +21,6 @@ class ShortcutDef:
 
     def to_combo(self):
         return KeyCombination(name=self.name, keys=frozenset(self.keys))
-
-
-class MultiActionToggleSettingsDialog(QDialog):
-    def __init__(self, parent, actions: dict):
-        super().__init__(parent)
-
-        self.setWindowTitle("Choose action")
-        layout = QHBoxLayout(self)
-
-        last_button = None
-        for action_name, action_callback in actions.items():
-            button = QPushButton(action_name)
-            button.clicked.connect(action_callback)
-            button.clicked.connect(self.accept)
-            layout.addWidget(button)
-            last_button = button
-
-        if last_button:
-            last_button.setDefault(True)
-            last_button.setFocus()
 
 
 class MainWidget(QtWidgets.QWidget):
@@ -176,29 +156,13 @@ class MainWidget(QtWidgets.QWidget):
         self._dialogable_browser.decorate("System Settings")
 
 
-    # By default toggles setting view, but when captive portal is detected,
-    # shows a modal dialog with several options.
+    # Toggles setting view
     def _toggle_settings(self):
-        actions = {}
-
         # Default actions which are always available
         if self._dialogable_browser.is_decorated():
-            actions['Return to home'] = self._close_dialog
+            self._close_dialog()
         else:
-            actions['Open settings'] = self._open_settings
-
-        # Additional actions:
-        if self._captive_portal_message.is_open():
-            actions['Network login'] = self._show_captive_portal
-
-        if len(actions) == 1:
-            first_action = next(iter(actions.values()))
-            first_action()
-        else:
-            dialog = MultiActionToggleSettingsDialog(self, actions)
-            dialog.exec()
-            self.activateWindow()
-
+            self._open_settings()
 
     def _show_captive_portal_message(self, url: str):
         self._captive_portal_url = QtCore.QUrl(url)
@@ -250,3 +214,73 @@ class MainWidget(QtWidgets.QWidget):
         if self._keyboardWidget:
             self._keyboardWidget._resize()
         return super().resizeEvent(event)
+
+    # Similar to QWidget.focusNextPrevChild, but:
+    # - uses the currently focused widget QApplication.focusWidget() as the starting point
+    # - avoids calling focusNextPrevChild, which is a protected method and
+    #   raises a RuntimeError when called for QWidget's not created from PyQt
+    # - prevents wrap-around assuming `bottom_widget` is the last focusable widget
+    #   in the focus chain
+    def _focus_next_prev_wihtout_wrapping(self, is_forward: bool) -> bool:
+        focusWidget = QApplication.focusWidget()
+        bottom_widget = self._browser_widget
+
+        next_prev = find_next_prev_focusable_widget(focusWidget, is_forward)
+
+        if next_prev is None:
+            return False
+
+        # If going backwards would wrap around to bottom_widget, do nothing
+        if not is_forward and bottom_widget.isAncestorOf(next_prev):
+                return False
+
+        # If going forward and already focused on bottom_widget or its child, do nothing
+        elif is_forward and bottom_widget.isAncestorOf(focusWidget):
+                return False
+
+        next_prev.setFocus()
+        return True
+
+    # Centralised handling of arrow Up/Down focus shifting.
+    #
+    # If a key press event for Up/Down bubbled up to here, try to shift focus
+    # (i.e. treat Down as Tab, Up as Shift+Tab), but prevent wrap around.
+    #
+    # Note: Currently not handling Left/Right as widgets/dialogs are only
+    # stacked vertically.
+    def keyPressEvent(self, event):
+        handled = False
+
+        if event.key() == Qt.Key.Key_Down:
+            handled = self._focus_next_prev_wihtout_wrapping(True)
+        elif event.key() == Qt.Key.Key_Up:
+            handled = self._focus_next_prev_wihtout_wrapping(False)
+
+        if handled:
+            return
+        else:
+            super().keyPressEvent(event)
+
+
+## Helpers
+
+# Find the next/prev element in the focus chain that is visible, enabled and
+# accepts TabFocus. This is simpler than what Qt does in focusNextPrevChild()
+# but works for our purposes.
+def find_next_prev_focusable_widget(initial: QtWidgets.QWidget, is_forward: bool) -> None | QtWidgets.QWidget:
+    def iter_next_prev(w):
+        if is_forward:
+            return w.nextInFocusChain()
+        else:
+            return w.previousInFocusChain()
+
+    next_prev = iter_next_prev(initial)
+
+    while next_prev != initial:
+        if next_prev.isEnabled() and next_prev.isVisible() and next_prev.focusPolicy() & Qt.FocusPolicy.TabFocus:
+            return next_prev
+
+        next_prev = iter_next_prev(next_prev)
+
+    # we looped around without finding focusable items
+    return None

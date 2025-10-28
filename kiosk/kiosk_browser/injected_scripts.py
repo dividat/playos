@@ -15,6 +15,8 @@ class KioskInjectedScript(QWebEngineScript):
 class FocusShiftScript(KioskInjectedScript):
     def __init__(self):
         super().__init__("focusShift")
+        # needed to allow other injected scripts to interact with focus-shift
+        self.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
         self.setSourceUrl(QtCore.QUrl.fromLocalFile(assets.FOCUS_SHIFT_PATH))
 
 class KeyboardDetectorBridge(KioskInjectedScript):
@@ -47,7 +49,12 @@ window.addEventListener("load", () => {
         keyboard_detector.keyboard_available_changed.connect(dispatchKeyboardAvailabilityChange);
 
         dispatchKeyboardAvailabilityChange(keyboard_detector.keyboard_available);
+
+        window.addEventListener("focus-shift:exhausted", (event) => {
+            channel.objects.focus_transfer.reached_end(event.detail.direction);
+        });
     });
+
 });
 
 window.addEventListener("kiosk:keyboardavailabilitychange", (event) => {

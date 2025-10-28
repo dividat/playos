@@ -2,6 +2,7 @@ from PyQt6 import QtWidgets, QtCore, QtGui
 from typing import Callable
 
 from kiosk_browser.keyboard_detector import KeyboardDetector
+from kiosk_browser.ui import LightButton
 
 overlay_color: str = '#888888'
 
@@ -165,32 +166,19 @@ def title_line(
     """
 
     line = QtWidgets.QWidget(dialog)
-    line.setStyleSheet(f"background-color: {dialog_color};")
+    line.setStyleSheet(f"""
+        background-color: {dialog_color};
+        font-family: monospace;
+        font-size: 16px;
+    """)
     line.setFixedHeight(30)
 
     label = QtWidgets.QLabel(title)
     label.setStyleSheet("""
         color: white;
-        font-family: monospace;
-        font-size: 16px;
     """)
 
-    button = QtWidgets.QPushButton("×", dialog)
-    button.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
-    button.setStyleSheet("""
-        QPushButton {
-            background-color: rgba(255, 255, 255, 0.2);
-            border: 0;
-            color: white;
-            font-family: monospace;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 4px 15px 5px;
-        }
-        QPushButton:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-        }
-    """)
+    button = LightButton("×", dialog)
     button.clicked.connect(on_close)
 
     layout = QtWidgets.QHBoxLayout()
