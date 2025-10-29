@@ -22,6 +22,7 @@ class FocusShiftScript(KioskInjectedScript):
 class FocusShiftBridge(KioskInjectedScript):
     def __init__(self):
         super().__init__("FocusShiftBridge")
+        self.setRunsOnSubFrames(False)
         self.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
 
         # provided by QWebChannel
