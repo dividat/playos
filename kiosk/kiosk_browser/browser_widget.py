@@ -22,6 +22,10 @@ class Status(Enum):
     LOADED = auto()
 
 
+# Small helper class for handling focus-shift:exhausted events, used to
+# "transfer" focus out of the page (QWebEngineView) into other widgets.
+#
+# It works by translating the exhausted direction "back" to a KeyPress event.
 class FocusTransfer(QtCore.QObject):
     @staticmethod
     def _direction_to_event(direction) -> QKeyEvent | None:
