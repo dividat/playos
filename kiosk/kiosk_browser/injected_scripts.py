@@ -19,9 +19,9 @@ class FocusShiftScript(KioskInjectedScript):
         self.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
         self.setSourceUrl(QtCore.QUrl.fromLocalFile(assets.FOCUS_SHIFT_PATH))
 
-class KeyboardDetectorBridge(KioskInjectedScript):
+class FocusShiftBridge(KioskInjectedScript):
     def __init__(self):
-        super().__init__("keyboardDetectorBridge")
+        super().__init__("FocusShiftBridge")
         self.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
 
         # provided by QWebChannel

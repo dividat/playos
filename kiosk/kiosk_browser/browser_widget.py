@@ -73,7 +73,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._focus_shift_script = injected_scripts.FocusShiftScript()
         self._input_with_enter_script = injected_scripts.EnableInputToggleWithEnterScript()
         self._force_focused_element_highlight_script = injected_scripts.ForceFocusedElementHighlightingScript()
-        self._keyboard_detector_bridge_script = injected_scripts.KeyboardDetectorBridge()
+        self._focus_shift_bridge_script = injected_scripts.FocusShiftBridge()
 
         # Add views to layout
         self._layout.addWidget(self._loading_page)
@@ -86,7 +86,7 @@ class BrowserWidget(QtWidgets.QWidget):
 
         # Register QWebChannel
         self._webview.page().setWebChannel(self._webchannel)
-        self._profile.scripts().insert(self._keyboard_detector_bridge_script)
+        self._profile.scripts().insert(self._focus_shift_bridge_script)
 
         # Override user agent
         self._webview.page().profile().setHttpUserAgent(user_agent_with_system(
