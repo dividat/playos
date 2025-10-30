@@ -223,6 +223,11 @@ class MainWidget(QtWidgets.QWidget):
     #   in the focus chain
     def _focus_next_prev_wihtout_wrapping(self, is_forward: bool) -> bool:
         focusWidget = QApplication.focusWidget()
+
+        # Handle bizarre dev cases, e.g. kiosk window minimized, but DevTools open
+        if focusWidget is None:
+            return False
+
         bottom_widget = self._browser_widget
 
         next_prev = find_next_prev_focusable_widget(focusWidget, is_forward)
@@ -274,13 +279,14 @@ def find_next_prev_focusable_widget(initial: QtWidgets.QWidget, is_forward: bool
         else:
             return w.previousInFocusChain()
 
-    next_prev = iter_next_prev(initial)
+    next_prev = initial
 
-    while next_prev != initial:
+    while next_prev := iter_next_prev(next_prev):
+        if next_prev == initial:
+            break
+
         if next_prev.isEnabled() and next_prev.isVisible() and next_prev.focusPolicy() & Qt.FocusPolicy.TabFocus:
             return next_prev
-
-        next_prev = iter_next_prev(next_prev)
 
     # we looped around without finding focusable items
     return None
