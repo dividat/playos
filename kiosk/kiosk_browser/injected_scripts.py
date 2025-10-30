@@ -12,12 +12,19 @@ class KioskInjectedScript(QWebEngineScript):
         self.setRunsOnSubFrames(True)
         self.setWorldId(QWebEngineScript.ScriptWorldId.ApplicationWorld)
 
+    def setSourceCode(self, source_code):
+        # avoid polluting the global scope
+        local_scoped_src = '(function () {\n\n' + source_code + '\n\n})();'
+        super().setSourceCode(local_scoped_src)
+
 class FocusShiftScript(KioskInjectedScript):
     def __init__(self):
         super().__init__("focusShift")
         # worldId must match FocusShiftBridge.worldId!
         self.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
-        self.setSourceUrl(QtCore.QUrl.fromLocalFile(assets.FOCUS_SHIFT_PATH))
+        with open(assets.FOCUS_SHIFT_PATH, "r") as f:
+            self.setSourceCode(f.read())
+
 
 class FocusShiftBridge(KioskInjectedScript):
     def __init__(self):
