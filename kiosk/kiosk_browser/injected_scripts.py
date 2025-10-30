@@ -104,13 +104,15 @@ class ForceFocusedElementHighlightingScript(KioskInjectedScript):
     def __init__(self):
         super().__init__("ForceFocusedElementHighlightingScript")
         self.setSourceCode("""
-const css = `
-  html body *:focus-visible:focus-visible:focus-visible:focus-visible {
-    outline: outset thick rgb(255 255 0 / 0.8) !important;
-  }
-`;
+window.addEventListener("load", () => {
+    const css = `
+      html body *:focus-visible:focus-visible:focus-visible:focus-visible {
+        outline: outset thick rgb(255 255 0 / 0.8) !important;
+      }
+    `;
 
-const elem = document.createElement('style');
-elem.textContent = css;
-document.head.appendChild(elem);
+    const elem = document.createElement('style');
+    elem.textContent = css;
+    document.head.appendChild(elem);
+});
         """)
