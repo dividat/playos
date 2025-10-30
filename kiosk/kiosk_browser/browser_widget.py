@@ -1,6 +1,9 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
 from PyQt6.QtWebEngineCore import QWebEngineScript
 from PyQt6.QtWebChannel import QWebChannel
+from PyQt6.QtCore import pyqtSlot, Qt, QEvent
+from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtWidgets import QApplication
 from enum import Enum, auto
 import logging
 import re
@@ -19,6 +22,35 @@ class Status(Enum):
     LOADED = auto()
 
 
+# Small helper class for handling focus-shift:exhausted events, used to
+# "transfer" focus out of the page (QWebEngineView) into other widgets.
+#
+# It works by translating the exhausted direction "back" to a KeyPress event.
+class FocusTransfer(QtCore.QObject):
+    @staticmethod
+    def _direction_to_event(direction) -> QKeyEvent | None:
+        match direction:
+            case "up":
+                key = Qt.Key.Key_Up
+            case "down":
+                key = Qt.Key.Key_Down
+            case _:
+                key = None
+
+        if key:
+            return QKeyEvent(QEvent.Type.KeyPress, key,
+                             Qt.KeyboardModifier.NoModifier, '', autorep=False)
+        else:
+            return None
+
+    @pyqtSlot(str)
+    def reached_end(self, direction):
+        event = self._direction_to_event(direction)
+        if event:
+            # Expected to bubble up the widget stack and be handled by
+            # MainWidget.keyPressEvent
+            QApplication.instance().notify(self.parent(), event)
+
 
 class BrowserWidget(QtWidgets.QWidget):
     def __init__(self, url, get_current_proxy, parent, keyboard_detector):
@@ -31,8 +63,11 @@ class BrowserWidget(QtWidgets.QWidget):
         self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
+        self._focus_transfer = FocusTransfer(self)
+
         self._webchannel = QWebChannel()
         self._webchannel.registerObject("keyboard_detector", keyboard_detector)
+        self._webchannel.registerObject("focus_transfer", self._focus_transfer)
 
         # Init views
         self._loading_page = loading_page(self)
@@ -42,7 +77,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._focus_shift_script = injected_scripts.FocusShiftScript()
         self._input_with_enter_script = injected_scripts.EnableInputToggleWithEnterScript()
         self._force_focused_element_highlight_script = injected_scripts.ForceFocusedElementHighlightingScript()
-        self._keyboard_detector_bridge_script = injected_scripts.KeyboardDetectorBridge()
+        self._focus_shift_bridge_script = injected_scripts.FocusShiftBridge()
 
         # Add views to layout
         self._layout.addWidget(self._loading_page)
@@ -54,8 +89,11 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.page().proxyAuthenticationRequired.connect(self._proxy_auth)
 
         # Register QWebChannel
-        self._webview.page().setWebChannel(self._webchannel)
-        self._profile.scripts().insert(self._keyboard_detector_bridge_script)
+        assert self._focus_shift_bridge_script.worldId() == self._focus_shift_script.worldId(), \
+            "FocusShiftScript and FocusShiftBridge must have the same worldId!"
+        self._webview.page().setWebChannel(self._webchannel,
+                                           self._focus_shift_bridge_script.worldId())
+        self._profile.scripts().insert(self._focus_shift_bridge_script)
 
         # Override user agent
         self._webview.page().profile().setHttpUserAgent(user_agent_with_system(
