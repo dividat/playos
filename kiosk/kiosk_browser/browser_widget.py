@@ -89,7 +89,10 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.page().proxyAuthenticationRequired.connect(self._proxy_auth)
 
         # Register QWebChannel
-        self._webview.page().setWebChannel(self._webchannel)
+        assert self._focus_shift_bridge_script.worldId() == self._focus_shift_script.worldId(), \
+            "FocusShiftScript and FocusShiftBridge must have the same worldId!"
+        self._webview.page().setWebChannel(self._webchannel,
+                                           self._focus_shift_bridge_script.worldId())
         self._profile.scripts().insert(self._focus_shift_bridge_script)
 
         # Override user agent

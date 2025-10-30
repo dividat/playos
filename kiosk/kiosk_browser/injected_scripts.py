@@ -15,15 +15,18 @@ class KioskInjectedScript(QWebEngineScript):
 class FocusShiftScript(KioskInjectedScript):
     def __init__(self):
         super().__init__("focusShift")
-        # needed to allow other injected scripts to interact with focus-shift
+        # worldId must match FocusShiftBridge.worldId!
         self.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
         self.setSourceUrl(QtCore.QUrl.fromLocalFile(assets.FOCUS_SHIFT_PATH))
 
 class FocusShiftBridge(KioskInjectedScript):
     def __init__(self):
         super().__init__("FocusShiftBridge")
-        self.setRunsOnSubFrames(False)
+        # Needs to run on MainWorld to be able to interact with focus-shift on Play
+        # and to expose events to page scripts.
         self.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
+        # qt.webChannelTransport is not available on iframes
+        self.setRunsOnSubFrames(False)
 
         # provided by QWebChannel
         qwebchannel_js = QtCore.QFile(':/qtwebchannel/qwebchannel.js')
