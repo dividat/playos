@@ -108,8 +108,6 @@ class BrowserWidget(QtWidgets.QWidget):
         # Prevent opening context menu on right click or pressing menu
         self._webview.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.NoContextMenu)
 
-        self.setFocusProxy(self._webview)
-
         # Prepare reload timer
         self._reload_timer = QtCore.QTimer(self)
         self._reload_timer.setSingleShot(True)
@@ -192,21 +190,25 @@ class BrowserWidget(QtWidgets.QWidget):
             logging.info("Proxy authentication request ignored because credentials are not provided.")
 
     def _view(self, status):
-        if status == Status.LOADING:
-            self._loading_page.show()
-            self._network_error_page.hide()
-            self._webview.hide()
-        elif status == Status.NETWORK_ERROR:
-            self._loading_page.hide()
-            self._network_error_page.show()
-            self._webview.hide()
-        elif status == Status.LOADED:
-            self._loading_page.hide()
-            self._network_error_page.hide()
-            self._webview.show()
-            # Set focus by clearing first, otherwise focus is lost after using CTRL+R
-            self._webview.clearFocus()
-            self._webview.setFocus()
+        views = [ self._loading_page, self._network_error_page, self._webview ]
+
+        active_view = None
+        match status:
+            case Status.LOADING:
+                active_view = self._loading_page
+            case Status.NETWORK_ERROR:
+                active_view = self._network_error_page
+            case Status.LOADED:
+                active_view = self._webview
+
+        for view in views:
+            if view == active_view:
+                view.show()
+                self.setFocusProxy(view)
+                view.clearFocus()
+                view.setFocus()
+            else:
+                view.hide()
 
 def user_agent_with_system(user_agent, system_name, system_version):
     """Inject a specific system into a user agent string"""
