@@ -12,15 +12,28 @@ class KioskInjectedScript(QWebEngineScript):
         self.setRunsOnSubFrames(True)
         self.setWorldId(QWebEngineScript.ScriptWorldId.ApplicationWorld)
 
+    def setSourceCode(self, source_code):
+        # avoid polluting the global scope
+        local_scoped_src = '(function () {\n\n' + source_code + '\n\n})();'
+        super().setSourceCode(local_scoped_src)
+
 class FocusShiftScript(KioskInjectedScript):
     def __init__(self):
         super().__init__("focusShift")
-        self.setSourceUrl(QtCore.QUrl.fromLocalFile(assets.FOCUS_SHIFT_PATH))
-
-class KeyboardDetectorBridge(KioskInjectedScript):
-    def __init__(self):
-        super().__init__("keyboardDetectorBridge")
+        # worldId must match FocusShiftBridge.worldId!
         self.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
+        with open(assets.FOCUS_SHIFT_PATH, "r") as f:
+            self.setSourceCode(f.read())
+
+
+class FocusShiftBridge(KioskInjectedScript):
+    def __init__(self):
+        super().__init__("FocusShiftBridge")
+        # Needs to run on MainWorld to be able to interact with focus-shift on Play
+        # and to expose events to page scripts.
+        self.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
+        # qt.webChannelTransport is not available on iframes
+        self.setRunsOnSubFrames(False)
 
         # provided by QWebChannel
         qwebchannel_js = QtCore.QFile(':/qtwebchannel/qwebchannel.js')
@@ -47,7 +60,12 @@ window.addEventListener("load", () => {
         keyboard_detector.keyboard_available_changed.connect(dispatchKeyboardAvailabilityChange);
 
         dispatchKeyboardAvailabilityChange(keyboard_detector.keyboard_available);
+
+        window.addEventListener("focus-shift:exhausted", (event) => {
+            channel.objects.focus_transfer.reached_end(event.detail.direction);
+        });
     });
+
 });
 
 window.addEventListener("kiosk:keyboardavailabilitychange", (event) => {
@@ -93,13 +111,15 @@ class ForceFocusedElementHighlightingScript(KioskInjectedScript):
     def __init__(self):
         super().__init__("ForceFocusedElementHighlightingScript")
         self.setSourceCode("""
-const css = `
-  html body *:focus-visible:focus-visible:focus-visible:focus-visible {
-    outline: outset thick rgb(255 255 0 / 0.8) !important;
-  }
-`;
+window.addEventListener("load", () => {
+    const css = `
+      html body *:focus-visible:focus-visible:focus-visible:focus-visible {
+        outline: outset thick rgb(255 255 0 / 0.8) !important;
+      }
+    `;
 
-const elem = document.createElement('style');
-elem.textContent = css;
-document.head.appendChild(elem);
+    const elem = document.createElement('style');
+    elem.textContent = css;
+    document.head.appendChild(elem);
+});
         """)

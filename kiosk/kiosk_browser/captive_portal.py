@@ -14,6 +14,8 @@ from PyQt6 import QtWidgets
 from typing import Callable
 import os
 
+from kiosk_browser.ui import DarkButton
+
 check_connection_url = os.getenv("PLAYOS_CAPTIVE_CHECK_URL", 'http://captive.dividat.com/')
 
 """
@@ -112,11 +114,10 @@ class OpenMessage(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self, parent)
 
         label = QtWidgets.QLabel(
-            'This network requires you to log in to access the Internet. '
-            'Long press Ctrl-Shift-F12 or the Menu key to open the network login page.'
+            'This network requires you to log in to access the Internet.'
         )
 
-        button = QtWidgets.QPushButton('Open Network Login Page')
+        button = DarkButton('Open Network Login Page', self)
         button.clicked.connect(on_open)
         button.setDefault(True)
 
