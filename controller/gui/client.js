@@ -29,20 +29,7 @@ customElements.define(
         }
       }
 
-      input.oninput = function (e) {
-        if (e.target.value.length > 0) {
-          button.style.visibility = 'visible'
-        } else {
-          button.style.visibility = 'hidden'
-          updatePasswordVisibility(false)
-        }
-      }
-
-      // If the input has a right margin, position the button accordingly
-      const rightMargin = parseFloat(window.getComputedStyle(input).getPropertyValue('margin-right'))
-
       button.style = `
-        visibility: hidden;
         border: none;
         background-color: transparent;
         color: #555555;
