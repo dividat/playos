@@ -151,6 +151,7 @@ module Service : sig
     ; type' : Technology.type'
     ; security : security list
     ; state : state
+    ; error : string option
     ; strength : int option
     ; favorite : bool
     ; autoconnect : bool

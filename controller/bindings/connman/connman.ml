@@ -449,6 +449,7 @@ module Service = struct
     ; type' : Technology.type'
     ; security : security list
     ; state : state
+    ; error : string option
     ; strength : int option
     ; favorite : bool
     ; autoconnect : bool
@@ -525,6 +526,7 @@ module Service = struct
           name
           type'
           state
+          error
           strength
           favorite
           autoconnect
@@ -542,6 +544,7 @@ module Service = struct
           ; name
           ; type'
           ; state
+          ; error
           ; strength
           ; favorite
           ; autoconnect
@@ -567,6 +570,7 @@ module Service = struct
           >>= string_of_obus
           >>= state_of_string
           )
+      <*> (properties |> List.assoc_opt "Error" >>= string_of_obus |> pure)
       <*> (properties |> List.assoc_opt "Strength" >>= strength_of_obus |> pure)
       <*> (properties |> List.assoc_opt "Favorite" >>= bool_of_obus)
       <*> (properties |> List.assoc_opt "AutoConnect" >>= bool_of_obus)
