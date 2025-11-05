@@ -12,6 +12,7 @@ customElements.define(
       root.style = 'position: relative'
 
       const button = document.createElement('button')
+      button.type = 'button'
       root.appendChild(button)
 
       let isPasswordShown = false
@@ -55,7 +56,6 @@ customElements.define(
         align-items: center;
       `
       button.onclick = function (event) {
-        event.preventDefault()
         updatePasswordVisibility(!isPasswordShown)
       }
 
