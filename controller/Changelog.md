@@ -1,3 +1,8 @@
+## Fixed
+
+- os: Prevent the network manager from attempting to route Internet traffic to the Senso in networks with delayed DHCP
+- os: Prevent captive portals with HTTPS addresses from stalling the network manager
+
 # [2025.3.1] - 2025-07-04
 
 # [2025.3.1-VALIDATION] - 2025-06-06
