@@ -1,3 +1,7 @@
+## Changed
+
+- os: Disable WiFi power-saving mode for increased network robustness
+
 ## Fixed
 
 - os: Prevent the network manager from attempting to route Internet traffic to the Senso in networks with delayed DHCP
