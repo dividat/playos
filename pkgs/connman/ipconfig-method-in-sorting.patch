@@ -1,0 +1,142 @@
+commit f07d9d0b79d43ba510841783d0fb1a82e91516a8
+Author: Johannes Emerich <johannes@dividat.com>
+Date:   Wed Sep 3 11:09:08 2025 +0200
+
+    Use IPv4 config method as service sorting criterion
+    
+    This makes service sorting factor in the type of IPv4 method used by
+    each service. Link-local/Auto-IP configured services are demoted
+    relative to connected services using other methods.
+    
+    This happens relatively late in the comparison hierarchy so that
+    
+    - online services still win over ready services,
+    - ready services still win over failed-online-check services,
+    - preferred technologies still win over less preferred (which may be
+      questionable, but also in line with current treatment of preferred
+      technologies).
+    
+    As link-local configured services are in READY state and remain in
+    READY state when receiving an address via DHCP, updating the comparison
+    function alone is not sufficient, we also need to add a new trigger for
+    re-sorting the service list when the IP address changes.
+    
+    The chosen trigger here is address_updated(), which is called both when
+    the ipconfig method is changed manually as well as when the ipconfig
+    changes bottom up when DHCP becomes active again after the IP device had
+    fallen back to link-local/AUTO.
+    
+    Considerations for this choice of re-sorting trigger:
+    
+    - Suitability: Triggering on address updates seems appropriate given
+      that we are ultimately interested in connectedness, not the ipconfig
+      method alone. We want to prefer READY DHCP services in particular, not
+      just any service for which DHCP is currently used but has not yieled
+      an IP.
+    - Frequency: relatively low, compared with trigger from
+      __connman_service_update_from_network() which triggers on average
+      every 3 seconds on my laptop
+    
+    I also posted to the ConnMan mailing list to request feedback on the
+    suitability of address_updated() for this purpose, answers pending at
+    the time of writing this commit message:
+    https://lore.kernel.org/connman/CAKQ2e6X9BVihgY58OjzwbaqNn5HVHqHDCirsO2+qCBro91sygg@mail.gmail.com/T/
+
+diff --git a/src/service.c b/src/service.c
+index 06d02322..44884fff 100644
+--- a/src/service.c
++++ b/src/service.c
+@@ -157,6 +157,7 @@ static struct connman_ipconfig *create_ip6config(struct connman_service *service
+ static void dns_changed(struct connman_service *service);
+ static void vpn_auto_connect(void);
+ static void trigger_autoconnect(struct connman_service *service);
++static void service_list_sort(void);
+ 
+ struct find_data {
+ 	const char *path;
+@@ -983,6 +984,18 @@ static bool is_idle(enum connman_service_state state)
+ 	return false;
+ }
+ 
++static bool is_ipv4ll(const struct connman_service *service)
++{
++	enum connman_ipconfig_method method4;
++
++	if (!service || !service->ipconfig_ipv4)
++		return false;
++
++	method4 = __connman_ipconfig_get_method(service->ipconfig_ipv4);
++
++	return (method4 == CONNMAN_IPCONFIG_METHOD_AUTO);
++}
++
+ static int nameservers_changed_cb(void *user_data)
+ {
+ 	struct connman_service *service = user_data;
+@@ -1473,9 +1486,43 @@ static void start_online_check(struct connman_service *service,
+ 	}
+ }
+ 
++/**
++ *  @brief
++ *    Handle an update to the address(es) for the specified network
++ *    service and IP configuration type.
++ *
++ *  This triggers sorting of the service list to promote/demote
++ *  according to ipconfig method. This can cause the default service
++ *  to change, possibly leading to the updated service starting or
++ *  stopping to be default service.
++ *
++ *  If and only if the service is connected (that is, #is_connected
++ *  returns true) and is the default service after re-sorting, then
++ *  nameservers are refreshed, an "online" HTTP-based Internet
++ *  reachability check is initiated, and a time-of-day synchronization
++ *  is requested.
++ *
++ *  @param[in,out]  service  A pointer to the mutable network service
++ *                           for which there was an address change or
++ *                           update.
++ *  @param[in]      type     The IP configuration type for @a service
++ *                           for which there was an address change or
++ *                           update.
++ *
++ *  @sa nameserver_remove_all
++ *  @sa nameserver_add_all
++ *  @sa service_list_sort
++ *  @sa start_online_check
++ *  @sa __connman_connection_update_gateway
++ *  @sa __connman_timeserver_sync
++ *
++ */
+ static void address_updated(struct connman_service *service,
+ 			enum connman_ipconfig_type type)
+ {
++	service_list_sort();
++	__connman_connection_update_gateway();
++
+ 	if (is_connected(service->state) &&
+ 			service == connman_service_get_default()) {
+ 		nameserver_remove_all(service, type);
+@@ -5416,6 +5463,14 @@ static gint service_compare(gconstpointer a, gconstpointer b)
+ 			return 1;
+ 	}
+ 
++	/* Prefer configured IPv4 address over auto/link-local IP. */
++	bool a_is_link_local = is_ipv4ll(service_a);
++	bool b_is_link_local = is_ipv4ll(service_b);
++	if (a_connected && !a_is_link_local && b_is_link_local)
++		return -1;
++	if (a_is_link_local && b_connected && !b_is_link_local)
++		return 1;
++
+ 	if (service_a->favorite && !service_b->favorite)
+ 		return -1;
+ 
+@@ -7124,6 +7179,7 @@ static void service_ip_release(struct connman_ipconfig *ipconfig,
+ 					CONNMAN_IPCONFIG_TYPE_IPV4);
+ 
+ 	settings_changed(service, ipconfig);
++	address_updated(service, type);
+ }
+ 
+ static void service_route_changed(struct connman_ipconfig *ipconfig,
