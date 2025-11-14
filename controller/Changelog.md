@@ -1,3 +1,7 @@
+## Changed
+
+- os: Optimize the WiFi scanning strategy for stationary clients
+
 ## Fixed
 
 - os: Prevent the network manager from attempting to route Internet traffic to the Senso in networks with delayed DHCP

@@ -21,6 +21,10 @@ super.connman.overrideAttrs (old: {
         url = "https://git.kernel.org/pub/scm/network/connman/connman.git/patch/?id=d90b911f6760959bdf1393c39fe8d1118315490f";
         hash = "sha256-odkjYC/iM6dTIJx2WM/KKotXdTtgv8NMFNJMzx5+YU4=";
       })
+      # Custom patch to use more appropriate bgscan settings for
+      # stationary clients. Will never be accepted upstream, but
+      # is minimal and easily updated.
+      ./stationary-bgscan.patch
       # Custom patch to add a ipconfig method heuristic to ConnMan,
       # can be made to work up to ConnMan 1.45 at least. If not
       # accepted upstream, we may want to switch to another,
