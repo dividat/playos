@@ -1,0 +1,63 @@
+From 378937f6ce3c45d2fc9d0b7e279f1af40985df45 Mon Sep 17 00:00:00 2001
+From: Johannes Emerich <johannes@dividat.com>
+Date: Fri, 14 Nov 2025 10:21:56 +0100
+Subject: [PATCH] Use less aggressive bgscan setting
+
+This overrides the hardcoded bgscan setting with less aggressive values:
+
+- Short scan period: Remains at 30 seconds
+- Signal strength threshold: -70 dB, sufficient for basic web usage
+- Long scan period: Tripled to 15 minutes
+
+The signal strength threshold is chosen low at -70 dB, which should
+still be tolerable but less than ideal for our kiosk applications. It
+seems like a good choice based on this reasoning:
+
+- A stable connection is higher priority than ideal throughput
+- Both client and APs are assumed to be stationary
+- The client will choose a suitable AP when first connecting
+
+Background
+
+The hardcoded default is very aggressive and probably assumes a mobile
+client, with tradeoffs for stability in stationary clients.
+
+The short scan period of 30 s seems appropriate to find a better option
+when needed, but the threshold is relatively demanding at -65 dB,
+whereas for basic web usage -70 dB is often quoted as still acceptable.
+
+The long scan period of 300s/5 minutes seems rather short, searching for
+better BSSs even when there is no particular need for it.
+
+Unfortunately ConnMan couples bgscan with autoscan through its
+`BackgroundScanning` option and will not perform either if the option is
+set to false[^1]:
+
+> When BackgroundScanning is false, ConnMan will not perform any scan
+regardless of wifi is connected or not, unless it is requested by
+the user through a D-Bus call.
+
+So while we could even consider disabling bgscan for stationary clients,
+we can not easily do so when still requiring autoscan.
+
+[^1]: https://git.kernel.org/pub/scm/network/connman/connman.git/tree/doc/connman.conf.5.in?c=1.42#n43
+---
+ plugins/wifi.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/plugins/wifi.c b/plugins/wifi.c
+index 0456f0c7..7719d8f7 100644
+--- a/plugins/wifi.c
++++ b/plugins/wifi.c
+@@ -65,7 +65,7 @@
+ #define MAXIMUM_RETRIES 2
+ #define FAVORITE_MAXIMUM_RETRIES 5
+ 
+-#define BGSCAN_DEFAULT "simple:30:-65:300"
++#define BGSCAN_DEFAULT "simple:30:-70:900"
+ #define AUTOSCAN_EXPONENTIAL "exponential:3:300"
+ #define AUTOSCAN_SINGLE "single:3"
+ #define SCAN_MAX_DURATION 10
+-- 
+2.50.1
+
