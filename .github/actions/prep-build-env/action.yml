@@ -5,6 +5,16 @@ runs:
   - name: Ensure KVM is usable by nix-build
     run: sudo chmod a+rwx /dev/kvm
     shell: bash
+  - name: Remove unused libraries for more available disk space
+    run: |
+        df -h
+        sudo rm -rf /usr/share/dotnet         # .NET SDKs
+        sudo rm -rf /usr/local/lib/android    # Android SDK
+        sudo rm -rf /opt/hostedtoolcache      # Hosted tool cache (CodeQL, etc.)
+        sudo rm -rf /usr/lib/jvm              # Java/JDK installations
+        sudo docker system prune --all --force
+        df -h
+    shell: bash
   - uses: cachix/install-nix-action@v18
     with:
       nix_path: nixpkgs=channel:nixos-unstable
