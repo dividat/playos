@@ -1,3 +1,5 @@
+# [2025.3.2-VALIDATION] - 2025-11-21
+
 ## Changed
 
 - os: Optimize the WiFi scanning strategy for stationary clients
