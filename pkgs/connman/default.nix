@@ -30,5 +30,8 @@ super.connman.overrideAttrs (old: {
       # accepted upstream, we may want to switch to another,
       # application-level approach for achieving the same effect.
       ./ipconfig-method-in-sorting.patch
+      # Custom patch to harmonize WiFi retry mechanism across
+      # WPA2/WPA3, will try to upstream.
+      ./generic-wifi-retry.patch
     ];
 })

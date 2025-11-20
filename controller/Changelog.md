@@ -1,6 +1,8 @@
 ## Changed
 
 - os: Optimize the WiFi scanning strategy for stationary clients
+- os: Enable retries when connecting to WPA3 WiFi networks fails
+- os: Increase the number of permitted retries for failed WiFi connections
 
 ## Fixed
 
