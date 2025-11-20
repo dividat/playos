@@ -3,6 +3,15 @@ rec {
     safeProductName = "playos";
     version = "2025.3.2-VALIDATION";
 
+    # kiosk is allowed to consume at most ${kioskMemoryHighPct}% of total system
+    # memory, at which point it will get throttled and put under memory pressure
+    # accoring to cgroup rules (see memory.high in
+    # https://docs.kernel.org/admin-guide/cgroup-v2.html#memory-interface-files)
+    #
+    # This provokes Chromium to perform GC earlier and prevents OOM kills if
+    # memory gets constrained.
+    kioskMemoryHighPct = 75;
+
     greeting = label: ''
                                            _
                                        , -"" "".
@@ -34,6 +43,17 @@ rec {
           bash
         ];
         text = (builtins.readFile ./application/select-display.sh);
+      };
+
+      runWithMemoryLimit = pkgs.writeShellApplication {
+        name = "run-with-memory-limit";
+        runtimeInputs = with pkgs; [
+            bash
+            gawk
+            systemd
+            libuuid
+        ];
+        text = (builtins.readFile ./application/run-with-memory-limit.sh);
       };
     in {
 
@@ -118,9 +138,11 @@ rec {
               # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-6/qtwebengine-debugging.html)
               export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
 
-              ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
-                ${config.playos.kioskUrl} \
-                http://localhost:3333/
+              ${runWithMemoryLimit}/bin/run-with-memory-limit \
+                --memory-pct ${toString kioskMemoryHighPct} \
+                    ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
+                    ${config.playos.kioskUrl} \
+                    http://localhost:3333/
 
               waitPID=$!
             '';
