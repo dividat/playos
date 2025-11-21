@@ -1,7 +1,7 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
 from PyQt6.QtWebEngineCore import QWebEngineScript
 from PyQt6.QtWebChannel import QWebChannel
-from PyQt6.QtCore import pyqtSlot, Qt, QEvent
+from PyQt6.QtCore import pyqtSlot, Qt, QEvent, QUrl
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QApplication
 from enum import Enum, auto
@@ -52,6 +52,13 @@ class FocusTransfer(QtCore.QObject):
             QApplication.instance().notify(self.parent(), event)
 
 
+# Expose the ability to "fully" reload the page from Play
+class ReloadHandler(QtCore.QObject):
+    @pyqtSlot()
+    def before_reload(self):
+        self.parent().full_reload()
+
+
 class BrowserWidget(QtWidgets.QWidget):
     def __init__(self, url, get_current_proxy, parent, keyboard_detector):
         QtWidgets.QWidget.__init__(self, parent)
@@ -64,10 +71,12 @@ class BrowserWidget(QtWidgets.QWidget):
         self.setLayout(self._layout)
 
         self._focus_transfer = FocusTransfer(self)
+        self._reload_handler = ReloadHandler(self)
 
         self._webchannel = QWebChannel()
         self._webchannel.registerObject("keyboard_detector", keyboard_detector)
         self._webchannel.registerObject("focus_transfer", self._focus_transfer)
+        self._webchannel.registerObject("reload_handler", self._reload_handler)
 
         # Init views
         self._loading_page = loading_page(self)
@@ -124,6 +133,14 @@ class BrowserWidget(QtWidgets.QWidget):
                 scripts.insert(script)
         else:
             scripts.remove(script)
+
+    def full_reload(self):
+        # temporarily set an empty page
+        self._webview.setUrl(QUrl("about:none"))
+        # restore original page
+        self.reload()
+        # trigger an explicit reload
+        self._webview.reload()
 
     def reload(self):
         """ Show kiosk browser loading URL.

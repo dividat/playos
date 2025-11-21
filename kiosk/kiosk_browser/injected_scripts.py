@@ -64,6 +64,10 @@ window.addEventListener("load", () => {
         window.addEventListener("focus-shift:exhausted", (event) => {
             channel.objects.focus_transfer.reached_end(event.detail.direction);
         });
+
+        window.addEventListener("play:beforereload", (event) => {
+            channel.objects.reload_handler.before_reload();
+        });
     });
 
 });
