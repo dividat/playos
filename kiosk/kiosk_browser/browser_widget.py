@@ -77,7 +77,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._focus_shift_script = injected_scripts.FocusShiftScript()
         self._input_with_enter_script = injected_scripts.EnableInputToggleWithEnterScript()
         self._force_focused_element_highlight_script = injected_scripts.ForceFocusedElementHighlightingScript()
-        self._focus_shift_bridge_script = injected_scripts.FocusShiftBridge()
+        self._play_bridge_script = injected_scripts.PlayBridge()
 
         # Add views to layout
         self._layout.addWidget(self._loading_page)
@@ -89,11 +89,11 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.page().proxyAuthenticationRequired.connect(self._proxy_auth)
 
         # Register QWebChannel
-        assert self._focus_shift_bridge_script.worldId() == self._focus_shift_script.worldId(), \
-            "FocusShiftScript and FocusShiftBridge must have the same worldId!"
+        assert self._play_bridge_script.worldId() == self._focus_shift_script.worldId(), \
+            "FocusShiftScript and PlayBridge must have the same worldId!"
         self._webview.page().setWebChannel(self._webchannel,
-                                           self._focus_shift_bridge_script.worldId())
-        self._profile.scripts().insert(self._focus_shift_bridge_script)
+                                           self._play_bridge_script.worldId())
+        self._profile.scripts().insert(self._play_bridge_script)
 
         # Override user agent
         self._webview.page().profile().setHttpUserAgent(user_agent_with_system(

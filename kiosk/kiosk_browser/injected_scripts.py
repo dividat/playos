@@ -26,9 +26,9 @@ class FocusShiftScript(KioskInjectedScript):
             self.setSourceCode(f.read())
 
 
-class FocusShiftBridge(KioskInjectedScript):
+class PlayBridge(KioskInjectedScript):
     def __init__(self):
-        super().__init__("FocusShiftBridge")
+        super().__init__("PlayBridge")
         # Needs to run on MainWorld to be able to interact with focus-shift on Play
         # and to expose events to page scripts.
         self.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
