@@ -54,7 +54,7 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
     signal.signal(signal.SIGTERM, quit_on_signal)
 
     # Start application
-    app.exec()
+    sys.exit(app.exec())
 
 def parseUrl(url):
     parsed_url = QUrl(url)
