@@ -1,4 +1,6 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
+from PyQt6.QtWebEngineCore import QWebEnginePage
+from PyQt6.QtWidgets import QApplication
 from enum import Enum, auto
 import logging
 import re
@@ -34,6 +36,9 @@ class BrowserWidget(QtWidgets.QWidget):
         self._network_error_page = network_error_page(self)
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
+
+        # Handle page (renderer) kills
+        self._webview.renderProcessTerminated.connect(self._handle_render_process_terminated)
 
         # Add views to layout
         self._layout.addWidget(self._loading_page)
@@ -72,6 +77,16 @@ class BrowserWidget(QtWidgets.QWidget):
         self._reload_timer = QtCore.QTimer(self)
         self._reload_timer.setSingleShot(True)
         self._reload_timer.timeout.connect(self._webview.reload)
+
+    def _handle_render_process_terminated(self, termination_status, exit_code):
+        is_normal_termination = termination_status == QWebEnginePage.RenderProcessTerminationStatus.NormalTerminationStatus
+        is_ok_exit = exit_code == 0
+        if is_normal_termination and is_ok_exit:
+            return
+        else:
+            logging.error(f"QtWebEngine Renderer process exited abnormaly ({termination_status=} {exit_code=}), stopping application")
+            self.deleteLater() # avoids segfault
+            QApplication.exit(1)
 
     def reload(self):
         """ Show kiosk browser loading URL.
