@@ -12,9 +12,18 @@
 
 - controller: Enable spatial navigation to toggle visibility in password inputs
 
+# [2025.3.2-VALIDATION] - 2025-11-21
+
+## Changed
+
+- os: Optimize the WiFi scanning strategy for stationary clients
+- os: Enable retries when connecting to WPA3 WiFi networks fails
+- os: Increase the number of permitted retries for failed WiFi connections
+
 ## Fixed
 
 - os: Prevent the network manager from attempting to route Internet traffic to the Senso in networks with delayed DHCP
+- os: Prevent captive portals with HTTPS addresses from stalling the network manager
 
 # [2025.3.1] - 2025-07-04
 
