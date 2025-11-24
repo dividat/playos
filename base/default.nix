@@ -51,6 +51,19 @@ with lib;
 
     playos = { inherit version kioskUrl; };
 
+    # Make a PlayOS-specific os-release file
+    # https://www.freedesktop.org/software/systemd/man/latest/os-release.html
+    environment.etc."os-release".text = lib.mkForce ''
+      ID=${safeProductName}
+      ID_LIKE="nixos"
+      NAME="${fullProductName}"
+      PRETTY_NAME="${fullProductName} ${version} (NixOS ${config.system.nixos.release} ${config.system.nixos.codeName})"
+      VERSION="${version}"
+      VERSION_ID="${version}"
+      HOME_URL="https://github.com/dividat/playos"
+      BUG_REPORT_URL="https://github.com/dividat/playos/issues"
+    '';
+
     # 'Welcome Screen'
     services.getty = {
       greetingLine = greeting "${fullProductName} (${version})";
