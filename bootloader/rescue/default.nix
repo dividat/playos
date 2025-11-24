@@ -4,10 +4,15 @@
 , importFromNixos
 , writeScript, dialog
 , vim, grub2_efi, rauc
-, squashfsCompressionOpts ? "-comp xz -Xdict-size 100%"}:
+, squashfsCompressionOpts}:
 with lib;
 let
   nixos = importFromNixos "";
+
+  squashfsCompressionParams =
+    if (squashfsCompressionOpts == null)
+        then "xz -Xdict-size 100%"
+        else squashfsCompressionOpts;
 
   rescue_kiosk = writeScript "rescue-kiosk.sh" ''
     # Setup a tempfile
@@ -133,7 +138,7 @@ in
 
           # Generate the squashfs image.
           mksquashfs init $(cat $closureInfo/store-paths) $out \
-            -keep-as-directory -all-root -b 1048576 ${squashfsCompressionOpts}
+            -keep-as-directory -all-root -b 1048576 -comp ${squashfsCompressionParams}
         '';
     };
 
