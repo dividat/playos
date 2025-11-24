@@ -1,5 +1,5 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
-from PyQt6.QtWebEngineCore import QWebEngineScript
+from PyQt6.QtWebEngineCore import QWebEngineScript, QWebEnginePage
 from PyQt6.QtWebChannel import QWebChannel
 from PyQt6.QtCore import pyqtSlot, Qt, QEvent
 from PyQt6.QtGui import QKeyEvent
@@ -79,6 +79,9 @@ class BrowserWidget(QtWidgets.QWidget):
         self._force_focused_element_highlight_script = injected_scripts.ForceFocusedElementHighlightingScript()
         self._focus_shift_bridge_script = injected_scripts.FocusShiftBridge()
 
+        # Handle page (renderer) kills
+        self._webview.renderProcessTerminated.connect(self._handle_render_process_terminated)
+
         # Add views to layout
         self._layout.addWidget(self._loading_page)
         self._layout.addWidget(self._network_error_page)
@@ -116,6 +119,18 @@ class BrowserWidget(QtWidgets.QWidget):
         # Load url
         self._webview.loadFinished.connect(self._load_finished)
         self.load(url)
+
+
+    def _handle_render_process_terminated(self, termination_status, exit_code):
+        is_normal_termination = termination_status == QWebEnginePage.RenderProcessTerminationStatus.NormalTerminationStatus
+        is_ok_exit = exit_code == 0
+        if is_normal_termination and is_ok_exit:
+            return
+        else:
+            logging.error(f"QtWebEngine Renderer process exited abnormaly ({termination_status=} {exit_code=}), stopping application")
+            self.deleteLater() # avoids segfault
+            QApplication.exit(1)
+
 
     def _toggle_script_inject(self, script: QWebEngineScript, should_enable: bool):
         scripts = self._profile.scripts()
