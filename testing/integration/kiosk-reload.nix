@@ -25,60 +25,50 @@ pkgs.nixosTest {
         serviceConfig = {
           ExecStart =
             let
-              counter = pkgs.writeScript "hello.sh" ''
-                #!${pkgs.bash}/bin/bash
-                COUNTER_FILE="/tmp/request-counter"
-                EMIT_RELOAD="/tmp/emit-reload"
+              counter = pkgs.writers.writePython3Bin "hello.py"
+                        { libraries = [ pkgs.python3Packages.flask ]; }
+              ''
+from flask import Flask, Response
 
-                COUNT=$(cat $COUNTER_FILE || echo 0)
-                ((COUNT++))
-                echo $COUNT > $COUNTER_FILE
-                printf "Request counter is: %d" "$COUNT" >&2
+app = Flask(__name__)
 
-                noreload_response() {
-                    cat <<EOF
-                        <html>
-                        <body>
-                            <h1>$COUNT</1>
-                            <script>
-                                console.error("PAGE: Page loaded, counter: $COUNT")
-                            </script>
-                        </body>
-                        </html>
-                EOF
-                }
 
-                reload_response() {
-                    cat <<EOF
-                        <html>
-                        <body>
-                            <h1>$COUNT</1>
-                            <script>
-                                function dispatch() {
-                                    const event = new CustomEvent("play:beforereload", {});
-                                    console.error("PAGE: about to reload");
-                                    window.dispatchEvent(event);
-                                }
-                                console.error("PAGE: Page loaded, counter: $COUNT")
-                                setTimeout(dispatch, 5000);
-                            </script>
-                        </body>
-                        </html>
-                EOF
-                }
+def response(count):
+    html = f"""\
+<html>
+<body>
+    <h1>{count}</h1>
+    <script>
+        function dispatch() {{
+            const event = new CustomEvent("play:beforereload", {{
+                detail: {{ url: "${kioskUrl}reloaded/{count+1}" }}
+            }});
+            console.error("PAGE: about to reload");
+            window.dispatchEvent(event);
+        }}
+        console.error("PAGE: Page loaded, counter: {count}");
+        setTimeout(dispatch, 5000);
+    </script>
+</body>
+</html>
+"""
+    return Response(html, mimetype="text/html")
 
-                echo -e "HTTP/1.1 200 OK\r"
-                echo -e "Content-Type: text/html\r"
-                echo -e "\r"
 
-                if [[ -r "$EMIT_RELOAD" ]]; then
-                    reload_response
-                else
-                    noreload_response
-                fi
+@app.route("/reloaded/<int:num>")
+def reloaded(num: int):
+    return response(num)
+
+
+@app.route("/")
+def root():
+    return reloaded(1)
+
+
+app.run(host="0.0.0.0", port=${toString serverPort})
               '';
             in
-            "${pkgs.nmap}/bin/ncat -lk -p ${toString serverPort} -c ${counter}";
+            "${counter}/bin/hello.py";
           Restart = "always";
         };
       };
@@ -135,25 +125,8 @@ pkgs.nixosTest {
     with TestPrecondition("kiosk loads the page"):
         wait_for_logs(machine, "PAGE: Page loaded, counter: 1", timeout=10)
 
-    with TestCase("kiosk does not prematurely reload the page") as t:
-        try:
-            wait_for_logs(machine, "PAGE: Page loaded, counter: [2|3]", timeout=5)
-        except TimeoutError:
-            # timeout is good
-            pass
-        else:
-            t.fail("Second load happened prematurely!")
-
-    machine.succeed("echo 1 > /tmp/emit-reload")
-    machine.systemctl("restart display-manager.service")
-
-    with TestCase("kiosk receives Play event and reloads"):
-        # It seems that Chromium does some pre-fretch request followed by a load,
-        # so counter jumps from 1->3. Also, kiosk's full reload does a doable
-        # load, so subsequent counters also increment by 2. To avoid depending
-        # on the internals, we just check that they are incrementing.
-        wait_for_logs(machine, "PAGE: Page loaded, counter: [3|4]", timeout=20)
-        wait_for_logs(machine, "PAGE: about to reload", timeout=10)
-        wait_for_logs(machine, "PAGE: Page loaded, counter: [5|6]", timeout=10)
+    with TestPrecondition("kiosk handles beforereload and loads specified url"):
+        wait_for_logs(machine, "PAGE: Page loaded, counter: 2", timeout=10)
+        wait_for_logs(machine, "PAGE: Page loaded, counter: 3", timeout=10)
 '';
 }

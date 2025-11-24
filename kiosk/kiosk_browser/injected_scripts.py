@@ -66,7 +66,8 @@ window.addEventListener("load", () => {
         });
 
         window.addEventListener("play:beforereload", (event) => {
-            channel.objects.reload_handler.before_reload();
+            const url = event.detail?.url || "";
+            channel.objects.reload_handler.before_reload(url);
         });
     });
 

@@ -54,9 +54,9 @@ class FocusTransfer(QtCore.QObject):
 
 # Expose the ability to "fully" reload the page from Play
 class ReloadHandler(QtCore.QObject):
-    @pyqtSlot()
-    def before_reload(self):
-        self.parent().full_reload()
+    @pyqtSlot(str)
+    def before_reload(self, url):
+        self.parent().full_reload(url=url)
 
 
 class BrowserWidget(QtWidgets.QWidget):
@@ -65,6 +65,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self.setStyleSheet(f"background-color: white;")
 
         self._url = url
+        self._is_full_reload = False
 
         self._layout = QtWidgets.QHBoxLayout()
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -134,18 +135,29 @@ class BrowserWidget(QtWidgets.QWidget):
         else:
             scripts.remove(script)
 
-    def full_reload(self):
-        # temporarily set an empty page
+    # Perform a "full" reload, changing to the new URL if specified.
+    #
+    # Note: this assumes script injection rules are not changing, i.e.
+    # we remain in the same dialog (cf. `BrowserWidget.load(..)`)
+    def full_reload(self, url=""):
+        # Temporarily navigate to an empty page
         self._webview.setUrl(QUrl("about:none"))
-        # restore original page
+
+        # Change URL if there's one specified.
+        if url:
+            self._url = QUrl(url)
+
+        # Trigger webview reload only when load finishes - calling
+        # self._webview.reload() here directly would reset the URL
+        # (strange QWebEngineView behaviour/bug)
+        self._is_full_reload = True
+
+        # Load the new URL or restore the original one.
         self.reload()
-        # trigger an explicit reload
-        self._webview.reload()
 
     def reload(self):
         """ Show kiosk browser loading URL.
         """
-
         self._webview.setUrl(self._url)
         self._view(Status.LOADING)
 
@@ -191,6 +203,12 @@ class BrowserWidget(QtWidgets.QWidget):
     # Private
 
     def _load_finished(self, success):
+        # Trigger an explicit reload, see BrowserWidget.full_reload(..)
+        if self._is_full_reload:
+            self._is_full_reload = False
+            self._webview.reload()
+            return
+
         if success:
             self._view(Status.LOADED)
         if not success:
