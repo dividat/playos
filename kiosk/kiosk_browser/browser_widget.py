@@ -135,7 +135,7 @@ class BrowserWidget(QtWidgets.QWidget):
         else:
             scripts.remove(script)
 
-    # Perform a "full" reload, changing to the new URL if specified.
+    # Perform a "full" reload, loading a new URL if specified.
     #
     # Note: this assumes script injection rules are not changing, i.e.
     # we remain in the same dialog (cf. `BrowserWidget.load(..)`)
@@ -143,22 +143,24 @@ class BrowserWidget(QtWidgets.QWidget):
         # Temporarily navigate to an empty page
         self._webview.setUrl(QUrl("about:none"))
 
-        # Change URL if there's one specified.
-        if url:
-            self._url = QUrl(url)
-
         # Trigger webview reload only when load finishes - calling
         # self._webview.reload() here directly would reset the URL
         # (strange QWebEngineView behaviour/bug)
         self._is_full_reload = True
 
-        # Load the new URL or restore the original one.
-        self.reload()
+        if url:
+            url = QUrl(url)
 
-    def reload(self):
+        # Load the new URL or restore the original one.
+        self.reload(url=url)
+
+    def reload(self, url=None):
         """ Show kiosk browser loading URL.
         """
-        self._webview.setUrl(self._url)
+        if not url:
+            url = self._url
+
+        self._webview.setUrl(url)
         self._view(Status.LOADING)
 
         # If reload_timer is ongoing, stop it, as we’re already reloading
