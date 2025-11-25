@@ -9,7 +9,7 @@ usage() {
     cat <<EOF
 Usage: $0 --scope-prefix [STR] --memory-pct <NUM> prog arg1 arg2 ...
 
-Starts program in a cgroup (using a systemd transient scope) and sets MemoryHigh
+Starts program in a cgroup (using a systemd transient scope) and sets MemoryMax
 to the specified <NUM>% of total system memory.
 
 A unique scope name is generated as {scope-prefix}-{uuid}.
@@ -20,8 +20,8 @@ EOF
 while true; do
     case "${1:-}" in
         --memory-pct)
-            memory_high_pct=${2}
-            readonly memory_high_pct
+            memory_pct=${2}
+            readonly memory_pct
             shift 2
         ;;
         --scope-prefix)
@@ -40,7 +40,7 @@ done
 
 readonly scope_prefix
 
-if [[ -z "${memory_high_pct:-}" ]] || [[ -z "$*" ]]; then
+if [[ -z "${memory_pct:-}" ]] || [[ -z "$*" ]]; then
     usage
     exit 1
 fi
@@ -53,15 +53,15 @@ if ! [[ $system_memory_kb -gt 0 ]]; then
     exit 1
 fi
 
-memory_high_mb=$(( memory_high_pct * system_memory_kb / 1024 / 100))
-readonly memory_high_mb
+memory_max_mb=$(( memory_pct * system_memory_kb / 1024 / 100))
+readonly memory_max_mb
 
-if ! [[ $memory_high_mb -gt 0 ]]; then
-    echo "Computed MemoryHigh is 0 or invalid: $memory_high_mb M"
+if ! [[ $memory_max_mb -gt 0 ]]; then
+    echo "Computed MemoryMax is 0 or invalid: $memory_max_mb M"
     exit 1
 fi
 
-printf "%s: MemoryHigh will be set to %d MB\n" "$0" "$memory_high_mb" >&2
+printf "%s: MemoryMax will be set to %d MB\n" "$0" "$memory_max_mb" >&2
 
 scope_name="${scope_prefix}-$(uuidgen)"
 readonly scope_name
@@ -80,5 +80,5 @@ trap cleanup EXIT
 systemd-run --user \
     --scope \
     --unit="${scope_name}" \
-    --property="MemoryHigh=${memory_high_mb}M" \
+    --property="MemoryMax=${memory_max_mb}M" \
     "$@"
