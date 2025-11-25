@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -euo pipefail
 
 usage() {
@@ -7,17 +8,11 @@ usage() {
     echo "to the specified <NUM>% of total system memory."
 }
 
-if [ $# -eq 0 ]; then
-    usage
-    exit 1
-fi
-
-memory_high_pct=
-
 while true; do
-    case "$1" in
+    case "${1:-}" in
         --memory-pct)
             memory_high_pct=${2}
+            readonly memory_high_pct
             shift 2
         ;;
         (-h|--help)
@@ -25,23 +20,18 @@ while true; do
             exit 0
         ;;
         *)
-            if [[ -z $memory_high_pct ]]; then
-                usage
-                exit 1
-            else
-                break
-            fi
+            break
         ;;
     esac
 done
 
-if [[ -z "$memory_high_pct" ]] || [[ -z "$*" ]]; then
+if [[ -z "${memory_high_pct:-}" ]] || [[ -z "$*" ]]; then
     usage
     exit 1
 fi
 
-
-system_memory_kb="$(awk '/MemTotal/ {print $2}' /proc/meminfo)"
+system_memory_kb=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+readonly system_memory_kb
 
 if ! [[ $system_memory_kb -gt 0 ]]; then
     echo "Failed to read system memory, got: $system_memory_kb kB"
@@ -49,6 +39,7 @@ if ! [[ $system_memory_kb -gt 0 ]]; then
 fi
 
 memory_high_mb=$(( memory_high_pct * system_memory_kb / 1024 / 100))
+readonly memory_high_mb
 
 if ! [[ $memory_high_mb -gt 0 ]]; then
     echo "Computed MemoryHigh is 0 or invalid: $memory_high_mb M"
@@ -58,6 +49,7 @@ fi
 printf "%s: MemoryHigh will be set to %d MB\n" "$0" "$memory_high_mb" >&2
 
 scope_name="run-$(uuidgen)"
+readonly scope_name
 
 # `systemd-run --scope` only waits for the main PID to exit before returning.
 # This means subprocesses can linger for longer. To avoid leaving any orphans
