@@ -1,7 +1,7 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
 from PyQt6.QtWebEngineCore import QWebEngineScript, QWebEnginePage
 from PyQt6.QtWebChannel import QWebChannel
-from PyQt6.QtCore import pyqtSlot, Qt, QEvent
+from PyQt6.QtCore import pyqtSlot, Qt, QEvent, QUrl
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QApplication
 from enum import Enum, auto
@@ -52,22 +52,32 @@ class FocusTransfer(QtCore.QObject):
             QApplication.instance().notify(self.parent(), event)
 
 
+# Expose the ability to "fully" reload the page from Play
+class ReloadHandler(QtCore.QObject):
+    @pyqtSlot(str)
+    def before_reload(self, url):
+        self.parent().full_reload(url=url)
+
+
 class BrowserWidget(QtWidgets.QWidget):
     def __init__(self, url, get_current_proxy, parent, keyboard_detector):
         QtWidgets.QWidget.__init__(self, parent)
         self.setStyleSheet(f"background-color: white;")
 
         self._url = url
+        self._is_full_reload = False
 
         self._layout = QtWidgets.QHBoxLayout()
         self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
         self._focus_transfer = FocusTransfer(self)
+        self._reload_handler = ReloadHandler(self)
 
         self._webchannel = QWebChannel()
         self._webchannel.registerObject("keyboard_detector", keyboard_detector)
         self._webchannel.registerObject("focus_transfer", self._focus_transfer)
+        self._webchannel.registerObject("reload_handler", self._reload_handler)
 
         # Init views
         self._loading_page = loading_page(self)
@@ -77,7 +87,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._focus_shift_script = injected_scripts.FocusShiftScript()
         self._input_with_enter_script = injected_scripts.EnableInputToggleWithEnterScript()
         self._force_focused_element_highlight_script = injected_scripts.ForceFocusedElementHighlightingScript()
-        self._focus_shift_bridge_script = injected_scripts.FocusShiftBridge()
+        self._play_bridge_script = injected_scripts.PlayBridge()
 
         # Handle page (renderer) kills
         self._webview.renderProcessTerminated.connect(self._handle_render_process_terminated)
@@ -92,11 +102,11 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webview.page().proxyAuthenticationRequired.connect(self._proxy_auth)
 
         # Register QWebChannel
-        assert self._focus_shift_bridge_script.worldId() == self._focus_shift_script.worldId(), \
-            "FocusShiftScript and FocusShiftBridge must have the same worldId!"
+        assert self._play_bridge_script.worldId() == self._focus_shift_script.worldId(), \
+            "FocusShiftScript and PlayBridge must have the same worldId!"
         self._webview.page().setWebChannel(self._webchannel,
-                                           self._focus_shift_bridge_script.worldId())
-        self._profile.scripts().insert(self._focus_shift_bridge_script)
+                                           self._play_bridge_script.worldId())
+        self._profile.scripts().insert(self._play_bridge_script)
 
         # Override user agent
         self._webview.page().profile().setHttpUserAgent(user_agent_with_system(
@@ -140,11 +150,32 @@ class BrowserWidget(QtWidgets.QWidget):
         else:
             scripts.remove(script)
 
-    def reload(self):
+    # Perform a "full" reload, loading a new URL if specified.
+    #
+    # Note: this assumes script injection rules are not changing, i.e.
+    # we remain in the same dialog (cf. `BrowserWidget.load(..)`)
+    def full_reload(self, url=""):
+        # Temporarily navigate to an empty page
+        self._webview.setUrl(QUrl("about:none"))
+
+        # Trigger webview reload only when load finishes - calling
+        # self._webview.reload() here directly would reset the URL
+        # (strange QWebEngineView behaviour/bug)
+        self._is_full_reload = True
+
+        if url:
+            url = QUrl(url)
+
+        # Load the new URL or restore the original one.
+        self.reload(url=url)
+
+    def reload(self, url=None):
         """ Show kiosk browser loading URL.
         """
+        if not url:
+            url = self._url
 
-        self._webview.setUrl(self._url)
+        self._webview.setUrl(url)
         self._view(Status.LOADING)
 
         # If reload_timer is ongoing, stop it, as we’re already reloading
@@ -189,6 +220,12 @@ class BrowserWidget(QtWidgets.QWidget):
     # Private
 
     def _load_finished(self, success):
+        # Trigger an explicit reload, see BrowserWidget.full_reload(..)
+        if self._is_full_reload:
+            self._is_full_reload = False
+            self._webview.reload()
+            return
+
         if success:
             self._view(Status.LOADED)
         if not success:
