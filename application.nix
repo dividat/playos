@@ -44,17 +44,6 @@ rec {
         ];
         text = (builtins.readFile ./application/select-display.sh);
       };
-
-      runWithMemoryLimit = pkgs.writeShellApplication {
-        name = "run-with-memory-limit";
-        runtimeInputs = with pkgs; [
-            bash
-            gawk
-            systemd
-            libuuid
-        ];
-        text = (builtins.readFile ./application/run-with-memory-limit.sh);
-      };
     in {
 
       imports = [
@@ -138,7 +127,7 @@ rec {
               # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-6/qtwebengine-debugging.html)
               export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
 
-              ${runWithMemoryLimit}/bin/run-with-memory-limit \
+              ${pkgs.run-with-memory-limit}/bin/run-with-memory-limit \
                 --memory-pct ${toString kioskMemoryHighPct} \
                     ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
                     ${config.playos.kioskUrl} \
