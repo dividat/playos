@@ -72,6 +72,6 @@ cleanup() {
 trap cleanup EXIT
 systemd-run --user \
     --scope \
-    -u "${scope_name}" \
-    -p "MemoryHigh=${memory_high_mb}M" \
+    --unit="${scope_name}" \
+    --property="MemoryHigh=${memory_high_mb}M" \
     "$@"
