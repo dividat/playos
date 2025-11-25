@@ -1,11 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# default optional param values
+
+scope_prefix="run"
+
 usage() {
-    echo "Usage: $0 --memory-pct <NUM> prog arg1 arg2 ... "
-    echo ""
-    echo "Starts program in a cgroup (using a systemd transient scope) and sets MemoryHigh"
-    echo "to the specified <NUM>% of total system memory."
+    cat <<EOF
+Usage: $0 --scope-prefix [STR] --memory-pct <NUM> prog arg1 arg2 ...
+
+Starts program in a cgroup (using a systemd transient scope) and sets MemoryHigh
+to the specified <NUM>% of total system memory.
+
+A unique scope name is generated as {scope-prefix}-{uuid}.
+scope-prefix defaults to "${scope_prefix}".
+EOF
 }
 
 while true; do
@@ -13,6 +22,10 @@ while true; do
         --memory-pct)
             memory_high_pct=${2}
             readonly memory_high_pct
+            shift 2
+        ;;
+        --scope-prefix)
+            scope_prefix=$2
             shift 2
         ;;
         (-h|--help)
@@ -24,6 +37,8 @@ while true; do
         ;;
     esac
 done
+
+readonly scope_prefix
 
 if [[ -z "${memory_high_pct:-}" ]] || [[ -z "$*" ]]; then
     usage
@@ -48,7 +63,7 @@ fi
 
 printf "%s: MemoryHigh will be set to %d MB\n" "$0" "$memory_high_mb" >&2
 
-scope_name="run-$(uuidgen)"
+scope_name="${scope_prefix}-$(uuidgen)"
 readonly scope_name
 
 # `systemd-run --scope` only waits for the main PID to exit before returning.

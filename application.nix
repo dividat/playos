@@ -128,6 +128,7 @@ rec {
               export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
 
               ${pkgs.run-with-memory-limit}/bin/run-with-memory-limit \
+                --scope-prefix kiosk \
                 --memory-pct ${toString kioskMemoryHighPct} \
                     ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
                     ${config.playos.kioskUrl} \
