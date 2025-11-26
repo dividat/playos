@@ -52,6 +52,7 @@ log.setLevel(logging.ERROR)
 LAST_PAYLOAD = None
 PAYLOAD_TYPE = None
 IMAGE_ID = 0
+BLOB_ID = 0
 
 
 @app.route('/', methods=['GET'])
@@ -69,8 +70,11 @@ async function poll() {
     if (j.type == 'blob') {
         buf.push(j.data);
         document.getElementById('count').innerText = buf.length;
+        console.error(`PAGE: Blob ''${j.num} loaded`);
     } else if (j.type == 'image') {
-        document.getElementById('img').src = j.url;
+        const im = document.getElementById('img');
+        im.onload = () => console.error(`PAGE: Image ''${j.num} loaded`);
+        im.src = j.url;
     }
 }
 setInterval(poll, ${toString pollIntervalSeconds} * 1000);
@@ -102,21 +106,22 @@ def new_image():
     LAST_PAYLOAD = buf.getvalue()
     PAYLOAD_TYPE = 'image'
     IMAGE_ID += 1
-    return 'ok'
+    return str(IMAGE_ID)
 
 
 @app.route('/data/new/blob', methods=['POST'])
 def new_data():
-    global LAST_PAYLOAD, PAYLOAD_TYPE
+    global LAST_PAYLOAD, PAYLOAD_TYPE, BLOB_ID
     rand_bytes = os.urandom(1024*1024*${toString testBlobSizeMB})
     LAST_PAYLOAD = rand_bytes.decode('latin1').encode('latin1').hex()
     PAYLOAD_TYPE = 'blob'
-    return 'ok'
+    BLOB_ID += 1
+    return str(BLOB_ID)
 
 
 @app.route('/data/get', methods=['POST'])
 def get_data():
-    global LAST_PAYLOAD, PAYLOAD_TYPE, IMAGE_ID
+    global LAST_PAYLOAD, PAYLOAD_TYPE, IMAGE_ID, BLOB_ID
     gc.collect()  # avoid OOM kill!
 
     resp = {'type': PAYLOAD_TYPE}
@@ -124,8 +129,10 @@ def get_data():
     match PAYLOAD_TYPE:
         case 'blob':
             resp['data'] = LAST_PAYLOAD
+            resp['num'] = BLOB_ID
         case 'image':
             resp['url'] = f'/image/{IMAGE_ID}.png'
+            resp['num'] = IMAGE_ID
 
     PAYLOAD_TYPE = None
     return jsonify(resp)
@@ -217,6 +224,10 @@ app.run(port=${toString serverPort})
         _, mem_peak_str = machine.systemctl("--user -M alice@.host show '${scopePrefix}-*.scope' --property MemoryPeak --state running --value")
         return int(int(mem_peak_str.strip()) / (1024*1024))
 
+    def kiosk_is_dead(kiosk_pid):
+        status, _ = machine.execute(f"ps -p {kiosk_pid}")
+        return status != 0
+
     machine.start()
     machine.wait_for_unit("graphical.target")
 
@@ -236,11 +247,13 @@ app.run(port=${toString serverPort})
 
     with TestCase("kiosk clears image upon request cache, does not OOM") as t:
         print(f"Going to load {num_images_to_oom} images of size {IMAGE_SIZE_MB}MB")
+
         for _ in range(num_images_to_oom):
-            machine.succeed("curl --silent --fail -X POST ${kioskUrl}data/new/image")
-            if get_dm_restarts() > 0:
+            num = machine.succeed("curl --silent --fail -X POST ${kioskUrl}data/new/image")
+            if kiosk_is_dead(original_kiosk_pid):
                 break
-            time.sleep(POLL_INTERVAL + 0.2)
+
+            wait_for_logs(machine, f"PAGE: Image {num.strip()} loaded", timeout=3)
 
         # display-manager and kiosk did not restart
         t.assertEqual(get_dm_restarts(), 0)
@@ -253,10 +266,14 @@ app.run(port=${toString serverPort})
     with TestCase("kiosk is killed on OOM, but recovers"):
         print(f"Going to load {num_blobs_to_oom} blobs of size {BLOB_SIZE_MB}MB")
         for _ in range(num_blobs_to_oom):
-            machine.succeed("curl --silent --fail -X POST ${kioskUrl}data/new/blob")
-            if get_dm_restarts() > 0:
+            num = machine.succeed("curl --silent --fail -X POST ${kioskUrl}data/new/blob")
+            if kiosk_is_dead(original_kiosk_pid):
                 break
-            time.sleep(POLL_INTERVAL + 0.2)
+
+            try:
+                wait_for_logs(machine, f"PAGE: Blob {num.strip()} loaded", timeout=10)
+            except TimeoutError:
+                break
 
         # ensure it is running again if it was just killed
         machine.wait_for_unit("display-manager.service")
