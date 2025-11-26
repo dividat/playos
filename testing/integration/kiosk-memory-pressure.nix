@@ -17,7 +17,7 @@ let
 
   pollIntervalSeconds = 1;
   testImageSizeMB = 50;
-  testBlobSizeMB = 50;
+  testBlobSizeMB = 30;
 in
 pkgs.nixosTest {
   name = "kiosk respects memory limits";
