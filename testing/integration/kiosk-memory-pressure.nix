@@ -275,16 +275,19 @@ app.run(port=${toString serverPort})
             except TimeoutError:
                 break
 
-        # ensure it is running again if it was just killed
-        machine.wait_for_unit("display-manager.service")
         # mark the time
         checkpoint = wait_for_logs(machine, ".*")
 
-        t.assertGreater(get_dm_restarts(), 0)
-        t.assertNotEqual(get_kiosk_pid(), original_kiosk_pid)
+        # ensure DM is running again if it was just killed
+        machine.wait_for_unit("display-manager.service")
+        machine.wait_until_succeeds("systemctl is-active display-manager.service", timeout=20)
 
         # kiosk loads the page again
         wait_for_logs(machine, "PAGE: Main loaded", since=checkpoint, timeout=20)
+
+        # check that kiosk really had a restart
+        t.assertGreater(get_dm_restarts(), 0)
+        t.assertNotEqual(get_kiosk_pid(), original_kiosk_pid)
 
         # Can switch to settings, they load
         machine.send_key("ctrl-shift-f12")
