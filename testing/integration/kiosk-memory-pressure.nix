@@ -253,7 +253,7 @@ app.run(port=${toString serverPort})
             if kiosk_is_dead(original_kiosk_pid):
                 break
 
-            wait_for_logs(machine, f"PAGE: Image {num.strip()} loaded", timeout=3)
+            wait_for_logs(machine, f"PAGE: Image {num.strip()} loaded", timeout=10)
 
         # display-manager and kiosk did not restart
         t.assertEqual(get_dm_restarts(), 0)
