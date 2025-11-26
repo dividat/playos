@@ -276,11 +276,11 @@ app.run(port=${toString serverPort})
                 break
 
         # mark the time
-        checkpoint = wait_for_logs(machine, ".*", unit="display-manager.service")
+        machine.succeed('echo "CHECKPOINT-NOW" | systemd-cat')
+        checkpoint = wait_for_logs(machine, "CHECKPOINT-NOW")
 
         # ensure DM is running again if it was just killed
         machine.wait_for_unit("display-manager.service")
-        machine.wait_until_succeeds("systemctl is-active display-manager.service", timeout=20)
 
         # kiosk loads the page again
         wait_for_logs(machine, "PAGE: Main loaded", since=checkpoint, timeout=20)
