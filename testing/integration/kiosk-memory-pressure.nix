@@ -276,7 +276,7 @@ app.run(port=${toString serverPort})
                 break
 
         # mark the time
-        checkpoint = wait_for_logs(machine, ".*")
+        checkpoint = wait_for_logs(machine, ".*", unit="display-manager.service")
 
         # ensure DM is running again if it was just killed
         machine.wait_for_unit("display-manager.service")
