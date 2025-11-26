@@ -3,14 +3,11 @@ rec {
     safeProductName = "playos";
     version = "2025.3.2-VALIDATION";
 
-    # kiosk is allowed to consume at most ${kioskMemoryHighPct}% of total system
-    # memory, at which point it will get throttled and put under memory pressure
-    # accoring to cgroup rules (see memory.high in
-    # https://docs.kernel.org/admin-guide/cgroup-v2.html#memory-interface-files)
+    # kiosk is allowed to consume at most ${kioskMemoryPct}% of total system
+    # memory.
     #
-    # This provokes Chromium to perform GC earlier and prevents OOM kills if
-    # memory gets constrained.
-    kioskMemoryHighPct = 75;
+    # This prevents some OOM kills if memory gets constrained.
+    kioskMemoryPct = 75;
 
     greeting = label: ''
                                            _
@@ -129,7 +126,7 @@ rec {
 
               ${pkgs.run-with-memory-limit}/bin/run-with-memory-limit \
                 --scope-prefix kiosk \
-                --memory-pct ${toString kioskMemoryHighPct} \
+                --memory-pct ${toString kioskMemoryPct} \
                     ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
                     ${config.playos.kioskUrl} \
                     http://localhost:3333/
