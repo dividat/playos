@@ -44,7 +44,7 @@ in vmTools.runInLinuxVM (
         mv $diskImage $out/playos-disk.img
         diskImage=$out/playos-disk.img
       '';
-      memSize = 1024;
+      memSize = 2048;
     }
     ''
       # machine-id of development image is hardcoded
