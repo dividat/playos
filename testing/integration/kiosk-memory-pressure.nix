@@ -246,7 +246,7 @@ app.run(port=${toString serverPort})
     num_blobs_to_oom = math.ceil(MAX_PAGE_MEMORY_MB / BLOB_SIZE_MB) + 1
 
     with TestCase("kiosk clears image upon request cache, does not OOM") as t:
-        print(f"Going to load {num_images_to_oom} images of size {IMAGE_SIZE_MB}MB")
+        print(f"Going to load {num_images_to_oom*2} images of size {IMAGE_SIZE_MB}MB")
 
         for _ in range(num_images_to_oom*2):
             num = machine.succeed("curl --silent --fail -X POST ${kioskUrl}data/new/image")
