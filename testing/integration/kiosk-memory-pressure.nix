@@ -248,7 +248,7 @@ app.run(port=${toString serverPort})
     with TestCase("kiosk clears image upon request cache, does not OOM") as t:
         print(f"Going to load {num_images_to_oom} images of size {IMAGE_SIZE_MB}MB")
 
-        for _ in range(num_images_to_oom):
+        for _ in range(num_images_to_oom*2):
             num = machine.succeed("curl --silent --fail -X POST ${kioskUrl}data/new/image")
             if kiosk_is_dead(original_kiosk_pid):
                 break
