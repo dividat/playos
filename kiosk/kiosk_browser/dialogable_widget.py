@@ -1,7 +1,13 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
 from typing import Callable
+import os
 
-from kiosk_browser.keyboard_detector import KeyboardDetector
+# Conditionally import mock or real keyboard detector based on environment
+if os.getenv("KIOSK_USE_MOCKS"):
+    from kiosk_browser.mock_keyboard_detector import KeyboardDetector
+else:
+    from kiosk_browser.keyboard_detector import KeyboardDetector
+
 from kiosk_browser.ui import LightButton
 
 overlay_color: str = '#888888'
