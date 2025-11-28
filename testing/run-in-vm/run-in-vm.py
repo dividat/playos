@@ -18,7 +18,21 @@ BINDFS_BIN = "@bindfs@/bin/bindfs"
 QEMU_SYSTEM_X86_64 = "@qemu@/bin/qemu-system-x86_64"
 QEMU_IMG = "@qemu@/bin/qemu-img"
 
-DEFAULT_QEMU_OPTS = ['-enable-kvm', '-m', '2048']
+QEMU_OPENGL_OPTS = [
+    '-device', 'virtio-vga-gl',
+    '-display', 'gtk,gl=on',
+]
+
+QEMU_NO_OPENGL_OPTS = [
+    '-vga', 'virtio'
+]
+
+DEFAULT_QEMU_OPTS = [
+    '-enable-kvm',
+    '-m','2048',
+    '-smp', '4',
+    '-cpu', 'max'
+]
 
 # set DISK to None if not substituted
 if not os.path.isfile(DISK):
@@ -45,7 +59,7 @@ def system_partition(system):
             subprocess.run(["fusermount", "-u", sp + "/nix/store"])
 
 
-def run_vm(system, qemu_opts, kernel_arguments):
+def run_vm(system, qemu_opts, kernel_arguments, enable_opengl=False):
     with system_partition(system) as sp, tempfile.TemporaryDirectory(
             prefix="playos-backdoor-") as backdoor_dir:
         kernel = sp + '/kernel'
@@ -56,6 +70,7 @@ def run_vm(system, qemu_opts, kernel_arguments):
         initrd = sp + '/initrd'
         virtfs_opts = 'local,path={},security_model=none,multidevs=remap,mount_tag=system,readonly=on'.format(
             sp)
+        video_opts = QEMU_OPENGL_OPTS if enable_opengl else QEMU_NO_OPENGL_OPTS
         print("\nsystem partition at:\n\t{}".format(sp))
         print("Kernel arguments:\n\t{}".format(kernel_arguments))
         print("Backdoor activated. Access console with following command:\n\tsocat STDIO,raw,echo=0,escape=0x03 UNIX:{}/backdoor".format(backdoor_dir))
@@ -64,7 +79,6 @@ def run_vm(system, qemu_opts, kernel_arguments):
             '-initrd', initrd,
             '--virtfs', virtfs_opts,
             '-append', kernel_arguments,
-            '-vga', 'virtio', # Display screen as big as possible
             # Unused shell. This is used by the "backdoor" in <nixos/modules/test-instrumentation.nix>.
             # TODO: Set up a Unix Socket from Python and connect to shell
             '-chardev', 'socket,id=shell,path={}/not-working-shell,server=on,wait=off'.format(backdoor_dir),
@@ -74,7 +88,7 @@ def run_vm(system, qemu_opts, kernel_arguments):
             '-chardev', 'socket,id=backdoor,path={}/backdoor,server=on,wait=off'.format(backdoor_dir),
             '-device', 'virtio-serial',
             '-device', 'virtconsole,chardev=backdoor'
-        ] + qemu_opts)
+        ] + video_opts + qemu_opts)
 
 
 @contextmanager
@@ -122,7 +136,8 @@ def main(opts):
             print("ERROR: disk not built.")
             exit(1)
     else:
-        run_vm(TESTING_SYSTEM_TOP_LEVEL, opts.qemu_options, opts.kernel_args)
+        run_vm(TESTING_SYSTEM_TOP_LEVEL, opts.qemu_options, opts.kernel_args,
+               enable_opengl=opts.enable_opengl)
 
 
 if __name__ == '__main__':
@@ -145,6 +160,12 @@ if __name__ == '__main__':
         default=[],
         help=
         "Additional Kernel Arguments to pass. Note that these arguments are ignored when booting from disk (as the bootloader specifies the kernel arguments)."
+    )
+    parser.add_argument(
+        '--opengl',
+        dest='enable_opengl',
+        action='store_true',
+        help="Enable a GPU with OpenGL support. Might require nixGL on non-NixOS systems"
     )
     parser.add_argument(
         '-q',
