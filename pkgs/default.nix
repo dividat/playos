@@ -36,6 +36,8 @@ let
       });
 
       focus-shift = self.callPackage ./focus-shift.nix {};
+
+      run-with-memory-limit = self.callPackage ./run-with-memory-limit {};
     };
 in
 

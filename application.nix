@@ -3,6 +3,12 @@ rec {
     safeProductName = "playos";
     version = "2025.3.2-VALIDATION";
 
+    # kiosk is allowed to consume at most ${kioskMemoryPct}% of total system
+    # memory.
+    #
+    # This prevents some OOM kills if memory gets constrained.
+    kioskMemoryPct = 75;
+
     greeting = label: ''
                                            _
                                        , -"" "".
@@ -118,9 +124,12 @@ rec {
               # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-6/qtwebengine-debugging.html)
               export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
 
-              ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
-                ${config.playos.kioskUrl} \
-                http://localhost:3333/
+              ${pkgs.run-with-memory-limit}/bin/run-with-memory-limit \
+                --scope-prefix kiosk \
+                --memory-pct ${toString kioskMemoryPct} \
+                    ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
+                    ${config.playos.kioskUrl} \
+                    http://localhost:3333/
 
               waitPID=$!
             '';
