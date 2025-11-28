@@ -2,11 +2,10 @@
 
 ## Added
 
-- os: Add network watchdog
-- kiosk: Add virtual keyboard
-- kiosk: Auto-disable virtual keyboard when real keyboard detected
+- kiosk: Add a virtual keyboard when no physical keyboard is connected
+- kiosk: Add remote control support in app and all configuration views
 - controller: Show a label for networks in which a Senso is found
-- kiosk: Update (remote control) shortcut handling
+- os: Add network watchdog for recovery from temporary connectivity issues
 
 ## Changed
 
