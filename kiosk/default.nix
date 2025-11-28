@@ -54,13 +54,16 @@ python3Packages.buildPythonApplication rec {
       ]
       ++ (with python3Packages; [
         dbus-python
-        evdev
         pyudev
         pygobject3
         pyqt6-webengine
         requests
         playos-proxy-utils
-      ]);
+      ]
+      ++ lib.optionals stdenv.isLinux [ evdev ]
+      )
+
+      ;
 
   postInstall = ''
     cp -r images/ $out/images
