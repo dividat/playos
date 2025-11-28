@@ -73,6 +73,11 @@ To create and run a VM, run:
 In order to get the vm system journal, look at the output of `run-in-vm`
 for a command starting with `socat`.
 
+By default, the VM is started without OpenGL support, use `--opengl` to enable
+it. This requires [Mesa with VirGL support on
+Linux](https://docs.mesa3d.org/drivers/virgl/) and you might need
+[nixGL](https://github.com/nix-community/nixGL) on non-NixOS systems.
+
 See the output of `./result/bin/run-in-vm --help` for more information.
 
 #### Guest networking
