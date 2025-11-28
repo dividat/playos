@@ -30,6 +30,8 @@ QEMU_NO_OPENGL_OPTS = [
 DEFAULT_QEMU_OPTS = [
     '-enable-kvm',
     '-m','2048',
+    '-smp', '4',
+    '-cpu', 'max'
 ]
 
 # set DISK to None if not substituted
