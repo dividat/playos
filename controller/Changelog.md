@@ -2,15 +2,19 @@
 
 ## Added
 
-- os: Add network watchdog
-- kiosk: Add virtual keyboard
-- kiosk: Auto-disable virtual keyboard when real keyboard detected
+- kiosk: Add a virtual keyboard when no physical keyboard is connected
+- kiosk: Add remote control support in app and all configuration views
+- kiosk: Allow kiosk page to trigger reload in a new renderer process for memory hygiene
 - controller: Show a label for networks in which a Senso is found
-- kiosk: Update (remote control) shortcut handling
+- os: Add network watchdog for recovery from temporary connectivity issues
 
 ## Changed
 
 - controller: Enable spatial navigation to toggle visibility in password inputs
+
+## Fixed
+
+- kiosk: Restart kiosk application when renderer process quits unexpectedly
 
 # [2025.3.2-VALIDATION] - 2025-11-21
 
