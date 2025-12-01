@@ -1,9 +1,10 @@
 from PyQt6 import QtWidgets, QtCore, QtGui
 from typing import Callable
 import os
+import sys
 
 # Conditionally import mock or real keyboard detector based on environment
-if os.getenv("KIOSK_USE_MOCKS"):
+if os.getenv("KIOSK_USE_MOCKS") or sys.platform == "darwin":
     from kiosk_browser.mock_keyboard_detector import KeyboardDetector
 else:
     from kiosk_browser.keyboard_detector import KeyboardDetector
