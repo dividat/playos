@@ -48,6 +48,18 @@ in
     '';
   };
 
+  # Disable WiFi card power-saving for robustness, assuming stationary use
+  # 1. udev rule for driver-agnostic configuration of any wireless interface (wl*)
+  services.udev.extraRules = ''
+    ACTION=="add", KERNEL=="wl*", SUBSYSTEM=="net", RUN+="${pkgs.iw}/bin/iw dev $name set power_save off"
+  '';
+  # 2. Supported devices use recent Intel WiFi cards, explicitly set 'active' scheme
+  boot.extraModprobeConfig = ''
+    options iwlwifi power_save=0
+    # 1-active, 2-balanced, 3-low power, default: 2 (int)
+    options iwlmvm power_scheme=1
+  '';
+
   networking = {
     hostName = hostName;
 
