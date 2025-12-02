@@ -1,6 +1,7 @@
 """Mock keyboard detector for non-Linux platforms or testing."""
 
 import logging
+import os
 
 from PyQt6.QtCore import QObject, pyqtProperty, pyqtSignal
 
@@ -35,4 +36,4 @@ class KeyboardDetector(QObject):
         logging.info("Using mock keyboard detector - virtual keyboard will be enabled")
 
         # Always report no keyboard available to enable virtual keyboard
-        self._keyboard_available = False
+        self._keyboard_available = bool(os.getenv("KIOSK_MOCK_DISABLE_VKB"))
