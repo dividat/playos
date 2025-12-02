@@ -29,7 +29,7 @@ PLAYOS_KEYBOARD_BLACKLIST=".*" bin/kiosk-browser ...
 
 You can also use the env variable to selectively blacklist devices by name for
 testing dynamic keyboard detection, see
-[kiosk_browser/keyboard_detector.py](kiosk_browser/keyboard_detector.py) for
+[kiosk_browser/keyboard_detector/linux.py](kiosk_browser/keyboard_detector/linux.py) for
 more details.
 
 
