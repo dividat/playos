@@ -5,20 +5,12 @@ import time
 import logging
 from dataclasses import dataclass
 from collections.abc import Callable
-import os
-import sys
 
-from kiosk_browser import browser_widget, captive_portal, dialogable_widget
+from kiosk_browser import browser_widget, captive_portal, dialogable_widget, proxy as proxy_module
 from kiosk_browser.keyboard_widget import KeyboardWidget
+from kiosk_browser.keyboard_detector import KeyboardDetector
 from kiosk_browser.long_press import LongPressEvents, KeyCombination
 from kiosk_browser.focus_object_tracker import FocusObjectTracker
-from kiosk_browser.keyboard_detector import KeyboardDetector
-
-# Conditionally import mock or real modules based on environment
-if os.getenv("KIOSK_USE_MOCKS") or sys.platform == "darwin":
-    from kiosk_browser import mock_proxy as proxy_module
-else:
-    from kiosk_browser import proxy as proxy_module  # type: ignore[no-redef]
 
 
 @dataclass
