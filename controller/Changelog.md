@@ -11,6 +11,7 @@
 ## Changed
 
 - controller: Enable spatial navigation to toggle visibility in password inputs
+- os: Disable power-saving on WiFi cards for greater connection stability
 
 ## Fixed
 
