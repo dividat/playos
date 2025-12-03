@@ -1,4 +1,4 @@
-{ config, pkgs, lib, install-playos, version, safeProductName, fullProductName, greeting, ... }:
+{ config, pkgs, lib, install-playos, version, safeProductName, fullProductName, greeting, squashfsCompressionOpts, ... }:
 
 with lib;
 
@@ -66,16 +66,13 @@ with lib;
     };
   };
 
-  # ISO naming.
-  isoImage.isoName = "${safeProductName}-installer-${version}.iso";
-
-  isoImage.volumeID = substring 0 11 "PLAYOS_ISO";
-
-  # EFI booting
-  isoImage.makeEfiBootable = true;
-
-  # USB booting
-  isoImage.makeUsbBootable = true;
+  isoImage = {
+    isoName = "${safeProductName}-installer-${version}.iso";
+    volumeID = substring 0 11 "PLAYOS_ISO";
+    makeEfiBootable = true;
+    makeUsbBootable = true;
+  } // lib.optionalAttrs (squashfsCompressionOpts != null)
+        { squashfsCompression = squashfsCompressionOpts; };
 
   # Add Memtest86+ to the CD.
   boot.loader.grub.memtest86.enable = true;

@@ -1,5 +1,5 @@
 # Build NixOS system
-{pkgs, lib, kioskUrl, playos-controller, application}:
+{pkgs, lib, kioskUrl, playos-controller, application, squashfsCompressionOpts}:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
@@ -18,10 +18,12 @@ let nixos = pkgs.importFromNixos ""; in
 
     config = {
       # ISO image customization
-      isoImage.makeEfiBootable = true;
-      isoImage.makeUsbBootable = true;
-      isoImage.isoName = "${application.safeProductName}-live-${application.version}.iso";
-      isoImage.appendToMenuLabel = " Live System";
+      isoImage = {
+        makeEfiBootable = true;
+        makeUsbBootable = true;
+        isoName = "${application.safeProductName}-live-${application.version}.iso";
+        appendToMenuLabel = " Live System";
+      } // lib.optionalAttrs (squashfsCompressionOpts != null) { squashfsCompression = squashfsCompressionOpts; };
 
       # Set up as completely volatile system
       fileSystems."/boot" = {
