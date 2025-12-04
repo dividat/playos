@@ -18,6 +18,20 @@ See https://github.com/NixOS/nixpkgs/issues/9415 for context.
 
 You can pass `--no-fullscreen` to run the kiosk windowed.
 
+## macOS Development
+
+When running on macOS, the kiosk browser automatically uses mocked implementations for:
+- **Keyboard detection**: Reports no physical keyboard by default (enabling the virtual keyboard), but can be overridden with `KIOSK_MOCK_DISABLE_VKB=1` to simulate a keyboard being present
+- **Proxy monitoring**: Proxy configuration monitoring is disabled (no D-Bus/Connman on macOS)
+
+This allows development and testing on macOS without requiring Linux-specific dependencies like `evdev`, `pyudev`, or D-Bus.
+
+You can also force the use of mocked implementations on Linux by setting the `KIOSK_USE_MOCKS` environment variable:
+
+```bash
+KIOSK_USE_MOCKS=1 bin/kiosk-browser ...
+```
+
 ## Virtual keyboard
 
 To "force" the virtual keyboard, you need to disable physical keyboard
@@ -29,7 +43,7 @@ PLAYOS_KEYBOARD_BLACKLIST=".*" bin/kiosk-browser ...
 
 You can also use the env variable to selectively blacklist devices by name for
 testing dynamic keyboard detection, see
-[kiosk_browser/keyboard_detector.py](kiosk_browser/keyboard_detector.py) for
+[kiosk_browser/keyboard_detector/linux.py](kiosk_browser/keyboard_detector/linux.py) for
 more details.
 
 

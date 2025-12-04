@@ -11,11 +11,13 @@ in
   pkgs.mkShell {
     inputsFrom = [ kiosk ];
 
-    shellHook = ''
+    shellHook = with pkgs.lib; ''
       # Give access to kiosk_browser module
       export PYTHONPATH=./:$PYTHONPATH
 
       export FOCUS_SHIFT_PATH="${pkgs.focus-shift.main}"
+
+      ${optionalString (! pkgs.stdenv.isLinux) "export KIOSK_USE_MOCKS=1"}
 
       # Setup Qt environment.. in a hacky way
       tmpdir=$(mktemp -d)
