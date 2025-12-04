@@ -16,6 +16,8 @@
 
 - kiosk: Restart kiosk application when renderer process quits unexpectedly
 
+# [2025.3.2] - 2025-12-04
+
 # [2025.3.2-VALIDATION] - 2025-11-21
 
 ## Changed
