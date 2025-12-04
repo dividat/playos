@@ -33,7 +33,10 @@ class KeyboardDetector(QObject):
     def __init__(self, parent):
         super().__init__(parent)
 
-        logging.info("Using mock keyboard detector - virtual keyboard will be enabled")
+        _keyboard_available = bool(os.getenv("KIOSK_MOCK_DISABLE_VKB"))
+        logging.info(
+            "Using mock keyboard detector - virtual keyboard will be %s",
+            "enabled" if _keyboard_available else "disabled",
+        )
 
-        # Always report no keyboard available to enable virtual keyboard
-        self._keyboard_available = bool(os.getenv("KIOSK_MOCK_DISABLE_VKB"))
+        self._keyboard_available = _keyboard_available
