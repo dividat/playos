@@ -299,22 +299,29 @@ with TestCase("controller starts downloading the bundle") as t:
 
     wait_until_passes(t_check, retries=30, sleep=1)
 
-with TestCase("controller has downloaded and installed the bundle") as t:
-    def t_check():
-        playos.send_key("ctrl-r")
-        time.sleep(2)
-        navigate_to_system_status()
-        screen_text = screenshot_and_ocr(playos)
-        print(f"Current sreen text: {screen_text}")
-        # return early if there is an error
+
+def check_for_text_in_status_page(text, ignore_errors=False):
+    playos.send_key("ctrl-r")
+    time.sleep(2)
+    navigate_to_system_status()
+    screen_text = screenshot_and_ocr(playos)
+    print(f"Current sreen text: {screen_text}")
+
+    # return early if there is an error
+    if not ignore_errors:
         possible_errors = ["ErrorDownloading", "ErrorInstalling", "UpdateError"]
         if any([e in screen_text for e in possible_errors]):
             return screen_text
-        t.assertIn("RebootRequired", screen_text)
 
+    t.assertIn(text, screen_text)
+
+
+with TestCase("controller has downloaded and installed the bundle") as t:
     # controller takes at least 2 minutes for the download
     # (1.2GB @ 10 MB/s), so allow up to 5 minutes for the download+install
-    screen_text = wait_until_passes(t_check, retries=30, sleep=10)
+    screen_text = wait_until_passes(
+        lambda: check_for_text_in_status_page("RebootRequired"),
+        retries=30, sleep=10)
     if screen_text is not None:
         t.fail(f"Update process failed with an error, last screen text: {screen_text}")
 
@@ -348,5 +355,16 @@ with TestCase("controller GUI with new version is visible") as t:
     wait_until_passes(
         lambda: t.assertIn("${nextSystemVersion}", screenshot_and_ocr(playos))
     )
+
+with TestCase("The new booted version reaches a Good state") as t:
+    wait_until_passes(
+        # UpdateError possible initially, because DHCP has not completed
+        lambda: check_for_text_in_status_page("Good", ignore_errors=True),
+        retries=10, sleep=10)
+
+with TestCase("Update state is UpToDate") as t:
+    wait_until_passes(
+        lambda: check_for_text_in_status_page("UpToDate", ignore_errors=True),
+        retries=3, sleep=10)
 '';
 }
