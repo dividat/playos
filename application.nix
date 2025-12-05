@@ -175,18 +175,26 @@ rec {
       services.udev.extraRules = ''
         ACTION=="change", SUBSYSTEM=="drm", RUN+="${pkgs.systemd}/bin/systemctl start select-display.service"
       '';
-      systemd.services."select-display" = {
+      systemd.services."select-display" = let
+        PlayXauhtorityFile = "${config.users.users.play.home}/.Xauthority";
+      in
+      {
         description = "Select best display to output to";
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = "${selectDisplay}/bin/select-display";
+          ExecStart = "-${selectDisplay}/bin/select-display";
           User = "play";
+          Restart = "no";
+        };
+        unitConfig = {
+          ConditionPathExists = PlayXauhtorityFile;
         };
         environment = {
-          XAUTHORITY = "${config.users.users.play.home}/.Xauthority";
+          XAUTHORITY = PlayXauhtorityFile;
           DISPLAY = ":0";
         };
         after = [ "graphical.target" ];
+        requisite = [ "display-manager.service" ];
       };
 
       # Audio
