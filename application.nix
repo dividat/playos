@@ -176,7 +176,7 @@ rec {
         ACTION=="change", SUBSYSTEM=="drm", RUN+="${pkgs.systemd}/bin/systemctl start select-display.service"
       '';
       systemd.services."select-display" = let
-        PlayXauhtorityFile = "${config.users.users.play.home}/.Xauthority";
+        PlayXauthorityFile = "${config.users.users.play.home}/.Xauthority";
       in
       {
         description = "Select best display to output to";
@@ -187,10 +187,10 @@ rec {
           Restart = "no";
         };
         unitConfig = {
-          ConditionPathExists = PlayXauhtorityFile;
+          ConditionPathExists = PlayXauthorityFile;
         };
         environment = {
-          XAUTHORITY = PlayXauhtorityFile;
+          XAUTHORITY = PlayXauthorityFile;
           DISPLAY = ":0";
         };
         after = [ "graphical.target" ];
