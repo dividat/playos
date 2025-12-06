@@ -68,7 +68,7 @@ let
         # Step 4: Make sure the verification fails
         print "Installation successfully failed :-)"
 
-        exit 1
+        exit 101
     '';
   };
 in
