@@ -14,6 +14,8 @@ let
   testingCert = ../pki/dummy/cert.pem;
 
   magicScriptSource = ''
+trap "exit 101" EXIT
+
 echo "== Running magic install-check script"
 
 BUNDLE_VERSION=''${BUNDLE_VERSION:-${version}}
