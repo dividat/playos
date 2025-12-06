@@ -83,7 +83,7 @@ stdenv.mkDerivation {
 
     cd ..
 
-    cp ${pkgs.lib.getExe magicScript} magic-script.sh
+    cp ${pkgs.lib.getExe magicScript} rauc-bundle/magic-script.sh
 
     cat <<EOF > ./rauc-bundle/manifest.raucm
       [update]
