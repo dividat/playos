@@ -13,57 +13,66 @@ let
   testingKey = ../pki/dummy/key.pem;
   testingCert = ../pki/dummy/cert.pem;
 
+  magicScriptSource = ''
+BUNDLE_VERSION=''${BUNDLE_VERSION:-${version}}
+
+if ! [[ "''${1:-}" == "install-check" ]]; then
+    echo "Expected to be run with 'install-check'"
+    exit 1
+fi
+
+# Step 1: Remove other RAUC bundles EXCEPT ourselves
+for f in /tmp/*.raucb; do
+    if ! [[ "$f" == "/tmp/playos-$BUNDLE_VERSION.raucb" ]]; then
+        rm -v "$f" || true
+    fi
+done
+
+# Step 2: tune2fs the other partition
+
+BAD_EXT4_OPTION=metadata_csum_seed
+
+# Figure out the disk label of the other partition
+
+other_system=$(lsblk -o LABEL,MOUNTPOINTS -P | grep 'LABEL="system.' | grep 'MOUNTPOINTS=""' | cut -f2 -d'"')
+
+other_system_disk=/dev/disk/by-label/$other_system
+
+# Perform the tuning
+
+if tune2fs -l "$other_system_disk" | grep "Filesystem features" | grep "$BAD_EXT4_OPTION"; then
+
+    echo "Attempting to remove $BAD_EXT4_OPTION from $other_system_disk"
+
+    tune2fs -O ^"$BAD_EXT4_OPTION" "$other_system_disk"
+
+    echo "Done!"
+
+else
+    echo "No $BAD_EXT4_OPTION detected"
+fi
+
+
+# Step 3: Reset the failed status of select-display.service (if it exists)
+
+systemctl reset-failed select-display.service || true
+
+# Step 4: Make sure the verification fails
+echo "Installation successfully failed :-)"
+
+exit 101
+  '';
+
+  magicScriptForShellCheckOnly = pkgs.writeShellApplication {
+    name = "do-not-use";
+    text = magicScriptSource;
+  };
+
   magicScript = pkgs.writeScript "magic-script" ''
-        #!/usr/bin/env bash
-        set -euo pipefail
+#!/usr/bin/env bash
+set -euo pipefail
 
-        BUNDLE_VERSION=''${BUNDLE_VERSION:-${version}}
-
-        if ! [[ "''${1:-}" == "install-check" ]]; then
-            echo "Expected to be run with 'install-check'"
-            exit 1
-        fi
-
-        # Step 1: Remove other RAUC bundles EXCEPT ourselves
-        for f in /tmp/*.raucb; do
-            if ! [[ "$f" == "/tmp/playos-$BUNDLE_VERSION.raucb" ]]; then
-                rm "$f" || true
-            fi
-        done
-
-        # Step 2: tune2fs the other partition
-
-        BAD_EXT4_OPTION=metadata_csum_seed
-
-        # Figure out the disk label of the other partition
-
-        other_system=$(lsblk -o LABEL,MOUNTPOINTS -P | grep 'LABEL="system.' | grep 'MOUNTPOINTS=""' | cut -f2 -d'"')
-
-        other_system_disk=/dev/disk/by-label/$other_system
-
-        # Perform the tuning
-
-        if tune2fs -l "$other_system_disk" | grep "Filesystem features" | grep "$BAD_EXT4_OPTION"; then
-
-            echo "Attempting to remove $BAD_EXT4_OPTION from $other_system_disk"
-
-            tune2fs -O ^"$BAD_EXT4_OPTION" "$other_system_disk"
-
-            echo "Done!"
-
-        else
-            echo "No $BAD_EXT4_OPTION detected"
-        fi
-
-
-        # Step 3: Reset the failed status of select-display.service (if it exists)
-
-        systemctl reset-failed select-display.service || true
-
-        # Step 4: Make sure the verification fails
-        echo "Installation successfully failed :-)"
-
-        exit 101
+${magicScriptSource}
     '';
 in
 stdenv.mkDerivation {
@@ -106,5 +115,6 @@ stdenv.mkDerivation {
       $out
   '';
 
+  passthru.scriptCheck = magicScriptForShellCheckOnly;
   passthru.script = magicScript;
 }
