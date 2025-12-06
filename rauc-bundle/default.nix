@@ -67,8 +67,7 @@ else
 fi
 
 echo "== Step 4: Make sure the verification fails"
-echo "Installation successfully failed :-)"
-
+echo "Applied compatibility settings, waiting for next update" 1>&2
 exit 101
   '';
 
