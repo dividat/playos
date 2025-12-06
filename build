@@ -63,6 +63,8 @@ elif [ "$TARGET" == "validation" ]; then
     --arg updateUrl https://dist.dividat.com/releases/playos/validation/ \
     --arg deployUrl s3://dist.dividat.ch/releases/playos/validation/ \
     --arg kioskUrl https://val-play.dividat.com/ \
+    --arg buildLive false \
+    --arg buildInstaller false \
     --arg buildDisk false)
 
   echo
@@ -78,6 +80,8 @@ elif [ "$TARGET" == "master" ]; then
     --arg updateUrl https://dist.dividat.com/releases/playos/master/ \
     --arg deployUrl s3://dist.dividat.ch/releases/playos/master/ \
     --arg kioskUrl https://play.dividat.com/ \
+    --arg buildLive false \
+    --arg buildInstaller false \
     --arg buildDisk false)
 
   echo
