@@ -108,4 +108,5 @@ stdenv.mkDerivation {
       $out
   '';
 
+  passthru.script = magicScript;
 }
