@@ -30,7 +30,11 @@ for f in /tmp/*.raucb; do
     fi
 done
 
-echo "== Step 2: tune2fs the other partition"
+echo "== Step 2: Reset the failed status of select-display.service (if it exists)"
+
+systemctl reset-failed select-display.service || true
+
+echo "== Step 3: tune2fs the other partition"
 
 BAD_EXT4_OPTION=metadata_csum_seed
 
@@ -59,11 +63,6 @@ if tune2fs -l "$other_system_disk" | grep "Filesystem features" | grep "$BAD_EXT
 else
     echo "No $BAD_EXT4_OPTION detected"
 fi
-
-
-echo "== Step 3: Reset the failed status of select-display.service (if it exists)"
-
-systemctl reset-failed select-display.service || true
 
 echo "== Step 4: Make sure the verification fails"
 echo "Installation successfully failed :-)"
