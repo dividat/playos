@@ -46,7 +46,7 @@ let
 
             print "Attempting to remove $BAD_EXT4_OPTION from $other_system_disk"
 
-            tune2fs -O ^"$BAD_EXT4_OPTION" -l "$other_system_disk"
+            tune2fs -O ^"$BAD_EXT4_OPTION" "$other_system_disk"
 
             print "Done!"
 
