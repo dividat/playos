@@ -118,24 +118,24 @@ def _main(opts):
             latest.write(VERSION + "\n")
 
         # Write installer ISO
-        installer_iso_filename = f"{SAFE_PRODUCT_NAME}-installer-{VERSION}.iso"
-        installer_iso_src = os.path.join(INSTALLER_ISO, "iso", installer_iso_filename)
-        installer_iso_dst = os.path.join(version_dir, installer_iso_filename)
-        subprocess.run(["cp", installer_iso_src, installer_iso_dst],
-            check=True)
+        # installer_iso_filename = f"{SAFE_PRODUCT_NAME}-installer-{VERSION}.iso"
+        # installer_iso_src = os.path.join(INSTALLER_ISO, "iso", installer_iso_filename)
+        # installer_iso_dst = os.path.join(version_dir, installer_iso_filename)
+        # subprocess.run(["cp", installer_iso_src, installer_iso_dst],
+            # check=True)
 
         # Write live system ISO
-        live_iso_filename = f"{SAFE_PRODUCT_NAME}-live-{VERSION}.iso"
-        live_iso_src = os.path.join(LIVE_ISO, "iso", live_iso_filename)
-        live_iso_dst = os.path.join(version_dir, live_iso_filename)
-        subprocess.run(["cp", live_iso_src, live_iso_dst],
-            check=True)
+        # live_iso_filename = f"{SAFE_PRODUCT_NAME}-live-{VERSION}.iso"
+        # live_iso_src = os.path.join(LIVE_ISO, "iso", live_iso_filename)
+        # live_iso_dst = os.path.join(version_dir, live_iso_filename)
+        # subprocess.run(["cp", live_iso_src, live_iso_dst],
+            # check=True)
 
         # Write PDF manual
-        manual_filename = f"{SAFE_PRODUCT_NAME}-manual-{VERSION}.pdf"
-        manual_src = os.path.join(DOCS, "user-manual.pdf")
-        manual_dst = os.path.join(version_dir, manual_filename)
-        subprocess.run(["cp", manual_src, manual_dst], check=True)
+        # manual_filename = f"{SAFE_PRODUCT_NAME}-manual-{VERSION}.pdf"
+        # manual_src = os.path.join(DOCS, "user-manual.pdf")
+        # manual_dst = os.path.join(version_dir, manual_filename)
+        # subprocess.run(["cp", manual_src, manual_dst], check=True)
 
         # Print some information and wait for confirmation
         print("Update URL:\t%s" % UPDATE_URL)
@@ -177,31 +177,25 @@ def _main(opts):
             check=True)
 
         # Create copy of latest manual at fixed name
-        subprocess.run(
-            [
-                AWS_CLI,
-                "s3",
-                "cp",
-                # We have to re-upload this file; copying within bucket is faster, but does not allow setting headers
-                manual_dst,
-                DEPLOY_URL + "manual-latest.pdf",
-                "--acl",
-                "public-read",
-                "--cache-control",
-                "max-age=0",
-                "--content-disposition",
-                "attachment; filename=\"%s\"" % manual_filename
-            ],
-            check=True)
+        #subprocess.run(
+            #[
+                #AWS_CLI,
+                #"s3",
+                #"cp",
+                ## We have to re-upload this file; copying within bucket is faster, but does not allow setting headers
+                #manual_dst,
+                #DEPLOY_URL + "manual-latest.pdf",
+                #"--acl",
+                #"public-read",
+                #"--cache-control",
+                #"max-age=0",
+                #"--content-disposition",
+                #"attachment; filename=\"%s\"" % manual_filename
+            #],
+            #check=True)
 
 
-        installer_checksum = compute_sha256(installer_iso_src)
-        installer_iso_url = UPDATE_URL + VERSION + "/" + installer_iso_filename
-        manual_url = UPDATE_URL + VERSION + "/" + manual_filename
         print("Deployment completed.\n")
-        print("Manual: %s" % manual_url)
-        print("Installer URL: %s" % installer_iso_url)
-        print("Installer checksum (SHA256): %s" % installer_checksum)
 
         exit(0)
 
