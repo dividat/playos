@@ -36,13 +36,7 @@ let
 
         # Figure out the disk label of the other partition
 
-        booted_system=$(rauc status | grep "Booted from:" | cut -f3 -d' ')
-
-        if [[ "$booted_system" == "system.a" ]]; then
-            other_system=system.b
-        else
-            other_system=system.a
-        fi
+        other_system=$(lsblk -o LABEL,MOUNTPOINTS -P | grep 'LABEL="system.' | grep 'MOUNTPOINTS=""' | cut -f2 -d'"')
 
         other_system_disk=/dev/disk/by-label/$other_system
 
