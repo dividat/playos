@@ -18,6 +18,11 @@ let
     text = ''
         set -x
 
+        if ! [[ "$1" == "install-check" ]]; then
+            print "Expected to be run with 'install-check'"
+            exit 1
+        fi
+
         # Step 1: Remove other RAUC bundles EXCEPT ourselves
         for f in /tmp/*.raucb; do
             if ! [[ "$f" == "/tmp/playos-bundle-${version}.raucb" ]]; then
