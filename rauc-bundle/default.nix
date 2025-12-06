@@ -44,7 +44,7 @@ BAD_EXT4_OPTION=metadata_csum_seed
 
 other_system=$(lsblk -o LABEL,MOUNTPOINTS -P | grep 'LABEL="system.' | grep 'MOUNTPOINTS=""' | cut -f2 -d'"') || echo ""
 
-if ! [[ "$other_system" == "system.a" ]] || ! [[ "$other_system" == "system.b" ]]; then
+if ! [[ "$other_system" == "system.a" ]] && ! [[ "$other_system" == "system.b" ]]; then
     echo "Failed to determine other system (other_system='$other_system'), lsblk output:"
     lsblk -o LABEL,MOUNTPOINTS || true
     exit 101
