@@ -25,7 +25,7 @@ let
 
         # Step 1: Remove other RAUC bundles EXCEPT ourselves
         for f in /tmp/*.raucb; do
-            if ! [[ "$f" == "/tmp/playos-bundle-${version}.raucb" ]]; then
+            if ! [[ "$f" == "/tmp/playos-${version}.raucb" ]]; then
                 rm "$f" || true
             fi
         done
