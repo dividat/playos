@@ -42,11 +42,11 @@ let
 
         # Perform the tuning
 
-        if tune2fs -l "$other_system_disk" | grep "Filesystem features" | grep $BAD_EXT4_OPTION; then
+        if tune2fs -l "$other_system_disk" | grep "Filesystem features" | grep "$BAD_EXT4_OPTION"; then
 
             print "Attempting to remove $BAD_EXT4_OPTION from $other_system_disk"
 
-            tune2fs -O ^$BAD_EXT4_OPTION -l "$other_system_disk"
+            tune2fs -O ^"$BAD_EXT4_OPTION" -l "$other_system_disk"
 
             print "Done!"
 
