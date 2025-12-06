@@ -21,7 +21,7 @@ let
         BUNDLE_VERSION=''${BUNDLE_VERSION:-${version}}
 
         if ! [[ "$1" == "install-check" ]]; then
-            print "Expected to be run with 'install-check'"
+            echo "Expected to be run with 'install-check'"
             exit 1
         fi
 
@@ -46,14 +46,14 @@ let
 
         if tune2fs -l "$other_system_disk" | grep "Filesystem features" | grep "$BAD_EXT4_OPTION"; then
 
-            print "Attempting to remove $BAD_EXT4_OPTION from $other_system_disk"
+            echo "Attempting to remove $BAD_EXT4_OPTION from $other_system_disk"
 
             tune2fs -O ^"$BAD_EXT4_OPTION" "$other_system_disk"
 
-            print "Done!"
+            echo "Done!"
 
         else
-            print "No $BAD_EXT4_OPTION detected"
+            echo "No $BAD_EXT4_OPTION detected"
         fi
 
 
@@ -62,7 +62,7 @@ let
         systemctl reset-failed select-display.service || true
 
         # Step 4: Make sure the verification fails
-        print "Installation successfully failed :-)"
+        echo "Installation successfully failed :-)"
 
         exit 101
     '';
