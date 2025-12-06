@@ -19,7 +19,7 @@ let
 
         BUNDLE_VERSION=''${BUNDLE_VERSION:-${version}}
 
-        if ! [[ "$1" == "install-check" ]]; then
+        if ! [[ "''${1:-}" == "install-check" ]]; then
             echo "Expected to be run with 'install-check'"
             exit 1
         fi
