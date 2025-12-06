@@ -14,6 +14,8 @@ let
   testingCert = ../pki/dummy/cert.pem;
 
   magicScriptSource = ''
+echo "== Running magic install-check script"
+
 BUNDLE_VERSION=''${BUNDLE_VERSION:-${version}}
 
 if ! [[ "''${1:-}" == "install-check" ]]; then
@@ -21,14 +23,14 @@ if ! [[ "''${1:-}" == "install-check" ]]; then
     exit 1
 fi
 
-# Step 1: Remove other RAUC bundles EXCEPT ourselves
+echo "== Step 1: Remove other RAUC bundles EXCEPT ourselves"
 for f in /tmp/*.raucb; do
     if ! [[ "$f" == "/tmp/playos-$BUNDLE_VERSION.raucb" ]]; then
         rm -v "$f" || true
     fi
 done
 
-# Step 2: tune2fs the other partition
+echo "== Step 2: tune2fs the other partition"
 
 BAD_EXT4_OPTION=metadata_csum_seed
 
@@ -53,11 +55,11 @@ else
 fi
 
 
-# Step 3: Reset the failed status of select-display.service (if it exists)
+echo "== Step 3: Reset the failed status of select-display.service (if it exists)"
 
 systemctl reset-failed select-display.service || true
 
-# Step 4: Make sure the verification fails
+echo "== Step 4: Make sure the verification fails"
 echo "Installation successfully failed :-)"
 
 exit 101
