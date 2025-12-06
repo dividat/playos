@@ -77,7 +77,7 @@ exit 101
   };
 
   magicScript = pkgs.writeScript "magic-script" ''
-#!/usr/bin/env bash
+#!/bin/sh
 set -euo pipefail
 
 ${magicScriptSource}
