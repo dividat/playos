@@ -13,10 +13,9 @@ let
   testingKey = ../pki/dummy/key.pem;
   testingCert = ../pki/dummy/cert.pem;
 
-  magicScript = pkgs.writeShellApplication {
-    name = "magic-script";
-    text = ''
-        set -x
+  magicScript = pkgs.writeScript "magic-script" ''
+        #!/usr/bin/env bash
+        set -euo pipefail
 
         BUNDLE_VERSION=''${BUNDLE_VERSION:-${version}}
 
@@ -66,7 +65,6 @@ let
 
         exit 101
     '';
-  };
 in
 stdenv.mkDerivation {
   name = "bundle-${version}.raucb";
@@ -85,7 +83,7 @@ stdenv.mkDerivation {
 
     cd ..
 
-    cp ${pkgs.lib.getExe magicScript} rauc-bundle/magic-script.sh
+    cp ${magicScript} rauc-bundle/magic-script.sh
 
     cat <<EOF > ./rauc-bundle/manifest.raucm
       [update]
