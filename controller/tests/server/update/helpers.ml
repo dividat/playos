@@ -27,7 +27,10 @@ let statefmt (state : Update.state) : string =
 (* === Mock init and setup === *)
 
 let default_test_config : Update.config =
-  { error_backoff_duration = 0.01; check_for_updates_interval = 0.05 }
+  { http_error_backoff_duration = 0.01
+  ; install_error_backoff_duration = 0.02
+  ; check_for_updates_interval = 0.05
+  }
 
 type test_context =
   { update_client : Mock_update_client.mock

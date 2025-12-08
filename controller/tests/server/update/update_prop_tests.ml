@@ -60,7 +60,8 @@ let test_random_failure_case =
     let failure_gen_upd = failure_seq_to_f seq_upd in
     let failure_gen_rauc = failure_seq_to_f seq_rauc in
     let test_config =
-      { Update.error_backoff_duration = 0.001
+      { Update.http_error_backoff_duration = 0.001
+      ; Update.install_error_backoff_duration = 0.002
       ; Update.check_for_updates_interval = 0.002
       }
     in

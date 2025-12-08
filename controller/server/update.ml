@@ -56,7 +56,8 @@ type state =
 [@@deriving sexp_of]
 
 type config =
-  { error_backoff_duration : sleep_duration
+  { http_error_backoff_duration : sleep_duration
+  ; install_error_backoff_duration : sleep_duration
   ; check_for_updates_interval : sleep_duration
   }
 
@@ -183,7 +184,7 @@ module Make (Deps : ServiceDeps) : UpdateService = struct
               )
             in
             return
-              { process_state = Sleeping config.error_backoff_duration
+              { process_state = Sleeping config.http_error_backoff_duration
               ; (* unsetting version_info to indicate we are unclear about
                    current system state *)
                 version_info = None
@@ -207,7 +208,7 @@ module Make (Deps : ServiceDeps) : UpdateService = struct
             in
             return
               { state with
-                process_state = Sleeping config.error_backoff_duration
+                process_state = Sleeping config.http_error_backoff_duration
               ; system_status = UpdateError (ErrorDownloading exn_str)
               }
       )
@@ -237,7 +238,7 @@ module Make (Deps : ServiceDeps) : UpdateService = struct
             in
             return
               { state with
-                process_state = Sleeping config.error_backoff_duration
+                process_state = Sleeping config.install_error_backoff_duration
               ; system_status = UpdateError (ErrorInstalling exn_str)
               }
       )
@@ -251,7 +252,8 @@ module Make (Deps : ServiceDeps) : UpdateService = struct
 end
 
 let default_config : config =
-  { error_backoff_duration = 30.0
+  { http_error_backoff_duration = 30.0
+  ; install_error_backoff_duration = 5. *. 60.
   ; check_for_updates_interval = 1. *. 60. *. 60.
   }
 

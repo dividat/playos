@@ -1,3 +1,7 @@
+## Changed
+
+- controller: Extend wait after failed update installation attempt from 30 s to 5 min
+
 # [2025.3.2] - 2025-12-04
 
 # [2025.3.2-VALIDATION] - 2025-11-21

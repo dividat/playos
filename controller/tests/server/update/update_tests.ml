@@ -122,7 +122,7 @@ let delete_downloaded_bundle_on_err
     ; Scenario.StateReached
         { init_state with
           process_state =
-            Sleeping Helpers.default_test_config.error_backoff_duration
+            Sleeping Helpers.default_test_config.install_error_backoff_duration
         ; system_status = UpdateError (ErrorInstalling Scenario._WILDCARD_PAT)
         }
     ; Scenario.StateReached
@@ -146,7 +146,7 @@ let sleep_on_get_version_err _ () =
     ; system_status =
         UpdateError (ErrorGettingVersionInfo Scenario._WILDCARD_PAT)
     ; process_state =
-        Sleeping Helpers.default_test_config.error_backoff_duration
+        Sleeping Helpers.default_test_config.http_error_backoff_duration
     }
   in
   let%lwt out_state = UpdateServiceI.run_step init_state in
@@ -171,7 +171,7 @@ let sleep_on_download_err _ () =
     { version_info = None
     ; system_status = UpdateError (ErrorDownloading Scenario._WILDCARD_PAT)
     ; process_state =
-        Sleeping Helpers.default_test_config.error_backoff_duration
+        Sleeping Helpers.default_test_config.http_error_backoff_duration
     }
   in
   let%lwt out_state = UpdateServiceI.run_step init_state in
