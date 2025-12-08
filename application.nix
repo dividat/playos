@@ -187,7 +187,7 @@ rec {
           Restart = "no";
         };
         unitConfig = {
-          ConditionPathExists = PlayXauthorityFile;
+          ConditionFileNotEmpty = PlayXauthorityFile;
         };
         environment = {
           XAUTHORITY = PlayXauthorityFile;
