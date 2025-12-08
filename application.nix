@@ -98,6 +98,7 @@ rec {
           xterm.enable = false;
           session = [{
             name = sessionName;
+            bgSupport = true; # We don't need wallpaper management tools
             start = ''
               # Disable screen-saver control (screen blanking)
               xset s off
@@ -131,6 +132,7 @@ rec {
           lightdm = {
             enable = true;
             greeter.enable = false;
+            greeters.gtk.enable = false;
             autoLogin.timeout = 0;
           };
 
