@@ -227,6 +227,9 @@ pkgs.testers.runNixOSTest {
             "Installed bundle does not have correct version"
         )
 
+    with TestCase("No raucb files left post-install") as t:
+        playos.fail("ls /tmp/*.raucb")
+
     with TestCase("System boots into the new bundle") as t:
         playos.shutdown()
         playos.start()

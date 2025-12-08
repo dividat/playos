@@ -1,6 +1,7 @@
 ## Changed
 
 - controller: Extend wait after failed update installation attempt from 30 s to 5 min
+- controller: Delete system update files immediately after successful installation
 
 # [2025.3.2] - 2025-12-04
 
