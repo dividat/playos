@@ -246,7 +246,9 @@ module Make (Deps : ServiceDeps) : UpdateService = struct
                   ; system_status = UpdateError (ErrorInstalling exn_str)
                   }
           )
-          (fun () -> try Lwt_unix.unlink bundle_path with _ -> Lwt.return ())
+          (fun () ->
+            try%lwt Lwt_unix.unlink bundle_path with _ -> Lwt.return ()
+          )
 
   let rec run_rec set_state state =
     let%lwt next_state = run_step state in
