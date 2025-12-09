@@ -132,7 +132,6 @@ rec {
           lightdm = {
             enable = true;
             greeter.enable = false;
-            greeters.gtk.enable = false;
             autoLogin.timeout = 0;
           };
 

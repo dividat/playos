@@ -12,6 +12,7 @@ with lib;
     (import ./controller-service.nix { inherit config lib pkgs playos-controller; })
     ./networking/watchdog
     ./hardening.nix
+    ./trim.nix
     ./localization.nix
     ./remote-maintenance.nix
     ./self-update
@@ -39,15 +40,6 @@ with lib;
 
     # disable installation of bootloader
     boot.loader.grub.enable = false;
-
-    # disable inaccessible documentation
-    documentation = {
-      enable = false;
-      doc.enable = false;
-      info.enable = false;
-      man.enable = false;
-      nixos.enable = false;
-    };
 
     playos = { inherit version kioskUrl; };
 
