@@ -17,6 +17,17 @@
     nixos.enable = false;
   };
 
+  # System is built by but not configured with Nix once deployed
+  nix.enable = false;
+  programs = {
+    # Useless when there is no way to install
+    command-not-found.enable = lib.mkDefault false;
+  };
+  # We don't need a helper to explain failed ELF loads
+  environment = {
+    stub-ld.enable = lib.mkDefault false;
+  };
+
   # Override a default from nixpkgs that would pull in Adwaita theme needlessly
   services.xserver.displayManager.lightdm.greeters.gtk.enable = lib.mkDefault false;
   # We assume a mono-application and don't need desktop manager mediation between apps
