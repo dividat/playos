@@ -139,9 +139,6 @@ pkgs.testers.runNixOSTest {
         virtualisation.qemu.networkingOptions = lib.mkOverride 0 [ ];
         virtualisation.sharedDirectories = lib.mkOverride 0 { };
 
-        # Note: this has to be at least 2x bundle size, otherwise
-        # the bundle download will not fit into /tmp (which is defined
-        # as 50% of RAM)!
         virtualisation.memorySize = lib.mkForce 4096;
 
         virtualisation.vlans = [ 1 ];
