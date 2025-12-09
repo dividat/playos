@@ -25,9 +25,6 @@ in
     # There is no need for sudo
     security.sudo.enable = lib.mkForce false;
 
-    # Nobody needs to use nix
-    nix.settings.allowed-users = lib.mkForce [ "root" ];
-
     # Do not include default packages
     environment.defaultPackages = lib.mkForce [];
 

@@ -11,8 +11,8 @@ with lib;
     (import ./networking/default.nix { hostName = safeProductName; inherit lib pkgs config; })
     (import ./controller-service.nix { inherit config lib pkgs playos-controller; })
     ./networking/watchdog
+    ./denixify.nix
     ./hardening.nix
-    ./trim.nix
     ./localization.nix
     ./remote-maintenance.nix
     ./self-update
