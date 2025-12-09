@@ -30,5 +30,9 @@ in
 
     # Do not include default packages
     environment.defaultPackages = lib.mkForce [];
+
+    # No emergency maintenance shell
+    systemd.enableEmergencyMode = false;
+
   };
 }
