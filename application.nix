@@ -84,6 +84,10 @@ rec {
       # Avoid bloating system image size
       services.speechd.enable = false;
 
+      # Mesa shader cache does not seem to grow above a couple of MB in
+      # practice, but protect against accidents.
+      environment.variables.MESA_SHADER_CACHE_MAX_SIZE = "50M";
+
       # Kiosk session
       services.xserver = {
         enable = true;
