@@ -250,7 +250,7 @@ rec {
       };
       services.journald.extraConfig = ''
         Storage=persistent
-        SystemMaxUse=1G
+        SystemMaxUse=750M
       '';
 
       # Set a low default timeout when stopping services, to prevent the Windows 95 shutdown experience
