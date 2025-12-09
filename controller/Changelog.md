@@ -1,6 +1,12 @@
+# [UNRELEASED]
+
 ## Changed
 
 - controller: Extend wait after failed update installation attempt from 30 s to 5 min
+
+## Fixed
+
+- os: Ensure the system is not marked as failed due to display selection errors
 
 # [2025.3.2] - 2025-12-04
 
