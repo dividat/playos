@@ -21,7 +21,7 @@ class Status(Enum):
 
 class BrowserWidget(QtWidgets.QWidget):
 
-    def __init__(self, url, get_current_proxy, parent):
+    def __init__(self, url, get_current_proxy, parent, max_cache_size):
         QtWidgets.QWidget.__init__(self, parent)
         self.setStyleSheet(f"background-color: white;")
 
@@ -35,6 +35,7 @@ class BrowserWidget(QtWidgets.QWidget):
         self._loading_page = loading_page(self)
         self._network_error_page = network_error_page(self)
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
+        self._profile.setHttpCacheMaximumSize(max_cache_size)
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
 
         # Handle page (renderer) kills

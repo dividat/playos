@@ -21,6 +21,9 @@ rec {
       (import ./application/overlays version)
     ];
 
+
+    max-browser-cache-size = 1024*1024*200; # 200MB, in bytes, not including profile
+
     module = { config, lib, pkgs, ... }:
     let
       sessionName = "kiosk-browser";
@@ -110,6 +113,7 @@ rec {
               export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
 
               ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
+                --max-cache-size ${toString max-browser-cache-size} \
                 ${config.playos.kioskUrl} \
                 http://localhost:3333/
 

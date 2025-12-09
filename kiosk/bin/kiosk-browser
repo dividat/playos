@@ -6,6 +6,7 @@ import os
 import kiosk_browser
 
 default_toggle_settings_key = 'CTRL+SHIFT+F12'
+default_max_cache_size = 1024*1024*100 # 100MB
 
 parser = argparse.ArgumentParser(
     prog='kiosk-browser',
@@ -20,6 +21,12 @@ parser.add_argument(
     help=
     'Keyboard combination to toggle settings. (Default: "%s")'
     % default_toggle_settings_key)
+parser.add_argument(
+    '--max-cache-size',
+    type=int,
+    default=default_max_cache_size,
+    help='Set a limit to QtWebEngine/Chromium disk cache size (in bytes). (Default: "%s")'
+    % default_max_cache_size)
 
 parser.add_argument('kiosk_url', help='Kiosk URL')
 parser.add_argument('settings_url', help='Settings URL')
@@ -29,4 +36,5 @@ args = parser.parse_args()
 # Go to root directory of the kiosk to give relative access to assets
 os.chdir(f'{os.path.dirname(__file__)}/..')
 
-kiosk_browser.start(args.kiosk_url, args.settings_url, args.toggle_settings_key)
+kiosk_browser.start(args.kiosk_url, args.settings_url, args.toggle_settings_key,
+                    args.max_cache_size)
