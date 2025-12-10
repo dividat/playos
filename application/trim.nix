@@ -29,9 +29,4 @@
       extraPortals = lib.mkForce [];
     };
   };
-
-  # Only include a single fallback font, assume kiosk app brings fonts
-  fonts.enableDefaultPackages = false;
-  fonts.fontconfig.enable = lib.mkForce false;
-  fonts.packages = lib.mkForce [ pkgs.fira ];
 }
