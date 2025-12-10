@@ -23,13 +23,11 @@ let make_deps ?download_dir get_proxy base_url : (module UpdateClientDeps) =
     let get_proxy = get_proxy
 
     let download_dir =
-      let fallback_download_dir = "/tmp" in
-      (* STATE_DIRECTORY is set by systemd when running controller as a service *)
-      let state_dir = Sys.getenv_opt "STATE_DIRECTORY" in
-      let state_or_fallback =
-        state_dir |> Option.value ~default:fallback_download_dir
+      let default_download_dir =
+        (* STATE_DIRECTORY is set by systemd when running controller as a service *)
+        Sys.getenv_opt "STATE_DIRECTORY" |> Option.value ~default:"/tmp"
       in
-      download_dir |> Option.value ~default:state_or_fallback
+      download_dir |> Option.value ~default:default_download_dir
   end
 )
 
