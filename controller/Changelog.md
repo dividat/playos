@@ -8,6 +8,7 @@
 ## Fixed
 
 - os: Ensure the system is not marked as failed due to display selection errors
+- kiosk: Restart kiosk application when renderer process quits unexpectedly
 
 # [2025.3.2] - 2025-12-04
 
