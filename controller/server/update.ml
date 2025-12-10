@@ -212,36 +212,43 @@ module Make (Deps : ServiceDeps) : UpdateService = struct
               ; system_status = UpdateError (ErrorDownloading exn_str)
               }
       )
-    | Installing bundle_path -> (
-        (* install bundle via RAUC *)
-        match%lwt Lwt_result.catch (fun () -> RaucI.install bundle_path) with
-        | Ok () ->
-            let%lwt () =
-              Logs_lwt.info (fun m ->
-                  m "succesfully installed update (%s)" bundle_path
-              )
-            in
-            return
-              { state with
-                (* unsetting version_info, because it is now stale *)
-                version_info = None
-              ; (* going back to GettingVersionInfo to update version_info *)
-                process_state = GettingVersionInfo
-              }
-        | Error exn ->
-            let () = try Sys.remove bundle_path with _ -> () in
-            let exn_str = Printexc.to_string exn in
-            let%lwt () =
-              Logs_lwt.err ~src:log_src (fun m ->
-                  m "failed to install RAUC bundle: %s" exn_str
-              )
-            in
-            return
-              { state with
-                process_state = Sleeping config.install_error_backoff_duration
-              ; system_status = UpdateError (ErrorInstalling exn_str)
-              }
-      )
+    | Installing bundle_path ->
+        Lwt.finalize
+          (fun () ->
+            (* install bundle via RAUC *)
+            match%lwt
+              Lwt_result.catch (fun () -> RaucI.install bundle_path)
+            with
+            | Ok () ->
+                let%lwt () =
+                  Logs_lwt.info (fun m ->
+                      m "succesfully installed update (%s)" bundle_path
+                  )
+                in
+                return
+                  { state with
+                    (* unsetting version_info, because it is now stale *)
+                    version_info = None
+                  ; (* going back to GettingVersionInfo to update version_info *)
+                    process_state = GettingVersionInfo
+                  }
+            | Error exn ->
+                let exn_str = Printexc.to_string exn in
+                let%lwt () =
+                  Logs_lwt.err ~src:log_src (fun m ->
+                      m "failed to install RAUC bundle: %s" exn_str
+                  )
+                in
+                return
+                  { state with
+                    process_state =
+                      Sleeping config.install_error_backoff_duration
+                  ; system_status = UpdateError (ErrorInstalling exn_str)
+                  }
+          )
+          (fun () ->
+            try%lwt Lwt_unix.unlink bundle_path with _ -> Lwt.return ()
+          )
 
   let rec run_rec set_state state =
     let%lwt next_state = run_step state in

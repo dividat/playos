@@ -55,6 +55,13 @@ let both_out_of_date ({ update_client; rauc } : Helpers.test_context) =
             in
             Lwt.return true
         )
+    ; Scenario.ActionDone
+        ( "bundle file was deleted after successful installation"
+        , fun { process_state = Installing path; _ } ->
+            Alcotest.(check bool)
+              "File no longer exists at path" false (Sys.file_exists path) ;
+            Lwt.return true
+        )
     ; Scenario.StateReached
         { base_expected_state with
           version_info = None
