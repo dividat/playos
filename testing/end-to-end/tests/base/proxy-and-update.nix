@@ -1,4 +1,9 @@
-{pkgs, qemu, disk, overlayPath, safeProductName, updateUrl, ...}:
+{
+    pkgs, qemu, disk, overlayPath, safeProductName, updateUrl,
+    legacyMode ? false, # disable ext4 compatibility configuration, this mode is
+                        # enabled in proxy-and-update-legacy.nix
+    ...
+}:
 let
    nixos = pkgs.importFromNixos "";
 
@@ -125,10 +130,18 @@ pkgs.testers.runNixOSTest {
 
     proxy_url = "http://${nodes.sidekick.networking.primaryIPAddress}:8888"
 
+    is_legacy_mode = bool(${toString legacyMode}) # `toString false` returns ""
+    bad_ext4_option = "metadata_csum_seed"
+
     create_overlay("${disk}", "${overlayPath}")
     playos.start(allow_reboot=True)
     sidekick.start()
 
+    if is_legacy_mode:
+        with TestPrecondition("Setup legacy mode"):
+            playos.wait_for_unit("local-fs.target")
+            playos.succeed("touch /tmp/empty.conf")
+            playos.succeed("mount --bind /tmp/empty.conf /etc/mke2fs.conf")
 
     ### === Stub Update server setup
 
@@ -229,6 +242,25 @@ pkgs.testers.runNixOSTest {
 
     with TestCase("No raucb files left post-install") as t:
         playos.fail("ls /tmp/*.raucb")
+
+    target_disk = "/dev/disk/by-label/system.b"
+    if not is_legacy_mode:
+        with TestCase("RAUC install respected mke2fs.conf") as t:
+            features = playos.succeed(
+                f'tune2fs -l "{target_disk}" | grep "Filesystem features"')
+            t.assertNotIn(bad_ext4_option, features,
+                          f"ext4 was formatted with {bad_ext4_option}")
+
+
+    with TestCase("RAUC post-install hook ran and performed compatibility fixes") as t:
+        wait_for_logs(playos, "Running post-install system compatibility fixes", unit="rauc.service")
+
+        if is_legacy_mode:
+            wait_for_logs(playos, f"Removing {bad_ext4_option} from {target_disk}", unit="rauc.service")
+            wait_for_logs(playos, f"Re-mounting {target_disk}", unit="rauc.service")
+            features = playos.succeed(f'tune2fs -l "{target_disk}" | grep "Filesystem features"')
+            t.assertNotIn(bad_ext4_option, features, f"ext4 was formatted with {bad_ext4_option}")
+
 
     with TestCase("System boots into the new bundle") as t:
         playos.shutdown()
