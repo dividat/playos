@@ -1,5 +1,6 @@
 {
     pkgs, qemu, disk, overlayPath, safeProductName, updateUrl,
+    version,
     legacyMode ? false, # disable ext4 compatibility configuration, this mode is
                         # enabled in proxy-and-update-legacy.nix
     ...
@@ -52,6 +53,15 @@ let
    nextVersionBundle = pkgs.callPackage (playosRoot + "/rauc-bundle/default.nix") {
     version  = nextVersion;
     systemImage = minimalTestSystem;
+
+    versionsRequiringCompatScript = [
+        "1.0.0" # a second version just to check array / looping works
+
+        (if legacyMode then
+            version # mark our own version as legacy
+        else
+            "1.0.1") # 1.0.1 is non-existant
+    ];
    };
 in
 pkgs.testers.runNixOSTest {
@@ -137,11 +147,20 @@ pkgs.testers.runNixOSTest {
     playos.start(allow_reboot=True)
     sidekick.start()
 
+    with TestCase("Installer produced a disk without incompatible FS features") as t:
+        playos.wait_for_unit("local-fs.target")
+        features = playos.succeed('tune2fs -l "/dev/disk/by-label/system.a" | grep "Filesystem features"')
+        for bad_opt in ["metadata_csum_seed", "orphan_file"]:
+            t.assertNotIn(bad_opt, features, f"ext4 was formatted with {bad_opt} by install-playos")
+
     if is_legacy_mode:
         with TestPrecondition("Setup legacy mode"):
-            playos.wait_for_unit("local-fs.target")
-            playos.succeed("touch /tmp/empty.conf")
-            playos.succeed("mount --bind /tmp/empty.conf /etc/mke2fs.conf")
+            # enable all disabled features
+            playos.succeed("cat /etc/mke2fs.conf | tr -d '^' > /tmp/mke2fs.conf")
+            playos.succeed("mount --bind /tmp/mke2fs.conf /etc/mke2fs.conf")
+            # RAUC does not see the bind mount unless restarted
+            playos.wait_for_unit("rauc.service")
+            playos.systemctl("restart rauc.service")
 
     ### === Stub Update server setup
 
@@ -244,22 +263,23 @@ pkgs.testers.runNixOSTest {
         playos.fail("ls /tmp/*.raucb")
 
     target_disk = "/dev/disk/by-label/system.b"
-    if not is_legacy_mode:
-        with TestCase("RAUC install respected mke2fs.conf") as t:
-            features = playos.succeed(
-                f'tune2fs -l "{target_disk}" | grep "Filesystem features"')
-            t.assertNotIn(bad_ext4_option, features,
-                          f"ext4 was formatted with {bad_ext4_option}")
-
 
     with TestCase("RAUC post-install hook ran and performed compatibility fixes") as t:
-        wait_for_logs(playos, "Running post-install system compatibility fixes", unit="rauc.service")
+        wait_for_logs(playos, "Checking if host system version requires compatibility fixes", unit="rauc.service")
+        wait_for_logs(playos, "Detected host system version as ${version}", unit="rauc.service")
 
         if is_legacy_mode:
             wait_for_logs(playos, f"Removing {bad_ext4_option} from {target_disk}", unit="rauc.service")
             wait_for_logs(playos, f"Re-mounting {target_disk}", unit="rauc.service")
-            features = playos.succeed(f'tune2fs -l "{target_disk}" | grep "Filesystem features"')
-            t.assertNotIn(bad_ext4_option, features, f"ext4 was formatted with {bad_ext4_option}")
+        else:
+            wait_for_logs(playos, "Host system does not require compatibility fixes", unit="rauc.service")
+
+
+    with TestCase("RAUC install produced a compatible filesystem") as t:
+        features = playos.succeed(
+            f'tune2fs -l "{target_disk}" | grep "Filesystem features"')
+        t.assertNotIn(bad_ext4_option, features,
+                      f"ext4 was formatted with {bad_ext4_option}")
 
 
     with TestCase("System boots into the new bundle") as t:

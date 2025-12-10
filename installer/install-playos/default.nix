@@ -41,14 +41,17 @@ stdenv.mkDerivation {
     chmod +x $out/bin/install-playos
 
     patchShebangs $out/bin/install-playos
-
     # Add required tools to path
     wrapProgram $out/bin/install-playos \
       --prefix PATH ":" ${utillinux}/bin \
       --prefix PATH ":" ${e2fsprogs}/bin \
       --prefix PATH ":" ${dosfstools}/bin \
       --prefix PATH ":" ${grub2_efi}/bin \
-      --prefix PATH ":" ${pv}/bin
+      --prefix PATH ":" ${pv}/bin \
+      --set MKE2FS_CONFIG ${../../base/compatibility/mke2fs.conf}
+      # The last line is only necessary for test installs, because testing/disk/
+      # uses install-playos without the configuration in installer/.
+      # TODO: change testing/disk/ to use installer/
 
   '';
 }
