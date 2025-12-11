@@ -22,7 +22,7 @@ rec {
     ];
 
 
-    max-browser-cache-size = 1024*1024*200; # 200MB, in bytes, not including profile
+    max-browser-cache-size = 1024*1024*250; # 250MB, in bytes, not including profile
 
     module = { config, lib, pkgs, ... }:
     let
