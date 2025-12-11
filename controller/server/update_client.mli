@@ -18,7 +18,7 @@ module type UpdateClientDeps = sig
 end
 
 val make_deps :
-     ?download_dir:string
+     ?download_dir_override:string
   -> (unit -> Uri.t option Lwt.t)
   -> Uri.t
   -> (module UpdateClientDeps)

@@ -21,6 +21,9 @@ rec {
       (import ./application/overlays version)
     ];
 
+
+    max-browser-cache-size = 1024*1024*250; # 250MB, in bytes, not including profile
+
     module = { config, lib, pkgs, ... }:
     let
       sessionName = "kiosk-browser";
@@ -81,6 +84,10 @@ rec {
       # Avoid bloating system image size
       services.speechd.enable = false;
 
+      # Mesa shader cache does not seem to grow above a couple of MB in
+      # practice, but protect against accidents.
+      environment.variables.MESA_SHADER_CACHE_MAX_SIZE = "50M";
+
       # Kiosk session
       services.xserver = {
         enable = true;
@@ -110,6 +117,7 @@ rec {
               export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
 
               ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
+                --max-cache-size ${toString max-browser-cache-size} \
                 ${config.playos.kioskUrl} \
                 http://localhost:3333/
 
@@ -242,7 +250,7 @@ rec {
       };
       services.journald.extraConfig = ''
         Storage=persistent
-        SystemMaxUse=1G
+        SystemMaxUse=750M
       '';
 
       # Set a low default timeout when stopping services, to prevent the Windows 95 shutdown experience
