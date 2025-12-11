@@ -78,7 +78,9 @@ let run_test_case ?(proxy = NoProxy) switch f =
   in
   let () = Sys.mkdir temp_dir 0o777 in
   let module DepsI =
-    (val Update_client.make_deps ~download_dir:temp_dir get_proxy base_url)
+    ( val Update_client.make_deps ~download_dir_override:temp_dir get_proxy
+            base_url
+      )
   in
   let module UpdateC = Update_client.Make (DepsI) in
   f server (module UpdateC : S)

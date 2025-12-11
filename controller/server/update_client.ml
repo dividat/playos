@@ -16,7 +16,8 @@ module type UpdateClientDeps = sig
   val get_proxy : unit -> Uri.t option Lwt.t
 end
 
-let make_deps ?download_dir get_proxy base_url : (module UpdateClientDeps) =
+let make_deps ?download_dir_override get_proxy base_url :
+    (module UpdateClientDeps) =
   (module struct
     let base_url = base_url
 
@@ -27,7 +28,7 @@ let make_deps ?download_dir get_proxy base_url : (module UpdateClientDeps) =
         (* STATE_DIRECTORY is set by systemd when running controller as a service *)
         Sys.getenv_opt "STATE_DIRECTORY" |> Option.value ~default:"/tmp"
       in
-      download_dir |> Option.value ~default:default_download_dir
+      download_dir_override |> Option.value ~default:default_download_dir
   end
 )
 
