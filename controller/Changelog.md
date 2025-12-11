@@ -9,6 +9,8 @@
 
 - os: Ensure the system is not marked as failed due to display selection errors
 - kiosk: Restart kiosk application when renderer process quits unexpectedly
+- os: Use only filesystem options compatible with older installations
+- os: Enforce filesystem compatibility on 2025.3.{0,1,2} during system updates
 
 # [2025.3.2] - 2025-12-04
 
