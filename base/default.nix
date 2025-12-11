@@ -11,6 +11,7 @@ with lib;
     (import ./networking/default.nix { hostName = safeProductName; inherit lib pkgs config; })
     (import ./controller-service.nix { inherit config lib pkgs playos-controller; })
     ./networking/watchdog
+    ./denixify.nix
     ./hardening.nix
     ./localization.nix
     ./remote-maintenance.nix
@@ -39,15 +40,6 @@ with lib;
 
     # disable installation of bootloader
     boot.loader.grub.enable = false;
-
-    # disable inaccessible documentation
-    documentation = {
-      enable = false;
-      doc.enable = false;
-      info.enable = false;
-      man.enable = false;
-      nixos.enable = false;
-    };
 
     playos = { inherit version kioskUrl; };
 

@@ -41,6 +41,7 @@ rec {
         ./application/playos-status.nix
         ./application/power-management/default.nix
         ./application/limit-vtes.nix
+        ./application/trim.nix
       ];
 
       assertions = with lib; [
@@ -98,6 +99,7 @@ rec {
           xterm.enable = false;
           session = [{
             name = sessionName;
+            bgSupport = true; # We don't need wallpaper management tools
             start = ''
               # Disable screen-saver control (screen blanking)
               xset s off
