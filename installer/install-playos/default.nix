@@ -48,10 +48,7 @@ stdenv.mkDerivation {
       --prefix PATH ":" ${dosfstools}/bin \
       --prefix PATH ":" ${grub2_efi}/bin \
       --prefix PATH ":" ${pv}/bin \
-      --set MKE2FS_CONFIG ${../../base/compatibility/mke2fs.conf}
-      # The last line is only necessary for test installs, because testing/disk/
-      # uses install-playos without the configuration in installer/.
-      # TODO: change testing/disk/ to use installer/
+      --set-default MKE2FS_CONFIG ${../../base/compatibility/mke2fs.conf}
 
   '';
 }

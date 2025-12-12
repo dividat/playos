@@ -4,7 +4,6 @@ with lib;
 
 {
   imports = [
-    ../base/compatibility
     (pkgs.importFromNixos "modules/installer/cd-dvd/iso-image.nix")
   ];
 
