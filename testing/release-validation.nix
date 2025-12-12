@@ -85,6 +85,7 @@ in
         # This override is not needed if application.version is "already" newer
         # than base
         versionOverride = nextSystemVersion;
+        # TODO: set users.root.initialHashedPassword = "" to allow debugging post-update
     }).components.unsignedRaucBundle,
 }:
 let
