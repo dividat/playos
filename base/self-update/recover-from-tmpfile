@@ -1,4 +1,5 @@
 #! /usr/bin/env bash
+# TODO: rename this to "status-file-sync-and-recovery" and update description
 
 # This script is designed to recover files written with glib's
 # g_file_set_contents function. On journaling filesystems this function
@@ -9,38 +10,88 @@
 # temporary file. This is the situation this script is designed to
 # detect and recover from, by repeating the moving from temp file to
 # target.
+#
+# TODO: it might also be possible to recover from /boot/FSCKXXXX.rec
+# produced after systemd-fsck runs
 
-FILE="$1"
+SOURCE_FILE="$1" # e.g. /boot/status.ini
+
+TARGET_FILE="$2" # e.g. /var/lib/rauc/status.ini
+
+# Step 1: Check if there's anything that can be used to recover $SOURCE_FILE,
+# set $SOURCE_FILE_FINAL_CANDIDATE to either original SOURCE_FILE or recoverable
+# version if they are viable. If not, leave empty.
 
 # Get absolute path for given file name
-TARGET="$(realpath --no-symlinks "$FILE")"
+SOURCE_FILE_CURRENT="$(realpath --no-symlinks "$SOURCE_FILE")"
 
-if ! [ -s "$TARGET" ]; then
+SOURCE_FILE_FINAL_CANDIDATE=
+
+if ! [ -s "$SOURCE_FILE_CURRENT" ]; then
   # We expect a random alnum suffix of "up to" 7 characters
   # (https://docs.gtk.org/glib/func.file_set_contents_full.html).
   # The ones actually observed were 6 characters long, and we want to
   # ignore files that don't seem likely to be tempfile copies.
   TMP_SUFFIX="\.\w{5,7}"
 
-  PARENT="$(dirname "$TARGET")"
+  PARENT="$(dirname "$SOURCE_FILE_CURRENT")"
   # List temp files based off of the target's name, with newer files first
-  CANDIDATES=($(ls -t --time=birth -d "$PARENT/"* | grep -E "$TARGET$TMP_SUFFIX"))
+  CANDIDATES=($(ls -t --time=birth -d "$PARENT/"* | grep -E "$SOURCE_FILE_CURRENT$TMP_SUFFIX"))
   GREP_EXIT="$?"
 
   if [ "$GREP_EXIT" -eq 0 ] && [ "${#CANDIDATES[@]}" -ge 1 ]; then
     # Use the first, i.e. newest alternative as replacement
     REPLACEMENT="${CANDIDATES[0]}"
     if [ -s "$REPLACEMENT" ]; then
-      mv "$REPLACEMENT" "$FILE"
-      echo "Detected missing or empty '$FILE' and replaced it with '$REPLACEMENT'."
+      echo "Candidate $REPLACEMENT is not empty and can be used for recovery"
+      SOURCE_FILE_FINAL_CANDIDATE=$REPLACEMENT
     else
       # If the newest alternative is empty, we do not know what to do.
       # Do not touch any evidence and abort.
-      echo "Both '$FILE' and recovery candidate '$REPLACEMENT' are empty. Aborting."
+      echo "Both '$SOURCE_FILE' and recovery candidate '$REPLACEMENT' are empty. No candidate."
     fi
   else
-    echo "The file '$FILE' seems empty, but no alternatives were found. Aborting."
+    echo "The file '$SOURCE_FILE' seems empty, but no alternatives were found. No candidate."
   fi
 else
-  echo "The file '$FILE' seems OK. Nothing to do."
+  echo "The file '$SOURCE_FILE' seems OK."
+  SOURCE_FILE_FINAL_CANDIDATE="$SOURCE_FILE"
+fi
+
+# Step 2: Sync-up $SOURCE_FILE and $TARGET_FILE
+
+if [[ -z $SOURCE_FILE_FINAL_CANDIDATE ]] && ! [[ -s $TARGET_FILE ]] ; then
+    echo "No SOURCE_FILE_FINAL_CANDIDATE and empty TARGET_FILE, aborting."
+elif [[ -z $SOURCE_FILE_FINAL_CANDIDATE ]] && [[ -s $TARGET_FILE ]]; then
+    echo "No SOURCE_FILE_FINAL_CANDIDATE, but $TARGET_FILE is non-empty. Setting $SOURCE_FILE to $TARGET_FILE"
+    cp -av $TARGET_FILE $SOURCE_FILE
+    touch -a -m --date=@0  $SOURCE_FILE
+else
+    echo "Final SOURCE_FILE_FINAL_CANDIDATE is $SOURCE_FILE_FINAL_CANDIDATE, $TARGET_FILE is non-empty."
+
+    echo "Checking which file is latest"
+    if [[ $SOURCE_FILE_FINAL_CANDIDATE -nt $TARGET_FILE ]]; then
+        echo "$SOURCE_FILE_FINAL_CANDIDATE is newer than $TARGET_FILE"
+
+        if [[ "$SOURCE_FILE" != "$SOURCE_FILE_FINAL_CANDIDATE" ]]; then
+            echo "Recovering $SOURCE_FILE using $SOURCE_FILE_FINAL_CANDIDATE"
+            mv -v $SOURCE_FILE_FINAL_CANDIDATE $SOURCE_FILE
+        fi
+
+        echo "Updating $TARGET_FILE using $SOURCE_FILE"
+        cp -av $SOURCE_FILE $TARGET_FILE
+
+    else
+        echo "$TARGET_FILE is newer than $SOURCE_FILE_FINAL_CANDIDATE".
+
+        echo "Updating $SOURCE_FILE using $TARGET_FILE"
+        cp -av $TARGET_FILE $SOURCE_FILE
+        touch -a -m --date=@0  $SOURCE_FILE
+
+        # not strictly necessary, but good to cleanup leftovers
+        if [[ "$SOURCE_FILE" != "$SOURCE_FILE_FINAL_CANDIDATE" ]]; then
+            echo "Removing outdated $SOURCE_FILE_FINAL_CANDIDATE"
+            rm -v $SOURCE_FILE_FINAL_CANDIDATE
+        fi
+    fi
 fi

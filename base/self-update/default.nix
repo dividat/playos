@@ -1,8 +1,28 @@
 { config, pkgs, lib, ... }:
 let
   cfg = config.playos.selfUpdate;
+
+  # propagate status.ini update to legacy systems
+  postInstallHandler = pkgs.writeShellApplication {
+    name = "post-install";
+    runtimeInputs = with pkgs; [ coreutils ];
+    text = ''
+        tmpfile=$(mktemp)
+        trap 'rm -f $tmpfile' EXIT
+
+        cp -av /var/lib/rauc/status.ini "$tmpfile"
+        # Ensure /boot/status.ini is always order than /var/lib/rauc/status.ini
+        # to avoid statusfile-recovery.service from overwriting it. See below
+        # for details.
+        touch -a -m --date=@0 "$tmpfile"
+        cp -av "$tmpfile" /boot/status.ini
+        sync
+    '';
+  };
 in
 {
+  imports = [ ../volatile-root.nix ];
+
   options = {
     playos.selfUpdate = with lib; {
       enable = mkEnableOption "Online self update";
@@ -21,6 +41,12 @@ in
 
     services.dbus.packages = with pkgs; [ rauc ];
 
+    playos.storage.persistentFolders."/var/lib/rauc" = {
+        mode = "0700";
+        user = "root";
+        group = "root";
+    };
+
     systemd.services.rauc = {
       description = "RAUC Update Service";
       serviceConfig = {
@@ -28,6 +54,7 @@ in
         BusName= "de.pengutronix.rauc";
         ExecStart = "${pkgs.rauc}/bin/rauc service";
         User = "root";
+        StateDirectory = "rauc";
       };
       wantedBy = [ "multi-user.target" ];
     };
@@ -38,7 +65,7 @@ in
         compatible=dividat-play-computer
         bootloader=grub
         grubenv=/boot/grub/grubenv
-        statusfile=/boot/status.ini
+        statusfile=/var/lib/rauc/status.ini
 
         [keyring]
         path=cert.pem
@@ -52,6 +79,9 @@ in
         device=/dev/disk/by-label/system.b
         type=ext4
         bootname=b
+
+        [handlers]
+        post-install=${lib.getExe postInstallHandler}
       '';
     };
 
@@ -59,23 +89,26 @@ in
       source = cfg.updateCert;
     };
 
-    # This service adjusts for a known weakness of the update mechanism that is due to the
-    # use of the `/boot` partition for storing RAUC's statusfile. The `/boot` partition
-    # was chosen to use FAT32 in order to use it as EFI system partition. FAT32 has no
-    # journaling and so the atomicity guarantees RAUC tries to give for statusfile updates
-    # are diminished. This service looks for leftovers from interrupted statusfile updates
-    # and tries to recover.
-    # Note that as previous installations will keep their boot partition unchanged even
-    # after system updates, this or a similar recovery mechanism would be required even if
-    # we change partition layout for new systems going forward.
+
+    # When one of the RAUC slots is legacy (meaning, RAUC state is persisted in
+    # /boot/status.ini), we need to copy it over to /var/lib/rauc in case it is
+    # newer than /var/lib/rauc/status.ini or if /var/lib/rauc/status.ini is
+    # missing
+    #
+    # Before comparing the the modified times, we deal with the lack of
+    # journalling/atomic writes on FAT32, by attempting to recover a partially
+    # written /boot/status.ini.
     systemd.services.statusfile-recovery = {
       description = "status.ini recovery";
-      serviceConfig.ExecStart = "${pkgs.bash}/bin/bash ${./recover-from-tmpfile} /boot/status.ini";
+      # TODO: use pkgs.writeShellApplication
+      serviceConfig.ExecStart = "${pkgs.bash}/bin/bash ${./recover-from-tmpfile} /boot/status.ini /var/lib/rauc/status.ini";
       serviceConfig.Type = "oneshot";
       serviceConfig.User = "root";
       serviceConfig.StandardOutput = "syslog";
       serviceConfig.SyslogIdentifier = "statusfile-recovery";
       serviceConfig.RemainAfterExit = true;
+      after = [ "local-fs.target" ];
+      before = [ "rauc.service" ];
       wantedBy = [ "multi-user.target" ];
     };
 
