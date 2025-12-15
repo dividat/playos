@@ -1,4 +1,4 @@
-# [UNRELEASED]
+# [2025.3.3-VALIDATION] - 2025-12-15
 
 ## Changed
 
@@ -8,8 +8,8 @@
 
 ## Fixed
 
-- os: Ensure the system is not marked as failed due to display selection errors
 - kiosk: Restart kiosk application when renderer process quits unexpectedly
+- os: Ensure the system is not marked as failed due to display selection errors
 - os: Use only filesystem options compatible with older installations
 - os: Enforce filesystem compatibility on 2025.3.{0,1,2} during system updates
 
