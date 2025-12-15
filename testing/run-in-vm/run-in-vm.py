@@ -31,7 +31,9 @@ DEFAULT_QEMU_OPTS = [
     '-enable-kvm',
     '-m','2048',
     '-smp', '4',
-    '-cpu', 'max'
+    '-cpu', 'max',
+    '-device', 'i6300esb,id=watchdog0',
+    '-action', 'watchdog=reset'
 ]
 
 # set DISK to None if not substituted
