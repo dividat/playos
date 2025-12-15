@@ -7,6 +7,7 @@
 - kiosk: Allow kiosk page to trigger reload in a new renderer process for memory hygiene
 - controller: Show a label for networks in which a Senso is found
 - os: Add network watchdog for recovery from temporary connectivity issues
+- os: Add a failsafe mechanism to automatically restart a fully unresponsive system
 
 ## Changed
 
