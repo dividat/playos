@@ -8,20 +8,23 @@ from PyQt6.QtWidgets import QApplication
 
 from kiosk_browser import main_widget
 
-# Workaround for https://bugreports.qt.io/browse/QTBUG-130273 in Qt 6.8.1
-# Should be fixed with QT 6.8.2
 # Note: doing this via env variables rather than passing `--webEngineArgs`,
 # because the env variable overrides the args (and so is easy to break in tests,
 # etc)
-def tempFixAudioIssues():
+def setChromiumFlags(max_cache_size: int):
     curFlags = os.environ.get('QTWEBENGINE_CHROMIUM_FLAGS', "")
-    os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = curFlags + " --disable-features=FFmpegAllowLists"
+    # Workaround for https://bugreports.qt.io/browse/QTBUG-130273 in Qt 6.8.1
+    # Should be fixed with QT 6.8.2
+    disableFFmpegAllowLists = "--disable-features=FFmpegAllowLists"
+    setDiskCacheSize = f"--disk-cache-size={max_cache_size}"
+    flags = [curFlags, disableFFmpegAllowLists, setDiskCacheSize]
+    os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = " ".join(flags)
 
-def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
+def start(kiosk_url, settings_url, toggle_settings_key, max_cache_size, fullscreen = True):
 
     logging.basicConfig(level=logging.INFO)
 
-    tempFixAudioIssues()
+    setChromiumFlags(max_cache_size)
 
     app = QApplication(sys.argv)
     app.setApplicationName("kiosk-browser")
@@ -30,7 +33,8 @@ def start(kiosk_url, settings_url, toggle_settings_key, fullscreen = True):
         kiosk_url = parseUrl(kiosk_url),
         settings_url = parseUrl(settings_url),
         toggle_settings_key = QKeySequence(toggle_settings_key),
-        fullscreen = fullscreen
+        fullscreen = fullscreen,
+        max_cache_size = max_cache_size
     )
 
     mainWidget.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)

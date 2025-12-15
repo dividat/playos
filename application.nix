@@ -1,7 +1,7 @@
 rec {
     fullProductName = "Dividat PlayOS";
     safeProductName = "playos";
-    version = "2025.3.2";
+    version = "2025.3.3-VALIDATION";
 
     greeting = label: ''
                                            _
@@ -20,6 +20,9 @@ rec {
     overlays = [
       (import ./application/overlays version)
     ];
+
+
+    max-browser-cache-size = 1024*1024*250; # 250MB, in bytes, not including profile
 
     module = { config, lib, pkgs, ... }:
     let
@@ -91,6 +94,10 @@ rec {
       # Avoid bloating system image size
       services.speechd.enable = false;
 
+      # Mesa shader cache does not seem to grow above a couple of MB in
+      # practice, but protect against accidents.
+      environment.variables.MESA_SHADER_CACHE_MAX_SIZE = "50M";
+
       # Kiosk session
       services.xserver = {
         enable = true;
@@ -121,6 +128,7 @@ rec {
               export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
 
               ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
+                --max-cache-size ${toString max-browser-cache-size} \
                 ${config.playos.kioskUrl} \
                 http://localhost:3333/
 
@@ -186,18 +194,26 @@ rec {
       services.udev.extraRules = ''
         ACTION=="change", SUBSYSTEM=="drm", RUN+="${pkgs.systemd}/bin/systemctl start select-display.service"
       '';
-      systemd.services."select-display" = {
+      systemd.services."select-display" = let
+        PlayXauthorityFile = "${config.users.users.play.home}/.Xauthority";
+      in
+      {
         description = "Select best display to output to";
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = "${selectDisplay}/bin/select-display";
+          ExecStart = "-${selectDisplay}/bin/select-display";
           User = "play";
+          Restart = "no";
+        };
+        unitConfig = {
+          ConditionFileNotEmpty = PlayXauthorityFile;
         };
         environment = {
-          XAUTHORITY = "${config.users.users.play.home}/.Xauthority";
+          XAUTHORITY = PlayXauthorityFile;
           DISPLAY = ":0";
         };
         after = [ "graphical.target" ];
+        requisite = [ "display-manager.service" ];
       };
 
       # Audio
@@ -247,7 +263,7 @@ rec {
       };
       services.journald.extraConfig = ''
         Storage=persistent
-        SystemMaxUse=1G
+        SystemMaxUse=750M
       '';
 
       # Set a low default timeout when stopping services, to prevent the Windows 95 shutdown experience

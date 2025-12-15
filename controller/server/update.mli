@@ -41,7 +41,9 @@ type state =
 
 type config =
   { (* time to sleep in seconds until retrying after a (Curl/HTTP) error *)
-    error_backoff_duration : sleep_duration
+    http_error_backoff_duration : sleep_duration
+  ; (* time to sleep in seconds until retrying after installation failed *)
+    install_error_backoff_duration : sleep_duration
   ; (* time to sleep in seconds between checking for available updates *)
     check_for_updates_interval : sleep_duration
   }

@@ -60,7 +60,7 @@ class ReloadHandler(QtCore.QObject):
 
 
 class BrowserWidget(QtWidgets.QWidget):
-    def __init__(self, url, get_current_proxy, parent, keyboard_detector):
+    def __init__(self, url, get_current_proxy, parent, max_cache_size, keyboard_detector):
         QtWidgets.QWidget.__init__(self, parent)
         self.setStyleSheet(f"background-color: white;")
 
@@ -83,11 +83,15 @@ class BrowserWidget(QtWidgets.QWidget):
         self._loading_page = loading_page(self)
         self._network_error_page = network_error_page(self)
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
+        self._profile.setHttpCacheMaximumSize(max_cache_size)
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
         self._focus_shift_script = injected_scripts.FocusShiftScript()
         self._input_with_enter_script = injected_scripts.EnableInputToggleWithEnterScript()
         self._force_focused_element_highlight_script = injected_scripts.ForceFocusedElementHighlightingScript()
         self._play_bridge_script = injected_scripts.PlayBridge()
+
+        # Handle page (renderer) kills
+        self._webview.renderProcessTerminated.connect(self._handle_render_process_terminated)
 
         # Handle page (renderer) kills
         self._webview.renderProcessTerminated.connect(self._handle_render_process_terminated)

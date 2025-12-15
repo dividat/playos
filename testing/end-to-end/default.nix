@@ -1,4 +1,4 @@
-args@{pkgs, disk, safeProductName, updateUrl, kioskUrl, ...}:
+args@{pkgs, disk, safeProductName, updateUrl, kioskUrl, version, ...}:
 with builtins;
 with pkgs.lib;
 let

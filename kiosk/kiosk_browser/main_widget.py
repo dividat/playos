@@ -32,7 +32,7 @@ class MainWidget(QtWidgets.QWidget):
     """
 
     def __init__(self, kiosk_url: str, settings_url: str,
-                 toggle_settings_key: str, fullscreen: bool):
+                 toggle_settings_key: str, fullscreen: bool, max_cache_size: int):
         super(MainWidget, self).__init__()
         # Display
         self._primary_screen_con = None
@@ -58,6 +58,7 @@ class MainWidget(QtWidgets.QWidget):
             url = kiosk_url,
             get_current_proxy = proxy.get_current,
             parent = self,
+            max_cache_size = max_cache_size,
             keyboard_detector=self._keyboard_detector)
         self._dialogable_browser = dialogable_widget.DialogableWidget(
             parent = self,

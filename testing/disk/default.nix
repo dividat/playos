@@ -8,8 +8,9 @@
 , rescueSystem
 , systemImage
 
-, # Size of data partition in MiB
-  dataPartSizeMiB ? 400
+, # The data partition needs to be big enough to store at least a single RAUC
+  # bundle, which currently is ~1.4GB, + other cached/persisted stuff
+  dataPartSizeMiB ? 2000
 }:
 with lib;
 let

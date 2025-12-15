@@ -26,6 +26,14 @@ with lib;
 
     services.avahi.enable = mkIf hasAnnotatedServices true;
 
+    # Use the persistent partition for storing controller state only to avoid
+    # storing the RAUC bundles in memory (tmpfs)
+    playos.storage.persistentFolders."/var/lib/playos-controller" = {
+      mode = "0755";
+      user = "root";
+      group = "root";
+    };
+
     systemd.services =
     let
       systemdServices = {
@@ -36,6 +44,11 @@ with lib;
             User = "root";
             RestartSec = "10s";
             Restart = "always";
+            ExecStartPre = "-${pkgs.writeShellScript "clear-state" ''
+                rm -rf /var/lib/playos-controller/*
+                rm -rf /var/lib/playos-controller/.*
+            ''}";
+            StateDirectory = "playos-controller";
           };
           wantedBy = [ "multi-user.target" ];
           requires = [ "connman.service" ];

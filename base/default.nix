@@ -18,6 +18,7 @@ with lib;
     ./self-update
     ./system-partition.nix
     ./volatile-root.nix
+    ./compatibility
   ];
 
   options = {
