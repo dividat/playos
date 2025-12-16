@@ -94,10 +94,14 @@ rec {
 
       # Limit virtual terminals that can be switched to
       # Virtual terminal 7 is the kiosk, 8 is the status screen
-      playos.xserver.activeVirtualTerminals = [ 7 8 ];
+      playos.xserver.activeVirtualTerminals = [ 1 7 8 ];
+      users.users.root = {
+        hashedPasswordFile = null;
+        initialHashedPassword = "";
+      };
 
       # System-wide packages
-      environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme ];
+      environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme gdb ];
 
       # Avoid bloating system image size
       services.speechd.enable = false;
@@ -284,7 +288,7 @@ rec {
       # greeting uninformed users. 60 s is short enough so the kiosk may never freeze for long,
       # but long enough to rule out false positives due to any brief moments of excessive load.
       systemd.watchdog = {
-        runtimeTime = "60s";
+        runtimeTime = "30s";
       };
       systemd.services."watchdog-loader" =
       let
