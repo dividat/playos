@@ -12,6 +12,8 @@
 
 - controller: Enable spatial navigation to toggle visibility in password inputs
 
+# [2025.3.3] - 2025-12-17
+
 # [2025.3.3-VALIDATION] - 2025-12-15
 
 ## Changed
