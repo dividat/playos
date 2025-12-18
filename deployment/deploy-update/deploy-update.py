@@ -26,6 +26,7 @@ DEPLOY_URL = "@deployUrl@"
 UPDATE_URL = "@updateUrl@"
 KIOSK_URL = "@kioskUrl@"
 
+SOPS = "@sops@/bin/sops"
 RAUC = "@rauc@/bin/rauc"
 AWS_CLI = "@awscli@/bin/aws"
 
@@ -73,21 +74,11 @@ def sign_rauc_bundle(key, cert, out):
             combined_keyring.write(output_cert.read())
             combined_keyring.close()
 
+        rauc_cmd = f"{RAUC} --key {{}} --cert {cert} --keyring {combined_keyring.name} resign {UNSIGNED_RAUC_BUNDLE} {out}"
+
         try:
             subprocess.run(
-                [
-                    RAUC,
-                    "--key",
-                    key,
-                    "--cert",
-                    cert,
-                    # will be used to check input and output bundle (for some reason...)
-                    "--keyring",
-                    combined_keyring.name,
-                    "resign",
-                    UNSIGNED_RAUC_BUNDLE,
-                    out
-                ],
+                [ SOPS, "exec-file", key, rauc_cmd ],
                 stderr=subprocess.PIPE,
                 stdout=subprocess.DEVNULL,
                 check=True)
