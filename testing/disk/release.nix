@@ -12,11 +12,12 @@
 with pkgs;
 with lib;
 let
-  # all sizes in MiB
+  # NOTE: partSizes are hard-coded in install-playos, here only used for
+  # computing the total diskSizeMiB
   partSizes = {
-    boot = 525; # 525 MiB (matches install-playos default)
-    system = 1024 * 9;  # 9 GiB (install-playos default - 1GiB)
-    data = 400; # 400 MiB (same as testing/disk/default.nix)
+    boot = 525; # 525 MiB
+    system = 1000 * 9;  # 9 GB
+    data = 2000; # 2000 MB
   };
   diskSizeMiB = 8 + partSizes."boot" + partSizes."data" + (partSizes."system" * 2) + 1;
 in

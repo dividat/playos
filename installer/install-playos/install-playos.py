@@ -13,7 +13,7 @@ import re
 from datetime import datetime
 
 PARTITION_SIZE_GB_SYSTEM = 9
-PARTITION_SIZE_GB_DATA = 1
+PARTITION_SIZE_GB_DATA = 2
 
 GRUB_CFG = "@grubCfg@"
 GRUB_ENV = '/mnt/boot/grub/grubenv'
