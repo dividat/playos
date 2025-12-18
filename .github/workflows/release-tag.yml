@@ -4,6 +4,16 @@ on:
   push:
     tags:
       - "*"
+  workflow_dispatch:
+    inputs:
+      uploadDiskOnly:
+        description: |
+          If enabled, will only re-build and re-upload the release disk, without
+          creating a new release. Uses the version of PlayOS defined in
+          application.nix, without verifying that it matches the git tag.
+        type: boolean
+        default: false
+
 
 permissions:
   contents: write
@@ -39,11 +49,18 @@ jobs:
       - name: Make magic-nix-cache read-only by removing post-build-hook
         run: sed -i '/post-build-hook = magic-nix-cache-build-hook/d' $HOME/.config/nix/nix.conf
 
-      - name: Validate tag
+      - name: Get version from application.nix
         run: |
-          app_vsn="$(nix eval --raw -f application.nix 'version')"
-          if [ "$app_vsn" != "$GITHUB_REF_NAME" ]; then
-            echo "Git tag ($GITHUB_REF_NAME) does not match version in application.nix ($app_vsn), aborting!"
+          PLAYOS_VERSION="$(nix eval --raw -f application.nix 'version')"
+
+          echo "PLAYOS_VERSION=$PLAYOS_VERSION" >> $GITHUB_ENV
+
+
+      - name: Validate tag
+        if: ${{ inputs.uploadDiskOnly != true }}
+        run: |
+          if [ "$PLAYOS_VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "Git tag ($GITHUB_REF_NAME) does not match version in application.nix ($PLAYOS_VERSION), aborting!"
             exit 1
           fi
 
@@ -58,23 +75,25 @@ jobs:
           aws-region: eu-central-1
 
       - name: Publish to S3
-        run: ./.github/workflows/upload-test-disk.sh "$GITHUB_REF_NAME"
+        run: ./.github/workflows/upload-test-disk.sh "$PLAYOS_VERSION"
 
       - name: Create Release summary
-        run: ./.github/workflows/gen-release-summary.sh "$GITHUB_REF_NAME" > ./release-notes.md
+        if: ${{ inputs.uploadDiskOnly != true }}
+        run: ./.github/workflows/gen-release-summary.sh "$PLAYOS_VERSION" > ./release-notes.md
 
       - name: Create Release
+        if: ${{ inputs.uploadDiskOnly != true }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           extra_args=""
-          if [[ "$GITHUB_REF_NAME" == *VALIDATION ]]; then
+          if [[ "$PLAYOS_VERSION" == *VALIDATION ]]; then
             extra_args="--prerelease"
-          elif [[ "$GITHUB_REF_NAME" == *TEST ]]; then
+          elif [[ "$PLAYOS_VERSION" == *TEST ]]; then
             extra_args="--draft"
           fi
 
           gh release create --verify-tag \
             -F ./release-notes.md \
             $extra_args \
-            "$GITHUB_REF_NAME"
+            "$PLAYOS_VERSION"
