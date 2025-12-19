@@ -269,6 +269,16 @@ rec {
       # Set a low default timeout when stopping services, to prevent the Windows 95 shutdown experience
       systemd.extraConfig = "DefaultTimeoutStopSec=15s";
 
+      # Activate the hardware watchdog with systemd responsible for periodic signs-of-life.
+      #
+      # This will instruct the PC to reset itself if the kernel or systemd become completely
+      # unresponsive, as a manner of last resort, avoiding an inexplicably frozen kiosk system
+      # greeting uninformed users. 60 s is short enough so the kiosk may never freeze for long,
+      # but long enough to rule out false positives due to any brief moments of excessive load.
+      systemd.watchdog = {
+        runtimeTime = "60s";
+      };
+
       playos.hardening.enable = true;
 
     };

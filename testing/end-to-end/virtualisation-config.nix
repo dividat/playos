@@ -27,6 +27,7 @@
 
         virtualisation.qemu.options = [
             "-enable-kvm"
+            "-device i6300esb,id=watchdog0" "-action watchdog=reset"
             # HACK: normally the `system.build.vm` derivation produces a start
             # script that creates a (temporary or overlay) filesystem image file
             # prior to launching a VM. Since it is not configurable to our
