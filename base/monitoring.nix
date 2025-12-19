@@ -327,7 +327,7 @@ in
           interfaces = [
             "wl*"
             "eth*"
-            "enp*"
+            "en*"
           ];
           fieldinclude = [
             "bytes_sent"
