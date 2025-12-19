@@ -299,7 +299,7 @@ in
           mount_points = [
             "/" # tmpfs overlay
             config.playos.storage.persistentDataPartition.mountPath # /mnt/data
-          ] ++ (builtins.attrNames config.playos.storage.persistentFolders); # individual persistent folders
+          ];
 
           fieldinclude = [
             "free"
