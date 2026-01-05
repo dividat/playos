@@ -1,5 +1,5 @@
 { stdenv
-, substituteAll
+, replaceVars
 , makeWrapper
 , grub2_efi
 , e2fsprogs
@@ -24,8 +24,7 @@ in
 stdenv.mkDerivation {
   name = "install-playos-${version}";
 
-  src = substituteAll {
-    src = ./install-playos.py;
+  src = replaceVars ./install-playos.py {
     inherit grubCfg systemImage rescueSystem systemClosureInfo version updateUrl kioskUrl;
     inherit python;
   };
