@@ -219,7 +219,7 @@ rec {
       # Audio
       services.pipewire.enable = false;
 
-      hardware.pulseaudio = {
+      services.pulseaudio = {
         enable = true;
         extraConfig = ''
           # Use HDMI output

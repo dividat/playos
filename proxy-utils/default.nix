@@ -8,7 +8,7 @@ python3Packages.buildPythonPackage rec {
     src = ./.;
 
     nativeBuildInputs = [
-        wrapGAppsHook
+        wrapGAppsHook3
     ];
 
     nativeCheckInputs = with python3Packages; [

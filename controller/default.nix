@@ -52,7 +52,7 @@ ocamlPackages.buildDunePackage rec {
 
   buildInputs = with ocamlPackages; [
     opium
-    ocaml_lwt
+    lwt
     logs
     fpath
     tyxml

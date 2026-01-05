@@ -4,7 +4,7 @@
 , grub2_efi
 , e2fsprogs
 , dosfstools
-, utillinux
+, util-linux
 , python3
 , pv
 , closureInfo
@@ -43,7 +43,7 @@ stdenv.mkDerivation {
     patchShebangs $out/bin/install-playos
     # Add required tools to path
     wrapProgram $out/bin/install-playos \
-      --prefix PATH ":" ${utillinux}/bin \
+      --prefix PATH ":" ${util-linux}/bin \
       --prefix PATH ":" ${e2fsprogs}/bin \
       --prefix PATH ":" ${dosfstools}/bin \
       --prefix PATH ":" ${grub2_efi}/bin \
