@@ -33,7 +33,7 @@ python3Packages.buildPythonApplication rec {
 
   nativeBuildInputs = [
     qt6.wrapQtAppsHook
-    wrapGAppsHook
+    wrapGAppsHook3
   ];
 
   checkPhase = ''
