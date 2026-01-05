@@ -14,9 +14,9 @@ in
 stdenv.mkDerivation {
   name = "install-playos-${systemMetadata.version}";
 
-  src = substituteAll {
-    src = ./install-playos.py;
-    inherit grubCfg systemImage rescueSystem systemClosureInfo;
+  src = replaceVars ./install-playos.py {
+    grubCfg = "${grubCfg}";
+    inherit systemImage rescueSystem systemClosureInfo;
     inherit (systemMetadata) version kioskUrl updateUrl;
     inherit python;
   };
