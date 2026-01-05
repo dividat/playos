@@ -18,6 +18,9 @@ python3Packages.buildPythonApplication rec {
       --replace "@focus_shift_path@" "${pkgs.focus-shift.main}" \
   '';
 
+  pyproject = true;
+  build-system = with python3Packages; [ setuptools ];
+
   buildInputs = [
     bashInteractive
     makeWrapper

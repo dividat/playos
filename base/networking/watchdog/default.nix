@@ -4,41 +4,44 @@ with pkgs;
 let
   cfg = config.playos.networking.watchdog;
   watchdog = python3Packages.buildPythonApplication rec {
-      pname = "playos_network_watchdog";
-      version = "0.1.0";
+    pname = "playos_network_watchdog";
+    version = "0.1.0";
 
-      src = ./.;
+    src = ./.;
 
-      nativeBuildInputs = [
-          wrapGAppsHook
-      ];
+    pyproject = true;
+    build-system = with python3Packages; [ setuptools ];
+
+    nativeBuildInputs = [
+      wrapGAppsHook3
+    ];
 
     nativeCheckInputs = with python3Packages; [
-        types-requests
-        ruff
-        mypy
+      types-requests
+      ruff
+      mypy
     ];
 
     checkPhase = ''
-        runHook preCheck
+      runHook preCheck
 
-        ruff check
+      ruff check
 
-        mypy \
-            --no-color-output \
-            --pretty \
-            --exclude 'build/.*' \
-            --exclude setup.py \
-            .
+      mypy \
+          --no-color-output \
+          --pretty \
+          --exclude 'build/.*' \
+          --exclude setup.py \
+          .
 
-        runHook postCheck
+      runHook postCheck
      '';
 
       propagatedBuildInputs = with python3Packages; [
-          dbus-python
-          pygobject3
-          requests
-          playos-proxy-utils
+        dbus-python
+        pygobject3
+        requests
+        playos-proxy-utils
       ];
   };
 in
