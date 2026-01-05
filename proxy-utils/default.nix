@@ -7,6 +7,9 @@ python3Packages.buildPythonPackage rec {
 
     src = ./.;
 
+    pyproject = true;
+    build-system = with python3Packages; [ setuptools ];
+
     nativeBuildInputs = [
         wrapGAppsHook3
     ];
