@@ -21,16 +21,16 @@ in {
   # Ignore system control keys that do not make sense for kiosk applications.
   # Ignore power key as well, but set up a systemd service shutting down the
   # computer on Power Button key press.
-  services.logind.extraConfig = ''
-    HandlePowerKey=ignore
-    HandleRebootKey=ignore
-    HandleSuspendKey=ignore
-    HandleHibernateKey=ignore
-    HandlePowerKeyLongPress=poweroff
-    HandleRebootKeyLongPress=poweroff
-    HandleSuspendKeyLongPress=poweroff
-    HandleHibernateKeyLongPress=poweroff
-  '';
+  services.logind.settings.Login = {
+    HandlePowerKey = "ignore";
+    HandleRebootKey = "ignore";
+    HandleSuspendKey = "ignore";
+    HandleHibernateKey = "ignore";
+    HandlePowerKeyLongPress = "poweroff";
+    HandleRebootKeyLongPress = "poweroff";
+    HandleSuspendKeyLongPress = "poweroff";
+    HandleHibernateKeyLongPress = "poweroff";
+  };
 
   users = {
     users.${user} = {

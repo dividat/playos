@@ -267,7 +267,9 @@ rec {
       '';
 
       # Set a low default timeout when stopping services, to prevent the Windows 95 shutdown experience
-      systemd.extraConfig = "DefaultTimeoutStopSec=15s";
+      systemd.settings.Manager = {
+        DefaultTimeoutStopSec = "15s";
+      };
 
       playos.hardening.enable = true;
 
