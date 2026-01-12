@@ -79,7 +79,7 @@ in
         },
 
     # PlayOS version we are updating into.
-    # Only used in the stub update server, not set in the bundle, etc.
+    # Used in the stub update server and set in the bundle.
     nextSystemVersion ? "9999.99.99",
 
     # PlayOS bundle for the next update
