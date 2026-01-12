@@ -16,7 +16,7 @@ let
   partSizes = {
     boot = 525; # 525 MiB (matches install-playos default)
     system = 1024 * 9;  # 9 GiB (install-playos default - 1GiB)
-    data = 400; # 400 MiB (same as testing/disk/default.nix)
+    data = 2000; # 2000 MiB (same as testing/disk/default.nix)
   };
   diskSizeMiB = 8 + partSizes."boot" + partSizes."data" + (partSizes."system" * 2) + 1;
 in
