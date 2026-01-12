@@ -49,6 +49,10 @@ let
             url = "${baseS3URL}/playos-release-disk-2025.3.2.img.zst";
             hash = "sha256-txgvrLtO2qq8JZlU/ijONnVLAMLK/6QyRutwej5UEWY=";
         };
+        "2025.3.3" = {
+            url = "${baseS3URL}/playos-release-disk-2025.3.3.img.zst";
+            hash = "sha256-u71dsbtnzXrERQ20H1CmCj9K9S1t2aOG0elzcrLIsYY=";
+        };
     };
 in
 {
@@ -65,7 +69,7 @@ in
     kioskUrlDomain ? "kiosk-server.local",
 
     # PlayOS system we are updating from
-    baseSystemVersion ? "2025.3.2",
+    baseSystemVersion ? "2025.3.3",
 
     # A zstd-compressed PlayOS disk image
     baseSystemDiskImage ? (pkgs.fetchurl diskImageURLs.${baseSystemVersion})
