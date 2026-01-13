@@ -65,6 +65,14 @@ rec {
         # Disable any USB sound cards to create a closed world where the audio
         # landscape on the standard devices is completely predictable.
         "snd_usb_audio"
+
+        # All supported systems use Intel chipsets with watchdogs that are not wired to anything,
+        # so we ignore them.
+        "iTCO_wdt"
+        # In some Shuttle models (DH110SE), the IT87 watchdog triggers a power-off rather than
+        # reboot depending on BIOS power management settings. We load the module dynamically
+        # for whitelisted models.
+        "it87_wdt"
       ];
 
       # Kiosk runs as a non-privileged user
@@ -277,6 +285,24 @@ rec {
       # but long enough to rule out false positives due to any brief moments of excessive load.
       systemd.watchdog = {
         runtimeTime = "60s";
+      };
+      systemd.services."watchdog-loader" =
+      let
+      watchdog-loader = pkgs.writeShellApplication {
+        name = "watchdog-loader";
+        runtimeInputs = with pkgs; [ bash util-linux kmod ];
+        text = (builtins.readFile ./application/watchdog-loader.sh);
+      };
+      in
+      {
+        description = "Load watchdog driver for known models";
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "-${watchdog-loader}/bin/watchdog-loader";
+          User = "root";
+          Restart = "no";
+        };
+        wantedBy = [ "multi-user.target" ];
       };
 
       playos.hardening.enable = true;
