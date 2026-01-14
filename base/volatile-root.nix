@@ -108,8 +108,22 @@ with lib;
 
         # === Wipe persistent data if magicWipeFile is present
         if [ -f "$tmpBootMountPoint/${magicWipeFile}" ]; then
+
+            # TODO: also update bootloader/rescue/, share code
+            # Backup rauc state
+            mkdir -p /tmp/data
+            mount -t ext4 ${cfgPart.device} /tmp/data
+            cp -av /tmp/data/rauc /tmp/rauc
+            umount /tmp/data
+
             # fstype and label hard-coded, same as in install and rescue scripts
             ${pkgs.e2fsprogs}/bin/mkfs.ext4 -L data ${cfgPart.device}
+
+            # Restore rauc state
+            mount -t ext4 ${cfgPart.device} /tmp/data
+            cp -av /tmp/rauc /tmp/data/rauc
+            umount /tmp/data
+
             rm -f $tmpBootMountPoint/${magicWipeFile}
         fi
 

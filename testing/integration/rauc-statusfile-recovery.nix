@@ -10,6 +10,8 @@ pkgs.testers.runNixOSTest {
       config = {
         # We need a /boot partition for our test
         virtualisation.useBootLoader = true;
+        # TODO: copy over the setup from integration/factory-reset.nix and
+        # rework/expand this test
 
         playos.selfUpdate = {
           enable = true;

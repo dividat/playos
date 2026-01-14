@@ -89,10 +89,13 @@ in
         # This override is not needed if application.version is "already" newer
         # than base
         versionOverride = nextSystemVersion;
+        # TODO: set users.root.initialHashedPassword = "" to allow debugging post-update
     }).components.unsignedRaucBundle,
 }:
 let
     overlayPath = "/tmp/release-validation-disk.img";
+
+    versionWithFixedStatusIniRecovery = "2025.3.2"; # TODO: specify next version
 in
 with pkgs.lib;
 pkgs.testers.runNixOSTest {
@@ -298,27 +301,46 @@ with TestCase("controller starts downloading the bundle") as t:
 
     wait_until_passes(t_check, retries=30, sleep=1)
 
-with TestCase("controller has downloaded and installed the bundle") as t:
-    def t_check():
-        playos.send_key("ctrl-r")
-        time.sleep(2)
-        navigate_to_system_status()
-        screen_text = screenshot_and_ocr(playos)
-        print(f"Current sreen text: {screen_text}")
-        # return early if there is an error
+
+def check_for_text_in_status_page(text, ignore_errors=False):
+    playos.send_key("ctrl-r")
+    time.sleep(2)
+    navigate_to_system_status()
+    screen_text = screenshot_and_ocr(playos)
+    print(f"Current sreen text: {screen_text}")
+
+    # return early if there is an error
+    if not ignore_errors:
         possible_errors = ["ErrorDownloading", "ErrorInstalling", "UpdateError"]
         if any([e in screen_text for e in possible_errors]):
             return screen_text
-        t.assertIn("RebootRequired", screen_text)
 
+    t.assertIn(text, screen_text)
+
+
+with TestCase("controller has downloaded and installed the bundle") as t:
     # controller takes at least 2 minutes for the download
     # (1.2GB @ 10 MB/s), so allow up to 5 minutes for the download+install
-    screen_text = wait_until_passes(t_check, retries=30, sleep=10)
+    screen_text = wait_until_passes(
+        lambda: check_for_text_in_status_page("RebootRequired"),
+        retries=30, sleep=10)
     if screen_text is not None:
         t.fail(f"Update process failed with an error, last screen text: {screen_text}")
 
-
 # Reboot to new system
+
+# For legacy systems, try to ensure fsync of /boot/status.ini before reboot
+if "${baseSystemVersion}" < "${versionWithFixedStatusIniRecovery}":
+    print("Attempting to trigger fsync of /boot/status.ini via partial shut-down")
+    time.sleep(30) # opportunistically wait for a sync
+
+    # simulate a Power key long-press to initiate a clean shutdown
+    long_press_duration_seconds = 5.5 # empirically determined :-)
+    playos.send_monitor_command(f"sendkey power {round(long_press_duration_seconds*1000)}")
+     # let the VM partially shut down, but not all the way, otherwise
+     # system_reset will not work
+    time.sleep(long_press_duration_seconds + 0.1)
+
 playos.send_monitor_command("system_reset")
 
 with TestCase("kiosk is open with kiosk URL after reboot") as t:
@@ -335,5 +357,16 @@ with TestCase("controller GUI with new version is visible") as t:
     wait_until_passes(
         lambda: t.assertIn("${nextSystemVersion}", screenshot_and_ocr(playos))
     )
+
+with TestCase("The new booted version reaches a Good state") as t:
+    wait_until_passes(
+        # UpdateError possible initially, because DHCP has not completed
+        lambda: check_for_text_in_status_page("Good", ignore_errors=True),
+        retries=10, sleep=10)
+
+with TestCase("Update state is UpToDate") as t:
+    wait_until_passes(
+        lambda: check_for_text_in_status_page("UpToDate", ignore_errors=True),
+        retries=3, sleep=10)
 '';
 }
