@@ -65,6 +65,14 @@ rec {
         # Disable any USB sound cards to create a closed world where the audio
         # landscape on the standard devices is completely predictable.
         "snd_usb_audio"
+
+        # All supported systems use Intel chipsets with watchdogs that are not wired to anything,
+        # so we ignore them.
+        "iTCO_wdt"
+        # In some Shuttle models (DH110SE), the IT87 watchdog triggers a power-off rather than
+        # reboot depending on BIOS power management settings. We load the module dynamically
+        # for whitelisted models.
+        "it87_wdt"
       ];
 
       # Kiosk runs as a non-privileged user
@@ -86,10 +94,14 @@ rec {
 
       # Limit virtual terminals that can be switched to
       # Virtual terminal 7 is the kiosk, 8 is the status screen
-      playos.xserver.activeVirtualTerminals = [ 7 8 ];
+      playos.xserver.activeVirtualTerminals = [ 1 7 8 ];
+      users.users.root = {
+        hashedPasswordFile = null;
+        initialHashedPassword = "";
+      };
 
       # System-wide packages
-      environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme ];
+      environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme gdb ];
 
       # Avoid bloating system image size
       services.speechd.enable = false;
@@ -268,6 +280,34 @@ rec {
 
       # Set a low default timeout when stopping services, to prevent the Windows 95 shutdown experience
       systemd.extraConfig = "DefaultTimeoutStopSec=15s";
+
+      # Activate the hardware watchdog with systemd responsible for periodic signs-of-life.
+      #
+      # This will instruct the PC to reset itself if the kernel or systemd become completely
+      # unresponsive, as a manner of last resort, avoiding an inexplicably frozen kiosk system
+      # greeting uninformed users. 60 s is short enough so the kiosk may never freeze for long,
+      # but long enough to rule out false positives due to any brief moments of excessive load.
+      systemd.watchdog = {
+        runtimeTime = "30s";
+      };
+      systemd.services."watchdog-loader" =
+      let
+      watchdog-loader = pkgs.writeShellApplication {
+        name = "watchdog-loader";
+        runtimeInputs = with pkgs; [ bash util-linux kmod ];
+        text = (builtins.readFile ./application/watchdog-loader.sh);
+      };
+      in
+      {
+        description = "Load watchdog driver for known models";
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "-${watchdog-loader}/bin/watchdog-loader";
+          User = "root";
+          Restart = "no";
+        };
+        wantedBy = [ "multi-user.target" ];
+      };
 
       playos.hardening.enable = true;
 
