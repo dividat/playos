@@ -60,7 +60,7 @@ let parse_status_code_and_body str =
   >>= fun (body, code_str) ->
   safe_int_of_string code_str >>= fun code -> return (code, body)
 
-let user_agent = "PlayOS/" ^ Config.System.version
+let user_agent = "playos-controller/" ^ Config.System.version
 
 let request ?proxy ?(headers = []) ?data ?(options = []) url =
   let cmd =
