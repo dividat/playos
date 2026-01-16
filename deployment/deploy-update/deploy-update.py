@@ -152,7 +152,6 @@ def _main(opts):
             print("Aborted.")
             exit(1)
 
-        # TODO: use boto3 library instead of calling awscli
         # Deploy the version
         subprocess.run(
             [
