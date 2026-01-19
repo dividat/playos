@@ -1,6 +1,7 @@
 #!@python3@/bin/python
 
 import argparse
+from dataclasses import dataclass
 import hashlib
 import subprocess
 import os
@@ -8,7 +9,7 @@ import os.path
 import tempfile
 import textwrap
 import sys
-from dataclasses import dataclass
+import urllib.request as request
 
 UNSIGNED_RAUC_BUNDLE = "@unsignedRaucBundle@"
 INSTALLER_ISO = "@installer@"
@@ -222,6 +223,18 @@ def _main(opts):
                 ],
                 check=True)
 
+        print()
+        print("CHECKS")
+        print("======\n")
+        verify(
+            f"Latest version has been updated",
+            lambda: request.urlopen(f"{UPDATE_URL}/latest", timeout=5).read().decode().strip(),
+            VERSION,
+            skip=opts.skip_latest)
+        verify(
+            f"Bundle is accessible",
+            lambda: request.urlopen(request.Request(f"{UPDATE_URL}/{VERSION}/{bundle.file_name}", method="HEAD"), timeout=5).status,
+            200)
 
         summary = "\n".join(
             item.summarize()
@@ -235,6 +248,20 @@ def _main(opts):
 
 
         exit(0)
+
+def verify(description, check, expected, skip=False):
+    if skip:
+        print(f"SKIP [{description}]")
+        return
+
+    try:
+        actual = check()
+        if actual == expected:
+            print(f"\033[92mOK\033[0m [{description}]")
+        else:
+            print(f"\033[91mFAIL\033[0m [{description}] Expected {expected}, got {actual}")
+    except Exception as e:
+        print(f"\033[91mFAIL\033[0m [{description}] Exception: {e}")
 
 
 if __name__ == '__main__':
