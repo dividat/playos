@@ -101,6 +101,12 @@ in
               echo "=== Telegraf ouput:"
               cat output.txt
 
+              echo "Hint: PlayOS uses a custom build of telegraf, so if you get"
+              echo "an error like 'undefined but requested input', this can mean"
+              echo "two things:"
+              echo "  1. Typo / wrong name of plugin"
+              echo "  2. Plugin is not included in custom build, check pkgs/telegraf.nix"
+
               exit 1
             fi
             '';
@@ -228,7 +234,7 @@ in
       systemd.services.telegraf.serviceConfig = commonServiceConfig // {
         EnvironmentFile = "/var/cache/telegraf/env-file";
 
-        MemoryMax = "200M";
+        MemoryMax = "60M";
       };
 
       systemd.services.telegraf.path = [
@@ -237,6 +243,8 @@ in
         telegrafConfigIsValid
       ];
 
+      # NOTE: if you add new inputs/ouputs or other configuration options that
+      # require extra telegraf dependencies, you need to also modify pkgs/telegraf.nix
       services.telegraf.extraConfig = with builtins; rec {
         global_tags.playos_version = lib.mkIf (config.playos ? "version") config.playos.version;
 

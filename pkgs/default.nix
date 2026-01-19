@@ -36,6 +36,8 @@ let
       });
 
       focus-shift = self.callPackage ./focus-shift.nix {};
+
+      telegraf = (import ./telegraf.nix) super;
     };
 in
 
