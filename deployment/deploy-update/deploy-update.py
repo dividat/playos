@@ -35,7 +35,7 @@ AWS_CLI = "@awscli@/bin/aws"
 TMPDIR = "/tmp"
 
 @dataclass
-class VersionedItem:
+class VersionItem:
     """An item to be added to a version on the dist host."""
     human_name: str
     file_name: str
@@ -82,7 +82,7 @@ def compute_sha256(filepath):
             hash.update(mem_view[:n])
     return hash.hexdigest()
 
-def sign_rauc_bundle(key, cert, out):
+def create_signed_rauc_bundle(key, cert, out):
     with tempfile.NamedTemporaryFile(
             mode="w", delete=False, dir=TMPDIR) as combined_keyring:
 
@@ -117,26 +117,49 @@ def sign_rauc_bundle(key, cert, out):
 
 def _main(opts):
 
-    print(f"Deploying {FULL_PRODUCT_NAME} update:\n")
+    print(f"Deploying {FULL_PRODUCT_NAME} {VERSION}:\n")
 
     output_cert = UPDATE_CERT if opts.override_cert == None else opts.override_cert
 
     with tempfile.TemporaryDirectory(
-            prefix="playos-signed-release", dir=TMPDIR) as signed_release:
-
-        items = []
-
-        # Create the version directory
-        version_dir = os.path.join(signed_release, VERSION)
-        os.makedirs(version_dir, exist_ok=True)
+            prefix="playos-signed-release", dir=TMPDIR) as release_tmp_dir:
 
         # Sign RAUC bundle (and verify signature)
-        signed_bundle = os.path.join(version_dir, f"{SAFE_PRODUCT_NAME}-{VERSION}.raucb")
-        sign_rauc_bundle(key=opts.key, cert=output_cert, out=signed_bundle)
+        signed_bundle_path = os.path.join(release_tmp_dir, f"{SAFE_PRODUCT_NAME}-{VERSION}.raucb")
+        create_signed_rauc_bundle(key=opts.key, cert=output_cert, out=signed_bundle_path)
+
+        # Print deployment givens and wait for confirmation
+        print("Update URL:\t%s" % UPDATE_URL)
+        print("Deploy URL:\t%s" % DEPLOY_URL)
+        print("Kiosk URL:\t%s" % KIOSK_URL)
+        subprocess.run(
+            [RAUC, "info", "--keyring", output_cert, signed_bundle_path],
+            stderr=subprocess.DEVNULL,
+            check=True)
+
+        if not _query_continue("\nContinue?"):
+            print("Aborted.")
+            exit(1)
+
+
+        # Gather items to deploy for this version
+        bundle = VersionItem(
+            human_name = "RAUC Bundle",
+            file_name = f"{SAFE_PRODUCT_NAME}-{VERSION}.raucb",
+            local_path = signed_bundle_path,
+            include_in_summary = False
+        )
+        manual = VersionItem(
+            human_name = "Manual",
+            file_name = f"{SAFE_PRODUCT_NAME}-manual-{VERSION}.pdf",
+            local_path = os.path.join(DOCS, "user-manual.pdf"),
+            include_in_summary = True
+        )
+        version_items = [ bundle, manual ]
 
         if INSTALLER_ISO:
             installer_iso_filename = f"{SAFE_PRODUCT_NAME}-installer-{VERSION}.iso"
-            items.append(VersionedItem(
+            version_items.append(VersionItem(
                 human_name = "Installer",
                 file_name = installer_iso_filename,
                 local_path = os.path.join(INSTALLER_ISO, "iso", installer_iso_filename),
@@ -145,47 +168,16 @@ def _main(opts):
 
         if LIVE_ISO:
             live_iso_filename = f"{SAFE_PRODUCT_NAME}-live-{VERSION}.iso"
-            items.append(VersionedItem(
+            version_items.append(VersionItem(
                 human_name = "Live System",
                 file_name = live_iso_filename,
                 local_path = os.path.join(LIVE_ISO, "iso", live_iso_filename),
                 include_in_summary = False
             ))
 
-        manual = VersionedItem(
-            human_name = "Manual",
-            file_name = f"{SAFE_PRODUCT_NAME}-manual-{VERSION}.pdf",
-            local_path = os.path.join(DOCS, "user-manual.pdf"),
-            include_in_summary = True
-        )
-        items.append(manual)
-
-        # Print some information and wait for confirmation
-        print("Update URL:\t%s" % UPDATE_URL)
-        print("Deploy URL:\t%s" % DEPLOY_URL)
-        print("Kiosk URL:\t%s" % KIOSK_URL)
-
-        # Show RAUC info
-        subprocess.run(
-            [RAUC, "info", "--keyring", output_cert, signed_bundle],
-            stderr=subprocess.DEVNULL,
-            check=True)
-
-        if opts.skip_latest:
-            print("Will skip updating 'latest' and 'manual-latest.pdf'.")
-
-        if not _query_continue("\nContinue?"):
-            print("Aborted.")
-            exit(1)
-
-        # Prepare dist files locally
-        latest_file = os.path.join(signed_release, "latest")
-        with open(latest_file, 'w') as latest:
-            latest.write(VERSION + "\n")
-
 
         # Deploy the version
-        for item in items:
+        for item in version_items:
             subprocess.run(
                 [
                     AWS_CLI, "s3", "cp", item.local_path, DEPLOY_URL + VERSION + "/" + item.file_name,
@@ -194,7 +186,10 @@ def _main(opts):
                 check=True)
 
         if not opts.skip_latest:
-            # Deploy the 'latest' file
+            # Deploy the latest file
+            latest_file = os.path.join(release_tmp_dir, "latest")
+            with open(latest_file, 'w') as latest:
+                latest.write(VERSION + "\n")
             subprocess.run(
                 [
                     AWS_CLI,
@@ -230,7 +225,7 @@ def _main(opts):
 
         summary = "\n".join(
             item.summarize()
-            for item in items
+            for item in version_items
             if item.include_in_summary
         )
         print()
