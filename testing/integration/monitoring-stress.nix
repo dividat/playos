@@ -147,7 +147,7 @@ pkgs.testers.runNixOSTest {
       # (compaction done, regular telegraf collection)
       MAX_INFLUXDB_PEAK_MEMORY_MB = 150
 
-      MAX_TELEGRAF_PEAK_MEMORY_MB = 150
+      MAX_TELEGRAF_PEAK_MEMORY_MB = 40
 
       SPEEDRUN = json.loads("${lib.boolToString speedrun}")
       if SPEEDRUN:
