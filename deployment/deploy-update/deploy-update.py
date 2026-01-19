@@ -183,19 +183,15 @@ def _main(opts):
         with open(latest_file, 'w') as latest:
             latest.write(VERSION + "\n")
 
-        for item in items:
-            subprocess.run(
-                ["cp", item.local_path, os.path.join(version_dir, item.file_name)],
-                check=True)
-
 
         # Deploy the version
-        subprocess.run(
-            [
-                AWS_CLI, "s3", "cp", version_dir, DEPLOY_URL + VERSION + "/",
-                "--recursive", "--acl", "public-read"
-            ],
-            check=True)
+        for item in items:
+            subprocess.run(
+                [
+                    AWS_CLI, "s3", "cp", item.local_path, DEPLOY_URL + VERSION + "/" + item.file_name,
+                    "--acl", "public-read"
+                ],
+                check=True)
 
         if not opts.skip_latest:
             # Deploy the 'latest' file
