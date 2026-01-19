@@ -94,7 +94,11 @@ let
     installer = callPackage ./installer {};
 
     # Script to deploy updates
-    deploy-update = callPackage ./deployment/deploy-update { application = application; };
+    deploy-update = callPackage ./deployment/deploy-update {
+      application = application;
+      live = if buildLive then live else "";
+      installer = if buildInstaller then installer else "";
+    };
 
     # RAUC bundle
     unsignedRaucBundle = callPackage ./rauc-bundle {};

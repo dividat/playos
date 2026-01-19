@@ -6,7 +6,9 @@ import subprocess
 import os
 import os.path
 import tempfile
+import textwrap
 import sys
+from dataclasses import dataclass
 
 UNSIGNED_RAUC_BUNDLE = "@unsignedRaucBundle@"
 INSTALLER_ISO = "@installer@"
@@ -31,6 +33,24 @@ AWS_CLI = "@awscli@/bin/aws"
 
 
 TMPDIR = "/tmp"
+
+@dataclass
+class VersionedItem:
+    """An item to be added to a version on the dist host."""
+    human_name: str
+    file_name: str
+    local_path: str
+    include_in_summary: bool
+
+    @property
+    def url(self) -> str:
+        return UPDATE_URL + VERSION + "/" + self.file_name
+
+    def summarize(self) -> str:
+        return textwrap.dedent(f"""
+            {self.human_name} URL: {self.url}
+            {self.human_name} checksum (SHA256): {compute_sha256(self.local_path)}""")
+
 
 # from http://code.activestate.com/recipes/577058/
 def _query_continue(question, default=False):
@@ -104,6 +124,8 @@ def _main(opts):
     with tempfile.TemporaryDirectory(
             prefix="playos-signed-release", dir=TMPDIR) as signed_release:
 
+        items = []
+
         # Create the version directory
         version_dir = os.path.join(signed_release, VERSION)
         os.makedirs(version_dir, exist_ok=True)
@@ -112,30 +134,31 @@ def _main(opts):
         signed_bundle = os.path.join(version_dir, f"{SAFE_PRODUCT_NAME}-{VERSION}.raucb")
         sign_rauc_bundle(key=opts.key, cert=output_cert, out=signed_bundle)
 
-        # Write latest file
-        latest_file = os.path.join(signed_release, "latest")
-        with open(latest_file, 'w') as latest:
-            latest.write(VERSION + "\n")
+        if INSTALLER_ISO:
+            installer_iso_filename = f"{SAFE_PRODUCT_NAME}-installer-{VERSION}.iso"
+            items.append(VersionedItem(
+                human_name = "Installer",
+                file_name = installer_iso_filename,
+                local_path = os.path.join(INSTALLER_ISO, "iso", installer_iso_filename),
+                include_in_summary = True
+            ))
 
-        # Write installer ISO
-        installer_iso_filename = f"{SAFE_PRODUCT_NAME}-installer-{VERSION}.iso"
-        installer_iso_src = os.path.join(INSTALLER_ISO, "iso", installer_iso_filename)
-        installer_iso_dst = os.path.join(version_dir, installer_iso_filename)
-        subprocess.run(["cp", installer_iso_src, installer_iso_dst],
-            check=True)
+        if LIVE_ISO:
+            live_iso_filename = f"{SAFE_PRODUCT_NAME}-live-{VERSION}.iso"
+            items.append(VersionedItem(
+                human_name = "Live System",
+                file_name = live_iso_filename,
+                local_path = os.path.join(LIVE_ISO, "iso", live_iso_filename),
+                include_in_summary = False
+            ))
 
-        # Write live system ISO
-        live_iso_filename = f"{SAFE_PRODUCT_NAME}-live-{VERSION}.iso"
-        live_iso_src = os.path.join(LIVE_ISO, "iso", live_iso_filename)
-        live_iso_dst = os.path.join(version_dir, live_iso_filename)
-        subprocess.run(["cp", live_iso_src, live_iso_dst],
-            check=True)
-
-        # Write PDF manual
-        manual_filename = f"{SAFE_PRODUCT_NAME}-manual-{VERSION}.pdf"
-        manual_src = os.path.join(DOCS, "user-manual.pdf")
-        manual_dst = os.path.join(version_dir, manual_filename)
-        subprocess.run(["cp", manual_src, manual_dst], check=True)
+        manual = VersionedItem(
+            human_name = "Manual",
+            file_name = f"{SAFE_PRODUCT_NAME}-manual-{VERSION}.pdf",
+            local_path = os.path.join(DOCS, "user-manual.pdf"),
+            include_in_summary = True
+        )
+        items.append(manual)
 
         # Print some information and wait for confirmation
         print("Update URL:\t%s" % UPDATE_URL)
@@ -154,6 +177,17 @@ def _main(opts):
         if not _query_continue("\nContinue?"):
             print("Aborted.")
             exit(1)
+
+        # Prepare dist files locally
+        latest_file = os.path.join(signed_release, "latest")
+        with open(latest_file, 'w') as latest:
+            latest.write(VERSION + "\n")
+
+        for item in items:
+            subprocess.run(
+                ["cp", item.local_path, os.path.join(version_dir, item.file_name)],
+                check=True)
+
 
         # Deploy the version
         subprocess.run(
@@ -186,25 +220,28 @@ def _main(opts):
                     "s3",
                     "cp",
                     # We have to re-upload this file; copying within bucket is faster, but does not allow setting headers
-                    manual_dst,
+                    manual.local_path,
                     DEPLOY_URL + "manual-latest.pdf",
                     "--acl",
                     "public-read",
                     "--cache-control",
                     "max-age=0",
                     "--content-disposition",
-                    "attachment; filename=\"%s\"" % manual_filename
+                    "attachment; filename=\"%s\"" % manual.file_name
                 ],
                 check=True)
 
 
-        installer_checksum = compute_sha256(installer_iso_src)
-        installer_iso_url = UPDATE_URL + VERSION + "/" + installer_iso_filename
-        manual_url = UPDATE_URL + VERSION + "/" + manual_filename
-        print("Deployment completed.\n")
-        print("Manual: %s" % manual_url)
-        print("Installer URL: %s" % installer_iso_url)
-        print("Installer checksum (SHA256): %s" % installer_checksum)
+        summary = "\n".join(
+            item.summarize()
+            for item in items
+            if item.include_in_summary
+        )
+        print()
+        print("DEPLOYMENT SUMMARY")
+        print("==================")
+        print(summary)
+
 
         exit(0)
 
