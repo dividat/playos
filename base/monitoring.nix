@@ -98,7 +98,7 @@ in
               echo "=== Config validation FAILED, config was:"
               cat ${configFile}
 
-              echo "=== Telegraf ouput:"
+              echo "=== Telegraf output:"
               cat output.txt
 
               echo "Hint: PlayOS uses a custom build of telegraf, so if you get"
