@@ -280,9 +280,9 @@ with TestPrecondition("controller GUI is visible") as t:
 # and then mouse_move'ing there for a click
 def navigate_to_system_status():
     for _ in range(4):
-        playos.send_key("tab")
-    playos.send_key("ret")
-    time.sleep(1)
+        playos.send_key("tab", delay=0.2)
+    playos.send_key("ret", delay=0.2)
+    time.sleep(2)
 
 with TestPrecondition("Navigate to System Status page") as t:
     navigate_to_system_status()
