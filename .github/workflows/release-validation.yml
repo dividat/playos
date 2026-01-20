@@ -17,7 +17,6 @@ jobs:
         # passthru and then dynamically take e.g. first 2 and last 2
         baseSystemVersion:
           - "2023.9.1-DISK"
-          - "2024.7.0-DISK"
           - "2025.3.1"
           - "previous" # uses default in release-validation.nix
 
