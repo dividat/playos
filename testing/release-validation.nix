@@ -327,25 +327,13 @@ with TestCase("controller has downloaded and installed the bundle") as t:
         t.fail(f"Update process failed with an error, last screen text: {screen_text}")
 
 # Reboot to new system
-
-
-with TestPrecondition("TEMP WORKAROUND: Try to trigger an fsync/unmount of /boot"):
-    # Avoid FAT corruption of /boot/status.ini, which can happen despite the
-    # presence of `statusfile-recovery.service`
-    #
-    # The workaround is problematic, since this can actually happen on a real
-    # system, but we need it to be able to check if slot status is marked as
-    # good after the reboot.
-    time.sleep(30) # opportunistically wait for a sync
-
-    # simulate a Power key long-press to initiate a clean shutdown
-    long_press_duration_seconds = 5.5 # empirically determined :-)
-    playos.send_monitor_command(f"sendkey power {round(long_press_duration_seconds*1000)}")
-    # let the VM partially shut down, but not all the way, otherwise
-    # system_reset will not work
-    time.sleep(long_press_duration_seconds + 0.1)
-
-playos.send_monitor_command("system_reset")
+# Note: done via root shell on tty1, since a QEMU system_reset corrupts the
+# /boot/status.ini due to unclean unmount + FAT
+playos.send_key("ctrl-alt-f8", delay=2) # direct switch to tty1 prevented by limit-vtes.nix
+playos.send_key("ctrl-alt-f1", delay=2)
+playos.send_chars("root\n")
+time.sleep(2)
+playos.send_chars("systemctl reboot\n")
 
 with TestCase("kiosk is open with kiosk URL after reboot") as t:
     wait_until_passes(
