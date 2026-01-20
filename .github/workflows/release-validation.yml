@@ -2,6 +2,10 @@ name: "Release Validation"
 permissions:
   contents: read
 on:
+  push:
+    branches:
+      - "release/*"
+
   workflow_dispatch:
 jobs:
   release-validation-tests:
