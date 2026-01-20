@@ -250,7 +250,9 @@ with TestPrecondition("dnsmasq hands out an IP to playos"):
 
 with TestPrecondition("kiosk is open with kiosk URL") as t:
     wait_until_passes(
-        lambda: t.assertIn("Hello world", screenshot_and_ocr(playos))
+        lambda: t.assertIn("Hello world", screenshot_and_ocr(playos)),
+        retries=60, # can take quite long on CI
+        sleep=2
     )
 
 # move mouse to bottom right corner so it doesn't accidentally cover
@@ -348,7 +350,8 @@ playos.send_monitor_command("system_reset")
 with TestCase("kiosk is open with kiosk URL after reboot") as t:
     wait_until_passes(
         lambda: t.assertIn("Hello world", screenshot_and_ocr(playos)),
-        retries=60
+        retries=60,
+        sleep=2
     )
 
 playos.send_monitor_command("mouse_move 2000 2000")
