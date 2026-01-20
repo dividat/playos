@@ -266,6 +266,7 @@ with TestPrecondition("controller GUI is visible") as t:
     def t_check():
         screen_text = screenshot_and_ocr(playos)
         t.assertIn("Information", screen_text)
+        time.sleep(2) # ensure page fully loaded
         return screen_text
 
     screen_text = wait_until_passes(t_check, retries=10)
