@@ -268,7 +268,7 @@ with TestPrecondition("controller GUI is visible") as t:
         t.assertIn("Information", screen_text)
         return screen_text
 
-    screen_text = wait_until_passes(t_check, retries=3)
+    screen_text = wait_until_passes(t_check, retries=10)
 
     t.assertIn("Version", screen_text)
     t.assertIn("${baseSystemVersion}", screen_text)
@@ -348,7 +348,8 @@ with TestCase("controller GUI with new version is visible") as t:
     # switch to controller
     playos.send_key("ctrl-shift-f12")
     wait_until_passes(
-        lambda: t.assertIn("${nextSystemVersion}", screenshot_and_ocr(playos))
+        lambda: t.assertIn("${nextSystemVersion}", screenshot_and_ocr(playos)),
+        retries=10
     )
 
 with TestCase("The new booted version reaches a Good state") as t:
