@@ -148,11 +148,13 @@ def _main(opts):
             stderr=subprocess.DEVNULL,
             check=True)
 
+        if opts.skip_latest:
+            print("Will skip updating 'latest' and 'manual-latest.pdf'.")
+
         if not _query_continue("\nContinue?"):
             print("Aborted.")
             exit(1)
 
-        # TODO: use boto3 library instead of calling awscli
         # Deploy the version
         subprocess.run(
             [
@@ -161,38 +163,39 @@ def _main(opts):
             ],
             check=True)
 
-        # Deploy the latest file
-        subprocess.run(
-            [
-                AWS_CLI,
-                "s3",
-                "cp",
-                latest_file,
-                DEPLOY_URL + "latest",
-                "--acl",
-                "public-read",
-                "--cache-control",
-                "max-age=0"
-            ],
-            check=True)
+        if not opts.skip_latest:
+            # Deploy the 'latest' file
+            subprocess.run(
+                [
+                    AWS_CLI,
+                    "s3",
+                    "cp",
+                    latest_file,
+                    DEPLOY_URL + "latest",
+                    "--acl",
+                    "public-read",
+                    "--cache-control",
+                    "max-age=0"
+                ],
+                check=True)
 
-        # Create copy of latest manual at fixed name
-        subprocess.run(
-            [
-                AWS_CLI,
-                "s3",
-                "cp",
-                # We have to re-upload this file; copying within bucket is faster, but does not allow setting headers
-                manual_dst,
-                DEPLOY_URL + "manual-latest.pdf",
-                "--acl",
-                "public-read",
-                "--cache-control",
-                "max-age=0",
-                "--content-disposition",
-                "attachment; filename=\"%s\"" % manual_filename
-            ],
-            check=True)
+            # Create copy of latest manual at fixed name
+            subprocess.run(
+                [
+                    AWS_CLI,
+                    "s3",
+                    "cp",
+                    # We have to re-upload this file; copying within bucket is faster, but does not allow setting headers
+                    manual_dst,
+                    DEPLOY_URL + "manual-latest.pdf",
+                    "--acl",
+                    "public-read",
+                    "--cache-control",
+                    "max-age=0",
+                    "--content-disposition",
+                    "attachment; filename=\"%s\"" % manual_filename
+                ],
+                check=True)
 
 
         installer_checksum = compute_sha256(installer_iso_src)
@@ -210,5 +213,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=f"Deploy {FULL_PRODUCT_NAME} update")
     parser.add_argument('-v', '--version', action='version', version=VERSION)
     parser.add_argument('--key', help="key file or PKCS#11 URL", required=True)
+    parser.add_argument('--skip-latest', help="skip updating the 'latest' references", action='store_true')
     parser.add_argument('--override-cert', help="use a previous cert when switching PKI pairs")
     _main(parser.parse_args())
