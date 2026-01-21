@@ -119,7 +119,6 @@ pkgs.testers.runNixOSTest {
   ''
     ${builtins.readFile ../../../helpers/nixos-test-script-helpers.py}
     ${builtins.readFile ./proxy-and-update-helpers.py}
-    import json
 
     product_name = "${safeProductName}"
     current_version = "1.1.1-TESTMAGIC"
@@ -188,7 +187,7 @@ pkgs.testers.runNixOSTest {
                 unit="playos-controller.service",
                 timeout=61)
 
-    with TestCase("Controller installs the new upstream version") as t:
+    with TestCase("controller attempts to install the bundle, but aborts due to install-check") as t:
         next_version = "${nextVersion}"
 
         update_server.add_bundle(next_version, filepath="${nextVersionBundle}")
@@ -201,7 +200,7 @@ pkgs.testers.runNixOSTest {
         expected_states = [
             "Downloading",
             f"Installing.*{update_server.bundle_filename(next_version)}",
-            "RebootRequired"
+            "ErrorInstalling"
         ]
 
         for state in expected_states:
@@ -212,36 +211,15 @@ pkgs.testers.runNixOSTest {
                 # a 600 MB bundle will take at least 60s
                 timeout=75)
 
-    with TestCase("RAUC status confirms the installation") as t:
-        rauc_status = json.loads(playos.succeed(
-            "rauc status --detailed --output-format=json"
-        ))
-        t.assertEqual(
-            rauc_status['boot_primary'],
-            "system.b",
-            "RAUC installation did not change boot primary other (i.e. system.b) slot"
-        )
-
-        b_slot = [s for s in rauc_status['slots'] if "system.b" in s][0]['system.b']
-        slot_bundle_version = b_slot['slot_status']['bundle']['version']
-        t.assertEqual(
-            slot_bundle_version,
-            next_version,
-            "Installed bundle does not have correct version"
-        )
-
     with TestCase("No raucb files left post-install") as t:
         playos.fail("ls /tmp/*.raucb")
 
-    with TestCase("System boots into the new bundle") as t:
-        playos.shutdown()
-        playos.start()
-        playos.wait_for_unit('multi-user.target')
-        out_version = playos.succeed("cat /etc/PLAYOS_VERSION").strip()
-        t.assertEqual(
-            out_version,
-            next_version,
-            "Did not boot into the installed bundle?"
-        )
+    with TestCase("compat fixes have run as part of install-check") as t:
+        wait_for_logs(playos, "== Running compat install-check script", unit="rauc.service")
+        wait_for_logs(playos, "Booted system is:.*system.a", unit="rauc.service")
+        wait_for_logs(playos, "Other system is:.*system.b", unit="rauc.service")
+
+        ## you can define additional assertions for testing the install-check
+        ## script's side-effects here
   '';
 }

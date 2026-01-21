@@ -14,6 +14,8 @@ let
   testingCert = ../pki/dummy/cert.pem;
 
   systemClosureInfo = closureInfo { rootPaths = [ systemImage ]; };
+
+  compatInstallCheckScript = (import ./compat-install-check-script.nix) { inherit pkgs; };
 in
 stdenv.mkDerivation {
   name = "bundle-${version}.raucb";
@@ -25,21 +27,18 @@ stdenv.mkDerivation {
     mkdir -p system
     cd system
 
-    # Copy store content
-    mkdir -p nix/store
-    for i in $(< ${systemClosureInfo}/store-paths); do
-        cp -a "$i" ".$i"
-    done
-
-    # copy initrd, kernel and init
-    cp -a "${systemImage}/initrd" initrd
-    cp -a "${systemImage}/kernel" kernel
-    cp -a "${systemImage}/init" init
+    # The install-check script is expected to fail and abort the installation, but
+    # in order to produce a valid bundle we crete a system image with a single
+    # empty file.
+    touch empty-system
 
     mkdir -p ../rauc-bundle
     time tar --sort=name --mtime='@1' --owner=0 --group=0 --numeric-owner -c * | pixz > ../rauc-bundle/system.tar.xz
 
     cd ..
+
+    # Add the install-check script to the bundle
+    cp ${compatInstallCheckScript} rauc-bundle/install-check.sh
 
     cat <<EOF > ./rauc-bundle/manifest.raucm
       [update]
@@ -48,6 +47,10 @@ stdenv.mkDerivation {
 
       [image.system]
       filename=system.tar.xz
+
+      [hooks]
+      filename=install-check.sh
+      hooks=install-check
     EOF
 
     time rauc \
