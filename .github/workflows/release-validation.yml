@@ -2,10 +2,24 @@ name: "Release Validation"
 permissions:
   contents: read
 on:
+  push:
+    branches:
+      - "release/*"
+
   workflow_dispatch:
 jobs:
   release-validation-tests:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # hard-coding for now, can alternatively expose diskImageURLs via
+        # passthru and then dynamically take e.g. first 2 and last 2
+        baseSystemVersion:
+          - "2023.9.1-DISK"
+          - "2025.3.1"
+          - "previous" # uses default in release-validation.nix
+
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/prep-build-env
@@ -14,4 +28,9 @@ jobs:
         NIX_CACHE_ACCESS_KEY_ID: ${{ secrets.NIX_CACHE_ACCESS_KEY_ID }}
         NIX_CACHE_SECRET_ACCESS_KEY: ${{ secrets.NIX_CACHE_SECRET_ACCESS_KEY }}
         NIX_BINARY_CACHE_PRIVATE_KEY: ${{ secrets.NIX_BINARY_CACHE_PRIVATE_KEY }}
-    - run: NIXPKGS_ALLOW_UNFREE=1 nix-build testing/release-validation.nix
+    - run: |
+        baseSystemVersionFlag=""
+        if ! [[ "${{ matrix.baseSystemVersion }}" == "previous" ]]; then
+          baseSystemVersionFlag="--arg baseSystemVersion \"${{ matrix.baseSystemVersion }}\""
+        fi
+        NIXPKGS_ALLOW_UNFREE=1 nix-build ${baseSystemVersionFlag} testing/release-validation.nix
