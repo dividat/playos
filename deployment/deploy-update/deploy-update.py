@@ -192,6 +192,13 @@ def _main(opts):
             ))
 
 
+        # Print deployment plan
+        print("DEPLOYMENT PLAN")
+        print("===============")
+        for item in version_items:
+            print(f"  - {item.human_name}: {item.file_name}")
+        print()
+
         # Deploy the version
         for item in version_items:
             run_command(
