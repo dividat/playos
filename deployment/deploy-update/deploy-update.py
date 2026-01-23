@@ -239,7 +239,7 @@ def _main(opts):
         summary = "\n".join(
             item.summarize()
             for item in version_items
-            if item.include_in_summary
+            if item.include_in_summary or opts.verbose
         )
         print()
         print("DEPLOYMENT SUMMARY")
@@ -270,4 +270,6 @@ if __name__ == '__main__':
     parser.add_argument('--key', help="key file or PKCS#11 URL", required=True)
     parser.add_argument('--skip-latest', help="skip updating the 'latest' references", action='store_true')
     parser.add_argument('--override-cert', help="use a previous cert when switching PKI pairs")
+    parser.add_argument('--verbose', help="list all artifact items in the built version", action='store_true')
+
     _main(parser.parse_args())
