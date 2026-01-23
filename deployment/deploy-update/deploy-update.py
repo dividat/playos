@@ -10,6 +10,7 @@ import tempfile
 import textwrap
 import sys
 import urllib.request as request
+import shlex
 
 UNSIGNED_RAUC_BUNDLE = "@unsignedRaucBundle@"
 INSTALLER_ISO = "@installer@"
@@ -83,6 +84,18 @@ def compute_sha256(filepath):
             hash.update(mem_view[:n])
     return hash.hexdigest()
 
+def run_command(args, dry_run=False, **kwargs):
+    """
+    Run a command in a subprocess. If dry_run is True, prints commands instead of executing.
+    """
+    if dry_run:
+        # Quote if needed to output complete, usable commands
+        cmd_str = ' '.join(shlex.quote(str(arg)) for arg in args)
+        print(f"\033[93m[DRY-RUN]\033[0m {cmd_str}")
+        return
+
+    subprocess.run(args, **kwargs)
+
 def create_signed_rauc_bundle(key, cert, out):
     with tempfile.NamedTemporaryFile(
             mode="w", delete=False, dir=TMPDIR) as combined_keyring:
@@ -118,7 +131,8 @@ def create_signed_rauc_bundle(key, cert, out):
 
 def _main(opts):
 
-    print(f"Deploying {FULL_PRODUCT_NAME} {VERSION}:\n")
+    mode_msg = " (DRY RUN)" if opts.dry_run else ""
+    print(f"Deploying {FULL_PRODUCT_NAME} {VERSION}{mode_msg}:\n")
 
     output_cert = UPDATE_CERT if opts.override_cert == None else opts.override_cert
 
@@ -133,12 +147,13 @@ def _main(opts):
         print("Update URL:\t%s" % UPDATE_URL)
         print("Deploy URL:\t%s" % DEPLOY_URL)
         print("Kiosk URL:\t%s" % KIOSK_URL)
+
         subprocess.run(
             [RAUC, "info", "--keyring", output_cert, signed_bundle_path],
             stderr=subprocess.DEVNULL,
             check=True)
 
-        if not _query_continue("\nContinue?"):
+        if not opts.dry_run and not _query_continue("\nContinue?"):
             print("Aborted.")
             exit(1)
 
@@ -179,11 +194,12 @@ def _main(opts):
 
         # Deploy the version
         for item in version_items:
-            subprocess.run(
+            run_command(
                 [
                     AWS_CLI, "s3", "cp", item.local_path, DEPLOY_URL + VERSION + "/" + item.file_name,
                     "--acl", "public-read"
                 ],
+                dry_run=opts.dry_run,
                 check=True)
 
         if not opts.skip_latest:
@@ -191,7 +207,7 @@ def _main(opts):
             latest_file = os.path.join(release_tmp_dir, "latest")
             with open(latest_file, 'w') as latest:
                 latest.write(VERSION + "\n")
-            subprocess.run(
+            run_command(
                 [
                     AWS_CLI,
                     "s3",
@@ -203,10 +219,11 @@ def _main(opts):
                     "--cache-control",
                     "max-age=0"
                 ],
+                dry_run=opts.dry_run,
                 check=True)
 
             # Create copy of latest manual at fixed name
-            subprocess.run(
+            run_command(
                 [
                     AWS_CLI,
                     "s3",
@@ -221,6 +238,7 @@ def _main(opts):
                     "--content-disposition",
                     "attachment; filename=\"%s\"" % manual.file_name
                 ],
+                dry_run=opts.dry_run,
                 check=True)
 
         print()
@@ -230,11 +248,13 @@ def _main(opts):
             f"Latest version has been updated",
             lambda: request.urlopen(f"{UPDATE_URL}/latest", timeout=5).read().decode().strip(),
             VERSION,
-            skip=opts.skip_latest)
+            skip=opts.skip_latest or opts.dry_run)
+
         verify(
             f"Bundle is accessible",
             lambda: request.urlopen(request.Request(f"{UPDATE_URL}/{VERSION}/{bundle.file_name}", method="HEAD"), timeout=5).status,
-            200)
+            200,
+            skip=opts.dry_run)
 
         summary = "\n".join(
             item.summarize()
@@ -270,6 +290,7 @@ if __name__ == '__main__':
     parser.add_argument('--key', help="key file or PKCS#11 URL", required=True)
     parser.add_argument('--skip-latest', help="skip updating the 'latest' references", action='store_true')
     parser.add_argument('--override-cert', help="use a previous cert when switching PKI pairs")
+    parser.add_argument('--dry-run', help="prepares artifacts, but only prints what would normally be uploaded", action='store_true')
     parser.add_argument('--verbose', help="list all artifact items in the built version", action='store_true')
 
     _main(parser.parse_args())
