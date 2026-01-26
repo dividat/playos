@@ -2,6 +2,7 @@
 
 import argparse
 from dataclasses import dataclass
+from enum import Enum
 import hashlib
 import subprocess
 import os
@@ -91,7 +92,7 @@ def run_command(args, dry_run=False, **kwargs):
     if dry_run:
         # Quote if needed to output complete, usable commands
         cmd_str = ' '.join(shlex.quote(str(arg)) for arg in args)
-        print(f"\033[93m[DRY-RUN]\033[0m {cmd_str}")
+        print_status("DRY-RUN", cmd_str, color=StatusColor.YELLOW)
         return
 
     subprocess.run(args, **kwargs)
@@ -278,17 +279,26 @@ def _main(opts):
 
 def verify(description, check, expected, skip=False):
     if skip:
-        print(f"SKIP [{description}]")
+        print_status("SKIP", description)
         return
 
     try:
         actual = check()
         if actual == expected:
-            print(f"\033[92mOK\033[0m [{description}]")
+            print_status("OK", description, color=StatusColor.GREEN)
         else:
-            print(f"\033[91mFAIL\033[0m [{description}] Expected {expected}, got {actual}")
+            print_status("FAIL", description, f"Expected '{expected}', got '{actual}'", color=StatusColor.RED)
     except Exception as e:
-        print(f"\033[91mFAIL\033[0m [{description}] Exception: {e}")
+        print_status("FAIL", description, f"Exception: {e}", color=StatusColor.RED)
+
+def print_status(status_label, description, text="", color=None):
+    status = status_label if color == None else f"\033[{color.value}m{status_label}\033[0m"
+    print(f"{status} [{description}] {text}")
+
+class StatusColor(Enum):
+    RED = 91
+    GREEN = 92
+    YELLOW = 93
 
 def join_url(base, *parts):
     """Join a URL from the base and parts, stripping any existing slashes from the parts."""
