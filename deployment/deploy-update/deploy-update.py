@@ -46,7 +46,7 @@ class VersionItem:
 
     @property
     def url(self) -> str:
-        return UPDATE_URL + VERSION + "/" + self.file_name
+        return join_url(UPDATE_URL, VERSION, self.file_name)
 
     def summarize(self) -> str:
         return textwrap.dedent(f"""
@@ -203,7 +203,7 @@ def _main(opts):
         for item in version_items:
             run_command(
                 [
-                    AWS_CLI, "s3", "cp", item.local_path, DEPLOY_URL + VERSION + "/" + item.file_name,
+                    AWS_CLI, "s3", "cp", item.local_path, join_url(DEPLOY_URL, VERSION, item.file_name),
                     "--acl", "public-read"
                 ],
                 dry_run=opts.dry_run,
@@ -220,7 +220,7 @@ def _main(opts):
                     "s3",
                     "cp",
                     latest_file,
-                    DEPLOY_URL + "latest",
+                    join_url(DEPLOY_URL, "latest"),
                     "--acl",
                     "public-read",
                     "--cache-control",
@@ -237,7 +237,7 @@ def _main(opts):
                     "cp",
                     # We have to re-upload this file; copying within bucket is faster, but does not allow setting headers
                     manual.local_path,
-                    DEPLOY_URL + "manual-latest.pdf",
+                    join_url(DEPLOY_URL, "manual-latest.pdf"),
                     "--acl",
                     "public-read",
                     "--cache-control",
@@ -253,13 +253,13 @@ def _main(opts):
         print("======\n")
         verify(
             f"Latest version has been updated",
-            lambda: request.urlopen(f"{UPDATE_URL}/latest", timeout=5).read().decode().strip(),
+            lambda: request.urlopen(join_url(UPDATE_URL, "latest"), timeout=5).read().decode().strip(),
             VERSION,
             skip=opts.skip_latest or opts.dry_run)
 
         verify(
             f"Bundle is accessible",
-            lambda: request.urlopen(request.Request(f"{UPDATE_URL}/{VERSION}/{bundle.file_name}", method="HEAD"), timeout=5).status,
+            lambda: request.urlopen(request.Request(join_url(UPDATE_URL, VERSION, bundle.file_name), method="HEAD"), timeout=5).status,
             200,
             skip=opts.dry_run)
 
@@ -290,6 +290,10 @@ def verify(description, check, expected, skip=False):
     except Exception as e:
         print(f"\033[91mFAIL\033[0m [{description}] Exception: {e}")
 
+def join_url(base, *parts):
+    """Join a URL from the base and parts, stripping any existing slashes from the parts."""
+    return '/'.join(
+        [base.rstrip('/')] + [part.strip('/') for part in parts])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=f"Deploy {FULL_PRODUCT_NAME} update")
