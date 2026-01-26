@@ -37,8 +37,8 @@ AWS_CLI = "@awscli@/bin/aws"
 TMPDIR = "/tmp"
 
 @dataclass
-class VersionItem:
-    """An item to be added to a version on the dist host."""
+class Artifact:
+    """An artifact to be included for the version on the dist host."""
     human_name: str
     file_name: str
     local_path: str
@@ -158,24 +158,24 @@ def _main(opts):
             exit(1)
 
 
-        # Gather items to deploy for this version
-        bundle = VersionItem(
+        # Gather artifacts to deploy for this version
+        bundle = Artifact(
             human_name = "RAUC Bundle",
             file_name = f"{SAFE_PRODUCT_NAME}-{VERSION}.raucb",
             local_path = signed_bundle_path,
             include_in_summary = False
         )
-        manual = VersionItem(
+        manual = Artifact(
             human_name = "Manual",
             file_name = f"{SAFE_PRODUCT_NAME}-manual-{VERSION}.pdf",
             local_path = os.path.join(DOCS, "user-manual.pdf"),
             include_in_summary = True
         )
-        version_items = [ bundle, manual ]
+        artifacts = [ bundle, manual ]
 
         if INSTALLER_ISO:
             installer_iso_filename = f"{SAFE_PRODUCT_NAME}-installer-{VERSION}.iso"
-            version_items.append(VersionItem(
+            artifacts.append(Artifact(
                 human_name = "Installer",
                 file_name = installer_iso_filename,
                 local_path = os.path.join(INSTALLER_ISO, "iso", installer_iso_filename),
@@ -184,7 +184,7 @@ def _main(opts):
 
         if LIVE_ISO:
             live_iso_filename = f"{SAFE_PRODUCT_NAME}-live-{VERSION}.iso"
-            version_items.append(VersionItem(
+            artifacts.append(Artifact(
                 human_name = "Live System",
                 file_name = live_iso_filename,
                 local_path = os.path.join(LIVE_ISO, "iso", live_iso_filename),
@@ -195,15 +195,15 @@ def _main(opts):
         # Print deployment plan
         print("DEPLOYMENT PLAN")
         print("===============")
-        for item in version_items:
-            print(f"  - {item.human_name}: {item.file_name}")
+        for artifact in artifacts:
+            print(f"  - {artifact.human_name}: {artifact.file_name}")
         print()
 
-        # Deploy the version
-        for item in version_items:
+        # Deploy the version's artifacts
+        for artifact in artifacts:
             run_command(
                 [
-                    AWS_CLI, "s3", "cp", item.local_path, join_url(DEPLOY_URL, VERSION, item.file_name),
+                    AWS_CLI, "s3", "cp", artifact.local_path, join_url(DEPLOY_URL, VERSION, artifact.file_name),
                     "--acl", "public-read"
                 ],
                 dry_run=opts.dry_run,
@@ -264,9 +264,9 @@ def _main(opts):
             skip=opts.dry_run)
 
         summary = "\n".join(
-            item.summarize()
-            for item in version_items
-            if item.include_in_summary or opts.verbose
+            artifact.summarize()
+            for artifact in artifacts
+            if artifact.include_in_summary or opts.verbose
         )
         print()
         print("DEPLOYMENT SUMMARY")
@@ -302,6 +302,6 @@ if __name__ == '__main__':
     parser.add_argument('--skip-latest', help="skip updating the 'latest' references", action='store_true')
     parser.add_argument('--override-cert', help="use a previous cert when switching PKI pairs")
     parser.add_argument('--dry-run', help="prepares artifacts, but only prints what would normally be uploaded", action='store_true')
-    parser.add_argument('--verbose', help="list all artifact items in the built version", action='store_true')
+    parser.add_argument('--verbose', help="list all artifacts in the built version", action='store_true')
 
     _main(parser.parse_args())
