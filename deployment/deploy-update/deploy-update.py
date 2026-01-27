@@ -92,7 +92,7 @@ def run_command(args, dry_run=False, **kwargs):
     if dry_run:
         # Quote if needed to output complete, usable commands
         cmd_str = ' '.join(shlex.quote(str(arg)) for arg in args)
-        print_status("DRY-RUN", cmd_str, color=StatusColor.YELLOW)
+        print(f"[DRY-RUN] {cmd_str}")
         return
 
     subprocess.run(args, **kwargs)
