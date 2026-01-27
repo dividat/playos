@@ -195,9 +195,9 @@ def _main(opts):
 
         # Print deployment plan
         print("DEPLOYMENT PLAN")
-        print("===============")
+        print("===============\n")
         for artifact in artifacts:
-            print(f"  - {artifact.human_name}: {artifact.file_name}")
+            print(f"- {artifact.human_name}: {artifact.file_name}")
         print()
 
         # Deploy the version's artifacts
