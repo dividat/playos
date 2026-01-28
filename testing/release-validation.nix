@@ -52,17 +52,17 @@ let
     diskImageURLs = {
         "2023.9.1-DISK" = {
             url = "${baseS3URL}/playos-release-disk-2023.9.1-DISK.img.zst";
-            hash = "sha256-eTyNcDkYSsMUsUHToZJ4tEKag9WSi8gA2SAihFFCqH0=";
+            hash = "sha256-Az5eYYZFUweSzMSEBKIB6Q3mGtG0SLJ51LxWeeJqpfw=";
         };
-        "2024.7.0-DISK" = {
+        "2024.7.0-DISK" = { # fails double-update, needs backport+rebuild
             url = "${baseS3URL}/playos-release-disk-2024.7.0-DISK.img.zst";
             hash = "sha256-vJDB99ICt0W1PmONikNY5wwIF7oQU388DzYRgPqkooY=";
         };
         "2025.3.1" = {
             url = "${baseS3URL}/playos-release-disk-2025.3.1.img.zst";
-            hash = "sha256-tAyrWcBgJUfIeHAPWF0o/5E9yITicCqYL3xWkc9buq8=";
+            hash = "sha256-ySLOMGsDfeGU4r8xUOwW9M/VMKC8GpzhaKXVQwu5fxM=";
         };
-        "2025.3.2" = {
+        "2025.3.2" = { # fails double-update, needs backport+rebuild
             url = "${baseS3URL}/playos-release-disk-2025.3.2.img.zst";
             hash = "sha256-txgvrLtO2qq8JZlU/ijONnVLAMLK/6QyRutwej5UEWY=";
         };
