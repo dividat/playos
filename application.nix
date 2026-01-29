@@ -271,5 +271,7 @@ rec {
 
       playos.hardening.enable = true;
 
+      playos.unsupervised.enable = true;
+
     };
 }

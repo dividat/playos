@@ -42,6 +42,9 @@
         settingChangeDelay = 15;
     };
 
+    # Disable various kinds of kernel panic that may trigger as false positives on VM
+    playos.unsupervised.enable = lib.mkForce false;
+
     # Disable the PS/2 keyboard to make kiosk's virtual keyboard enabled by default.
     # Note: you can simulate extra input devices either 'statically' (extra qemu opts)
     # or dynamically (e.g. `device_add usb-kbd` via qemu monitor).
