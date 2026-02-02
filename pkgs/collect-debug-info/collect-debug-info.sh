@@ -50,7 +50,7 @@ General params:
 
     -o, --output            Destination file, defaults to stdout
 
-    --log-format FORMAT     Sets journalctl --ouput=FORMAT. Defaults to '${DEFAULT_LOG_FORMAT}'
+    --log-format FORMAT     Sets journalctl --output=FORMAT. Defaults to '${DEFAULT_LOG_FORMAT}'
 
 Limits:
 
