@@ -75,7 +75,7 @@ Misc:
 
 
 Examples:
-  $0 --ouput debug-info.tar.gz --minimal
+  $0 --output debug-info.tar.gz --minimal
 
   $0 --since "1 week ago" --exclude network
 EOF
