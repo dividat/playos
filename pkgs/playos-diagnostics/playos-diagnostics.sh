@@ -201,6 +201,7 @@ collect_STATS() {
 workdir=$(mktemp -d)
 # shellcheck disable=SC2064
 trap "rm -rf '$workdir'" EXIT
+readonly workdir
 
 machine_id="$(cat /etc/machine-id || echo "NO_MACHINE_ID")"
 archive_name="playos-diagnostics-${machine_id}-$(date +%Y%m%d-%H%M%S)"
@@ -208,7 +209,7 @@ basedir="$workdir/$archive_name"
 datadir="$basedir/data"
 logfile="$basedir/collection.log"
 
-readonly workdir archive_name datadir logfile machine_id
+readonly machine_id archive_name basedir datadir logfile
 
 mkdir -p "$datadir"
 touch "$logfile"
