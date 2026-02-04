@@ -161,7 +161,6 @@ collect_LOGS() {
 
     # Note: logs get compressed in-flight to reduce the amount of data stored in /tmp
     run_cmd -o journald.log.gz "journalctl --output=\"$LOG_FORMAT\" $since_args | gzip -c"
-    run_cmd -o dmesg.log.gz "dmesg --time-format iso $since_args | gzip -c"
 }
 
 collect_NETWORK() {

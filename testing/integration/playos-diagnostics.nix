@@ -124,24 +124,19 @@ with TestCase("archive contents contain expected structure") as t:
 
 with TestCase("logs are collected according to --since limits") as t:
     machine.succeed('echo RECENT_TEST_LOG | systemd-cat -t TEST') # journald
-    machine.succeed('echo RECENT_TEST_LOG > /dev/kmsg') # dmesg
     oldest_expected_date = datetime.fromisoformat(machine.succeed(
       'date --date="12 seconds ago" --rfc-3339=seconds | sed "s/ /T/"').strip())
 
     with diagnostic_output('--since "10 seconds ago"') as (_, tmpdir):
-        journald_contents = get_file_contents(
+        contents = get_file_contents(
             tmpdir, "playos-diagnostics-*/data/logs/journald.log.gz", t=t)
 
-        dmesg_contents = get_file_contents(
-            tmpdir, "playos-diagnostics-*/data/logs/dmesg.log.gz", t=t)
+        t.assertIn("RECENT_TEST_LOG", contents)
 
-        for contents in [journald_contents, dmesg_contents]:
-            t.assertIn("RECENT_TEST_LOG", contents)
-
-            for line in contents.splitlines():
-                ts = datetime.fromisoformat(line.split(" ")[0].strip())
-                t.assertGreater(ts, oldest_expected_date,
-                   f"Logs contain entries with timestamps older than expected, line: {line}")
+        for line in contents.splitlines():
+            ts = datetime.fromisoformat(line.split(" ")[0].strip())
+            t.assertGreater(ts, oldest_expected_date,
+               f"Logs contain entries with timestamps older than expected, line: {line}")
 
 
 with TestCase("--minimal flag excludes logs") as t:
