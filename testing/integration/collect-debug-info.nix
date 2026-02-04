@@ -90,7 +90,7 @@ with TestCase("script outputs a valid gziped tar archive to stdout"):
     run_diagnostic_script("> /tmp/diag.tar.gz")
     machine.succeed("mkdir -p /tmp/diag")
     machine.succeed("tar xvf /tmp/diag.tar.gz -C /tmp/")
-    machine.succeed("ls /tmp/playos-diagnostic-data-*/collection.log")
+    machine.succeed("ls /tmp/playos-diagnostics-*/collection.log")
 
 ALL_DIAGNOSTIC_TYPES = [ t.lower() for t in run_diagnostic_script("--list-types")[1].split() ]
 
@@ -101,7 +101,7 @@ with TestCase("archive contents contain expected structure") as t:
       # exactly 1 top-level directory
       t.assertEqual(len(top_level_items), 1)
       top_dir = top_level_items[0]
-      t.assertIn("playos-diagnostic-data-", top_dir.name)
+      t.assertIn("playos-diagnostics-", top_dir.name)
 
       # contains expected files and dir structure
       files_and_dirs = { h.name for h in top_dir.glob("*") }
@@ -130,10 +130,10 @@ with TestCase("logs are collected according to --since limits") as t:
 
     with diagnostic_output('--since "10 seconds ago"') as (_, tmpdir):
         journald_contents = get_file_contents(
-            tmpdir, "playos-diagnostic-data-*/data/logs/journald.log.gz", t=t)
+            tmpdir, "playos-diagnostics-*/data/logs/journald.log.gz", t=t)
 
         dmesg_contents = get_file_contents(
-            tmpdir, "playos-diagnostic-data-*/data/logs/dmesg.log.gz", t=t)
+            tmpdir, "playos-diagnostics-*/data/logs/dmesg.log.gz", t=t)
 
         for contents in [journald_contents, dmesg_contents]:
             t.assertIn("RECENT_TEST_LOG", contents)
@@ -146,13 +146,13 @@ with TestCase("logs are collected according to --since limits") as t:
 
 with TestCase("--minimal flag excludes logs") as t:
     with diagnostic_output('--minimal') as (_, tmpdir):
-        match = list(tmpdir.glob("playos-diagnostic-data-*/data/logs/"))
+        match = list(tmpdir.glob("playos-diagnostics-*/data/logs/"))
         t.assertEqual(match, [])
 
 
 with TestCase("--exclude excludes custom types") as t:
     with diagnostic_output('--exclude NETWORK') as (_, tmpdir):
-        match = list(tmpdir.glob("playos-diagnostic-data-*/data/network/"))
+        match = list(tmpdir.glob("playos-diagnostics-*/data/network/"))
         t.assertEqual(match, [])
 
 
@@ -164,7 +164,7 @@ with TestCase("command error exit codes are propagated up") as t:
     with diagnostic_output(check_error=False) as (exit_code, tmpdir):
         t.assertGreater(exit_code, 100)
 
-        contents = get_file_contents(tmpdir, "playos-diagnostic-data-*/collection.log", t=t)
+        contents = get_file_contents(tmpdir, "playos-diagnostics-*/collection.log", t=t)
         t.assertIn("ERR command failed", contents)
         t.assertIn("Warning: some diagnostic commands failed", contents)
 
@@ -180,7 +180,7 @@ with TestCase("commands that hang are timed out") as t:
     with diagnostic_output('--cmd-timeout 5s', check_error=False) as (exit_code, tmpdir):
         t.assertGreater(exit_code, 100)
 
-        contents = get_file_contents(tmpdir, "playos-diagnostic-data-*/collection.log", t=t)
+        contents = get_file_contents(tmpdir, "playos-diagnostics-*/collection.log", t=t)
         t.assertIn("timeout: sending signal TERM", contents)
         t.assertIn("ERR command failed", contents)
         t.assertIn("Warning: some diagnostic commands failed", contents)

@@ -33,7 +33,7 @@ and their exit error codes into collection.log, which serves as an audit log.
 
 The resulting archive will have the following structure:
 
-    playos-diagnostic-data-<DATE>/
+    playos-diagnostics-<MACHINE_ID>-<DATE>/
     - collection.log  # date, params and logs of diagnostic tool invocations and
                       # error exit codes
     - data/
@@ -203,12 +203,13 @@ workdir=$(mktemp -d)
 # shellcheck disable=SC2064
 trap "rm -rf '$workdir'" EXIT
 
-archive_name="playos-diagnostic-data-$(date +%Y%m%d-%H%M%S)"
+machine_id="$(cat /etc/machine-id || echo "NO_MACHINE_ID")"
+archive_name="playos-diagnostics-${machine_id}-$(date +%Y%m%d-%H%M%S)"
 basedir="$workdir/$archive_name"
 datadir="$basedir/data"
 logfile="$basedir/collection.log"
 
-readonly workdir archive_name datadir logfile
+readonly workdir archive_name datadir logfile machine_id
 
 mkdir -p "$datadir"
 touch "$logfile"
@@ -221,6 +222,7 @@ exec 2> >(tee -a "$logfile" >&3)
 log "Starting PlayOS diagnostic data collection."
 log ""
 log "Collection date: $(date --rfc-3339=seconds)"
+log "Machine id: ${machine_id}"
 log ""
 log "Parameters:"
 log "  SINCE: ${SINCE:-<not set>}"
