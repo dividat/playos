@@ -138,7 +138,7 @@ run_cmd() {
     log "Running: $* > $outfile ..."
 
     local exit_code; exit_code=0
-    # Note: using `bash -c` to
+    # Note: using `bash -c` to allow passing piped commands and custom redirects
     timeout -v --kill-after 10 "$CMD_TIMEOUT" bash -c "$*" > "$outfile" || exit_code=$?
 
 
