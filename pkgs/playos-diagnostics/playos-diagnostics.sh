@@ -150,7 +150,7 @@ run_cmd() {
 }
 
 copy_file() {
-    run_cmd -o /dev/null "cp \"$1\" \"$2\""
+    run_cmd -o /dev/null cp --no-preserve=all "$1" "$2"
 }
 
 collect_LOGS() {
