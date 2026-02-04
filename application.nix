@@ -89,7 +89,7 @@ rec {
       playos.xserver.activeVirtualTerminals = [ 7 8 ];
 
       # System-wide packages
-      environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme playos-collect-debug-info ];
+      environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme playos-diagnostics ];
 
       # Avoid bloating system image size
       services.speechd.enable = false;

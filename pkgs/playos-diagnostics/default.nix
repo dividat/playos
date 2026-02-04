@@ -1,6 +1,6 @@
 { pkgs }:
 pkgs.writeShellApplication {
-  name = "playos-collect-debug-info";
+  name = "playos-diagnostics";
   runtimeInputs = with pkgs; [
     # script dependencies
     gnutar
@@ -11,5 +11,5 @@ pkgs.writeShellApplication {
     wirelesstools
     connman
   ];
-  text = builtins.readFile ./collect-debug-info.sh;
+  text = builtins.readFile ./playos-diagnostics.sh;
 }

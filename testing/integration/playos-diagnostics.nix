@@ -11,7 +11,7 @@ pkgs.testers.runNixOSTest {
       ];
 
       config = {
-        environment.systemPackages = with pkgs; [ playos-collect-debug-info ];
+        environment.systemPackages = with pkgs; [ playos-diagnostics ];
         services.connman.enable = pkgs.lib.mkOverride 0 true; # disabled in runNixOSTest by default
       };
     };
@@ -34,10 +34,10 @@ import gzip
 ######### Test helpers
 
 def run_diagnostic_script(extra_params="", check_error=True):
-    (exit_code, out) = machine.execute(f"playos-collect-debug-info {extra_params}")
+    (exit_code, out) = machine.execute(f"playos-diagnostics {extra_params}")
 
     if check_error and exit_code != 0:
-      raise RuntimeError(f"playos-collect-debug-info failed ({exit_code=})!")
+      raise RuntimeError(f"playos-diagnostics failed ({exit_code=})!")
 
     return (exit_code, out)
 

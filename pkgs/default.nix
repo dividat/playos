@@ -37,7 +37,7 @@ let
 
       focus-shift = self.callPackage ./focus-shift.nix {};
 
-      playos-collect-debug-info = self.callPackage ./collect-debug-info {};
+      playos-diagnostics = self.callPackage ./playos-diagnostics {};
     };
 in
 
