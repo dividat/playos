@@ -28,8 +28,8 @@ In case any of the diagnostic commands fail with exit code N>0, the script will
 exit with code 100+N. Exit codes <100 are bugs and/or unexpected errors in the
 collection script.
 
-The tool will print commands used to collect the data to stderr also save it
-their stderr outputs as well as exit codes in collection.log.
+The tool will save the commands used to collect the data, their stderr outputs
+and their exit error codes into collection.log, which serves as an audit log.
 
 The resulting archive will have the following structure:
 
