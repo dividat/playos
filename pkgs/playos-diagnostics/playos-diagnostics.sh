@@ -178,7 +178,6 @@ collect_NETWORK() {
 }
 
 collect_SYSINFO() {
-    run_cmd date
     run_cmd -o uname.txt uname -a
     copy_file /etc/os-release .
 
