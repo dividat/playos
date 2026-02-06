@@ -246,7 +246,6 @@ in
       };
 
       systemd.services.telegraf.path = [
-        pkgs.lm_sensors # for inputs.sensors
         pkgs.dbus # for inputs.systemd_units
       ];
 
@@ -322,9 +321,6 @@ in
             "inodes_used"
           ];
         };
-
-        # TODO: check if it works on a PlayOS PC
-        #inputs.sensors = { };
 
         inputs.wireless = {
           # keeping many fields for now, to help debug wireless issues

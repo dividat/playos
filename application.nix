@@ -87,11 +87,16 @@ rec {
       playos.monitoring.enable = true;
       playos.monitoring.extraServices = [ "dividat-driver.service" ];
 
-      systemd.services.telegraf.path = with pkgs; [ procps ]; # pgrep for procstat
+      systemd.services.telegraf.path = with pkgs; [
+        procps # pgrep for inputs.procstat
+        lm_sensors # for inputs.sensors
+      ];
 
-      # track the memory and cpu usage of processes started in the X11 session
-      # (kiosk, qtwebengine and anything else)
       services.telegraf.extraConfig = {
+        inputs.sensors = { };
+
+        # track the memory and cpu usage of processes started in the X11 session
+        # (kiosk, qtwebengine and anything else)
         inputs.procstat = [{
           properties = [ "cpu" "memory" ];
 
