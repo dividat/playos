@@ -181,8 +181,7 @@ collect_SYSINFO() {
     run_cmd -o uname.txt uname -a
     copy_file /etc/os-release .
 
-    # excluding autosuspend_delay_ms since it seems to always produce I/O error
-    run_cmd -o sys_class_dmi_id.txt grep -r . /sys/class/dmi/id/ --exclude="autosuspend_delay_ms"
+    run_cmd dmidecode
 }
 
 collect_HARDWARE() {
