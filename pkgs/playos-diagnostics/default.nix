@@ -11,6 +11,7 @@ pkgs.writeShellApplication {
     wirelesstools
     connman
     dmidecode
+    lshw
   ];
   text = builtins.readFile ./playos-diagnostics.sh;
 }

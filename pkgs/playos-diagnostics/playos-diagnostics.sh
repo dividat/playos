@@ -188,6 +188,7 @@ collect_HARDWARE() {
     run_cmd -o "udevadm_net_devices.txt" "udevadm info /sys/class/net/*/device/"
     run_cmd lsmod
     run_cmd lscpu
+    run_cmd lshw
 }
 
 collect_STATS() {
