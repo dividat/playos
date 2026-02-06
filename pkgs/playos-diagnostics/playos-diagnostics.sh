@@ -10,6 +10,7 @@ declare -a DIAGNOSTIC_TYPES=(
     "NETWORK"
     "STATS"
     "SYSINFO"
+    "UPDATE"
 )
 
 readonly DEFAULT_LOG_FORMAT DEFAULT_SINCE DEFAULT_CMD_TIMEOUT DIAGNOSTIC_TYPES
@@ -195,6 +196,32 @@ collect_STATS() {
     run_cmd -o free.txt free -h
     run_cmd -o df.txt df -h
     run_cmd uptime
+}
+
+collect_UPDATE() {
+    # what version of GRUB is the system using?
+    run_cmd -o grub_pkg_version.txt grub-install --version
+
+    # what version and build of GRUB is installed in /boot?
+    copy_file /boot/grub/x86_64-efi/modinfo.sh grub_modinfo.sh
+
+    # when was GRUB (and also initial PlayOS) installed?
+    run_cmd -o BOOTX64.EFI.stat stat /boot/EFI/BOOT/BOOTX64.EFI # might be machine-specific
+    run_cmd -o core.efi.stat stat /boot/grub/x86_64-efi/core.efi
+
+    # for verifying that grub.cfg is unmodified
+    copy_file /boot/grub/grub.cfg .
+    run_cmd -o grub.cfg.stat stat /boot/grub/grub.cfg
+
+    # current grubenv values
+    run_cmd -o grubenv.txt grub-editenv list
+
+    # RAUC status
+    copy_file /boot/status.ini .
+    run_cmd -o rauc_status.txt rauc status --detailed
+
+    # update status as observed by controller
+    run_cmd -o controller_system_status.html curl -L --fail --silent http://localhost:3333/status
 }
 
 workdir=$(mktemp -d)

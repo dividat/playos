@@ -34,7 +34,10 @@ import gzip
 ######### Test helpers
 
 def run_diagnostic_script(extra_params="", check_error=True):
-    (exit_code, out) = machine.execute(f"playos-diagnostics {extra_params}")
+    # Note: we exclude UPDATE diagnostics by default, because they require
+    # a fully functional EFI/GRUB/RAUC setup and are best tested on actual
+    # hardware or in end-to-end tests.
+    (exit_code, out) = machine.execute(f"playos-diagnostics --exclude UPDATE {extra_params}")
 
     if check_error and exit_code != 0:
       raise RuntimeError(f"playos-diagnostics failed ({exit_code=})!")
@@ -113,7 +116,8 @@ with TestCase("archive contents contain expected structure") as t:
 
       t.assertSetEqual(
         { d.name for d in output_diagnostic_type_dirs },
-        set(ALL_DIAGNOSTIC_TYPES)
+        # UPDATE is excluded in these tests, see run_diagnostic_script
+        set(ALL_DIAGNOSTIC_TYPES) - { 'update' }
       )
 
       # for each diagnostic type, we expect at least one diagnostic file produced

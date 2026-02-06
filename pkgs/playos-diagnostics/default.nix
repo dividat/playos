@@ -12,6 +12,9 @@ pkgs.writeShellApplication {
     connman
     dmidecode
     lshw
+    rauc
+    grub2_efi
+    curl
   ];
   text = builtins.readFile ./playos-diagnostics.sh;
 }
