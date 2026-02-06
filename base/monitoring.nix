@@ -58,6 +58,8 @@ in
 
   config =
     let
+      defaultResourceScalingWeight = 100; # cgroup default
+
       commonServiceConfig = {
         # restart with delay and backoff
         Restart = lib.mkForce "always";
@@ -69,8 +71,8 @@ in
         StartLimitBurst = 20;
 
         # limit resource usage
-        CPUWeight = 100 / 10; # 10 times smaller than the default
-        IOWeight = 100 / 10;
+        CPUWeight = defaultResourceScalingWeight / 10;
+        IOWeight = defaultResourceScalingWeight / 10;
       };
 
       # A slightly silly, but helpful way to validate Telegraf's config.
