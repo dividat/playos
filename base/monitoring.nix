@@ -83,15 +83,20 @@ in
           telegrafCfg = config.services.telegraf;
           settingsFormat = pkgs.formats.toml { };
           configFile = settingsFormat.generate "config.toml"
-          (telegrafCfg.extraConfig // {agent.debug = true; });
+            (telegrafCfg.extraConfig // {agent.debug = true;  });
+          stubSensorsBin = pkgs.writeShellScriptBin "sensors" ''true'';
         in
           pkgs.runCommand
             "validate-config"
-            { buildInputs = with pkgs; [ telegraf ]; }
+            { buildInputs = [pkgs.telegraf] ++ config.systemd.services.telegraf.path;  }
             ''
             set -euo pipefail
 
             echo "=== Validating telegraf's config..."
+
+            # provide a stub `sensors` bin, because input.sensors fails if there
+            # are no sensors available while the real `sensors` from pkgs.lm-sensors
+            export PATH=${stubSensorsBin}/bin:$PATH
 
             if telegraf --config ${configFile} --test &> output.txt; then
               echo "=== Config seems good!"
@@ -115,6 +120,7 @@ in
 
     in
     lib.mkIf cfg.enable {
+      system.checks = [ telegrafConfigIsValid ];
 
       ### InfluxDB --- local metric storage
 
@@ -242,7 +248,6 @@ in
       systemd.services.telegraf.path = [
         pkgs.lm_sensors # for inputs.sensors
         pkgs.dbus # for inputs.systemd_units
-        telegrafConfigIsValid
       ];
 
       # NOTE: if you add new inputs/ouputs or other configuration options that
