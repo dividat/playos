@@ -293,10 +293,25 @@ in
         };
 
         inputs.cpu = {
+          # gather stats summed over all CPUs
+          totalcpu = true;
+          # gather per-CPU stats
+          percpu = true;
+
+          # We exclude 'active' and rely on plotting setup to sum up the parts,
+          # since telegraf has an awkward definition of 'active' that includes
+          # `iowait`. This differs from the interpretation in standard tools
+          # like like top/htop and does not reflect CPU business.
+          report_active = false;
+
           fieldinclude = [
             "usage_user"
             "usage_system"
-            "usage_active" # is this sum of above?
+            "usage_idle"
+            "usage_nice"
+            "usage_iowait"
+            "usage_irq"
+            "usage_softirq"
           ];
         };
 
