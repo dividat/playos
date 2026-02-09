@@ -10,6 +10,8 @@ let
   supportedPlugins = [
     "inputs.cpu"
     "inputs.disk"
+    "inputs.diskio"
+    "inputs.kernel"
     "inputs.mem"
     "inputs.net"
     "inputs.procstat"

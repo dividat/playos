@@ -403,13 +403,34 @@ in
             }
           ];
 
-        # Additional input plugins of possible interest:
-        #
-        # - inputs.procstat + processors.topk for TOP 5 processes by mem/cpu?
-        #   computationally heavy, not sure how useful.
-        # - inputs.diskio - disk perf, at least read_time, write_time, io_time, io_await?
-        # - inputs.kernel - various core kernel stats, including mem pressure
+          inputs.kernel = {
+            # collect CPU, IO and memory pressure information
+            collect = [ "psi" ];
+            fieldinclude = [
+              # 'kernel' metric fields
+              "boot_time"
+              "entropy_avail"
+              "processes_forked"
 
+              # 'pressure' metric fields
+              "avg10"
+              "avg60"
+              "avg300"
+            ];
+
+          };
+
+          inputs.diskio = {
+            skip_serial_number = true;
+            fieldinclude = [
+              "reads"
+              "writes"
+              "read_time"
+              "write_time"
+              "io_await"
+              "io_util"
+            ];
+          };
       };
 
     };
