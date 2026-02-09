@@ -53,6 +53,10 @@ let
             url = "${baseS3URL}/playos-release-disk-2025.3.3.img.zst";
             hash = "sha256-u71dsbtnzXrERQ20H1CmCj9K9S1t2aOG0elzcrLIsYY=";
         };
+        "2026.1.0" = {
+            url = "${baseS3URL}/playos-release-disk-2026.1.0.img.zst";
+            hash = "sha256-M+fZJtoHONlPBIaWV0vjJCdvtwDH+a6TyoiV243/wfo=";
+        };
     };
 in
 {
