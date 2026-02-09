@@ -73,7 +73,7 @@ in
     kioskUrlDomain ? "kiosk-server.local",
 
     # PlayOS system we are updating from
-    baseSystemVersion ? "2025.3.3",
+    baseSystemVersion ? "2026.1.0",
 
     # A zstd-compressed PlayOS disk image
     baseSystemDiskImage ? (pkgs.fetchurl diskImageURLs.${baseSystemVersion})
