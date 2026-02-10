@@ -196,6 +196,7 @@ collect_STATS() {
     run_cmd -o free.txt free -h
     run_cmd -o df.txt df -h
     run_cmd uptime
+    run_cmd -o journalctl_list_boots.txt journalctl --list-boots
 
     # systemctl prints a bunch of 'Unit <UNIT> could not be found.' warnings
     # for units that are referenced, but do not exist, so we capture that
