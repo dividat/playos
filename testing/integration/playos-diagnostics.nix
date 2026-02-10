@@ -176,7 +176,8 @@ with TestCase("commands that hang are timed out") as t:
     machine.succeed("mkfifo /tmp/empty-pipe")
     machine.succeed("mount --bind /tmp/empty-pipe /etc/os-release")
 
-    with diagnostic_output('--cmd-timeout 5s', check_error=False) as (exit_code, tmpdir):
+    # excluding STATS, because the blocked bind mount also makes systemctl hang
+    with diagnostic_output('--cmd-timeout 5s --exclude STATS', check_error=False) as (exit_code, tmpdir):
         t.assertGreater(exit_code, 100)
 
         contents = get_file_contents(tmpdir, "playos-diagnostics-*/collection.log", t=t)

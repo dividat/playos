@@ -196,6 +196,13 @@ collect_STATS() {
     run_cmd -o free.txt free -h
     run_cmd -o df.txt df -h
     run_cmd uptime
+
+    # systemctl prints a bunch of 'Unit <UNIT> could not be found.' warnings
+    # for units that are referenced, but do not exist, so we capture that
+    # in the same output. We also ignore the exit code, since it will be
+    # non-zero if any unit is missing, inactive or failed
+    run_cmd -o systemctl_status.txt \
+        "(systemctl status --no-pager --plain --all || true) 2>&1"
 }
 
 collect_UPDATE() {
