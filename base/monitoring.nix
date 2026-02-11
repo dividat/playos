@@ -141,7 +141,7 @@ in
         # for db / data
         StateDirectory = "influxdb";
 
-        MemoryMax = "500M";
+        MemoryMax = "200M";
 
         # limit to two cores
         Environment = "GOMAXPROCS=2";
