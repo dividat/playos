@@ -168,7 +168,7 @@ collect_NETWORK() {
     run_cmd ip addr show
     run_cmd ip link show
     run_cmd ip route show
-    run_cmd -o ip_link_stats ip -s link show
+    run_cmd -o ip_link_stats.txt ip -s link show
     run_cmd connmanctl services
     run_cmd rfkill list
     run_cmd iw dev
