@@ -163,7 +163,7 @@ with TestCase("proxy passwords are masked in connman output") as t:
         t.assertNotIn(proxy_pass, contents, 
             "The proxy password was found in cleartext!.")
             
-        expected_mask = f"http://{proxy_user}:*****@{proxy_host}"
+        expected_mask = f"http://<MASKED_USER>:<MASKED_PASSWORD>@{proxy_host}"
         t.assertIn(expected_mask, contents, 
             f"The expected masked string '{expected_mask}' was not found.")
 
