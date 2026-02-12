@@ -30,6 +30,7 @@ from pathlib import Path
 import tarfile
 from datetime import datetime
 import gzip
+import urllib.parse
 
 ######### Test helpers
 
@@ -148,10 +149,10 @@ with TestCase("proxy passwords are masked in connman output") as t:
     ethernet_service_id = machine.succeed("connmanctl services | awk '/ethernet/ {print $NF}' | head -n 1").strip()
 
     # Configure a proxy
-    proxy_user = "publicuser"
-    proxy_pass = "secretpass"
+    proxy_user = "walter@vogelwei.de"
+    proxy_pass = urllib.parse.quote(r"Ch@os:The/or&y|'$(id)\"\\", safe="")
     proxy_host = "192.168.1.5:8080"
-    machine.succeed(f"connmanctl config {ethernet_service_id} proxy manual http://{proxy_user}:{proxy_pass}@{proxy_host}")
+    machine.succeed(f"connmanctl config {ethernet_service_id} proxy manual 'http://{proxy_user}:{proxy_pass}@{proxy_host}'")
 
     with diagnostic_output() as (_, tmpdir):
         contents = get_file_contents(
