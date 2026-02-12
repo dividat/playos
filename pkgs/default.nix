@@ -36,6 +36,8 @@ let
       });
 
       focus-shift = self.callPackage ./focus-shift.nix {};
+
+      playos-diagnostics = self.callPackage ./playos-diagnostics {};
     };
 in
 

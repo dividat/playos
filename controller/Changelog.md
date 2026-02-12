@@ -1,3 +1,7 @@
+# [UNRELEASED]
+
+- os: Add command for collecting system diagnostics
+
 # [2026.1.0] - 2026-02-09
 
 # [2026.1.0-VALIDATION] - 2026-01-12
