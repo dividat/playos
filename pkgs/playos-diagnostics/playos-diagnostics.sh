@@ -170,6 +170,7 @@ collect_NETWORK() {
     run_cmd ip route show
     run_cmd -o ip_link_stats.txt ip -s link show
     run_cmd connmanctl services
+    run_cmd -o connmanctl_service_properties.txt "connmanctl services | awk '{print \$NF}' | xargs -n 1 connmanctl services | sed -E -e 's|://([^:]+):[^@]+@|://\\1:*****@|g'"
     run_cmd rfkill list
     run_cmd iw dev
     # redirectering stderr to stdout here, because these tools dump non-wireless
