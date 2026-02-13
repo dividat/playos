@@ -30,6 +30,7 @@ from pathlib import Path
 import tarfile
 from datetime import datetime
 import gzip
+import urllib.parse
 
 ######### Test helpers
 
@@ -141,6 +142,31 @@ with TestCase("logs are collected according to --since limits") as t:
             ts = datetime.fromisoformat(line.split(" ")[0].strip())
             t.assertGreater(ts, oldest_expected_date,
                f"Logs contain entries with timestamps older than expected, line: {line}")
+
+with TestCase("proxy passwords are masked in connman output") as t:
+    machine.wait_until_succeeds("connmanctl services | grep ethernet")
+
+    ethernet_service_id = machine.succeed("connmanctl services | awk '/ethernet/ {print $NF}' | head -n 1").strip()
+
+    # Configure a proxy
+    proxy_user = "walter@vogelwei.de"
+    proxy_pass = urllib.parse.quote(r"Ch@os:The/or&y|'$(id)\"\\", safe="")
+    proxy_host = "192.168.1.5:8080"
+    machine.succeed(f"connmanctl config {ethernet_service_id} proxy manual 'http://{proxy_user}:{proxy_pass}@{proxy_host}'")
+
+    with diagnostic_output() as (_, tmpdir):
+        contents = get_file_contents(
+            tmpdir, 
+            "playos-diagnostics-*/data/network/connmanctl_service_properties.txt", 
+            t=t
+        )
+
+        t.assertNotIn(proxy_pass, contents, 
+            "The proxy password was found in cleartext!.")
+            
+        expected_mask = f"http://<MASKED_USER>:<MASKED_PASSWORD>@{proxy_host}"
+        t.assertIn(expected_mask, contents, 
+            f"The expected masked string '{expected_mask}' was not found.")
 
 
 with TestCase("--minimal flag excludes logs") as t:

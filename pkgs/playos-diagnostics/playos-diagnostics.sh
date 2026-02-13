@@ -164,12 +164,20 @@ collect_LOGS() {
     run_cmd -o journald.log.gz "journalctl --output=\"$LOG_FORMAT\" $since_args | gzip -c"
 }
 
+connmanctl_service_properties() {
+    for service in $(connmanctl services | awk '{print $NF}'); do
+        connmanctl services --properties "$service" | sed -E -e 's|://([^:]+):[^@]+@|://<MASKED_USER>:<MASKED_PASSWORD>@|g'
+    done
+}
+export -f connmanctl_service_properties
+
 collect_NETWORK() {
     run_cmd ip addr show
     run_cmd ip link show
     run_cmd ip route show
-    run_cmd -o ip_link_stats ip -s link show
+    run_cmd -o ip_link_stats.txt ip -s link show
     run_cmd connmanctl services
+    run_cmd connmanctl_service_properties
     run_cmd rfkill list
     run_cmd iw dev
     # redirectering stderr to stdout here, because these tools dump non-wireless
