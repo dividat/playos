@@ -1,0 +1,16 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB
+    uid: influxdb-default
+    type: influxdb
+    access: proxy
+    url: @INFLUXDB_URL@
+    database: @DATABASE@
+    isDefault: true
+    orgId: 1
+    editable: true
+
+    jsonData:
+      version: InfluxQL
+      httpMode: POST

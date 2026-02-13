@@ -1,0 +1,180 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Determine the directory where this script lives
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+INFLUXDB_URL="http://localhost:8086"
+INFLUXDB_DB="playos"
+GRAFANA_IP="127.0.0.1"
+GRAFANA_PORT="9090"
+RUNTIME_DIR="$SCRIPT_DIR/rundir"
+
+TEMPLATE_DIR="$SCRIPT_DIR/templates"
+# GRAFANA_PKG_DIR is set in flake.nix
+GRAFANA_BIN="$GRAFANA_PKG_DIR/bin/grafana"
+GRAFANA_HOMEPATH="$GRAFANA_PKG_DIR/share/grafana"
+
+usage() {
+    cat <<EOF
+Usage: run-grafana [OPTIONS]
+
+Start a local Grafana instance with a configured InfluxDB datasource.
+
+Options:
+    --influxdb-url URL    InfluxDB server URL (default: $INFLUXDB_URL)
+    --influxdb-db DB      InfluxDB database name (default: $INFLUXDB_DB)
+    --listen IP:PORT      Listen address (default: $GRAFANA_IP:$GRAFANA_PORT)
+    --runtime-dir PATH    Where to store persistent Grafana files (default: $RUNTIME_DIR)
+    -h, --help            Show this help message
+
+Examples:
+    run-grafana --influxdb-url http://192.168.1.10:8086
+    run-grafana --listen 0.0.0.0:3000
+
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    --influxdb-url)
+        INFLUXDB_URL="$2"
+        shift 2
+        ;;
+    --influxdb-db)
+        INFLUXDB_DB="$2"
+        shift 2
+        ;;
+    --listen)
+        GRAFANA_IP="${2%:*}"
+        GRAFANA_PORT="${2#*:}"
+        shift 2
+        ;;
+    --runtime-dir)
+        RUNTIME_DIR="$2"
+        shift 2
+        ;;
+    -h|--help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo "Unknown argument: $1" >&2
+        echo "Use --help for usage information" >&2
+        exit 1
+        ;;
+    esac
+done
+
+# Create required directories
+mkdir -p "$RUNTIME_DIR/provisioning/datasources" \
+        "$RUNTIME_DIR/provisioning/dashboards" \
+        "$RUNTIME_DIR/provisioning/plugins" \
+        "$RUNTIME_DIR/provisioning/alerting"
+
+# Generate RSA key pair for JWT if it doesn't exist
+if [[ ! -f "$RUNTIME_DIR/jwt-key.pem" ]]; then
+    openssl genrsa -out "$RUNTIME_DIR/jwt-key.pem" 2048 2>/dev/null
+    openssl rsa -in "$RUNTIME_DIR/jwt-key.pem" -pubout -out "$RUNTIME_DIR/jwt-key-pub.pem" 2>/dev/null
+    chmod 600 "$RUNTIME_DIR/jwt-key.pem"
+fi
+
+# Generate JWT token for auto-login as admin
+JWT_TOKEN=$(jwt encode \
+    --alg RS256 \
+    --secret @"$RUNTIME_DIR/jwt-key.pem" \
+    '{"sub":"admin","email":"admin@localhost","name":"Admin","role":"Admin"}')
+
+# Substitute datasource template
+sed -e "s|@INFLUXDB_URL@|$INFLUXDB_URL|g" \
+    -e "s|@DATABASE@|$INFLUXDB_DB|g" \
+    "$TEMPLATE_DIR/influxdb.yaml" \
+    > "$RUNTIME_DIR/provisioning/datasources/influxdb.yaml"
+
+# Substitute dashboards template
+sed -e "s|@DASHBOARDS_DIR@|$SCRIPT_DIR/dashboards|g" \
+    "$TEMPLATE_DIR/dashboards.yaml" \
+    > "$RUNTIME_DIR/provisioning/dashboards/dashboards.yaml"
+
+# Substitute grafana.ini template
+sed -e "s|@HOST@|$GRAFANA_IP|g" \
+    -e "s|@PORT@|$GRAFANA_PORT|g" \
+    -e "s|@RUNTIME_DIR@|$RUNTIME_DIR|g" \
+    "$TEMPLATE_DIR/grafana.ini" \
+    > "$RUNTIME_DIR/grafana.ini"
+
+echo ""
+echo "=========================================="
+echo "Starting Grafana"
+echo "=========================================="
+echo "URL:        http://$GRAFANA_IP:$GRAFANA_PORT"
+echo "Auto-login: http://$GRAFANA_IP:$GRAFANA_PORT/?auth_token=$JWT_TOKEN"
+echo "User/Pass:  admin / admin"
+echo "InfluxDB:   $INFLUXDB_URL (DB=$INFLUXDB_DB)"
+echo "Dashboards: $SCRIPT_DIR/dashboards"
+echo "Runtime:    $RUNTIME_DIR"
+echo "=========================================="
+echo ""
+
+# Track Grafana PID for signal handling
+GRAFANA_PID=""
+
+# Stop Grafana gracefully (used by all exit paths)
+stop_grafana() {
+    if [[ -n "$GRAFANA_PID" ]] && kill -0 "$GRAFANA_PID" 2>/dev/null; then
+        echo "Stopping Grafana..."
+        # Negative PID to kill the process group created by setsid
+        kill -TERM "-$GRAFANA_PID" 2>/dev/null || true
+        wait "$GRAFANA_PID" 2>/dev/null || true
+    fi
+}
+
+# Handler for Ctrl+C: ask about exporting dashboards, then stop
+on_interrupt() {
+    # Prevent re-entry
+    trap - INT
+
+    echo ""
+    echo ""
+    # Use /dev/tty to read from terminal even if stdin is redirected
+    read -r -t 10 -n 1 -p "Save modified dashboards before exiting? [y/N] " response </dev/tty || response="n"
+    echo ""
+
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        echo "Exporting dashboards..."
+        "$SCRIPT_DIR/export-dashboards" \
+            --url "http://$GRAFANA_IP:$GRAFANA_PORT" \
+            --output "$SCRIPT_DIR/dashboards"
+    fi
+
+    stop_grafana
+    exit 130  # 128 + SIGINT(2)
+}
+
+# Handler for regular exit or TERM: just stop Grafana quietly
+on_exit() {
+    local exit_code=$?
+
+    # Disable all traps to prevent re-entry
+    trap - INT TERM EXIT
+
+    stop_grafana
+    exit "$exit_code"
+}
+
+trap on_interrupt INT
+trap on_exit TERM EXIT
+
+# Run Grafana in its own process group so it doesn't receive SIGINT when
+# user presses Ctrl+C. This allows the cleanup function to export dashboards
+# before stopping Grafana.
+setsid "$GRAFANA_BIN" server \
+  --homepath "$GRAFANA_HOMEPATH" \
+  --config "$RUNTIME_DIR/grafana.ini" &
+
+GRAFANA_PID=$!
+readonly GRAFANA_PID
+
+# Wait for Grafana to exit
+wait "$GRAFANA_PID"

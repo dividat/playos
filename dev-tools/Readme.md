@@ -12,3 +12,8 @@ In order to use the simulated captive portal, set the environment variable
 before starting kiosk or controller:
 
     export PLAYOS_CAPTIVE_CHECK_URL="http://localhost:8000"
+
+
+## Metric plotting in Grafana
+
+See Readme in [grafana](grafana/Readme.md).
