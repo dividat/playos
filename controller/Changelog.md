@@ -1,6 +1,9 @@
 # [UNRELEASED]
 
+## Added
+
 - os: Add command for collecting system diagnostics
+- os: Local metric collection
 
 # [2026.1.0] - 2026-02-09
 
