@@ -5,6 +5,10 @@
 - os: Add command for collecting system diagnostics
 - os: Local metric collection
 
+## Changed
+
+- driver: Upgrade driver to 2.8.0 for Flex V6 and device metadata support
+
 # [2026.1.0] - 2026-02-09
 
 # [2026.1.0-VALIDATION] - 2026-01-12
