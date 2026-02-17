@@ -40,8 +40,9 @@ let nixos = pkgs.importFromNixos ""; in
         };
       };
 
-      # Live system does not self update
+      # Live system does not self update or need monitoring
       playos.selfUpdate.enable = false;
+      playos.monitoring.enable = mkForce false;
 
       # There is no persistent state for a live system
       system.stateVersion = lib.trivial.release;
