@@ -83,7 +83,7 @@ in
           telegrafCfg = config.services.telegraf;
           settingsFormat = pkgs.formats.toml { };
           configFile = settingsFormat.generate "config.toml"
-            (telegrafCfg.extraConfig // {agent.debug = true;  });
+            (lib.recursiveUpdate telegrafCfg.extraConfig {agent.debug = true; });
           stubSensorsBin = pkgs.writeShellScriptBin "sensors" ''true'';
         in
           pkgs.runCommand
