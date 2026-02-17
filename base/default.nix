@@ -19,6 +19,7 @@ with lib;
     ./system-partition.nix
     ./volatile-root.nix
     ./compatibility
+    ./monitoring.nix
   ];
 
   options = {

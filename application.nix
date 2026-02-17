@@ -84,6 +84,49 @@ rec {
         group = "users";
       };
 
+      playos.monitoring.enable = true;
+      playos.monitoring.extraServices = [ "dividat-driver.service" ];
+
+      systemd.services.telegraf.path = with pkgs; [
+        procps # pgrep for inputs.procstat
+        lm_sensors # for inputs.sensors
+      ];
+
+      services.telegraf.extraConfig = {
+        inputs.sensors = { };
+
+        # track the memory and cpu usage of processes started in the X11 session
+        # (kiosk, qtwebengine and anything else)
+        inputs.procstat = [{
+          properties = [ "cpu" "memory" ];
+
+          taginclude = [ "process_name" ]; # not unique!
+          fieldinclude = [
+            "pid" # Note: PID is a field, not a tag, to avoid tag cardinality
+                  # growth due to restarts.
+            "cpu_time_iowait"
+            "cpu_usage"
+            "memory_rss"
+            "memory_shared"
+          ];
+
+          filter = [{
+            name = "session-procs";
+            cgroups = [ "/sys/fs/cgroup/user.slice/user-*.slice/session-*.scope" ];
+            users = [ "play" ];
+          }];
+
+        }];
+
+        processors.strings = [{
+          left = [{
+            tag = "process_name";
+            width = 64; # trim process_names to at most 64 chars to avoid very long tag names
+          }];
+        }];
+
+      };
+
       # Limit virtual terminals that can be switched to
       # Virtual terminal 7 is the kiosk, 8 is the status screen
       playos.xserver.activeVirtualTerminals = [ 7 8 ];
