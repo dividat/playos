@@ -2,7 +2,7 @@
 
 let
 
-  version = "2.6.0";
+  version = "2.8.0";
 
 in buildGoModule rec {
 
@@ -13,10 +13,10 @@ in buildGoModule rec {
     owner = "dividat";
     repo = "driver";
     rev = version;
-    sha256 = "sha256-ssRGJ0p2Bld5BuwyKD057NNjDS5ukk+x73DR73SrOz0=";
+    sha256 = "sha256-gn7wzLxYWMrENyteEKmUD3mbVoOY9Dfi1I8Q2U8cQVQ=";
   };
 
-  vendorHash = "sha256-Jj6aI85hZXGeWhJ8wq9MgI9uTm11tJZUdVwI90Pio4s=";
+  vendorHash = "sha256-GwV+DmGCYe/PvnimpVbUWziD4SCoZDm0U9aVfmrLqsI=";
 
   nativeBuildInputs = with pkgs; [ pkg-config pcsclite ];
   buildInputs = with pkgs; [ pcsclite ];
