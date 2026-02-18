@@ -132,14 +132,14 @@ let
     extraModules = [ ./testing/end-to-end/profile.nix ];
   };
 
-  releaseDiskComponents = mkComponents {
+  releaseValidationComponents = mkComponents {
     inherit application;
     inherit squashfsCompressionOpts;
     extraModules = [ ./testing/system/passwordless-root.nix ];
   };
 
   releaseDisk = pkgs.callPackage ./testing/disk/release.nix {
-    inherit (releaseDiskComponents) install-playos;
+    inherit (releaseValidationComponents) install-playos;
   };
 in
 
@@ -194,4 +194,5 @@ with pkgs; stdenv.mkDerivation {
   passthru.tests = testComponents.tests.run;
 
   passthru.components = components;
+  passthru.releaseValidation = { components = releaseValidationComponents; };
 }

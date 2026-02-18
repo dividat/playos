@@ -1,14 +1,31 @@
 # This is meant to be the final _automated_ validation test before
 # pushing the release out for manual testing/QA.
 #
-# It tests the self-update scenario from an earlier release (the 'base' system)
-# to the current/upcoming release (the 'next' system).
+# It tests the double-self-update scenario, updating PlayOS from a BASE system
+# version to a PRE version and finally to the NEXT version.
 #
-# It is "untainted" because it does not alter the configuration of the base or
-# next systems' in any way (e.g. no test-instrumentation.nix extras). Instead it
-# sets up a simulated environment (DHCP, DNS, update server, etc.) and runs the
-# base system in it, interacting via "physical" inputs (mouse, keyboard using
-# QEMU's QMP) and observing the results via screenshots+OCR.
+# By default the system image in PRE and NEXT is the same and is the current
+# PlayOS image. This setup tests whether the current system can self-update.
+#
+# The tested steps:
+#    1. 'latest' is set to PRE in update server
+#    2. BASE system downloads+installs PRE
+#    3. VM reboots into PRE
+#    4. PRE system is marked Good. First update (BASE->PRE) successful.
+#    5. 'latest' is set to NEXT in update server
+#    6. PRE downloads+installs NEXT
+#    7. VM reboots into NEXT
+#    8. NEXT system is marked Good. Second update (PRE->NEXT) successful.
+#
+# In theory, the PRE and NEXT bundles can be replaced with a different system
+# image as long as they have the same build configuration (updateUrl and kioskUrl)
+# and a passwordless root. This allows to test path-dependant update scenarios.
+#
+# The test is "untainted" because it does not alter the configuration of the
+# base or next systems' in any way (e.g. no test-instrumentation.nix extras).
+# Instead it sets up a simulated environment (DHCP, DNS, update server, etc.)
+# and runs the base system in it, interacting via "physical" inputs (mouse,
+# keyboard using QEMU's QMP) and observing the results via screenshots+OCR.
 #
 # The test can be run non-interactively, but for debugging you will definitely
 # need visible output since there are no logs. This can be done using:
@@ -17,8 +34,8 @@
 #   ./result/bin/nixos-test-driver
 #   >> run_tests()
 #
-# The base system images have a passwordless root account, so
-# you can gain root access from the QEMU GUI:
+# The system images have a passwordless root account, so you can gain root
+# access from the QEMU GUI:
 #   - switch to QEMU monitor console (using ctrl-alt-2 or the menu)
 #   - execute "sendkey ctrl-shift-f8" (switch to status screen on TTY8)
 #   - execute "sendkey ctrl-shift-f1" (switch to TTY1)
@@ -35,17 +52,17 @@ let
     diskImageURLs = {
         "2023.9.1-DISK" = {
             url = "${baseS3URL}/playos-release-disk-2023.9.1-DISK.img.zst";
-            hash = "sha256-eTyNcDkYSsMUsUHToZJ4tEKag9WSi8gA2SAihFFCqH0=";
+            hash = "sha256-Az5eYYZFUweSzMSEBKIB6Q3mGtG0SLJ51LxWeeJqpfw=";
         };
-        "2024.7.0-DISK" = {
+        "2024.7.0-DISK" = { # fails double-update, needs backport+rebuild
             url = "${baseS3URL}/playos-release-disk-2024.7.0-DISK.img.zst";
             hash = "sha256-vJDB99ICt0W1PmONikNY5wwIF7oQU388DzYRgPqkooY=";
         };
         "2025.3.1" = {
             url = "${baseS3URL}/playos-release-disk-2025.3.1.img.zst";
-            hash = "sha256-tAyrWcBgJUfIeHAPWF0o/5E9yITicCqYL3xWkc9buq8=";
+            hash = "sha256-ySLOMGsDfeGU4r8xUOwW9M/VMKC8GpzhaKXVQwu5fxM=";
         };
-        "2025.3.2" = {
+        "2025.3.2" = { # fails double-update, needs backport+rebuild
             url = "${baseS3URL}/playos-release-disk-2025.3.2.img.zst";
             hash = "sha256-txgvrLtO2qq8JZlU/ijONnVLAMLK/6QyRutwej5UEWY=";
         };
@@ -58,6 +75,13 @@ let
             hash = "sha256-M+fZJtoHONlPBIaWV0vjJCdvtwDH+a6TyoiV243/wfo=";
         };
     };
+
+    mkNextSystemBundle = { pkgs, version, updateUrlDomain, kioskUrlDomain }:
+      (pkgs.callPackage ../default.nix {
+          updateUrl = "http://${updateUrlDomain}/";
+          kioskUrl = "http://${kioskUrlDomain}/";
+          versionOverride = version;
+      }).releaseValidation.components.unsignedRaucBundle;
 in
 {
     pkgs ? import ../pkgs { },
@@ -66,7 +90,7 @@ in
 
     safeProductName ? application.safeProductName,
 
-    # Note: the base system disk must be built with update and kiosk URLs which:
+    # Note: the system images must all be built with the same update and kiosk URLs which:
     # 1) have proper domain names (i.e. not localhost or plain IPs)
     # 2) do not use HTTPS
     updateUrlDomain ? "update-server.local",
@@ -82,18 +106,21 @@ in
             unsafeDiscardReferences.out = true;
         },
 
-    # PlayOS version we are updating into.
-    # Used in the stub update server and set in the bundle.
+    # PlayOS versions we are updating into.
+    #
+    # There will be two updates: BASE -> PRE and PRE -> NEXT where PRE and NEXT
+    # are by default the same (i.e. the current PlayOS system image).
+    #
+    # Note: these versions cannot be substrings of each other, since
+    # we rely on (visually) detecting the values on screen.
+    preSystemVersion ? "6666.66.66",
     nextSystemVersion ? "9999.99.99",
 
-    # PlayOS bundle for the next update
-    nextSystemBundlePath ? (pkgs.callPackage ../default.nix {
-        updateUrl = "http://${updateUrlDomain}/";
-        kioskUrl = "http://${kioskUrlDomain}/";
-        # This override is not needed if application.version is "already" newer
-        # than base
-        versionOverride = nextSystemVersion;
-    }).components.unsignedRaucBundle,
+    # PlayOS bundles to be updated to
+    preSystemBundlePath ? mkNextSystemBundle
+      { version = preSystemVersion; inherit pkgs updateUrlDomain kioskUrlDomain; },
+    nextSystemBundlePath ? mkNextSystemBundle
+      { version = nextSystemVersion; inherit pkgs updateUrlDomain kioskUrlDomain; }
 }:
 let
     overlayPath = "/tmp/release-validation-disk.img";
@@ -191,6 +218,17 @@ import PIL.ImageEnhance
 import PIL.ImageOps
 import os
 
+### Constants
+
+product_name = "${safeProductName}"
+pre_version = "${preSystemVersion}"
+next_version = "${nextSystemVersion}"
+
+http_root = "${nodes.sidekick.services.static-web-server.root}"
+http_local_url = "http://127.0.0.1"
+
+### Test helpers
+
 # Note #1: extracting the compressed disk in the test rather than in a
 # derivation to avoid bloating nix store with a 10GB+ file
 # Note #2: no need to create a COW overlay, since we can write to the temp disk
@@ -203,15 +241,6 @@ def extract_base_system_disk(compressed_disk, target_path):
     os.chmod(target_path, 0o666)
     atexit.register(os.remove, target_path)
 
-product_name = "${safeProductName}"
-next_version = "${nextSystemVersion}"
-
-http_root = "${nodes.sidekick.services.static-web-server.root}"
-http_local_url = "http://127.0.0.1"
-
-extract_base_system_disk("${baseSystemDiskImage}", "${overlayPath}")
-playos.start(allow_reboot=True)
-sidekick.start()
 
 # Faster OCR than NixOS `get_screen_text`, which takes almost 20 seconds per
 # call. Fails to identify white text on dark backgrounds.
@@ -225,6 +254,48 @@ def screenshot_and_ocr(vm):
         return tesserocr.image_to_text(im)
 
 
+# Navigate to system status page using keyboard only.
+# Hack: depends on current UI layout. Could be made more
+# sophisticated by using tesseract to detect the bounding box
+# and then mouse_move'ing there for a click
+def navigate_to_system_status():
+    for _ in range(4):
+        playos.send_key("tab", delay=0.2)
+    playos.send_key("ret", delay=0.2)
+    time.sleep(2)
+
+
+def check_for_text_in_status_page(text, ignore_errors=False):
+    playos.send_key("ctrl-r")
+    time.sleep(2)
+    navigate_to_system_status()
+    screen_text = screenshot_and_ocr(playos)
+    print(f"Current sreen text: {screen_text}")
+
+    # return early if there is an error
+    if not ignore_errors:
+        possible_errors = ["ErrorDownloading", "ErrorInstalling", "UpdateError"]
+        if any([e in screen_text for e in possible_errors]):
+            return screen_text
+
+    t.assertIn(text, screen_text)
+
+# Note: done via root shell on tty1, since a QEMU system_reset corrupts the
+# /boot/status.ini due to unclean unmount + FAT
+def reboot_via_tty():
+    playos.send_key("ctrl-alt-f8", delay=2) # direct switch to tty1 prevented by limit-vtes.nix
+    playos.send_key("ctrl-alt-f1", delay=2)
+    playos.send_chars("root\n")
+    time.sleep(2)
+    playos.send_chars("systemctl reboot\n")
+
+
+### === Start VMs
+
+extract_base_system_disk("${baseSystemDiskImage}", "${overlayPath}")
+playos.start(allow_reboot=True)
+sidekick.start()
+
 ### === Stub Update server setup
 
 with TestPrecondition("Stub update server is started"):
@@ -234,10 +305,18 @@ with TestPrecondition("Stub update server is started"):
     sidekick.succeed(f"curl -f {http_local_url}")
 
 with TestPrecondition("Stub update server is functional") as t:
+    update_server.add_bundle(pre_version, filepath="${preSystemBundlePath}")
     update_server.add_bundle(next_version, filepath="${nextSystemBundlePath}")
-    update_server.set_latest_version(next_version)
+    update_server.set_latest_version(pre_version)
     out_v = sidekick.succeed(f"curl -f {http_local_url}/latest")
-    t.assertEqual(out_v, next_version)
+    t.assertEqual(out_v, pre_version)
+
+def move_mouse_to_corner():
+  # move mouse to bottom right corner so it doesn't accidentally cover
+  # any text while OCR'ing
+  playos.send_monitor_command("mouse_move 2000 2000")
+
+### === Validate that PlayOS VM and baseSystem is OK
 
 with TestPrecondition("dnsmasq hands out an IP to playos"):
     dhcp_seq = [
@@ -259,9 +338,8 @@ with TestPrecondition("kiosk is open with kiosk URL") as t:
         sleep=2
     )
 
-# move mouse to bottom right corner so it doesn't accidentally cover
-# any text while OCR'ing
-playos.send_monitor_command("mouse_move 2000 2000")
+
+move_mouse_to_corner()
 
 with TestPrecondition("controller GUI is visible") as t:
     # switch to controller
@@ -279,89 +357,81 @@ with TestPrecondition("controller GUI is visible") as t:
     t.assertIn("${baseSystemVersion}", screen_text)
 
 
-# Navigate to system status page using keyboard only.
-# Hack: depends on current UI layout. Could be made more
-# sophisticated by using tesseract to detect the bounding box
-# and then mouse_move'ing there for a click
-def navigate_to_system_status():
-    for _ in range(4):
-        playos.send_key("tab", delay=0.2)
-    playos.send_key("ret", delay=0.2)
-    time.sleep(2)
-
 with TestPrecondition("Navigate to System Status page") as t:
     navigate_to_system_status()
     screen_text = screenshot_and_ocr(playos)
     t.assertIn("Update State", screen_text,
         "Update State not visible in screen, navigation failed?")
 
-with TestCase("controller starts downloading the bundle") as t:
-    def t_check():
-        playos.send_key("ctrl-r")
-        time.sleep(2)
-        navigate_to_system_status()
-        screen_text = screenshot_and_ocr(playos)
-        t.assertIn("Downloading", screen_text)
+### Helpers re-used in both BASE->PRE and PRE->NEXT
 
-    wait_until_passes(t_check, retries=30, sleep=1)
+def check_update_is_downloaded_and_installed(stage):
+  with TestCase(f"{stage}: controller starts downloading the bundle") as t:
+      def t_check():
+          playos.send_key("ctrl-r")
+          time.sleep(2)
+          navigate_to_system_status()
+          screen_text = screenshot_and_ocr(playos)
+          t.assertIn("Downloading", screen_text)
 
+      wait_until_passes(t_check, retries=30, sleep=1)
 
-def check_for_text_in_status_page(text, ignore_errors=False):
-    playos.send_key("ctrl-r")
-    time.sleep(2)
-    navigate_to_system_status()
-    screen_text = screenshot_and_ocr(playos)
-    print(f"Current sreen text: {screen_text}")
-
-    # return early if there is an error
-    if not ignore_errors:
-        possible_errors = ["ErrorDownloading", "ErrorInstalling", "UpdateError"]
-        if any([e in screen_text for e in possible_errors]):
-            return screen_text
-
-    t.assertIn(text, screen_text)
+  with TestCase(f"{stage}: controller has downloaded and installed the bundle") as t:
+      # controller takes at least 2 minutes for the download
+      # (1.2GB @ 10 MB/s), so allow up to 5 minutes for the download+install
+      screen_text = wait_until_passes(
+          lambda: check_for_text_in_status_page("RebootRequired"),
+          retries=30, sleep=10)
+      if screen_text is not None:
+          t.fail(f"Update process failed with an error, last screen text: {screen_text}")
 
 
-with TestCase("controller has downloaded and installed the bundle") as t:
-    # controller takes at least 2 minutes for the download
-    # (1.2GB @ 10 MB/s), so allow up to 5 minutes for the download+install
-    screen_text = wait_until_passes(
-        lambda: check_for_text_in_status_page("RebootRequired"),
-        retries=30, sleep=10)
-    if screen_text is not None:
-        t.fail(f"Update process failed with an error, last screen text: {screen_text}")
+def check_system_boots_into_new_version(new_version, stage):
+    with TestCase(f"{stage}: kiosk is open with kiosk URL after reboot") as t:
+        wait_until_passes(
+            lambda: t.assertIn("Hello world", screenshot_and_ocr(playos)),
+            retries=60,
+            sleep=2
+        )
 
-# Reboot to new system
-# Note: done via root shell on tty1, since a QEMU system_reset corrupts the
-# /boot/status.ini due to unclean unmount + FAT
-playos.send_key("ctrl-alt-f8", delay=2) # direct switch to tty1 prevented by limit-vtes.nix
-playos.send_key("ctrl-alt-f1", delay=2)
-playos.send_chars("root\n")
-time.sleep(2)
-playos.send_chars("systemctl reboot\n")
+    move_mouse_to_corner()
 
-with TestCase("kiosk is open with kiosk URL after reboot") as t:
-    wait_until_passes(
-        lambda: t.assertIn("Hello world", screenshot_and_ocr(playos)),
-        retries=60,
-        sleep=2
-    )
+    with TestCase(f"{stage}: controller GUI with new version is visible") as t:
+        # switch to controller
+        playos.send_key("ctrl-shift-f12")
+        wait_until_passes(
+            lambda: t.assertIn(new_version, screenshot_and_ocr(playos)),
+            retries=10
+        )
 
-playos.send_monitor_command("mouse_move 2000 2000")
+    with TestCase(f"{stage}: The new booted version reaches a Good state") as t:
+        wait_until_passes(
+            # UpdateError possible initially, because DHCP has not completed
+            lambda: check_for_text_in_status_page("Good", ignore_errors=True),
+            retries=10, sleep=10)
 
-with TestCase("controller GUI with new version is visible") as t:
-    # switch to controller
-    playos.send_key("ctrl-shift-f12")
-    wait_until_passes(
-        lambda: t.assertIn("${nextSystemVersion}", screenshot_and_ocr(playos)),
-        retries=10
-    )
 
-with TestCase("The new booted version reaches a Good state") as t:
-    wait_until_passes(
-        # UpdateError possible initially, because DHCP has not completed
-        lambda: check_for_text_in_status_page("Good", ignore_errors=True),
-        retries=10, sleep=10)
+print("======== First update (BASE->PRE) tests ========")
+
+check_update_is_downloaded_and_installed("BASE->PRE")
+
+reboot_via_tty()
+# Note: we must immediatelly change the latest version to NEXT, because if
+# controller determines it is UpToDate after the reboot, it will not do another
+# check for an hour
+update_server.set_latest_version(next_version)
+
+check_system_boots_into_new_version(pre_version, "BASE->PRE")
+
+print("======== First update (BASE->PRE) successful =============")
+
+print("======== Start second (PRE->NEXT) update =================")
+
+check_update_is_downloaded_and_installed("PRE->NEXT")
+
+reboot_via_tty()
+
+check_system_boots_into_new_version(next_version, "PRE->NEXT")
 
 with TestCase("Update state is UpToDate") as t:
     wait_until_passes(
