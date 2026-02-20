@@ -8,6 +8,7 @@ declare -a DIAGNOSTIC_TYPES=(
     "HARDWARE"
     "LOGS"
     "NETWORK"
+    "METRICS"
     "STATS"
     "SYSINFO"
     "UPDATE"
@@ -60,7 +61,7 @@ Limits:
                             suffixes for seconds, minutes, hours, days.
 
 Filters:
-    -m, --minimal           Produce a small archive. Alias for --exclude=LOGS
+    -m, --minimal           Produce a small archive. Alias for "--exclude=METRICS --exclude=LOGS"
 
     -S, --since SINCE       How much historical data (e.g. logs) to collect.
                             Defaults to "${DEFAULT_SINCE}".
@@ -100,7 +101,7 @@ while [[ $# -gt 0 ]]; do
         -h|--help) usage ;;
         -o|--output) OUTPUT="$2"; shift 2 ;;
         --log-format) LOG_FORMAT="$2"; shift 2 ;;
-        -m|--minimal) EXCLUDES+=("LOGS"); shift ;;
+        -m|--minimal) EXCLUDES+=("LOGS" "METRICS"); shift ;;
         -S|--since) SINCE="$2"; shift 2 ;;
         --cmd-timeout) CMD_TIMEOUT="$2"; shift 2 ;;
         -e|--exclude) EXCLUDES+=("$2"); shift 2 ;;
@@ -238,6 +239,16 @@ collect_UPDATE() {
 
     # update status as observed by controller
     run_cmd -o controller_system_status.html curl -L --fail --silent http://localhost:3333/status
+}
+
+collect_METRICS() {
+    # If influxdb is not running, the backup tool keeps retrying with back-off,
+    # which will take forever, so to fail early we check if the service is active
+    #
+    # Expected uncompressed size is around 200-300 MB
+    run_cmd -o /dev/null \
+        "systemctl is-active -q influxdb.service && \
+         influxd backup -portable -skip-errors ./influxdb-backup"
 }
 
 workdir=$(mktemp -d)

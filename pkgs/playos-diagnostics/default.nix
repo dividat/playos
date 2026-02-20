@@ -15,6 +15,7 @@ pkgs.writeShellApplication {
     rauc
     grub2_efi
     curl
+    influxdb
   ];
   text = builtins.readFile ./playos-diagnostics.sh;
 }

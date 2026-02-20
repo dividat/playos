@@ -13,6 +13,7 @@ pkgs.testers.runNixOSTest {
       config = {
         environment.systemPackages = with pkgs; [ playos-diagnostics ];
         services.connman.enable = pkgs.lib.mkOverride 0 true; # disabled in runNixOSTest by default
+        services.influxdb.enable = true; # for testing backups in METRICS
       };
     };
   };
@@ -169,9 +170,12 @@ with TestCase("proxy passwords are masked in connman output") as t:
             f"The expected masked string '{expected_mask}' was not found.")
 
 
-with TestCase("--minimal flag excludes logs") as t:
+with TestCase("--minimal flag excludes logs and metrics") as t:
     with diagnostic_output('--minimal') as (_, tmpdir):
         match = list(tmpdir.glob("playos-diagnostics-*/data/logs/"))
+        t.assertEqual(match, [])
+
+        match = list(tmpdir.glob("playos-diagnostics-*/data/metrics/"))
         t.assertEqual(match, [])
 
 
