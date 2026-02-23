@@ -39,7 +39,7 @@ python3Packages.buildPythonApplication rec {
   checkPhase = ''
     runHook preCheck
 
-    ./bin/test
+    bash ./bin/test
 
     runHook postCheck
   '';

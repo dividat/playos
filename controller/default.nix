@@ -1,4 +1,4 @@
-{ pkgs, version, bundleName, updateUrl, kioskUrl }:
+{ pkgs, version, bundleName, updateUrl, kioskUrl, doCheck ? false }:
 
 with pkgs;
 
@@ -44,6 +44,21 @@ ocamlPackages.buildDunePackage rec {
 
   useDune2 = true;
 
+  inherit doCheck;
+
+  preCheck = ''
+    dune build @fmt
+  '';
+
+  nativeCheckInputs = [ curl ocamlformat ];
+
+  checkInputs = with ocamlPackages; [
+    alcotest
+    alcotest-lwt
+    qcheck
+    qcheck-alcotest
+  ];
+
   nativeBuildInputs = [
     pkgs.makeWrapper
     discount # Transform Markdown to HTML
@@ -65,9 +80,5 @@ ocamlPackages.buildDunePackage rec {
     fieldslib
     ppx_protocol_conv
     ppx_protocol_conv_jsonm
-    alcotest
-    alcotest-lwt
-    qcheck
-    qcheck-alcotest
   ];
 }
