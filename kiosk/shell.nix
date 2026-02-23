@@ -4,11 +4,13 @@ let
     pkgs = pkgs;
     system_name = "PlayOS";
     system_version = "1.0.0-dev";
-    # enable test deps
+    # enable test deps and checks
     doCheck = true;
   };
 in
   pkgs.mkShell {
+    passthru.kiosk = kiosk;
+
     inputsFrom = [ kiosk ];
 
     shellHook = with pkgs.lib; ''

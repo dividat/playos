@@ -69,7 +69,7 @@ jobs:
         NIX_CACHE_ACCESS_KEY_ID: ${{ secrets.NIX_CACHE_ACCESS_KEY_ID }}
         NIX_CACHE_SECRET_ACCESS_KEY: ${{ secrets.NIX_CACHE_SECRET_ACCESS_KEY }}
         NIX_BINARY_CACHE_PRIVATE_KEY: ${{ secrets.NIX_BINARY_CACHE_PRIVATE_KEY }}
-    - run: cd kiosk && nix-shell --run bin/test
+    - run: nix-build -A kiosk kiosk/shell.nix
 
   build-vm:
     runs-on: ubuntu-latest
