@@ -6,15 +6,17 @@ let
     bundleName = "playos";
     updateUrl = "http://localhost:9999/";
     kioskUrl = "https://dev-play.dividat.com/";
+    doCheck = true;
   };
 in
 pkgs.mkShell {
+  passthru.controller = playos-controller;
+
+  inputsFrom = [ playos-controller ];
+
   packages =
-    playos-controller.buildInputs
-      ++ playos-controller.nativeBuildInputs
-      ++ [
+      [
         pkgs.watchexec
-        pkgs.ocamlformat
       ];
 
   shellHook = playos-controller.genAssetsHook;
