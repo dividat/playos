@@ -1,4 +1,4 @@
-{ stdenv, perl, pixz, pathsFromGraph
+{ stdenv, perl, pigz, pathsFromGraph
 , importFromNixos
 , rauc
 , version
@@ -121,7 +121,7 @@ in
 stdenv.mkDerivation {
   name = "bundle-${version}.raucb";
 
-  buildInputs = [ rauc pixz ];
+  buildInputs = [ rauc pigz ];
 
   buildCommand = ''
     # First create tarball with system content
@@ -140,7 +140,7 @@ stdenv.mkDerivation {
     cp -a "${systemImage}/init" init
 
     mkdir -p ../rauc-bundle
-    time tar --sort=name --mtime='@1' --owner=0 --group=0 --numeric-owner -c * | pixz > ../rauc-bundle/system.tar.xz
+    time tar --sort=name --mtime='@1' --owner=0 --group=0 --numeric-owner -c * | pigz > ../rauc-bundle/system.tar.xz
 
     cd ..
 
