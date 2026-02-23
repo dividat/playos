@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+# Export Grafana dashboards to JSON files via the HTTP API
+# This script fetches all dashboards from a running Grafana instance
+# and saves them back to the dashboards directory.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
+
+GRAFANA_URL="http://127.0.0.1:9090"
+DASHBOARDS_DIR="$SCRIPT_DIR/dashboards"
+
+usage() {
+    cat <<EOF
+Usage: export-dashboards [OPTIONS]
+
+Export dashboards from a running Grafana instance to JSON files.
+
+Options:
+    --url URL             Grafana URL (default: $GRAFANA_URL)
+    -o, --output PATH     Where to save dashboard JSON files (default: $DASHBOARDS_DIR)
+    -h, --help            Show this help message
+
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    --url)
+        GRAFANA_URL="$2"
+        shift 2
+        ;;
+    -o|--output)
+        DASHBOARDS_DIR="$2"
+        shift 2
+        ;;
+    -h|--help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo "Unknown argument: $1" >&2
+        echo "Use --help for usage information" >&2
+        exit 1
+        ;;
+    esac
+done
+
+readonly GRAFANA_URL
+readonly DASHBOARDS_DIR
+
+auth="admin:admin"
+
+echo "Fetching dashboard list from $GRAFANA_URL..."
+
+# Get list of all dashboards
+if ! dashboard_list=$(curl -fsS -u "$auth" "$GRAFANA_URL/api/search?type=dash-db"); then
+    echo "Error: Failed to fetch dashboards, is Grafana running?" >&2
+    exit 1
+fi
+
+if [[ -z "$dashboard_list" || "$dashboard_list" == "[]" ]]; then
+    echo "No dashboards found."
+    exit 1
+fi
+
+# Create output directory if it doesn't exist
+mkdir -p "$DASHBOARDS_DIR"
+
+# Iterate over each dashboard
+echo "$dashboard_list" | jq -c '.[]' | while read -r dash; do
+    uid=$(echo "$dash" | jq -r '.uid')
+    title=$(echo "$dash" | jq -r '.title')
+
+    # Fetch the full dashboard JSON
+    full_dash=$(curl -fsS -u "$auth" "$GRAFANA_URL/api/dashboards/uid/$uid")
+
+    # Extract just the dashboard object (without meta wrapper)
+    # and clean up provisioned/generated fields that shouldn't be saved
+    dashboard_json=$(echo "$full_dash" | jq '.dashboard | del(.id) | del(.version)')
+
+    # Determine filename: use existing file if it matches the UID, otherwise use slug
+    filename=""
+    for f in "$DASHBOARDS_DIR"/*.json; do
+        file_uid=$(jq -r '.uid // empty' "$f" 2>/dev/null || true)
+        if [[ "$file_uid" == "$uid" ]]; then
+            filename=$(basename "$f")
+            break
+        fi
+    done
+
+    # If no existing file found, create a new filename from the slug/title
+    if [[ -z "$filename" ]]; then
+        slug=$(echo "$dash" | jq -r '.uri' | sed 's|^db/||')
+        filename="${slug}.json"
+    fi
+
+    output_file="$DASHBOARDS_DIR/$filename"
+
+    # Write the dashboard JSON
+    echo "$dashboard_json" | jq '.' > "$output_file"
+    echo "  [OK] $title -> $filename"
+done
+
+echo ""
+echo "Export complete. Dashboards saved to: $DASHBOARDS_DIR"
