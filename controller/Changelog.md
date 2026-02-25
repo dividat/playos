@@ -1,4 +1,4 @@
-# [UNRELEASED]
+# [2026.3.0-VALIDATION] - 2026-02-25
 
 ## Added
 

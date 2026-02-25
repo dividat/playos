@@ -1,7 +1,7 @@
 rec {
     fullProductName = "Dividat PlayOS";
     safeProductName = "playos";
-    version = "2026.1.0";
+    version = "2026.3.0-VALIDATION";
 
     greeting = label: ''
                                            _
