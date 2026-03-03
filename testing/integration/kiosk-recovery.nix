@@ -119,8 +119,13 @@ pkgs.nixosTest {
       machine.systemctl("is-active user-1000.session")
 
     with TestCase("loading the page produced no unexpected errors from JS") as t:
-      # these are produced in kiosk-recovery/index.html for unexpected paths
-      t.assertRaises(TimeoutError, lambda: wait_for_logs(machine, "JS-TEST-ERR", timeout=1))
+      try:
+        # these are produced in kiosk-recovery/index.html for unexpected paths,
+        # so should not be present
+        out = wait_for_logs(machine, "JS-TEST-ERR", timeout=1)
+        t.fail(f"JS-TEST-ERR errors present: {out}")
+      except TimeoutError:
+        pass
 
     if EXPECTED_TEXT:
       with TestCase(f"Page displays '{EXPECTED_TEXT}'"):
