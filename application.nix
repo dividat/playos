@@ -196,17 +196,15 @@ rec {
       };
 
       # This service is started only after several regular restarts of DM/kiosk
-      # fail to bring it up and it is run AT MOST ONCE. It attempts to clear
-      # cached (optional) data that might have gotten corrupted due to a
-      # Qt/WebEngine upgrade, I/O errors or other unknown reasons. Primarily
-      # aimed to safeguard against Service Worker related QtWebEngine crashes
-      # observed in the wild.
+      # fail to bring it up. It attempts to clear cached (optional) data that
+      # might have gotten corrupted due to a Qt/WebEngine upgrade, I/O errors or
+      # other unknown reasons. Primarily aimed to safeguard against Service
+      # Worker related QtWebEngine crashes observed in the wild.
       systemd.services.kiosk-recovery = {
         serviceConfig = {
           Type = "oneshot";
-          # Allow at most one recovery attempt per boot to avoid infinite
-          # delete+restart loops.
-          RemainAfterExit = "yes";
+          # Forget the state and keep attempting to recover+restart indefinitely
+          RemainAfterExit = "no";
 
           User = "play";
           ExecStart = "${pkgs.playos-kiosk-browser}/bin/nuke-cache";
