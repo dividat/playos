@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test page with Service Worker</title>
+</head>
+<body>
+
+  <h1>Content to-be-fetched from Service Worker</h1>
+  <pre id="output">Loading...</pre>
+
+  <script>
+    const outputElem = document.getElementById('output');
+
+    navigator.serviceWorker.register('sw.js')
+        .then(registration => {
+            console.log('SW Registered:', registration.scope);
+        })
+        .catch(err => {
+            const errText = `SW Registration failed: ${err}`;
+            outputElem.innerText = errText;
+            console.error(`JS-TEST-ERR: ${errText}`)
+        });
+
+    setTimeout(() => {
+        fetch('/sw/mock-data')
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              return response.text();
+            })
+            .then(data => {
+              outputElem.innerText = data;
+            })
+            .catch(error => {
+              const errText = `Fetch failed: \n\n${error.message}`;
+              outputElem.innerText = errText;
+              console.error(`JS-TEST-ERR: ${errText}`)
+            });
+    }, 500);
+  </script>
+
+</body>
+</html>

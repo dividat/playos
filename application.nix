@@ -194,6 +194,32 @@ rec {
           '';
         };
       };
+
+      # This service is started only after several regular restarts of DM/kiosk
+      # fail to bring it up and it is run AT MOST ONCE. It attempts to clear
+      # cached (optional) data that might have gotten corrupted due to a
+      # Qt/WebEngine upgrade, I/O errors or other unknown reasons. Primarily
+      # aimed to safeguard against Service Worker related QtWebEngine crashes
+      # observed in the wild.
+      systemd.services.kiosk-recovery = {
+        serviceConfig = {
+          Type = "oneshot";
+          # Allow at most one recovery attempt per boot to avoid infinite
+          # delete+restart loops.
+          RemainAfterExit = "yes";
+
+          User = "play";
+          ExecStart = "${pkgs.playos-kiosk-browser}/bin/nuke-cache";
+
+          # the + prefix means "run as root"
+          ExecStartPost="+${pkgs.writeShellScript "reset-dm-service.sh" ''
+            ${config.systemd.package}/bin/systemctl reset-failed display-manager.service
+            ${config.systemd.package}/bin/systemctl start display-manager.service
+          ''}";
+        };
+
+      };
+
       services.displayManager = {
         # Always automatically log in play user
         autoLogin = {
@@ -203,6 +229,29 @@ rec {
 
         defaultSession = sessionName;
       };
+
+      systemd.services.display-manager = {
+        serviceConfig = {
+          Restart = "always";
+
+          # Let the system breathe for a few seconds if kiosk/DM crashes
+          RestartSec = lib.mkForce "3s";
+
+           # Crucial! Do not pass through 'failed' state until restart attempts
+           # are exhausted. The OnFailure handler (below) would be run before
+           # every restart otherwise, which is not what we want.
+          RestartMode = "direct";
+        };
+
+        # Allow at most 3 restarts in the interval of 5 minutes, afterwards
+        # the service will enter 'failed' state and the kiosk-recovery service
+        # takes over
+        startLimitIntervalSec = lib.mkForce (5 * 60);
+        startLimitBurst = 3;
+
+        onFailure = [ config.systemd.services.kiosk-recovery.name ];
+      };
+
       # Hide mouse cursor when not in use
       services.unclutter-xfixes = {
         enable = true;
