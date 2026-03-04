@@ -134,7 +134,7 @@ def get_booted_slot():
     return rauc_status['booted']
 
 def wait_for_dm_restart():
-    wait_for_logs(playos, "display-manager.service: Scheduled restart job")
+    wait_for_logs(playos, "display-manager.service: Scheduled restart job", timeout=20)
     playos.wait_for_x()
 
 
