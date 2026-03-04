@@ -253,30 +253,47 @@
                 "value": 85
               }
             ]
-          }
+          },
+          "unit": "celsius"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "chip"
+              "options": "temp_high"
             },
             "properties": [
               {
                 "id": "custom.width",
-                "value": 200
+                "value": 114
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "feature"
+              "options": "temp_crit"
             },
             "properties": [
               {
                 "id": "custom.width",
-                "value": 200
+                "value": 92
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "temp_crit_alarm"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 144
+              },
+              {
+                "id": "unit",
+                "value": "none"
               }
             ]
           }
@@ -299,7 +316,17 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "chip"
+          },
+          {
+            "desc": false,
+            "displayName": "feature"
+          }
+        ]
       },
       "pluginVersion": "12.0.7",
       "targets": [
@@ -308,13 +335,28 @@
             "type": "influxdb",
             "uid": "influxdb-default"
           },
-          "query": "SELECT last(*) FROM \"sensors\" WHERE $timeFilter GROUP BY \"chip\", \"feature\"",
+          "query": "SELECT temp_max AS temp_high, temp_crit, temp_crit_alarm, temp_input AS current FROM \"sensors\" WHERE $timeFilter GROUP BY \"chip\", \"feature\" ORDER BY time  DESC LIMIT 1",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "table"
         }
       ],
       "title": "Hardware Sensors",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Time": ""
+            }
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -360,6 +402,7 @@
               "mode": "off"
             }
           },
+          "fieldMinMax": false,
           "mappings": [],
           "min": 0,
           "thresholds": {
@@ -369,12 +412,13 @@
                 "color": "green"
               }
             ]
-          }
+          },
+          "unit": "celsius"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 12,
+        "h": 19,
         "w": 13,
         "x": 11,
         "y": 8
@@ -383,10 +427,13 @@
       "options": {
         "legend": {
           "calcs": [
-            "last"
+            "min",
+            "mean",
+            "max",
+            "lastNotNull"
           ],
           "displayMode": "table",
-          "placement": "right",
+          "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
@@ -398,11 +445,12 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
+          "alias": "$tag_chip: $tag_feature",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"
           },
-          "query": "SELECT * FROM \"sensors\" WHERE $timeFilter GROUP BY \"chip\", \"feature\"",
+          "query": "SELECT temp_input FROM \"sensors\" WHERE $timeFilter GROUP BY \"chip\", \"feature\"",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series"

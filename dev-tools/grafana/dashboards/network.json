@@ -92,7 +92,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 0,
         "y": 1
@@ -118,6 +118,7 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
+          "alias": "$tag_interface",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"
@@ -191,7 +192,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 12,
         "y": 1
@@ -217,6 +218,7 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
+          "alias": "$tag_interface",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"
@@ -236,7 +238,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 10
       },
       "id": 4,
       "panels": [],
@@ -305,10 +307,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 9,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 11
       },
       "id": 5,
       "options": {
@@ -331,11 +333,12 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
+          "alias": "$tag_interface",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"
           },
-          "query": "SELECT non_negative_derivative(last(\"err_in\"), 1m) + non_negative_derivative(last(\"err_out\"), 1m) AS \"errs\" FROM \"net\" WHERE $timeFilter GROUP BY time($__interval), \"interface\" fill(null)",
+          "query": "SELECT non_negative_derivative(last(\"err_in\"), 1m) + non_negative_derivative(last(\"err_out\"), 1m) AS \"errs\" FROM \"net\" WHERE $timeFilter GROUP BY time($__interval), \"interface\"",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series"
@@ -406,10 +409,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 9,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 11
       },
       "id": 6,
       "options": {
@@ -432,11 +435,12 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
+          "alias": "$tag_interface",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"
           },
-          "query": "SELECT non_negative_derivative(last(\"drop_in\"), 1m) + non_negative_derivative(last(\"drop_out\"), 1m) AS \"dropped\" FROM \"net\" WHERE $timeFilter GROUP BY time($__interval), \"interface\" fill(null)",
+          "query": "SELECT non_negative_derivative(last(\"drop_in\"), 1m) + non_negative_derivative(last(\"drop_out\"), 1m) AS \"dropped\" FROM \"net\" WHERE $timeFilter GROUP BY time($__interval), \"interface\"",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series"
@@ -562,11 +566,38 @@
                 "value": "Noise Level"
               }
             ]
+          },
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "wireless.level { interface: wlp3s0 }",
+                  "wireless.noise { interface: wlp3s0 }",
+                  "wireless.retry { interface: wlp3s0 }",
+                  "wireless.status { interface: wlp3s0 }"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 0,
         "y": 21
@@ -575,9 +606,12 @@
       "options": {
         "legend": {
           "calcs": [
-            "last"
+            "min",
+            "mean",
+            "max",
+            "lastNotNull"
           ],
-          "displayMode": "list",
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
@@ -590,11 +624,12 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
+          "alias": "",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"
           },
-          "query": "SELECT last(\"level\"), last(\"noise\") FROM \"wireless\" WHERE $timeFilter GROUP BY time($__interval), \"interface\" fill(null)",
+          "query": "SELECT level, noise FROM \"wireless\" WHERE $timeFilter GROUP BY \"interface\"",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series"
@@ -629,7 +664,7 @@
               "tooltip": false,
               "viz": false
             },
-            "insertNulls": false,
+            "insertNulls": 600000,
             "lineInterpolation": "stepAfter",
             "lineWidth": 2,
             "pointSize": 5,
@@ -661,7 +696,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 12,
         "y": 21
@@ -669,8 +704,13 @@
       "id": 10,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
+          "calcs": [
+            "min",
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
@@ -687,7 +727,7 @@
             "type": "influxdb",
             "uid": "influxdb-default"
           },
-          "query": "SELECT non_negative_derivative(last(\"retry\"), 1m) AS \"retries\", non_negative_derivative(last(\"misc\"), 1m) AS \"misc\", non_negative_derivative(last(\"missed_beacon\"), 1m) AS \"missed_beacon\" FROM \"wireless\" WHERE $timeFilter GROUP BY time($__interval), \"interface\" fill(null)",
+          "query": "SELECT non_negative_derivative(last(\"retry\"), 1m) AS \"retries\", non_negative_derivative(last(\"misc\"), 1m) AS \"misc\", non_negative_derivative(last(\"missed_beacon\"), 1m) AS \"missed_beacon\" FROM \"wireless\" WHERE $timeFilter GROUP BY time(1m), \"interface\" fill(null)",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series"

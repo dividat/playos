@@ -212,6 +212,7 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
+          "alias": "$tag_cpu",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"
@@ -315,6 +316,7 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
+          "alias": "$tag_cpu",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"

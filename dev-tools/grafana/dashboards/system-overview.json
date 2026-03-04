@@ -383,7 +383,7 @@
           "resultFormat": "time_series"
         }
       ],
-      "title": "Data Disk Usage",
+      "title": "Persistent Data Usage",
       "type": "gauge"
     },
     {
@@ -427,7 +427,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 113
+                "value": 181
               }
             ]
           }
@@ -1119,7 +1119,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 0,
         "y": 17
@@ -1145,6 +1145,7 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
+          "alias": "$tag_interface",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"
@@ -1218,7 +1219,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 12,
         "x": 12,
         "y": 17
@@ -1244,6 +1245,7 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
+          "alias": "$tag_interface",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"

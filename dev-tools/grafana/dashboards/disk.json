@@ -22,122 +22,29 @@
   "links": [],
   "panels": [
     {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "influxdb-default"
-      },
       "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 30,
-            "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": 600000,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "fieldMinMax": false,
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              }
-            ]
-          },
-          "unit": "decbytes"
-        },
+        "defaults": {},
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 5,
         "w": 12,
         "x": 0,
         "y": 0
       },
-      "id": 1,
+      "id": 9,
       "options": {
-        "legend": {
-          "calcs": [
-            "last",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
         },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
+        "content": "# How to read\n\n- **`/mnt/data`** is the persistent data volume, it remains after reboots.\n   It is the sum of all persistent folder sizes bind-mounted in PlayOS.\n- **`/` is essentially `/tmp`**, since the rest of `/` is read-only.\n   And since `/tmp` is tmpfs, size of this partition is equal `0.5*total memory` (usually `0.5*8GB = 4GB`).\n   It is cleared on reboot and recent PlayOS versions should normally not be using more than 10% of it, since\n   it eats up the RAM.",
+        "mode": "markdown"
       },
       "pluginVersion": "12.0.7",
-      "targets": [
-        {
-          "alias": "$tag_path used",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "influxdb-default"
-          },
-          "groupBy": [
-            {
-              "params": [
-                "path"
-              ],
-              "type": "tag"
-            }
-          ],
-          "measurement": "disk",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "used"
-                ],
-                "type": "field"
-              }
-            ]
-          ],
-          "tags": []
-        }
-      ],
-      "title": "Disk Space Usage",
-      "type": "timeseries"
+      "title": "How to read these metrics",
+      "type": "text"
     },
     {
       "datasource": {
@@ -159,16 +66,16 @@
                 "color": "green"
               },
               {
-                "color": "yellow",
-                "value": 70
+                "color": "orange",
+                "value": 30
               },
               {
-                "color": "orange",
-                "value": 85
+                "color": "yellow",
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 95
+                "value": 75
               }
             ]
           },
@@ -177,7 +84,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 13,
         "w": 6,
         "x": 12,
         "y": 0
@@ -232,7 +139,7 @@
           ]
         }
       ],
-      "title": "Root (/) Usage %",
+      "title": "Root (/) tmpfs overlay usage %",
       "type": "gauge"
     },
     {
@@ -273,7 +180,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 13,
         "w": 6,
         "x": 18,
         "y": 0
@@ -350,8 +257,8 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
+            "fillOpacity": 30,
+            "gradientMode": "opacity",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
@@ -374,6 +281,7 @@
               "mode": "off"
             }
           },
+          "fieldMinMax": false,
           "mappings": [],
           "min": 0,
           "thresholds": {
@@ -384,17 +292,17 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "decbytes"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 6,
         "x": 0,
-        "y": 8
+        "y": 5
       },
-      "id": 4,
+      "id": 1,
       "options": {
         "legend": {
           "calcs": [
@@ -414,7 +322,7 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
-          "alias": "$tag_path inodes used",
+          "alias": "$tag_path used",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"
@@ -436,7 +344,7 @@
             [
               {
                 "params": [
-                  "inodes_used"
+                  "used"
                 ],
                 "type": "field"
               }
@@ -445,7 +353,7 @@
           "tags": []
         }
       ],
-      "title": "Inodes Used",
+      "title": "Disk Space Usage",
       "type": "timeseries"
     },
     {
@@ -503,50 +411,20 @@
           },
           "unit": "short"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/reads/"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/writes/"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
+        "w": 6,
+        "x": 6,
+        "y": 5
       },
-      "id": 5,
+      "id": 4,
       "options": {
         "legend": {
           "calcs": [
-            "last"
+            "last",
+            "max"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -561,7 +439,7 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
-          "alias": "$tag_name reads",
+          "alias": "$tag_path inodes used",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"
@@ -569,12 +447,12 @@
           "groupBy": [
             {
               "params": [
-                "name"
+                "path"
               ],
               "type": "tag"
             }
           ],
-          "measurement": "diskio",
+          "measurement": "disk",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",
@@ -583,60 +461,16 @@
             [
               {
                 "params": [
-                  "reads"
+                  "inodes_used"
                 ],
                 "type": "field"
-              },
-              {
-                "params": [
-                  "1m"
-                ],
-                "type": "non_negative_derivative"
-              }
-            ]
-          ],
-          "tags": []
-        },
-        {
-          "alias": "$tag_name writes",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "influxdb-default"
-          },
-          "groupBy": [
-            {
-              "params": [
-                "name"
-              ],
-              "type": "tag"
-            }
-          ],
-          "hide": false,
-          "measurement": "diskio",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "B",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "writes"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [
-                  "1m"
-                ],
-                "type": "non_negative_derivative"
               }
             ]
           ],
           "tags": []
         }
       ],
-      "title": "Disk I/O Operations (reads/writes per minute)",
+      "title": "Inodes Used",
       "type": "timeseries"
     },
     {
@@ -728,10 +562,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 6,
+        "h": 10,
+        "w": 12,
         "x": 0,
-        "y": 16
+        "y": 13
       },
       "id": 6,
       "options": {
@@ -856,122 +690,6 @@
               "tooltip": false,
               "viz": false
             },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              }
-            ]
-          },
-          "unit": "ms"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 6,
-        "y": 16
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "calcs": [
-            "last"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.0.7",
-      "targets": [
-        {
-          "alias": "$tag_name io_await",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "influxdb-default"
-          },
-          "groupBy": [
-            {
-              "params": [
-                "name"
-              ],
-              "type": "tag"
-            }
-          ],
-          "measurement": "diskio",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "io_await"
-                ],
-                "type": "field"
-              }
-            ]
-          ],
-          "tags": []
-        }
-      ],
-      "title": "Disk I/O Await (average time for I/O requests)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "influxdb-default"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
             "insertNulls": 600000,
             "lineInterpolation": "linear",
             "lineWidth": 2,
@@ -999,17 +717,48 @@
               }
             ]
           },
-          "unit": "percent"
+          "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/reads/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/writes/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 10,
         "w": 12,
         "x": 12,
-        "y": 16
+        "y": 13
       },
-      "id": 7,
+      "id": 5,
       "options": {
         "legend": {
           "calcs": [
@@ -1028,7 +777,7 @@
       "pluginVersion": "12.0.7",
       "targets": [
         {
-          "alias": "$tag_name io_util",
+          "alias": "$tag_name reads",
           "datasource": {
             "type": "influxdb",
             "uid": "influxdb-default"
@@ -1050,16 +799,60 @@
             [
               {
                 "params": [
-                  "io_util"
+                  "reads"
                 ],
                 "type": "field"
+              },
+              {
+                "params": [
+                  "1m"
+                ],
+                "type": "non_negative_derivative"
+              }
+            ]
+          ],
+          "tags": []
+        },
+        {
+          "alias": "$tag_name writes",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-default"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "name"
+              ],
+              "type": "tag"
+            }
+          ],
+          "hide": false,
+          "measurement": "diskio",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "writes"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [
+                  "1m"
+                ],
+                "type": "non_negative_derivative"
               }
             ]
           ],
           "tags": []
         }
       ],
-      "title": "Disk I/O Utilization %",
+      "title": "Disk I/O Operations (reads/writes per minute)",
       "type": "timeseries"
     }
   ],
