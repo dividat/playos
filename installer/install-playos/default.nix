@@ -3,9 +3,7 @@
 , systemImage
 , rescueSystem
 , grubCfg
-, version
-, updateUrl
-, kioskUrl
+, systemMetadata
 }:
 with pkgs;
 let
@@ -14,11 +12,12 @@ let
   python = python3.withPackages(ps: with ps; [pyparted]);
 in
 stdenv.mkDerivation {
-  name = "install-playos-${version}";
+  name = "install-playos-${systemMetadata.version}";
 
   src = substituteAll {
     src = ./install-playos.py;
-    inherit grubCfg systemImage rescueSystem systemClosureInfo version updateUrl kioskUrl;
+    inherit grubCfg systemImage rescueSystem systemClosureInfo;
+    inherit (systemMetadata) version kioskUrl updateUrl;
     inherit python;
   };
 

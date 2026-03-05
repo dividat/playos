@@ -1,8 +1,9 @@
-{ install-playos, version, safeProductName, fullProductName, squashfsCompressionOpts, ... }:
+{ install-playos, squashfsCompressionOpts, systemMetadata, ... }:
 
 
 { modulesPath, lib, ... }:
 with lib;
+with systemMetadata;
 let
     # TODO: WIP ^_^
     greeting = label: ''
