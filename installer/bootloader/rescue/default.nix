@@ -1,5 +1,5 @@
 { stdenv, lib
-, safeProductName, fullProductName
+, systemMetadata
 , squashfsTools, closureInfo, makeInitrd, linkFarm
 , nixos
 , writeScript, dialog
@@ -22,7 +22,7 @@ let
     do
 
       ${dialog}/bin/dialog --clear --title "" \
-        --backtitle "${fullProductName} - Rescue System" \
+        --backtitle "${systemMetadata.fullProductName} - Rescue System" \
         --nocancel \
         --menu "Please Select an action" 0 0 0 \
         "wipe-user-data" "Delete all user data." \
@@ -93,7 +93,7 @@ in
       '';
     };
     networking = {
-      hostName = "${safeProductName}-rescue";
+      hostName = "${systemMetadata.safeProductName}-rescue";
       # enable wpa_supplicant
       wireless = {
         enable = true;

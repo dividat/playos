@@ -1,8 +1,8 @@
 # Build NixOS system
-{ systemImage
-, version, safeProductName, fullProductName
-, kioskUrl, updateUrl
-, squashfsCompressionOpts
+{ squashfsCompressionOpts
+, systemImage
+# TODO: combine this into a single systemMetadata attrset that is defined in the top-level default.nix
+, safeProductName, fullProductName, kioskUrl, updateUrl, version
 }:
 let
   nixpkgs = builtins.fetchTarball {
@@ -20,19 +20,27 @@ let
 
   nixos = import "${nixpkgs}/nixos";
 
+  systemMetadata = {
+    inherit safeProductName fullProductName kioskUrl updateUrl version;
+  };
+
   # Rescue system
   rescueSystem = pkgs.callPackage ./bootloader/rescue {
-    inherit nixos safeProductName fullProductName squashfsCompressionOpts;
+    inherit nixos squashfsCompressionOpts;
+    inherit systemMetadata;
   };
+
 
   # Installation script
   install-playos = pkgs.callPackage ./install-playos {
     grubCfg = ./bootloader/grub.cfg;
-    inherit kioskUrl updateUrl rescueSystem systemImage version;
+    inherit rescueSystem;
+    inherit systemImage systemMetadata;
   };
 
   configuration = (import ./configuration.nix) {
-    inherit install-playos version safeProductName fullProductName squashfsCompressionOpts;
+    inherit install-playos squashfsCompressionOpts;
+    inherit systemMetadata;
   };
 
 
