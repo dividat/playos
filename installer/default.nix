@@ -1,6 +1,7 @@
 # TODO: rename this to "skeleton" that exposes several components:
 # - [ ] skeleton configuration params (partition labels, hard-coded paths like /boot/status.ini)
 # - [x] the installer script (for e2e and release validation tests)
+# - [x] the rescueSystem (for e2e and release validation tests)
 # - [x] the installer ISO
 { squashfsCompressionOpts
 , systemImage
@@ -43,5 +44,5 @@ let
   }).config.system.build.isoImage;
 in
 {
-  inherit install-playos isoImage;
+  inherit install-playos isoImage rescueSystem;
 }
