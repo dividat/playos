@@ -1,13 +1,4 @@
-{ stdenv
-, substituteAll
-, makeWrapper
-, grub2_efi
-, e2fsprogs
-, dosfstools
-, utillinux
-, python3
-, pv
-, closureInfo
+{ pkgs
 
 , systemImage
 , rescueSystem
@@ -16,6 +7,7 @@
 , updateUrl
 , kioskUrl
 }:
+with pkgs;
 let
   systemClosureInfo = closureInfo { rootPaths = [ systemImage ]; };
 
