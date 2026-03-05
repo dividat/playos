@@ -87,7 +87,7 @@ let
 
     # Rescue system
     rescueSystem = callPackage ./bootloader/rescue {
-        application = application;
+      inherit safeProductName fullProductName;
     };
 
     # Installer ISO image
