@@ -16,13 +16,13 @@ let
   nixos = import "${nixpkgs}/nixos";
 
   # Rescue system
-  rescueSystem = pkgs.callPackage ../bootloader/rescue {
+  rescueSystem = pkgs.callPackage ./bootloader/rescue {
     inherit nixos safeProductName fullProductName squashfsCompressionOpts;
   };
 
   # Installation script
   install-playos = pkgs.callPackage ./install-playos {
-    grubCfg = ../bootloader/grub.cfg;
+    grubCfg = ./bootloader/grub.cfg;
     inherit kioskUrl updateUrl rescueSystem systemImage version;
   };
 
