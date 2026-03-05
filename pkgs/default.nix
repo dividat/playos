@@ -13,7 +13,10 @@ let
 
       importFromNixos = path: import (nixpkgs + "/nixos/" + path);
 
-      rauc = (import ./rauc) super;
+      # TODO: replace with something along the lines of:
+      #   rauc = (import ../installer/pkgs).rauc;
+      # to ensure 100% identical package and deps?
+      rauc = (import ../installer/rauc) super;
 
       ocamlPackages = super.ocamlPackages.overrideScope (self: super: {
         semver = self.callPackage ./ocaml-modules/semver {};

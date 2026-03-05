@@ -11,7 +11,12 @@ let
     sha256 = "1gb61gahkq74hqiw8kbr9j0qwf2wlwnsvhb7z68zhm8wa27grqr0";
   };
 
-  pkgs = import nixpkgs { };
+  overlay =
+    self: super: {
+      rauc = (import ./rauc) super;
+    };
+
+  pkgs = import nixpkgs { overlays = [ overlay ]; };
 
   nixos = import "${nixpkgs}/nixos";
 
