@@ -1,3 +1,9 @@
+# [UNRELEASED]
+
+# Changed
+
+- driver: Upgrade driver to 2.8.1 to remove irrelevant error log
+
 # [2026.3.0-VALIDATION] - 2026-02-25
 
 ## Added
