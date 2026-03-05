@@ -1,10 +1,11 @@
-{ config, pkgs, lib, install-playos, version, safeProductName, fullProductName, greeting, squashfsCompressionOpts, ... }:
+{ install-playos, version, safeProductName, fullProductName, greeting, squashfsCompressionOpts, ... }:
 
+
+{ modulesPath, lib, ... }:
 with lib;
-
 {
   imports = [
-    (pkgs.importFromNixos "modules/installer/cd-dvd/iso-image.nix")
+    "${modulesPath}/installer/cd-dvd/iso-image.nix"
   ];
 
   # Custom label when identifying OS

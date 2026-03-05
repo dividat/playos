@@ -1,13 +1,12 @@
 { stdenv, lib
 , safeProductName, fullProductName
 , squashfsTools, closureInfo, makeInitrd, linkFarm
-, importFromNixos
+, nixos
 , writeScript, dialog
 , vim, grub2_efi, rauc
 , squashfsCompressionOpts}:
 with lib;
 let
-  nixos = importFromNixos "";
 
   squashfsCompressionParams =
     if (squashfsCompressionOpts == null)
