@@ -98,7 +98,11 @@ let
     testingToplevel = callPackage ./testing/system { application = application; };
 
     # Disk image containing pre-installed system
-    disk = if diskBuildEnabled then callPackage ./testing/disk {} else null;
+    disk =
+      if diskBuildEnabled then
+        callPackage ./testing/disk { inherit (installer) install-playos rescueSystem; }
+      else
+        null;
 
     # Script for spinning up VMs
     run-in-vm = callPackage ./testing/run-in-vm {};
