@@ -1,8 +1,24 @@
-{ install-playos, version, safeProductName, fullProductName, greeting, squashfsCompressionOpts, ... }:
+{ install-playos, version, safeProductName, fullProductName, squashfsCompressionOpts, ... }:
 
 
 { modulesPath, lib, ... }:
 with lib;
+let
+    # TODO: WIP ^_^
+    greeting = label: ''
+             ░░░░
+           ░▒▒▒▒▒▒▒  ░    ▒
+        ▒▒▒▒▒   ░░▒▒░░░▒▒▒▒▒ ▒▒
+      ▒▒          ░░░░░░░   ▒▒▒▒▒
+     ▒▒▒      ▲           ▲     ▒▒
+     ▒░░                         ░
+       ░░░                       ░
+         ░░░▒▒      ▒▒░░░  ▒▒▒   ░░ ${label}
+             ▒▒▒▒▒▒▒▒    ░░░▒▒▒░░░
+    '';
+
+in
+
 {
   imports = [
     "${modulesPath}/installer/cd-dvd/iso-image.nix"

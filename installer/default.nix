@@ -1,6 +1,6 @@
 # Build NixOS system
 { systemImage
-, version, safeProductName, fullProductName, greeting
+, version, safeProductName, fullProductName
 , kioskUrl, updateUrl
 , squashfsCompressionOpts
 }:
@@ -32,7 +32,7 @@ let
   };
 
   configuration = (import ./configuration.nix) {
-    inherit install-playos version safeProductName fullProductName greeting squashfsCompressionOpts;
+    inherit install-playos version safeProductName fullProductName squashfsCompressionOpts;
   };
 
 
