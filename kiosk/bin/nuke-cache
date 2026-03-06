@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+# This script is used clear optional data stored by the kiosk and QtWebEngine
+# in an attempt to recover from unexpected cache corruption issues.
+#
+# It must be run by the same user that is running the kiosk-browser executable.
+# Use `su - <USER> -c nuke-cache` if running this from system services or other
+# user shells (e.g. root).
+
+if [[ -z "$HOME" ]]; then
+    echo 'Error: $HOME not set, you must be running this somewhere strange.'
+    exit 1
+fi
+
+declare -a PATHS_TO_NUKE=(
+    "$HOME/.cache/kiosk-browser"
+    "$HOME/.local/share/kiosk-browser/QtWebEngine/Default/Service Worker"
+)
+
+echo "Clearing optional/cached kiosk data"
+
+for path in "${PATHS_TO_NUKE[@]}"; do
+    echo "=== Removing '$path'"
+    rm -v -rf "$path"
+done
+
+echo "All done!"
