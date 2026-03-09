@@ -1,7 +1,7 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
 from PyQt6.QtWebEngineCore import QWebEngineScript, QWebEnginePage
 from PyQt6.QtWebChannel import QWebChannel
-from PyQt6.QtCore import pyqtSlot, Qt, QEvent, QUrl
+from PyQt6.QtCore import pyqtSlot, pyqtSignal, Qt, QEvent, QUrl
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QApplication
 from enum import Enum, auto
@@ -20,6 +20,62 @@ class Status(Enum):
     LOADING = auto()
     NETWORK_ERROR = auto()
     LOADED = auto()
+
+
+class TimerWithTicks(QtCore.QObject):
+    """A timer that behaves like a regular QTimer, but can also emit
+    signals at regular intervals before timeout.
+
+    Allows to implement "3... 2... 1... TIMEOUT" style countdowns.
+
+    Signals:
+        tick(int): Emitted every tickInterval with remaining time count
+        timeout: Emitted after tickNumber * tickInterval (inherited from QTimer)
+
+    Examples:
+        timer.start(1000, 3) will:
+            - at t = 0    will emit tick(3000)
+            - at t = 1000 will emit tick(2000)
+            - at t = 2000 will emit tick(1000)
+            - at t = 3000 will emit timeout
+
+        timer.start(x, 1) will emit a timeout the same as QTimer.start(x)
+    """
+    tick = pyqtSignal(int)
+    timeout = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._internalTimer = QtCore.QTimer()
+        self._internalTimer.setSingleShot(False)
+        self._internalTimer.timeout.connect(self._on_internal_timeout)
+        self._tickInterval = 0
+        self._remainingTicks = 0
+
+
+    def start(self, tickIntervalMs: int, tickNumber: int = 1):
+        self._tickInterval = tickIntervalMs
+        self._remainingTicks = tickNumber
+        self._on_internal_timeout()
+        self._internalTimer.setInterval(tickIntervalMs)
+        self._internalTimer.start()
+
+    def stop(self):
+        return self._internalTimer.stop()
+
+    def isActive(self):
+        return self._internalTimer.isActive()
+
+    def _on_internal_timeout(self):
+        if self._remainingTicks <= 0:
+            self.stop()
+            self.timeout.emit()
+        else:
+            self.tick.emit(self.remainingTime())
+        self._remainingTicks -= 1
+
+    def remainingTime(self):
+        return self._remainingTicks * self._tickInterval
 
 
 # Small helper class for handling focus-shift:exhausted events, used to
@@ -79,9 +135,11 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webchannel.registerObject("focus_transfer", self._focus_transfer)
         self._webchannel.registerObject("reload_handler", self._reload_handler)
 
+        self._reload_timer = TimerWithTicks(self)
+
         # Init views
         self._loading_page = loading_page(self)
-        self._network_error_page = network_error_page(self)
+        self._network_error_page = network_error_page(self, self._reload_timer)
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._profile.setHttpCacheMaximumSize(max_cache_size)
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
@@ -125,9 +183,6 @@ class BrowserWidget(QtWidgets.QWidget):
         # Prevent opening context menu on right click or pressing menu
         self._webview.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.NoContextMenu)
 
-        # Prepare reload timer
-        self._reload_timer = QtCore.QTimer(self)
-        self._reload_timer.setSingleShot(True)
         self._reload_timer.timeout.connect(self._webview.reload)
 
         # Load url
@@ -234,7 +289,7 @@ class BrowserWidget(QtWidgets.QWidget):
             self._view(Status.LOADED)
         if not success:
             self._view(Status.NETWORK_ERROR)
-            self._reload_timer.start(reload_on_network_error_after)
+            self._reload_timer.start(1000, reload_on_network_error_after // 1000)
 
     def _proxy_auth(self, url, auth, proxyHost):
         proxy = self._get_current_proxy()
@@ -293,7 +348,7 @@ def loading_page(parent):
 
     return hcenter(label, parent)
 
-def network_error_page(parent):
+def network_error_page(parent, reload_timer: TimerWithTicks):
     """ Show network error page.
     """
 
@@ -309,6 +364,18 @@ def network_error_page(parent):
     paragraph_1 = paragraph("Please ensure the Internet connection to this device is active.", parent)
     paragraph_2 = paragraph("If the problem persists, contact Senso Service.", parent)
 
+    countdown_label = QtWidgets.QLabel("", parent)
+    countdown_label.setStyleSheet("font-size: 16px; color: #666;")
+
+    def update_countdown(remaining_time: int):
+        countdown_label.setText(f"Reloading page in {remaining_time // 1000} seconds...")
+
+    def clear_countdown():
+        countdown_label.setText("")
+
+    reload_timer.tick.connect(update_countdown)
+    reload_timer.timeout.connect(clear_countdown)
+
     logo = QtSvgWidgets.QSvgWidget("images/dividat-logo.svg", parent)
     logo.renderer().setAspectRatioMode(QtCore.Qt.AspectRatioMode.KeepAspectRatio)
     logo.setFixedHeight(30)
@@ -321,6 +388,8 @@ def network_error_page(parent):
     layout.addSpacing(20)
     layout.addWidget(hcenter(paragraph_1, parent))
     layout.addWidget(hcenter(paragraph_2, parent))
+    layout.addSpacing(20)
+    layout.addWidget(hcenter(countdown_label, parent))
     layout.addStretch(1)
     layout.addWidget(hcenter(logo, parent))
     layout.addSpacing(20)
