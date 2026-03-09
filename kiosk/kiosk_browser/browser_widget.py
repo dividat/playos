@@ -78,6 +78,20 @@ class TimerWithTicks(QtCore.QObject):
         return self._remainingTicks * self._tickInterval
 
 
+class CountdownLabel(QtWidgets.QLabel):
+    def __init__(self, timer: TimerWithTicks, parent=None):
+        super().__init__("", parent)
+        self.setStyleSheet("font-size: 16px; color: #666;")
+        timer.tick.connect(self._update_countdown)
+        timer.timeout.connect(self._clear_countdown)
+
+    def _update_countdown(self, remaining_time: int):
+        self.setText(f"Reloading page in {remaining_time // 1000} seconds...")
+
+    def _clear_countdown(self):
+        self.setText("")
+
+
 # Small helper class for handling focus-shift:exhausted events, used to
 # "transfer" focus out of the page (QWebEngineView) into other widgets.
 #
@@ -136,10 +150,11 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webchannel.registerObject("reload_handler", self._reload_handler)
 
         self._reload_timer = TimerWithTicks(self)
+        self._countdown_label = CountdownLabel(self._reload_timer, self)
 
         # Init views
         self._loading_page = loading_page(self)
-        self._network_error_page = network_error_page(self, self._reload_timer)
+        self._network_error_page = network_error_page(self, self._countdown_label)
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._profile.setHttpCacheMaximumSize(max_cache_size)
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
@@ -345,7 +360,7 @@ def loading_page(parent):
 
     return hcenter(label, parent)
 
-def network_error_page(parent, reload_timer: TimerWithTicks):
+def network_error_page(parent, countdown_label: CountdownLabel):
     """ Show network error page.
     """
 
@@ -360,18 +375,6 @@ def network_error_page(parent, reload_timer: TimerWithTicks):
 
     paragraph_1 = paragraph("Please ensure the Internet connection to this device is active.", parent)
     paragraph_2 = paragraph("If the problem persists, contact Senso Service.", parent)
-
-    countdown_label = QtWidgets.QLabel("", parent)
-    countdown_label.setStyleSheet("font-size: 16px; color: #666;")
-
-    def update_countdown(remaining_time: int):
-        countdown_label.setText(f"Reloading page in {remaining_time // 1000} seconds...")
-
-    def clear_countdown():
-        countdown_label.setText("")
-
-    reload_timer.tick.connect(update_countdown)
-    reload_timer.timeout.connect(clear_countdown)
 
     logo = QtSvgWidgets.QSvgWidget("images/dividat-logo.svg", parent)
     logo.renderer().setAspectRatioMode(QtCore.Qt.AspectRatioMode.KeepAspectRatio)
