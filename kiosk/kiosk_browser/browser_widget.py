@@ -151,9 +151,6 @@ class BrowserWidget(QtWidgets.QWidget):
         # Handle page (renderer) kills
         self._webview.renderProcessTerminated.connect(self._handle_render_process_terminated)
 
-        # Handle page (renderer) kills
-        self._webview.renderProcessTerminated.connect(self._handle_render_process_terminated)
-
         # Add views to layout
         self._layout.addWidget(self._loading_page)
         self._layout.addWidget(self._network_error_page)
