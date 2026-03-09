@@ -154,8 +154,8 @@ class BrowserWidget(QtWidgets.QWidget):
         self._countdown_label = CountdownLabel(self._reload_timer, self)
 
         # Init views
-        self._loading_page = loading_page(self)
-        self._network_error_page = network_error_page(self, self._countdown_label, request_settings)
+        self._loading_page = loading_page()
+        self._network_error_page = network_error_page(self._countdown_label, request_settings)
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._profile.setHttpCacheMaximumSize(max_cache_size)
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
@@ -349,28 +349,28 @@ def user_agent_with_system(user_agent, system_name, system_version):
 
         return f"{m.group(1)} ({system_detail}){m.group(3)}"
 
-def loading_page(parent):
+def loading_page():
     """ Show a loader in the middle of a blank page.
     """
 
     movie = QtGui.QMovie("images/spinner.gif")
     movie.start()
 
-    label = QtWidgets.QLabel(parent)
+    label = QtWidgets.QLabel()
     label.setMovie(movie)
 
-    return hcenter(label, parent)
+    return hcenter(label)
 
-def network_error_page(parent, countdown_label: CountdownLabel, request_settings):
+def network_error_page(countdown_label: CountdownLabel, request_settings):
     """ Show network error page.
     """
 
     widget = QtWidgets.QWidget()
 
-    icon = QtWidgets.QLabel(parent)
+    icon = QtWidgets.QLabel()
     icon.setPixmap(QtGui.QPixmap("images/no-internet-icon.png")) # https://flaticons.net
 
-    title = QtWidgets.QLabel("No Internet Connection", parent)
+    title = QtWidgets.QLabel("No Internet Connection")
     title.setStyleSheet("""
         font-size: 45px;
         font-weight: bold;
@@ -385,28 +385,28 @@ def network_error_page(parent, countdown_label: CountdownLabel, request_settings
     button.setDefault(True)
 
     main_block = [
-        paragraph("Please ensure the Internet connection to this device is active.", parent),
-        paragraph("To configure the connection, go to Network settings:", parent),
+        paragraph("Please ensure the Internet connection to this device is active."),
+        paragraph("To configure the connection, go to Network settings:"),
         button,
-        paragraph("If the problem persists, contact Senso Service.", parent)
+        paragraph("If the problem persists, contact Senso Service.")
     ]
 
-    logo = QtSvgWidgets.QSvgWidget("images/dividat-logo.svg", parent)
+    logo = QtSvgWidgets.QSvgWidget("images/dividat-logo.svg")
     logo.renderer().setAspectRatioMode(QtCore.Qt.AspectRatioMode.KeepAspectRatio)
     logo.setFixedHeight(30)
 
     layout = QtWidgets.QVBoxLayout()
     layout.addStretch(1)
-    layout.addWidget(hcenter(icon, parent))
+    layout.addWidget(hcenter(icon))
     layout.addSpacing(30)
-    layout.addWidget(hcenter(title, parent))
+    layout.addWidget(hcenter(title))
     layout.addSpacing(20)
     for w in main_block:
-        layout.addWidget(hcenter(w, parent))
+        layout.addWidget(hcenter(w))
     layout.addSpacing(20)
-    layout.addWidget(hcenter(countdown_label, parent))
+    layout.addWidget(hcenter(countdown_label))
     layout.addStretch(1)
-    layout.addWidget(hcenter(logo, parent))
+    layout.addWidget(hcenter(logo))
     layout.addSpacing(20)
 
     widget.setLayout(layout)
@@ -414,12 +414,12 @@ def network_error_page(parent, countdown_label: CountdownLabel, request_settings
 
     return widget
 
-def paragraph(text, parent):
-    label = QtWidgets.QLabel(text, parent)
+def paragraph(text):
+    label = QtWidgets.QLabel(text)
     label.setStyleSheet("font-size: 20px;")
     return label
 
-def hcenter(child, parent):
+def hcenter(child):
     """ Center widget horizontally inside another widget.
     """
 
@@ -428,7 +428,7 @@ def hcenter(child, parent):
     layout.addWidget(child)
     layout.addStretch(1)
 
-    widget = QtWidgets.QWidget(parent)
+    widget = QtWidgets.QWidget()
     widget.setLayout(layout)
 
     return widget
