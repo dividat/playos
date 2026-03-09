@@ -9,6 +9,7 @@ import logging
 import re
 
 from kiosk_browser import system, injected_scripts
+from kiosk_browser.ui import DarkButton
 
 # Config
 reload_on_network_error_after = 5000 # ms
@@ -130,7 +131,7 @@ class ReloadHandler(QtCore.QObject):
 
 
 class BrowserWidget(QtWidgets.QWidget):
-    def __init__(self, url, get_current_proxy, parent, max_cache_size, keyboard_detector):
+    def __init__(self, url, get_current_proxy, parent, max_cache_size, keyboard_detector, request_settings):
         QtWidgets.QWidget.__init__(self, parent)
         self.setStyleSheet(f"background-color: white;")
 
@@ -154,7 +155,7 @@ class BrowserWidget(QtWidgets.QWidget):
 
         # Init views
         self._loading_page = loading_page(self)
-        self._network_error_page = network_error_page(self, self._countdown_label)
+        self._network_error_page = network_error_page(self, self._countdown_label, request_settings)
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._profile.setHttpCacheMaximumSize(max_cache_size)
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
@@ -360,9 +361,11 @@ def loading_page(parent):
 
     return hcenter(label, parent)
 
-def network_error_page(parent, countdown_label: CountdownLabel):
+def network_error_page(parent, countdown_label: CountdownLabel, request_settings):
     """ Show network error page.
     """
+
+    widget = QtWidgets.QWidget()
 
     icon = QtWidgets.QLabel(parent)
     icon.setPixmap(QtGui.QPixmap("images/no-internet-icon.png")) # https://flaticons.net
@@ -373,8 +376,20 @@ def network_error_page(parent, countdown_label: CountdownLabel):
         font-weight: bold;
     """)
 
-    paragraph_1 = paragraph("Please ensure the Internet connection to this device is active.", parent)
-    paragraph_2 = paragraph("If the problem persists, contact Senso Service.", parent)
+    button = DarkButton('Open PlayOS settings', widget)
+    button.setFixedHeight(32)
+    font = button.font()
+    font.setPointSize(12)
+    button.setFont(font)
+    button.clicked.connect(request_settings)
+    button.setDefault(True)
+
+    main_block = [
+        paragraph("Please ensure the Internet connection to this device is active.", parent),
+        paragraph("To configure the connection, go to Network settings:", parent),
+        button,
+        paragraph("If the problem persists, contact Senso Service.", parent)
+    ]
 
     logo = QtSvgWidgets.QSvgWidget("images/dividat-logo.svg", parent)
     logo.renderer().setAspectRatioMode(QtCore.Qt.AspectRatioMode.KeepAspectRatio)
@@ -386,16 +401,16 @@ def network_error_page(parent, countdown_label: CountdownLabel):
     layout.addSpacing(30)
     layout.addWidget(hcenter(title, parent))
     layout.addSpacing(20)
-    layout.addWidget(hcenter(paragraph_1, parent))
-    layout.addWidget(hcenter(paragraph_2, parent))
+    for w in main_block:
+        layout.addWidget(hcenter(w, parent))
     layout.addSpacing(20)
     layout.addWidget(hcenter(countdown_label, parent))
     layout.addStretch(1)
     layout.addWidget(hcenter(logo, parent))
     layout.addSpacing(20)
 
-    widget = QtWidgets.QWidget()
     widget.setLayout(layout)
+    widget.setFocusProxy(button)
 
     return widget
 
