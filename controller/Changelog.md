@@ -1,5 +1,9 @@
 # [UNRELEASED]
 
+# Added
+
+- kiosk: Clear cached files if kiosk fails to start repeatedly
+
 # Changed
 
 - driver: Upgrade driver to 2.8.1 to remove irrelevant error log
