@@ -170,12 +170,12 @@ for more details.
 The release validation test is used to perform the final _automated_ checks before
 manually testing and officially publishing a release.
 
-Currently it tests only one critical path: the self-update scenario from an
-earlier release (the 'base' system) to the current/upcoming release (the 'next'
-system).
+It tests the critical double-self-update scenario: first updating from an
+earlier release to the current/upcoming release and then again updating the
+current system to itself.
 
-The test does not alter the configuration of the base or next systems' in any way
-(e.g. no test-instrumentation.nix extras, which are present in end-to-end
+The test does not alter the configuration of the base or next systems' in any
+way (e.g. no test-instrumentation.nix extras, which are present in end-to-end
 tests).
 
 To run the tests against the previous release, execute:
@@ -184,6 +184,12 @@ To run the tests against the previous release, execute:
 
 To test against a specific base system (e.g. `2023.9.1-DISK`), add the flag
 `--arg baseSystemVersion '"2023.9.1-DISK"'`.
+
+Prior to releasing, you should run the release-validation tests against multiple
+older base systems, this is easiest done via Github Actions:
+
+    - Open https://github.com/dividat/playos/actions/workflows/release-validation.yml
+    - Click "Run workflow" and select the relevant branch or tag
 
 Compressed base system disk images are created for every tagged release using
 `./build release-disk` and the [release](.github/workflows/release-tag.yml)
