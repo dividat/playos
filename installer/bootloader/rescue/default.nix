@@ -1,13 +1,12 @@
 { stdenv, lib
-, application
+, systemMetadata
 , squashfsTools, closureInfo, makeInitrd, linkFarm
-, importFromNixos
+, nixos
 , writeScript, dialog
 , vim, grub2_efi, rauc
 , squashfsCompressionOpts}:
 with lib;
 let
-  nixos = importFromNixos "";
 
   squashfsCompressionParams =
     if (squashfsCompressionOpts == null)
@@ -23,7 +22,7 @@ let
     do
 
       ${dialog}/bin/dialog --clear --title "" \
-        --backtitle "${application.fullProductName} - Rescue System" \
+        --backtitle "${systemMetadata.fullProductName} - Rescue System" \
         --nocancel \
         --menu "Please Select an action" 0 0 0 \
         "wipe-user-data" "Delete all user data." \
@@ -94,7 +93,7 @@ in
       '';
     };
     networking = {
-      hostName = "${application.safeProductName}-rescue";
+      hostName = "${systemMetadata.safeProductName}-rescue";
       # enable wpa_supplicant
       wireless = {
         enable = true;
