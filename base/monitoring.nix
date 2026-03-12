@@ -422,6 +422,15 @@ in
 
           inputs.diskio = {
             skip_serial_number = true;
+            # keep only total drive metrics (drop stats for individual
+            # partitions like sda1", "sda2", etc) and drop loopback devices
+            devices = [
+              "sda"
+              "sdb"
+              "sdc"
+              "nvme*n1"
+            ];
+
             fieldinclude = [
               "reads"
               "writes"

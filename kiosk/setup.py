@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/dividat/playos/",
     packages=setuptools.find_packages(),
-    scripts=['bin/kiosk-browser'],
+    scripts=['bin/kiosk-browser', 'bin/nuke-cache'],
     classifiers=[
         "Programming Language :: Python :: 3",
     ],
