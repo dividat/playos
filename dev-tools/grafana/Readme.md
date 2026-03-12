@@ -19,7 +19,7 @@ Start Grafana, pointing it to InfluxDB:
     ./run-grafana --influxdb-url http://localhost:18086/
 
 Click the provided auto-login link or open http://localhost:9090/ and login with
-admin / admin.
+admin / pass.
 
 See "Dashboards" in the Grafana menu for a list of available dashboards.
 

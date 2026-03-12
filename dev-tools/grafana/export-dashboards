@@ -51,7 +51,7 @@ done
 readonly GRAFANA_URL
 readonly DASHBOARDS_DIR
 
-auth="admin:admin"
+auth="admin:pass"
 
 echo "Fetching dashboard list from $GRAFANA_URL..."
 
