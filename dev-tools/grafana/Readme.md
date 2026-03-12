@@ -66,7 +66,7 @@ the host:
 - set `networking.firewall.enabled = false`
 - set `services.influxdb.extraConfig.http.bind-address = "0.0.0.0:8086"`
 - build `./build vm`
-- run with `./result/bin/run-in-vm -q -enable-kvm -nic user,hostfwd=tcp::8086-:8086`
+- run with `./result/bin/run-in-vm -q -enable-kvm -m 2048 -nic user,hostfwd=tcp::8086-:8086`
 
 However, note that this does not include all metrics: sensor, wireless and
 diskio stats are note available on the VM.
