@@ -1,5 +1,5 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
-from PyQt6.QtWebEngineCore import QWebEngineScript, QWebEnginePage
+from PyQt6.QtWebEngineCore import QWebEngineScript, QWebEnginePage, QWebEngineLoadingInfo
 from PyQt6.QtWebChannel import QWebChannel
 from PyQt6.QtCore import pyqtSlot, pyqtSignal, Qt, QEvent, QUrl
 from PyQt6.QtGui import QKeyEvent
@@ -82,7 +82,6 @@ class TimerWithTicks(QtCore.QObject):
 class CountdownLabel(QtWidgets.QLabel):
     def __init__(self, timer: TimerWithTicks, parent=None):
         super().__init__("", parent)
-        self.setStyleSheet("font-size: 16px; color: #666;")
         timer.tick.connect(self._update_countdown)
         timer.timeout.connect(self._clear_countdown)
 
@@ -152,10 +151,14 @@ class BrowserWidget(QtWidgets.QWidget):
 
         self._reload_timer = TimerWithTicks(self)
         self._countdown_label = CountdownLabel(self._reload_timer, self)
+        self._network_error_reason_label = QtWidgets.QLabel(self)
 
         # Init views
         self._loading_page = loading_page()
-        self._network_error_page = network_error_page(self._countdown_label, request_settings)
+        self._network_error_page = network_error_page(
+                self._countdown_label,
+                self._network_error_reason_label,
+                request_settings)
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._profile.setHttpCacheMaximumSize(max_cache_size)
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
@@ -200,8 +203,8 @@ class BrowserWidget(QtWidgets.QWidget):
 
         # Load url
         self._webview.loadFinished.connect(self._load_finished)
+        self._webview.page().loadingChanged.connect(self._update_loading_error)
         self.load(url)
-
 
     def _handle_render_process_terminated(self, termination_status, exit_code):
         is_normal_termination = termination_status == QWebEnginePage.RenderProcessTerminationStatus.NormalTerminationStatus
@@ -304,6 +307,41 @@ class BrowserWidget(QtWidgets.QWidget):
             self._view(Status.NETWORK_ERROR)
             self._reload_timer.start(1000, reload_on_network_error_after // 1000)
 
+    def _update_loading_error(self, loading_info):
+        match loading_info.status():
+            case QWebEngineLoadingInfo.LoadStatus.LoadFailedStatus:
+                error_text = self._format_loading_error(loading_info)
+                page_url = self._webview.page().url().toString()
+                logging.warning(f"Page '{page_url}' load failed: {error_text}")
+                self._network_error_reason_label.setText(f"Technical details: {error_text}")
+            case QWebEngineLoadingInfo.LoadStatus.LoadSucceededStatus:
+                # clear on success
+                self._network_error_reason_label.setText("")
+            case _:
+                # Do nothing while loading to preserve error visibility
+                pass
+
+    def _format_loading_error(self, loading_info: QWebEngineLoadingInfo) -> str:
+        error_details = f"code: {loading_info.errorCode()}, reason: {loading_info.errorString()}"
+
+        error_reason = ""
+        match loading_info.errorDomain():
+            case QWebEngineLoadingInfo.ErrorDomain.DnsErrorDomain:
+                error_reason = "DNS error"
+            case QWebEngineLoadingInfo.ErrorDomain.HttpStatusCodeDomain:
+                error_reason = "HTTP status error"
+            case QWebEngineLoadingInfo.ErrorDomain.CertificateErrorDomain:
+                error_reason = "SSL Certificate error"
+            case QWebEngineLoadingInfo.ErrorDomain.ConnectionErrorDomain:
+                error_reason = "Connection error"
+            case QWebEngineLoadingInfo.ErrorDomain.HttpErrorDomain:
+                error_reason = "HTTP connection error"
+            case _:
+                error_reason = "Unknown error ({loading_info.errorDomain()})"
+
+        return f"{error_reason}, {error_details}"
+
+
     def _proxy_auth(self, url, auth, proxyHost):
         proxy = self._get_current_proxy()
         if proxy is not None and proxy.credentials is not None:
@@ -361,7 +399,7 @@ def loading_page():
 
     return hcenter(label)
 
-def network_error_page(countdown_label: CountdownLabel, request_settings):
+def network_error_page(countdown_label: CountdownLabel, error_label: QtWidgets.QLabel, request_settings):
     """ Show network error page.
     """
 
@@ -391,6 +429,9 @@ def network_error_page(countdown_label: CountdownLabel, request_settings):
         button,
     ]
 
+    countdown_label.setStyleSheet("font-size: 16px; color: #666;")
+    error_label.setStyleSheet("font-size: 12px; color: #666;")
+
     logo = QtSvgWidgets.QSvgWidget("images/dividat-logo.svg")
     logo.renderer().setAspectRatioMode(QtCore.Qt.AspectRatioMode.KeepAspectRatio)
     logo.setFixedHeight(30)
@@ -405,6 +446,7 @@ def network_error_page(countdown_label: CountdownLabel, request_settings):
         layout.addWidget(hcenter(w))
     layout.addSpacing(20)
     layout.addWidget(hcenter(countdown_label))
+    layout.addWidget(hcenter(error_label))
     layout.addStretch(1)
     layout.addWidget(hcenter(logo))
     layout.addSpacing(20)
