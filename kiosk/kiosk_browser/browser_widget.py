@@ -385,10 +385,10 @@ def network_error_page(countdown_label: CountdownLabel, request_settings):
     button.setDefault(True)
 
     main_block = [
-        paragraph("Please ensure the Internet connection to this device is active."),
+        paragraph("Please ensure the device has an active Internet connection"
+                  " and is not blocked by a firewall."),
         paragraph("To configure the connection, go to Network settings:"),
         button,
-        paragraph("If the problem persists, contact Senso Service.")
     ]
 
     logo = QtSvgWidgets.QSvgWidget("images/dividat-logo.svg")
