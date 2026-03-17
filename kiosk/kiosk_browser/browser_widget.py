@@ -415,9 +415,9 @@ def network_error_page(countdown_label: CountdownLabel, error_label: QtWidgets.Q
     """)
 
     button = DarkButton('Open PlayOS settings', widget)
-    button.setFixedHeight(32)
+    button.setFixedHeight(40)
     font = button.font()
-    font.setPointSize(12)
+    font.setPointSize(16)
     button.setFont(font)
     button.clicked.connect(request_settings)
     button.setDefault(True)
