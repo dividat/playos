@@ -6,6 +6,7 @@ let
 
   supportedLanguages = [
       { locale = "cs_CZ.UTF-8"; name = "Czech"; }
+      { locale = "da_DK.UTF-8"; name = "Danish"; }
       { locale = "nl_NL.UTF-8"; name = "Dutch"; }
       { locale = "en_GB.UTF-8"; name = "English (UK)"; }
       { locale = "en_US.UTF-8"; name = "English (US)"; }
@@ -15,10 +16,12 @@ let
       { locale = "it_IT.UTF-8"; name = "Italian"; }
       { locale = "pl_PL.UTF-8"; name = "Polish"; }
       { locale = "es_ES.UTF-8"; name = "Spanish"; }
+      { locale = "tr_TR.UTF-8"; name = "Turkish"; }
    ];
 
    supportedKeymaps = [
       { keymap = "cz"; name = "Czech"; }
+      { keymap = "dk"; name = "Danish"; }
       { keymap = "nl"; name = "Dutch"; }
       { keymap = "gb"; name = "English (UK)"; }
       { keymap = "us"; name = "English (US)"; }
@@ -29,6 +32,7 @@ let
       { keymap = "it"; name = "Italian"; }
       { keymap = "pl"; name = "Polish"; }
       { keymap = "es"; name = "Spanish"; }
+      { keymap = "tr"; name = "Turkish"; }
     ];
 
 in {
