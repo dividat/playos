@@ -86,7 +86,7 @@ class CountdownLabel(QtWidgets.QLabel):
         timer.timeout.connect(self._clear_countdown)
 
     def _update_countdown(self, remaining_time: int):
-        self.setText(f"Retrying in {remaining_time // 1000} seconds...")
+        self.setText(f"Retrying in {remaining_time // 1000} seconds…")
 
     def _clear_countdown(self):
         self.setText("")
