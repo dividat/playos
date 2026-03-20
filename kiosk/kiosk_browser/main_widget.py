@@ -59,7 +59,8 @@ class MainWidget(QtWidgets.QWidget):
             get_current_proxy = proxy.get_current,
             parent = self,
             max_cache_size = max_cache_size,
-            keyboard_detector=self._keyboard_detector)
+            keyboard_detector=self._keyboard_detector,
+            request_settings=self._open_settings)
         self._dialogable_browser = dialogable_widget.DialogableWidget(
             parent = self,
             inner_widget = self._browser_widget,
