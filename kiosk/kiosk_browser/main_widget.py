@@ -38,7 +38,7 @@ class MainWidget(QtWidgets.QWidget):
     - Use proxy configured in Connman.
     """
 
-    def __init__(self, kiosk_url: str, settings_url: str,
+    def __init__(self, kiosk_url: QtCore.QUrl, settings_url: QtCore.QUrl,
                  toggle_settings_key: str, fullscreen: bool, max_cache_size: int):
         super(MainWidget, self).__init__()
         # Display
