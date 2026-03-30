@@ -189,7 +189,7 @@ class ReloadHandler(QtCore.QObject):
 
 
 class BrowserWidget(QtWidgets.QWidget):
-    def __init__(self, url, get_current_proxy, parent, max_cache_size, keyboard_detector, request_settings):
+    def __init__(self, url, get_current_proxy, parent, max_cache_size, keyboard_detector, request_network_settings):
         QtWidgets.QWidget.__init__(self, parent)
         self.setStyleSheet(f"background-color: white;")
 
@@ -216,7 +216,7 @@ class BrowserWidget(QtWidgets.QWidget):
             self._reload_timer, parent=self)
         self._network_error_page = network_error_page(
             self._network_error_retry_widget,
-            request_settings)
+            request_network_settings)
 
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._profile.setHttpCacheMaximumSize(max_cache_size)
@@ -428,7 +428,7 @@ def loading_spinner():
     return hcenter(label)
 
 
-def network_error_page(network_error_retry_widget: NetworkErrorRetryWidget, request_settings):
+def network_error_page(network_error_retry_widget: NetworkErrorRetryWidget, request_network_settings):
     """ Show network error page.
     """
 
@@ -443,12 +443,12 @@ def network_error_page(network_error_retry_widget: NetworkErrorRetryWidget, requ
         font-weight: bold;
     """)
 
-    button = DarkButton('Open PlayOS settings', widget)
+    button = DarkButton('Open Network settings', widget)
     button.setFixedHeight(40)
     font = button.font()
     font.setPointSize(16)
     button.setFont(font)
-    button.clicked.connect(request_settings)
+    button.clicked.connect(request_network_settings)
     button.setDefault(True)
 
     main_block = [

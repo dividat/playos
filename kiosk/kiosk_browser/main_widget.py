@@ -5,6 +5,7 @@ import time
 import logging
 from dataclasses import dataclass
 from collections.abc import Callable
+from enum import StrEnum
 
 from kiosk_browser import browser_widget, captive_portal, dialogable_widget, proxy as proxy_module
 from kiosk_browser.keyboard_widget import KeyboardWidget
@@ -21,6 +22,12 @@ class ShortcutDef:
 
     def to_combo(self):
         return KeyCombination(name=self.name, keys=frozenset(self.keys))
+
+
+# listing only two pages, since we do not use any others currently
+class SettingsPage(StrEnum):
+    HOME = "/"
+    NETWORK = "/network"
 
 
 class MainWidget(QtWidgets.QWidget):
@@ -60,7 +67,7 @@ class MainWidget(QtWidgets.QWidget):
             parent = self,
             max_cache_size = max_cache_size,
             keyboard_detector=self._keyboard_detector,
-            request_settings=self._open_settings)
+            request_network_settings=lambda: self._open_settings(page=SettingsPage.NETWORK))
         self._dialogable_browser = dialogable_widget.DialogableWidget(
             parent = self,
             inner_widget = self._browser_widget,
@@ -153,8 +160,11 @@ class MainWidget(QtWidgets.QWidget):
                     "but KeyboardWidget already initialized - this should not happen"
                 )
 
-    def _open_settings(self):
-        self._browser_widget.load(self._settings_url, inject_spatial_navigation_scripts=True)
+    def _open_settings(self, page: SettingsPage = SettingsPage.HOME):
+        path = self._settings_url.path().rstrip("/") + page
+        url = QtCore.QUrl(self._settings_url)
+        url.setPath(path)
+        self._browser_widget.load(url, inject_spatial_navigation_scripts=True)
         self._dialogable_browser.decorate("System Settings")
 
 
