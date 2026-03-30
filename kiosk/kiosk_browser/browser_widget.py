@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QApplication
 from enum import Enum, auto
 import logging
 import re
+import math
 
 from kiosk_browser import system, injected_scripts
 from kiosk_browser.ui import DarkButton
@@ -79,17 +80,75 @@ class TimerWithTicks(QtCore.QObject):
         return self._remainingTicks * self._tickInterval
 
 
-class CountdownLabel(QtWidgets.QLabel):
-    def __init__(self, timer: TimerWithTicks, parent=None):
-        super().__init__("", parent)
-        timer.tick.connect(self._update_countdown)
-        timer.timeout.connect(self._clear_countdown)
+class NetworkErrorRetryWidget(QtWidgets.QWidget):
+    """This widget is used when a network error occurs, it:
+        1. Manages the reload_timer while retrying
+        2. Displays a reload countdown and spinner
+        3. Displays the last network error details
+    """
+
+    def __init__(self, reload_timer: TimerWithTicks, parent=None):
+        self._tick_interval_ms = 200
+        # To avoid a "flicker" effect when the network error is nearly
+        # instantenous (<300ms), we show the spinner slightly earlier
+        self._prestart_spinner_time_ms = 400
+
+        super().__init__(parent)
+        self._reload_timer = reload_timer
+
+        self._retry_countdown_label = QtWidgets.QLabel(self)
+        self._loading_spinner = loading_spinner()
+        self._error_reason_label = QtWidgets.QLabel(self)
+        # for style-sheet
+        self._error_reason_label.setObjectName("error_reason")
+
+        self._countdown_or_spinner = QtWidgets.QStackedWidget(self)
+        self._countdown_or_spinner.addWidget(self._retry_countdown_label)
+        self._countdown_or_spinner.addWidget(self._loading_spinner)
+
+        self._layout = QtWidgets.QVBoxLayout()
+        self._layout.addWidget(hcenter(self._countdown_or_spinner))
+        self._layout.addWidget(hcenter(self._error_reason_label))
+        self.setLayout(self._layout)
+
+        self._reload_timer.tick.connect(self._update_countdown)
+
+    def start_reload(self):
+        return self._reload_timer.start(
+            self._tick_interval_ms,
+            (reload_on_network_error_after + self._prestart_spinner_time_ms) // self._tick_interval_ms
+        )
 
     def _update_countdown(self, remaining_time: int):
-        self.setText(f"Retrying in {remaining_time // 1000} seconds…")
+        if remaining_time <= self._prestart_spinner_time_ms:
+            self._countdown_or_spinner.setCurrentWidget(self._loading_spinner)
+        else:
+            display_remaining_time = remaining_time - self._prestart_spinner_time_ms
+            self._retry_countdown_label.setText(f"Retrying in { math.ceil(display_remaining_time/1000.0) } seconds…")
 
-    def _clear_countdown(self):
-        self.setText("")
+
+    def _loading_changed(self, loading_info):
+        error_text = format_loading_error(loading_info)
+
+        match loading_info.status():
+            case QWebEngineLoadingInfo.LoadStatus.LoadStartedStatus:
+                # Do nothing to preserve the error reason
+                pass
+
+            case QWebEngineLoadingInfo.LoadStatus.LoadFailedStatus:
+                page_url = loading_info.url().toString()
+                logging.warning(f"Page '{page_url}' load failed: {error_text}")
+                self._error_reason_label.setText(f"Technical details: {error_text}")
+                self._countdown_or_spinner.setCurrentWidget(self._retry_countdown_label)
+
+            case QWebEngineLoadingInfo.LoadStatus.LoadStoppedStatus:
+                # this should not happen, since we do not expect any (manual or
+                # automatic) load interrupts
+                self._error_reason_label.setText(f"Loading stopped unexpectedly: {error_text}")
+                self._countdown_or_spinner.setCurrentWidget(self._retry_countdown_label)
+
+            case QWebEngineLoadingInfo.LoadStatus.LoadSucceededStatus:
+                self._error_reason_label.setText("")
 
 
 # Small helper class for handling focus-shift:exhausted events, used to
@@ -150,15 +209,15 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webchannel.registerObject("reload_handler", self._reload_handler)
 
         self._reload_timer = TimerWithTicks(self)
-        self._countdown_label = CountdownLabel(self._reload_timer, self)
-        self._network_error_reason_label = QtWidgets.QLabel(self)
 
         # Init views
-        self._loading_page = loading_page()
+        self._loading_page = loading_spinner()
+        self._network_error_retry_widget = NetworkErrorRetryWidget(
+            self._reload_timer, parent=self)
         self._network_error_page = network_error_page(
-                self._countdown_label,
-                self._network_error_reason_label,
-                request_settings)
+            self._network_error_retry_widget,
+            request_settings)
+
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._profile.setHttpCacheMaximumSize(max_cache_size)
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
@@ -203,7 +262,7 @@ class BrowserWidget(QtWidgets.QWidget):
 
         # Load url
         self._webview.loadFinished.connect(self._load_finished)
-        self._webview.page().loadingChanged.connect(self._update_loading_error)
+        self._webview.page().loadingChanged.connect(self._network_error_retry_widget._loading_changed)
         self.load(url)
 
     def _handle_render_process_terminated(self, termination_status, exit_code):
@@ -305,41 +364,7 @@ class BrowserWidget(QtWidgets.QWidget):
             self._view(Status.LOADED)
         if not success:
             self._view(Status.NETWORK_ERROR)
-            self._reload_timer.start(1000, reload_on_network_error_after // 1000)
-
-    def _update_loading_error(self, loading_info):
-        match loading_info.status():
-            case QWebEngineLoadingInfo.LoadStatus.LoadFailedStatus:
-                error_text = self._format_loading_error(loading_info)
-                page_url = self._webview.page().url().toString()
-                logging.warning(f"Page '{page_url}' load failed: {error_text}")
-                self._network_error_reason_label.setText(f"Technical details: {error_text}")
-            case QWebEngineLoadingInfo.LoadStatus.LoadSucceededStatus:
-                # clear on success
-                self._network_error_reason_label.setText("")
-            case _:
-                # Do nothing while loading to preserve error visibility
-                pass
-
-    def _format_loading_error(self, loading_info: QWebEngineLoadingInfo) -> str:
-        error_details = f"code: {loading_info.errorCode()}, reason: {loading_info.errorString()}"
-
-        error_reason = ""
-        match loading_info.errorDomain():
-            case QWebEngineLoadingInfo.ErrorDomain.DnsErrorDomain:
-                error_reason = "DNS error"
-            case QWebEngineLoadingInfo.ErrorDomain.HttpStatusCodeDomain:
-                error_reason = "HTTP status error"
-            case QWebEngineLoadingInfo.ErrorDomain.CertificateErrorDomain:
-                error_reason = "SSL Certificate error"
-            case QWebEngineLoadingInfo.ErrorDomain.ConnectionErrorDomain:
-                error_reason = "Connection error"
-            case QWebEngineLoadingInfo.ErrorDomain.HttpErrorDomain:
-                error_reason = "HTTP connection error"
-            case _:
-                error_reason = "Unknown error ({loading_info.errorDomain()})"
-
-        return f"{error_reason}, {error_details}"
+            self._network_error_retry_widget.start_reload()
 
 
     def _proxy_auth(self, url, auth, proxyHost):
@@ -387,8 +412,8 @@ def user_agent_with_system(user_agent, system_name, system_version):
 
         return f"{m.group(1)} ({system_detail}){m.group(3)}"
 
-def loading_page():
-    """ Show a loader in the middle of a blank page.
+def loading_spinner():
+    """ Show a loader centered in the middle
     """
 
     movie = QtGui.QMovie("images/spinner.gif")
@@ -396,10 +421,14 @@ def loading_page():
 
     label = QtWidgets.QLabel()
     label.setMovie(movie)
+    # ensure label fits the QMovie exactly
+    label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed,
+                        QtWidgets.QSizePolicy.Policy.Fixed)
 
     return hcenter(label)
 
-def network_error_page(countdown_label: CountdownLabel, error_label: QtWidgets.QLabel, request_settings):
+
+def network_error_page(network_error_retry_widget: NetworkErrorRetryWidget, request_settings):
     """ Show network error page.
     """
 
@@ -429,8 +458,14 @@ def network_error_page(countdown_label: CountdownLabel, error_label: QtWidgets.Q
         button,
     ]
 
-    countdown_label.setStyleSheet("font-size: 16px; color: #666;")
-    error_label.setStyleSheet("font-size: 12px; color: #666;")
+    network_error_retry_widget.setStyleSheet("""
+        * {
+            font-size: 16px; color: #666;
+        }
+        #error_reason {
+            font-size: 12px;
+        }
+    """)
 
     logo = QtSvgWidgets.QSvgWidget("images/dividat-logo.svg")
     logo.renderer().setAspectRatioMode(QtCore.Qt.AspectRatioMode.KeepAspectRatio)
@@ -444,9 +479,7 @@ def network_error_page(countdown_label: CountdownLabel, error_label: QtWidgets.Q
     layout.addSpacing(20)
     for w in main_block:
         layout.addWidget(hcenter(w))
-    layout.addSpacing(20)
-    layout.addWidget(hcenter(countdown_label))
-    layout.addWidget(hcenter(error_label))
+    layout.addWidget(hcenter(network_error_retry_widget))
     layout.addStretch(1)
     layout.addWidget(hcenter(logo))
     layout.addSpacing(20)
@@ -474,3 +507,24 @@ def hcenter(child):
     widget.setLayout(layout)
 
     return widget
+
+
+def format_loading_error(loading_info: QWebEngineLoadingInfo) -> str:
+    error_details = f"code: {loading_info.errorCode()}, reason: {loading_info.errorString()}"
+
+    error_reason = ""
+    match loading_info.errorDomain():
+        case QWebEngineLoadingInfo.ErrorDomain.DnsErrorDomain:
+            error_reason = "DNS error"
+        case QWebEngineLoadingInfo.ErrorDomain.HttpStatusCodeDomain:
+            error_reason = "HTTP status error"
+        case QWebEngineLoadingInfo.ErrorDomain.CertificateErrorDomain:
+            error_reason = "SSL Certificate error"
+        case QWebEngineLoadingInfo.ErrorDomain.ConnectionErrorDomain:
+            error_reason = "Connection error"
+        case QWebEngineLoadingInfo.ErrorDomain.HttpErrorDomain:
+            error_reason = "HTTP connection error"
+        case _:
+            error_reason = f"Unknown error ({loading_info.errorDomain()})"
+
+    return f"{error_reason}, {error_details}"
