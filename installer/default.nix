@@ -9,6 +9,9 @@
 , safeProductName, fullProductName, kioskUrl, updateUrl, version
 }:
 let
+  # versioned manually, this needs to be bumped if installer/ changes
+  skeletonVersion = "0.1.0";
+
   pkgs = import ./pkgs;
 
   systemMetadata = {
@@ -32,7 +35,7 @@ let
 
   configuration = (import ./configuration.nix) {
     inherit install-playos squashfsCompressionOpts;
-    inherit systemMetadata;
+    inherit systemMetadata skeletonVersion;
   };
 
 
