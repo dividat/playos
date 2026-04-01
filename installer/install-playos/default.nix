@@ -4,6 +4,7 @@
 , rescueSystem
 , grubCfg
 , systemMetadata
+, skeletonVersion
 }:
 with pkgs;
 let
@@ -18,6 +19,7 @@ stdenv.mkDerivation {
     src = ./install-playos.py;
     inherit grubCfg systemImage rescueSystem systemClosureInfo;
     inherit (systemMetadata) version kioskUrl updateUrl;
+    inherit skeletonVersion;
     inherit python;
   };
 

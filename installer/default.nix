@@ -31,6 +31,7 @@ let
     grubCfg = ./bootloader/grub.cfg;
     inherit rescueSystem;
     inherit systemImage systemMetadata;
+    inherit skeletonVersion;
   };
 
   configuration = (import ./configuration.nix) {
