@@ -1,32 +1,25 @@
-{ stdenv
-, substituteAll
-, makeWrapper
-, grub2_efi
-, e2fsprogs
-, dosfstools
-, utillinux
-, python3
-, pv
-, closureInfo
+{ pkgs
 
 , systemImage
 , rescueSystem
 , grubCfg
-, version
-, updateUrl
-, kioskUrl
+, systemMetadata
+, skeletonVersion
 }:
+with pkgs;
 let
   systemClosureInfo = closureInfo { rootPaths = [ systemImage ]; };
 
   python = python3.withPackages(ps: with ps; [pyparted]);
 in
 stdenv.mkDerivation {
-  name = "install-playos-${version}";
+  name = "install-playos-${systemMetadata.version}";
 
   src = substituteAll {
     src = ./install-playos.py;
-    inherit grubCfg systemImage rescueSystem systemClosureInfo version updateUrl kioskUrl;
+    inherit grubCfg systemImage rescueSystem systemClosureInfo;
+    inherit (systemMetadata) version kioskUrl updateUrl;
+    inherit skeletonVersion;
     inherit python;
   };
 

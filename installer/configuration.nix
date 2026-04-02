@@ -1,14 +1,48 @@
-{ config, pkgs, lib, install-playos, version, safeProductName, fullProductName, greeting, squashfsCompressionOpts, ... }:
+{ install-playos, squashfsCompressionOpts, systemMetadata, skeletonVersion, ... }:
 
+
+{ config, modulesPath, lib, ... }:
 with lib;
+let
+    safeProductName = "${systemMetadata.safeProductName}-installer";
+    fullProductName = "${systemMetadata.fullProductName} Installer";
+    # We version the installer according to the version of PlayOS it installs!
+    version = systemMetadata.version;
+
+    # TODO: WIP ^_^
+    greeting = label: ''
+             ░░░░
+           ░▒▒▒▒▒▒▒  ░    ▒
+        ▒▒▒▒▒   ░░▒▒░░░▒▒▒▒▒ ▒▒
+      ▒▒          ░░░░░░░   ▒▒▒▒▒
+     ▒▒▒      ▲           ▲     ▒▒
+     ▒░░                         ░
+       ░░░                       ░
+         ░░░▒▒      ▒▒░░░  ▒▒▒   ░░ ${label}
+             ▒▒▒▒▒▒▒▒    ░░░▒▒▒░░░
+    '';
+
+in
 
 {
   imports = [
-    (pkgs.importFromNixos "modules/installer/cd-dvd/iso-image.nix")
+    "${modulesPath}/installer/cd-dvd/iso-image.nix"
   ];
 
   # Custom label when identifying OS
   system.nixos.label = "${safeProductName}-${version}";
+
+  environment.etc."os-release".text = lib.mkForce ''
+    ID=${safeProductName}
+    ID_LIKE="nixos"
+    NAME="${fullProductName}"
+    PRETTY_NAME="${fullProductName} ${version} (Skeleton ${skeletonVersion}, NixOS ${config.system.nixos.release} ${config.system.nixos.codeName})"
+    VERSION="${version}"
+    VERSION_ID="${version}"
+    HOME_URL="https://github.com/dividat/playos"
+    BUG_REPORT_URL="https://github.com/dividat/playos/issues"
+  '';
+
 
   environment.systemPackages = [
     install-playos
