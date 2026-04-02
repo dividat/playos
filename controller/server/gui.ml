@@ -450,6 +450,7 @@ module NetworkGui = struct
 
   let build ~(connman : Connman.Manager.t) app =
     app
+    (* Note: kiosk uses this route, see kiosk_browser.MainWidget.SettingsPage *)
     |> get "/network" (overview ~connman)
     |> get "/network/:id" (details ~connman)
     |> post "/network/:id/connect" (connect ~connman)

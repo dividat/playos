@@ -1,14 +1,16 @@
 from PyQt6 import QtCore, QtWidgets, QtWebEngineWidgets, QtWebEngineCore, QtGui, QtSvgWidgets
-from PyQt6.QtWebEngineCore import QWebEngineScript, QWebEnginePage
+from PyQt6.QtWebEngineCore import QWebEngineScript, QWebEnginePage, QWebEngineLoadingInfo
 from PyQt6.QtWebChannel import QWebChannel
-from PyQt6.QtCore import pyqtSlot, Qt, QEvent, QUrl
+from PyQt6.QtCore import pyqtSlot, pyqtSignal, Qt, QEvent, QUrl
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QApplication
 from enum import Enum, auto
 import logging
 import re
+import math
 
 from kiosk_browser import system, injected_scripts
+from kiosk_browser.ui import DarkButton
 
 # Config
 reload_on_network_error_after = 5000 # ms
@@ -20,6 +22,133 @@ class Status(Enum):
     LOADING = auto()
     NETWORK_ERROR = auto()
     LOADED = auto()
+
+
+class TimerWithTicks(QtCore.QObject):
+    """A timer that behaves like a regular QTimer, but can also emit
+    signals at regular intervals before timeout.
+
+    Allows to implement "3... 2... 1... TIMEOUT" style countdowns.
+
+    Signals:
+        tick(int): Emitted every tickInterval with remaining time count
+        timeout: Emitted after ticks * tickInterval (inherited from QTimer)
+
+    Examples:
+        timer.start(1000, 3) will:
+            - at t = 0    will emit tick(3000)
+            - at t = 1000 will emit tick(2000)
+            - at t = 2000 will emit tick(1000)
+            - at t = 3000 will emit timeout
+
+        timer.start(x, 1) will emit a timeout the same as QTimer.start(x)
+    """
+    tick = pyqtSignal(int)
+    timeout = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._internalTimer = QtCore.QTimer()
+        self._internalTimer.setSingleShot(False)
+        self._internalTimer.timeout.connect(self._on_internal_timeout)
+        self._tickInterval = 0
+        self._remainingTicks = 0
+
+
+    def start(self, tickIntervalMs: int, ticks: int = 1):
+        self._tickInterval = tickIntervalMs
+        self._remainingTicks = ticks
+        self._on_internal_timeout()
+        self._internalTimer.setInterval(tickIntervalMs)
+        self._internalTimer.start()
+
+    def stop(self):
+        return self._internalTimer.stop()
+
+    def isActive(self):
+        return self._internalTimer.isActive()
+
+    def _on_internal_timeout(self):
+        if self._remainingTicks <= 0:
+            self.stop()
+            self.timeout.emit()
+        else:
+            self.tick.emit(self.remainingTime())
+        self._remainingTicks -= 1
+
+    def remainingTime(self):
+        return self._remainingTicks * self._tickInterval
+
+
+class NetworkErrorRetryWidget(QtWidgets.QWidget):
+    """This widget is used when a network error occurs, it:
+        1. Manages the reload_timer while retrying
+        2. Displays a reload countdown and spinner
+        3. Displays the last network error details
+    """
+
+    def __init__(self, reload_timer: TimerWithTicks, parent=None):
+        self._tick_interval_ms = 200
+        # To avoid a "flicker" effect when the network error is nearly
+        # instantenous (<300ms), we show the spinner slightly earlier
+        self._prestart_spinner_time_ms = 400
+
+        super().__init__(parent)
+        self._reload_timer = reload_timer
+
+        self._retry_countdown_label = QtWidgets.QLabel(self)
+        self._loading_spinner = loading_spinner()
+        self._error_reason_label = QtWidgets.QLabel(self)
+        # for style-sheet, used in an ID selector
+        self._error_reason_label.setObjectName("error_reason")
+
+        self._countdown_or_spinner = QtWidgets.QStackedWidget(self)
+        self._countdown_or_spinner.addWidget(self._retry_countdown_label)
+        self._countdown_or_spinner.addWidget(self._loading_spinner)
+
+        self._layout = QtWidgets.QVBoxLayout()
+        self._layout.addWidget(hcenter(self._countdown_or_spinner))
+        self._layout.addWidget(hcenter(self._error_reason_label))
+        self.setLayout(self._layout)
+
+        self._reload_timer.tick.connect(self._update_countdown)
+
+    def start_reload(self):
+        return self._reload_timer.start(
+            self._tick_interval_ms,
+            (reload_on_network_error_after + self._prestart_spinner_time_ms) // self._tick_interval_ms
+        )
+
+    def _update_countdown(self, remaining_time: int):
+        if remaining_time <= self._prestart_spinner_time_ms:
+            self._countdown_or_spinner.setCurrentWidget(self._loading_spinner)
+        else:
+            display_remaining_time = remaining_time - self._prestart_spinner_time_ms
+            self._retry_countdown_label.setText(f"Retrying in { math.ceil(display_remaining_time/1000.0) } seconds…")
+
+
+    def _loading_changed(self, loading_info):
+        error_text = format_loading_error(loading_info)
+
+        match loading_info.status():
+            case QWebEngineLoadingInfo.LoadStatus.LoadStartedStatus:
+                # Do nothing to preserve the error reason
+                pass
+
+            case QWebEngineLoadingInfo.LoadStatus.LoadFailedStatus:
+                page_url = loading_info.url().toString()
+                logging.warning(f"Page '{page_url}' load failed: {error_text}")
+                self._error_reason_label.setText(f"Technical details: {error_text}")
+                self._countdown_or_spinner.setCurrentWidget(self._retry_countdown_label)
+
+            case QWebEngineLoadingInfo.LoadStatus.LoadStoppedStatus:
+                # this should not happen, since we do not expect any (manual or
+                # automatic) load interrupts
+                self._error_reason_label.setText(f"Loading stopped unexpectedly: {error_text}")
+                self._countdown_or_spinner.setCurrentWidget(self._retry_countdown_label)
+
+            case QWebEngineLoadingInfo.LoadStatus.LoadSucceededStatus:
+                self._error_reason_label.setText("")
 
 
 # Small helper class for handling focus-shift:exhausted events, used to
@@ -60,7 +189,7 @@ class ReloadHandler(QtCore.QObject):
 
 
 class BrowserWidget(QtWidgets.QWidget):
-    def __init__(self, url, get_current_proxy, parent, max_cache_size, keyboard_detector):
+    def __init__(self, url, get_current_proxy, parent, max_cache_size, keyboard_detector, request_network_settings):
         QtWidgets.QWidget.__init__(self, parent)
         self.setStyleSheet(f"background-color: white;")
 
@@ -79,9 +208,16 @@ class BrowserWidget(QtWidgets.QWidget):
         self._webchannel.registerObject("focus_transfer", self._focus_transfer)
         self._webchannel.registerObject("reload_handler", self._reload_handler)
 
+        self._reload_timer = TimerWithTicks(self)
+
         # Init views
-        self._loading_page = loading_page(self)
-        self._network_error_page = network_error_page(self)
+        self._loading_page = loading_spinner()
+        self._network_error_retry_widget = NetworkErrorRetryWidget(
+            self._reload_timer, parent=self)
+        self._network_error_page = network_error_page(
+            self._network_error_retry_widget,
+            request_network_settings)
+
         self._profile = QtWebEngineCore.QWebEngineProfile("Default")
         self._profile.setHttpCacheMaximumSize(max_cache_size)
         self._webview = QtWebEngineWidgets.QWebEngineView(self._profile, self)
@@ -89,9 +225,6 @@ class BrowserWidget(QtWidgets.QWidget):
         self._input_with_enter_script = injected_scripts.EnableInputToggleWithEnterScript()
         self._force_focused_element_highlight_script = injected_scripts.ForceFocusedElementHighlightingScript()
         self._play_bridge_script = injected_scripts.PlayBridge()
-
-        # Handle page (renderer) kills
-        self._webview.renderProcessTerminated.connect(self._handle_render_process_terminated)
 
         # Handle page (renderer) kills
         self._webview.renderProcessTerminated.connect(self._handle_render_process_terminated)
@@ -125,15 +258,12 @@ class BrowserWidget(QtWidgets.QWidget):
         # Prevent opening context menu on right click or pressing menu
         self._webview.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.NoContextMenu)
 
-        # Prepare reload timer
-        self._reload_timer = QtCore.QTimer(self)
-        self._reload_timer.setSingleShot(True)
         self._reload_timer.timeout.connect(self._webview.reload)
 
         # Load url
         self._webview.loadFinished.connect(self._load_finished)
+        self._webview.page().loadingChanged.connect(self._network_error_retry_widget._loading_changed)
         self.load(url)
-
 
     def _handle_render_process_terminated(self, termination_status, exit_code):
         is_normal_termination = termination_status == QWebEnginePage.RenderProcessTerminationStatus.NormalTerminationStatus
@@ -234,7 +364,8 @@ class BrowserWidget(QtWidgets.QWidget):
             self._view(Status.LOADED)
         if not success:
             self._view(Status.NETWORK_ERROR)
-            self._reload_timer.start(reload_on_network_error_after)
+            self._network_error_retry_widget.start_reload()
+
 
     def _proxy_auth(self, url, auth, proxyHost):
         proxy = self._get_current_proxy()
@@ -281,61 +412,89 @@ def user_agent_with_system(user_agent, system_name, system_version):
 
         return f"{m.group(1)} ({system_detail}){m.group(3)}"
 
-def loading_page(parent):
-    """ Show a loader in the middle of a blank page.
+def loading_spinner():
+    """ Show a loader centered in the middle
     """
 
     movie = QtGui.QMovie("images/spinner.gif")
     movie.start()
 
-    label = QtWidgets.QLabel(parent)
+    label = QtWidgets.QLabel()
     label.setMovie(movie)
+    # ensure label fits the QMovie exactly
+    label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed,
+                        QtWidgets.QSizePolicy.Policy.Fixed)
 
-    return hcenter(label, parent)
+    return hcenter(label)
 
-def network_error_page(parent):
+
+def network_error_page(network_error_retry_widget: NetworkErrorRetryWidget, request_network_settings):
     """ Show network error page.
     """
 
-    icon = QtWidgets.QLabel(parent)
+    widget = QtWidgets.QWidget()
+
+    icon = QtWidgets.QLabel()
     icon.setPixmap(QtGui.QPixmap("images/no-internet-icon.png")) # https://flaticons.net
 
-    title = QtWidgets.QLabel("No Internet Connection", parent)
+    title = QtWidgets.QLabel("No Internet Connection")
     title.setStyleSheet("""
         font-size: 45px;
         font-weight: bold;
     """)
 
-    paragraph_1 = paragraph("Please ensure the Internet connection to this device is active.", parent)
-    paragraph_2 = paragraph("If the problem persists, contact Senso Service.", parent)
+    button = DarkButton('Open Network settings', widget)
+    button.setFixedHeight(40)
+    font = button.font()
+    font.setPointSize(16)
+    button.setFont(font)
+    button.clicked.connect(request_network_settings)
+    button.setDefault(True)
 
-    logo = QtSvgWidgets.QSvgWidget("images/dividat-logo.svg", parent)
+    main_block = [
+        paragraph("Please ensure the device has an active Internet connection"
+                  " and is not blocked by a firewall."),
+        paragraph("To configure the connection, go to Network settings:"),
+        button,
+    ]
+
+    network_error_retry_widget.setStyleSheet("""
+        * {
+            font-size: 16px; color: #666;
+        }
+        #error_reason {
+            font-size: 12px;
+        }
+    """)
+
+    logo = QtSvgWidgets.QSvgWidget("images/dividat-logo.svg")
     logo.renderer().setAspectRatioMode(QtCore.Qt.AspectRatioMode.KeepAspectRatio)
     logo.setFixedHeight(30)
 
     layout = QtWidgets.QVBoxLayout()
     layout.addStretch(1)
-    layout.addWidget(hcenter(icon, parent))
+    layout.addWidget(hcenter(icon))
     layout.addSpacing(30)
-    layout.addWidget(hcenter(title, parent))
+    layout.addWidget(hcenter(title))
     layout.addSpacing(20)
-    layout.addWidget(hcenter(paragraph_1, parent))
-    layout.addWidget(hcenter(paragraph_2, parent))
+    for w in main_block:
+        layout.addWidget(hcenter(w))
+    layout.addWidget(hcenter(network_error_retry_widget))
     layout.addStretch(1)
-    layout.addWidget(hcenter(logo, parent))
+    layout.addWidget(hcenter(logo))
     layout.addSpacing(20)
 
-    widget = QtWidgets.QWidget()
     widget.setLayout(layout)
+    widget.setFocusProxy(button)
 
     return widget
 
-def paragraph(text, parent):
-    label = QtWidgets.QLabel(text, parent)
+def paragraph(text):
+    label = QtWidgets.QLabel(text)
     label.setStyleSheet("font-size: 20px;")
     return label
 
-def hcenter(child, parent):
+def hcenter(child):
     """ Center widget horizontally inside another widget.
     """
 
@@ -344,7 +503,28 @@ def hcenter(child, parent):
     layout.addWidget(child)
     layout.addStretch(1)
 
-    widget = QtWidgets.QWidget(parent)
+    widget = QtWidgets.QWidget()
     widget.setLayout(layout)
 
     return widget
+
+
+def format_loading_error(loading_info: QWebEngineLoadingInfo) -> str:
+    error_details = f"code: {loading_info.errorCode()}, reason: {loading_info.errorString()}"
+
+    error_reason = ""
+    match loading_info.errorDomain():
+        case QWebEngineLoadingInfo.ErrorDomain.DnsErrorDomain:
+            error_reason = "DNS error"
+        case QWebEngineLoadingInfo.ErrorDomain.HttpStatusCodeDomain:
+            error_reason = "HTTP status error"
+        case QWebEngineLoadingInfo.ErrorDomain.CertificateErrorDomain:
+            error_reason = "SSL Certificate error"
+        case QWebEngineLoadingInfo.ErrorDomain.ConnectionErrorDomain:
+            error_reason = "Connection error"
+        case QWebEngineLoadingInfo.ErrorDomain.HttpErrorDomain:
+            error_reason = "HTTP connection error"
+        case _:
+            error_reason = f"Unknown error ({loading_info.errorDomain()})"
+
+    return f"{error_reason}, {error_details}"
