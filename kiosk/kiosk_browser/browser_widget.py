@@ -99,7 +99,7 @@ class NetworkErrorRetryWidget(QtWidgets.QWidget):
         self._retry_countdown_label = QtWidgets.QLabel(self)
         self._loading_spinner = loading_spinner()
         self._error_reason_label = QtWidgets.QLabel(self)
-        # for style-sheet
+        # for style-sheet, used in an ID selector
         self._error_reason_label.setObjectName("error_reason")
 
         self._countdown_or_spinner = QtWidgets.QStackedWidget(self)
