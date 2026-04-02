@@ -32,7 +32,7 @@ class TimerWithTicks(QtCore.QObject):
 
     Signals:
         tick(int): Emitted every tickInterval with remaining time count
-        timeout: Emitted after tickNumber * tickInterval (inherited from QTimer)
+        timeout: Emitted after ticks * tickInterval (inherited from QTimer)
 
     Examples:
         timer.start(1000, 3) will:
@@ -55,9 +55,9 @@ class TimerWithTicks(QtCore.QObject):
         self._remainingTicks = 0
 
 
-    def start(self, tickIntervalMs: int, tickNumber: int = 1):
+    def start(self, tickIntervalMs: int, ticks: int = 1):
         self._tickInterval = tickIntervalMs
-        self._remainingTicks = tickNumber
+        self._remainingTicks = ticks
         self._on_internal_timeout()
         self._internalTimer.setInterval(tickIntervalMs)
         self._internalTimer.start()
