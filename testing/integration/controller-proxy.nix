@@ -106,10 +106,11 @@ http_local_url = "http://127.0.0.1"
 
 proxy_url = "http://sidekick:8888"
 
-playos.start()
 sidekick.start()
+playos.start()
 
 with TestPrecondition("Stub HTTP server is functional"):
+    sidekick.wait_for_unit('multi-user.target')
     sidekick.succeed("echo 'TEST_CAPTIVE_RESPONSE' > /tmp/www/index.html")
     sidekick.succeed(f"echo '{latest_version}' > /tmp/www/latest")
     sidekick.succeed(f"curl --fail -v {http_local_url}")
@@ -124,7 +125,7 @@ with TestPrecondition("PlayOS is booted, RAUC and controller are started"):
 
 with TestPrecondition("PlayOS can manually use proxy in sidekick VM"):
     wait_until_passes(lambda: playos.succeed(f"curl -f --proxy {proxy_url} ${updateUrl}"),
-                      retries=60) # on CI, sidekick is not reachable quite long
+                      retries=120) # on CI, sidekick is not reachable for very long
     playos.succeed(f"curl -f --proxy {proxy_url} ${captivePortalUrl}")
 
 with TestPrecondition("Controller fails to reach captive portal without proxy"):
