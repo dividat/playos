@@ -33,8 +33,6 @@ in
     };
 
     environment.etc."rauc/system.conf" = {
-      # TODO: disk labels/paths and statusfile path should be supplied/defined
-      # by skeleton/installer
       text = ''
         [system]
         compatible=dividat-play-computer
