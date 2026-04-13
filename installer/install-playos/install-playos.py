@@ -24,7 +24,6 @@ SYSTEM_IMAGE = "@systemImage@"
 RESCUE_SYSTEM = "@rescueSystem@"
 SYSTEM_CLOSURE_INFO = "@systemClosureInfo@"
 VERSION = "@version@"
-SKELETON_VERSION = "@skeletonVersion@"
 
 
 PLAYOS_UPDATE_URL = "@updateUrl@"
@@ -226,7 +225,6 @@ def install_bootloader(disk, machine_id):
     # Mark the skeleton version and installation date
     with open("/mnt/boot/playos-skeleton.txt", "w") as f:
         metadata = {
-            "skeleton_version": SKELETON_VERSION,
             "installer_version": VERSION,
             "date": datetime.now().isoformat()
 
