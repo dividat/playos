@@ -1,11 +1,24 @@
-# TODO: rename this to "skeleton" that exposes several components:
-# - [ ] skeleton configuration params (partition labels, hard-coded paths like /boot/status.ini)
-# - [x] the installer script (for e2e and release validation tests)
-# - [x] the rescueSystem (for e2e and release validation tests)
-# - [x] the installer ISO
+# The PlayOS skeleton defines the immutable parts of an installed system
+# and provides tools to perform the installation.
+#
+# It consists of:
+# - the bootloader
+# - the rescue system
+# - the installer (script and ISO image)
+#
+# The installer also sets up various hard-coded configuration parts of the
+# system: partition labels and sizes, GRUB config, RAUC slot paths and labels.
+#
+# The mutable "complement" of the skeleton is the updatable PlayOS runtime
+# system as defined by `../system-image/`, which relies on the hard-coded
+# configuration.
+#
+# The skeleton maintains a separate pin on nixpkgs, to ensure that the
+# installed runtime software (e.g. GRUB) does not change and that tools which
+# set up the system do it in an identical way (e.g. mkfs tools write the same
+# metadata to the partition table) across PlayOS versions.
 { squashfsCompressionOpts
 , systemImage
-# TODO: combine this into a single systemMetadata attrset that is defined in the top-level default.nix
 , safeProductName, fullProductName, kioskUrl, updateUrl, version
 }:
 let

@@ -16,7 +16,6 @@ let nixos = pkgs.importFromNixos ""; in
     ] ++ extraModules;
 
     # Storage
-    # TODO: should be defined by installer/skeleton config module
     fileSystems = {
       "/boot" = {
         device = "/dev/disk/by-label/ESP";
@@ -29,7 +28,6 @@ let nixos = pkgs.importFromNixos ""; in
         device = "/dev/root";
         options = [ "ro" ];
       };
-      # TODO: should be defined by installer/skeleton config module
       persistentDataPartition.device = "/dev/disk/by-label/data";
     };
 
