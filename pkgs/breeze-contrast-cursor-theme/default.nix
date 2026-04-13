@@ -1,4 +1,4 @@
-{ stdenv, fetchzip, ... }:
+{ stdenv, unzip, ... }:
 
 # Inspiration:
 # https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=breeze-contrast-cursor-theme
@@ -7,12 +7,9 @@ stdenv.mkDerivation rec {
   version = "1.0";
   themeName = "Breeze_Contrast";
 
-  src = fetchzip {
-    url = "https://code.jpope.org/jpope/breeze_cursor_sources/raw/master/${name}.zip";
-    sha256 = "1l8ils82bq2hlsl8shkcirxfjgk0459hsf6zvjnk9zrav47y9vjk";
-    # See issue https://github.com/NixOS/nixpkgs/issues/38649
-    extraPostFetch = "chmod go-w $out";
-  };
+  buildInputs = [ unzip ];
+
+  src = ./breeze-contrast-cursor-theme.zip;
 
   installPhase = ''
     install -d $out/share/icons/${themeName}
