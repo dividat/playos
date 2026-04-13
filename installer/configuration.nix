@@ -1,4 +1,4 @@
-{ install-playos, squashfsCompressionOpts, systemMetadata, skeletonVersion, ... }:
+{ install-playos, squashfsCompressionOpts, systemMetadata, ... }:
 
 
 { config, modulesPath, lib, ... }:
@@ -36,7 +36,7 @@ in
     ID=${safeProductName}
     ID_LIKE="nixos"
     NAME="${fullProductName}"
-    PRETTY_NAME="${fullProductName} ${version} (Skeleton ${skeletonVersion}, NixOS ${config.system.nixos.release} ${config.system.nixos.codeName})"
+    PRETTY_NAME="${fullProductName} ${version} (NixOS ${config.system.nixos.release} ${config.system.nixos.codeName})"
     VERSION="${version}"
     VERSION_ID="${version}"
     HOME_URL="https://github.com/dividat/playos"
