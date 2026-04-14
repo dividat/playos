@@ -50,6 +50,10 @@ let
     # Generated via ./build release-disk and .github/workflows/release-tag.yml
     # See https://github.com/dividat/playos/releases
     diskImageURLs = {
+        "2020.7.0-DISK" = { # oldest PlayOS containing a "modern" GRUB config
+            url = "${baseS3URL}/playos-release-disk-2020.7.0-DISK.img.zst";
+            hash = "sha256-FRtbKScV3+hHYePLFiAJ62nuDaRUV+zWJMH9kukxScU=";
+        };
         "2023.9.1-DISK" = {
             url = "${baseS3URL}/playos-release-disk-2023.9.1-DISK.img.zst";
             hash = "sha256-Az5eYYZFUweSzMSEBKIB6Q3mGtG0SLJ51LxWeeJqpfw=";
