@@ -109,6 +109,8 @@ with pkgs; stdenv.mkDerivation {
     components.install-playos
   ];
 
+  passthru.version = version;
+
   buildCommand = ''
     mkdir -p $out
 

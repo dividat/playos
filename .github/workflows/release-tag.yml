@@ -49,9 +49,9 @@ jobs:
       - name: Make magic-nix-cache read-only by removing post-build-hook
         run: sed -i '/post-build-hook = magic-nix-cache-build-hook/d' $HOME/.config/nix/nix.conf
 
-      - name: Get version from application.nix
+      - name: Get version from default.nix
         run: |
-          PLAYOS_VERSION="$(nix eval --raw -f application.nix 'version')"
+          PLAYOS_VERSION="$(nix eval --raw -f default.nix 'version')"
 
           echo "PLAYOS_VERSION=$PLAYOS_VERSION" >> $GITHUB_ENV
 
