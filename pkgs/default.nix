@@ -4,7 +4,7 @@ let
 
   nixpkgs = builtins.fetchGit {
     name = "nixpkgs-20.03";
-    url = "git@github.com:nixos/nixpkgs.git";
+    url = "https://github.com/nixos/nixpkgs.git";
     rev = "5272327b81ed355bbed5659b8d303cf2979b6953";
     ref = "refs/tags/20.03";
   };
