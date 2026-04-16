@@ -50,6 +50,10 @@ let
     # Generated via ./build release-disk and .github/workflows/release-tag.yml
     # See https://github.com/dividat/playos/releases
     diskImageURLs = {
+        "2020.7.0-DISK" = { # oldest PlayOS containing a "modern" GRUB config
+            url = "${baseS3URL}/playos-release-disk-2020.7.0-DISK.img.zst";
+            hash = "sha256-FRtbKScV3+hHYePLFiAJ62nuDaRUV+zWJMH9kukxScU=";
+        };
         "2023.9.1-DISK" = {
             url = "${baseS3URL}/playos-release-disk-2023.9.1-DISK.img.zst";
             hash = "sha256-Az5eYYZFUweSzMSEBKIB6Q3mGtG0SLJ51LxWeeJqpfw=";
@@ -185,11 +189,6 @@ pkgs.testers.runNixOSTest {
         virtualisation.memorySize = lib.mkForce 4096;
 
         virtualisation.vlans = [ 1 ];
-
-        virtualisation.qemu.options = [
-            # needed for mouse_move to work
-            "-device" "usb-mouse,bus=usb-bus.0"
-        ];
       };
     };
   };
@@ -217,6 +216,7 @@ import PIL.Image
 import PIL.ImageEnhance
 import PIL.ImageOps
 import os
+import contextlib
 
 ### Constants
 
@@ -241,27 +241,132 @@ def extract_base_system_disk(compressed_disk, target_path):
     os.chmod(target_path, 0o666)
     atexit.register(os.remove, target_path)
 
+@contextlib.contextmanager
+def temp_screenshot(vm):
+    # using temp file instead of dir leads to strange permission errors
+    with tempfile.TemporaryDirectory() as d:
+        temp_path = d + "/screenshot.png"
+        vm.screenshot(temp_path)
+        yield temp_path
+
 
 # Faster OCR than NixOS `get_screen_text`, which takes almost 20 seconds per
 # call. Fails to identify white text on dark backgrounds.
 def screenshot_and_ocr(vm):
-    with tempfile.TemporaryDirectory() as d:
-        vm.screenshot(d + "/screenshot.png")
-        im = PIL.Image.open(d + "/screenshot.png")
-        im = PIL.ImageOps.grayscale(im)
-        im = PIL.ImageEnhance.Brightness(im).enhance(1.5)
-        im = PIL.ImageEnhance.Contrast(im).enhance(4.0)
-        return tesserocr.image_to_text(im)
+    with temp_screenshot(vm) as p:
+      im = PIL.Image.open(p)
+      im = PIL.ImageOps.grayscale(im)
+      im = PIL.ImageEnhance.Brightness(im).enhance(1.5)
+      im = PIL.ImageEnhance.Contrast(im).enhance(4.0)
+      return tesserocr.image_to_text(im)
 
 
-# Navigate to system status page using keyboard only.
-# Hack: depends on current UI layout. Could be made more
-# sophisticated by using tesseract to detect the bounding box
-# and then mouse_move'ing there for a click
+def find_text_locations(image_path: str, target_text: str):
+    """
+    Run OCR on the provider image and finds all instances of `target_text`
+    inside it. Casing is ignored, all whitespace is collapsed to
+    single spaces.
+
+    Returns an iterator of center points of the bounding boxes containing the
+    text.
+
+    The returned (x, y) coordinates are NORMALIZED to [0, 1]x[0, 1]. This is
+    meant to simplify usage with `mouse_click_in_location`. To convert back to
+    pixels, multiply by the image dimensions.
+    """
+    level = tesserocr.RIL.TEXTLINE # OCR whole lines, not words
+
+    # normalize to lowercase
+    target_text = target_text.lower()
+
+    with PIL.Image.open(image_path) as img, tesserocr.PyTessBaseAPI() as api:
+        dim_x, dim_y = img.size
+        api.SetImage(img)
+        # Note: could also apply OCR-aiding enhancements like in
+        # screenshot_and_ocr, but currently works well out of the box.
+        api.Recognize()
+
+        for element in tesserocr.iterate_level(api.GetIterator(), level):
+            ocr_text = element.GetUTF8Text(level)
+            ocr_text_clean = r" ".join(ocr_text.lower().split())
+
+            # note: we assume at most 1 instance of target_text per line
+            start_idx = ocr_text_clean.find(target_text)
+
+            # find() returns -1 if no matches
+            if start_idx >= 0:
+                left, top, right, bottom = element.BoundingBox(level)
+
+                # roughly estimate the position of the target_text within the
+                # OCR'ed line based on char offsets
+                center_char_idx = start_idx + (len(target_text) / 2.0)
+                target_text_offset_frac = center_char_idx / len(ocr_text_clean)
+
+                bbox_width = right - left
+                center_x = left + (bbox_width * target_text_offset_frac)
+
+                center_y = (top + bottom) / 2.0
+
+                # Normalize coordinates to [0...1]
+                normalized_x = center_x / dim_x
+                normalized_y = center_y / dim_y
+                yield (normalized_x, normalized_y)
+
+    return None
+
+
+# Note: using the QMP input-send-event command rather than `mouse_move`, because
+# the latter does not work consistently with any of the mouse devices supported
+# by QEMU.
+def mouse_move_abs(vm, x: float, y: float):
+    """
+    Move the mouse pointer to the absolute point defined by normalized
+    [0, 1]x[0, 1] coordinates (as returned by `find_text_locations()`).
+
+    """
+    # see https://qemu-project.gitlab.io/qemu/interop/qemu-qmp-ref.html#object-QMP-ui.InputMoveEvent
+    qemu_max_coordinate = 0x7fff
+
+    x_qemu = int(round(x * qemu_max_coordinate))
+    y_qemu = int(round(y * qemu_max_coordinate))
+
+    events = [
+      { "type": "abs", "data" : { "axis": "x", "value" : x_qemu } },
+      { "type": "abs", "data" : { "axis": "y", "value" : y_qemu } }
+    ]
+
+    vm.qmp_client.send("input-send-event", args = { "events": events })
+
+
+def mouse_click_in_location(vm, x: float, y: float):
+    """
+    Move mouse to the specified absolute location (in normalized [0, 1]x[0, 1]
+    coordinates) and perform a left-click.
+    """
+    mouse_move_abs(vm, x, y)
+    time.sleep(0.3)
+    # left-click
+    vm.send_monitor_command("mouse_button 1")
+    vm.send_monitor_command("mouse_button 0")
+    time.sleep(0.3)
+
+def move_mouse_to_corner():
+  mouse_move_abs(playos, 1, 1)
+
+
 def navigate_to_system_status():
-    for _ in range(4):
-        playos.send_key("tab", delay=0.2)
-    playos.send_key("ret", delay=0.2)
+    with temp_screenshot(playos) as path:
+        locs = find_text_locations(path, "system status")
+        if locs is None:
+            raise RuntimeError("Failed to locate 'system status' link in page")
+
+        # we might detect multiple locations (e.g. header of page + link)
+        # click all of them hoping that we hit the right one
+        for pos_x, pos_y in locs:
+            mouse_click_in_location(playos, pos_x, pos_y)
+
+    # move mouse away to not obstruct further OCR
+    move_mouse_to_corner()
     time.sleep(2)
 
 
@@ -311,11 +416,6 @@ with TestPrecondition("Stub update server is functional") as t:
     out_v = sidekick.succeed(f"curl -f {http_local_url}/latest")
     t.assertEqual(out_v, pre_version)
 
-def move_mouse_to_corner():
-  # move mouse to bottom right corner so it doesn't accidentally cover
-  # any text while OCR'ing
-  playos.send_monitor_command("mouse_move 2000 2000")
-
 ### === Validate that PlayOS VM and baseSystem is OK
 
 with TestPrecondition("dnsmasq hands out an IP to playos"):
@@ -339,6 +439,8 @@ with TestPrecondition("kiosk is open with kiosk URL") as t:
     )
 
 
+# move mouse to bottom right corner so it doesn't accidentally cover
+# any text while OCR'ing
 move_mouse_to_corner()
 
 with TestPrecondition("controller GUI is visible") as t:
