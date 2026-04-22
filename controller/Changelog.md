@@ -1,6 +1,10 @@
+# [UNRELEASED]
+
 # Added
 
 - os: Added localization options for Danish and Turkish
+
+# [2026.3.0] - 2026-04-22
 
 # [2026.3.0-VALIDATION.1] - 2026-03-12
 
