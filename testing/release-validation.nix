@@ -78,6 +78,10 @@ let
             url = "${baseS3URL}/playos-release-disk-2026.1.0.img.zst";
             hash = "sha256-M+fZJtoHONlPBIaWV0vjJCdvtwDH+a6TyoiV243/wfo=";
         };
+        "2026.3.0" = {
+            url = "${baseS3URL}/playos-release-disk-2026.3.0.img.zst";
+            hash = "sha256-q8h4YRBRGzpm5ymGxardKVZTbq09x0wsoWWaejScQFo=";
+        };
     };
 
     mkNextSystemBundle = { pkgs, version, updateUrlDomain, kioskUrlDomain }:
@@ -101,7 +105,7 @@ in
     kioskUrlDomain ? "kiosk-server.local",
 
     # PlayOS system we are updating from
-    baseSystemVersion ? "2026.1.0",
+    baseSystemVersion ? "2026.3.0",
 
     # A zstd-compressed PlayOS disk image
     baseSystemDiskImage ? (pkgs.fetchurl diskImageURLs.${baseSystemVersion})
