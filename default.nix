@@ -87,7 +87,7 @@ let
     deploy-update = callPackage ./deployment/deploy-update {
       application = application;
       live = if buildLive then live else "";
-      installer = if buildInstaller then installer.isoImage else "";
+      installer = if buildInstaller then skeleton.isoImage else "";
     };
 
     # RAUC bundle
