@@ -17,7 +17,35 @@ in
           # Respond to changes in connected outputs
           load-module module-switch-on-port-available
           load-module module-switch-on-connect blacklist=""
+
+          # Prevent PulseAudio from remembering previous muted states.
+          # First, we unload the default restore module, then reload it
+          # explicitly telling it NOT to restore mute states.
+          unload-module module-device-restore
+          load-module module-device-restore restore_volume=true restore_muted=false
         '';
+      };
+
+      systemd.user.services.force-unmute = {
+        description = "Force unmute PulseAudio on login";
+        wantedBy = [ "default.target" ];
+        after = [ "pulseaudio.service" ];
+
+        path = [ pkgs.pulseaudio ];
+
+        script = ''
+          # Brief pause to ensure PulseAudio has fully initialized its sinks
+          sleep 2
+          pactl set-sink-mute @DEFAULT_SINK@ 0
+
+          # Optional: Force volume to a safe default so it is never at 0%
+          pactl set-sink-volume @DEFAULT_SINK@ 70%
+        '';
+
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
       };
 
       # we do not expect a stable/permanent network connection
