@@ -94,7 +94,7 @@ in
   };
 
   networking = {
-    hostName = "${safeProductName}-installer";
+    hostName = "${safeProductName}";
 
     # enable wpa_supplicant
     wireless = {
@@ -103,7 +103,7 @@ in
   };
 
   isoImage = {
-    isoName = "${safeProductName}-installer-${version}.iso";
+    isoName = "${safeProductName}-${version}.iso";
     volumeID = substring 0 11 "PLAYOS_ISO";
     makeEfiBootable = true;
     makeUsbBootable = true;
