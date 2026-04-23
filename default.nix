@@ -170,7 +170,7 @@ with pkgs; stdenv.mkDerivation {
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
-    ln -s ${components.skeleton.isoImage}/iso/${components.safeProductName}-installer-${components.version}.iso $out/${components.safeProductName}-installer-${components.version}.iso
+    ln -s ${components.skeleton.isoImage}/iso/${components.skeleton.isoImage.isoName} $out/${components.safeProductName}-installer-${components.version}.iso
   ''
   # RAUC bundle
   + lib.optionalString buildBundle ''
