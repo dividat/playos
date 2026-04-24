@@ -9,19 +9,19 @@ let
     # We version the installer according to the version of PlayOS it installs!
     version = systemMetadata.version;
 
-    greeting = label: ''
-                 ,¸,¸¸,¸,
-               ¸,░░░░░░░░´,
-             ,░░░░░░░░░░░░░´¸
-            ⌠░░░░░░░░░░░░░░░░´
-           ⌠  ░░░░░░░░░░░░░░░░`
-          /``  ░░░░░░░░░░░░░░░░`
-         /      ░░░░░░░░░░░░░░'
-        °¯¯¯¯¯¯(¨(¨¨¨¨¨¨(¨(¨¨¨
-     ☼         ´ ´      ´ ´
-      ☼
+    greeting = label: strings.escape [''\''] ''
+                 _,_,_,_,
+               .'########',
+             ,#############'.
+            |################'
+           |  ################`
+          /``  ################`
+         /      ###############'
+        o------~"/"/"""""\"\"""`
+     *          ` `       ` `
+      *
        ${label}
-       ${strings.stringAsChars (char: "≈") label}
+       ${strings.stringAsChars (char: "=") label}
     '';
 
 in
