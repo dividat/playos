@@ -80,24 +80,15 @@ let
     # USB live system
     live = callPackage ./live { application = application; };
 
-    # Installation script
-    install-playos = callPackage ./installer/install-playos {
-      grubCfg = ./bootloader/grub.cfg;
-    };
-
-    # Rescue system
-    rescueSystem = callPackage ./bootloader/rescue {
-        application = application;
-    };
-
-    # Installer ISO image
-    installer = callPackage ./installer {};
+    # PlayOS skeleton components
+    skeleton = callPackage ./skeleton {};
+    inherit (skeleton) installer rescueSystem;
 
     # Script to deploy updates
     deploy-update = callPackage ./deployment/deploy-update {
       application = application;
       live = if buildLive then live else "";
-      installer = if buildInstaller then installer else "";
+      installer = if buildInstaller then installer.isoImage else "";
     };
 
     # RAUC bundle
@@ -108,7 +99,14 @@ let
     testingToplevel = callPackage ./testing/system { application = application; };
 
     # Disk image containing pre-installed system
-    disk = if diskBuildEnabled then callPackage ./testing/disk {} else null;
+    disk =
+      if diskBuildEnabled then
+        callPackage ./testing/disk {
+          inherit rescueSystem;
+          inherit (installer) install-playos;
+        }
+      else
+        null;
 
     # Script for spinning up VMs
     run-in-vm = callPackage ./testing/run-in-vm {};
@@ -139,7 +137,7 @@ let
   };
 
   releaseDisk = pkgs.callPackage ./testing/disk/release.nix {
-    inherit (releaseValidationComponents) install-playos;
+    install-playos = releaseValidationComponents.installer.install-playos;
   };
 in
 
@@ -149,7 +147,7 @@ with pkgs; stdenv.mkDerivation {
   buildInputs = [
     rauc
     (python3.withPackages(ps: with ps; [pyparted]))
-    components.install-playos
+    components.installer.install-playos
   ];
 
   buildCommand = ''
@@ -176,7 +174,7 @@ with pkgs; stdenv.mkDerivation {
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
-    ln -s ${components.installer}/iso/${components.safeProductName}-installer-${components.version}.iso $out/${components.safeProductName}-installer-${components.version}.iso
+    ln -s ${components.installer.isoImage}/iso/${components.installer.isoImage.isoName} $out/${components.safeProductName}-installer-${components.version}.iso
   ''
   # RAUC bundle
   + lib.optionalString buildBundle ''

@@ -216,6 +216,14 @@ collect_STATS() {
 }
 
 collect_UPDATE() {
+    # playos-skeleton.txt only exists on new installations, so we check for
+    # existence to avoid diagnostic errors due to missing file. For older
+    # installations, we collect other files (see below) to determine the version
+    # heuristically.
+    if [[ -f "/boot/playos-skeleton.txt" ]]; then
+        copy_file /boot/playos-skeleton.txt .
+    fi
+
     # what version of GRUB is the system using?
     run_cmd -o grub_pkg_version.txt grub-install --version
 

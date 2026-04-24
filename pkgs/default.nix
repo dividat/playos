@@ -13,7 +13,8 @@ let
 
       importFromNixos = path: import (nixpkgs + "/nixos/" + path);
 
-      rauc = (import ./rauc) super;
+      # use RAUC from skeleton
+      rauc = (import ../skeleton/pkgs).rauc;
 
       ocamlPackages = super.ocamlPackages.overrideScope (self: super: {
         semver = self.callPackage ./ocaml-modules/semver {};

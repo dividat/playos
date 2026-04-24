@@ -25,6 +25,7 @@ RESCUE_SYSTEM = "@rescueSystem@"
 SYSTEM_CLOSURE_INFO = "@systemClosureInfo@"
 VERSION = "@version@"
 
+
 PLAYOS_UPDATE_URL = "@updateUrl@"
 PLAYOS_KIOSK_URL = "@kioskUrl@"
 
@@ -220,6 +221,16 @@ def install_bootloader(disk, machine_id):
     os.makedirs('/mnt/boot/rescue', exist_ok=True)
     shutil.copy2(RESCUE_SYSTEM + '/kernel', '/mnt/boot/rescue/kernel')
     shutil.copy2(RESCUE_SYSTEM + '/initrd', '/mnt/boot/rescue/initrd')
+
+    # Mark the skeleton version and installation date
+    with open("/mnt/boot/playos-skeleton.txt", "w") as f:
+        metadata = {
+            "installer_version": VERSION,
+            "date": datetime.now().isoformat()
+
+        }
+        for k, v in metadata.items():
+            f.write(f"{k}={v}\n")
 
     # Unmount to make this function idempotent.
     subprocess.run(['umount', '/mnt/boot'], check=True)

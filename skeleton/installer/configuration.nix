@@ -1,14 +1,50 @@
-{ config, pkgs, lib, install-playos, version, safeProductName, fullProductName, greeting, squashfsCompressionOpts, ... }:
+{ install-playos, squashfsCompressionOpts, systemMetadata, ... }:
 
+
+{ config, modulesPath, lib, ... }:
 with lib;
+let
+    safeProductName = "${systemMetadata.safeProductName}-installer";
+    fullProductName = "${systemMetadata.fullProductName} Installer";
+    # We version the installer according to the version of PlayOS it installs!
+    version = systemMetadata.version;
+
+    greeting = label: strings.escape [''\''] ''
+                 _,_,_,_,
+               .'########',
+             ,#############'.
+            |################'
+           |  ################`
+          /``  ################`
+         /      ###############'
+        o------~"/"/"""""\"\"""`
+     *          ` `       ` `
+      *
+       ${label}
+       ${strings.stringAsChars (char: "=") label}
+    '';
+
+in
 
 {
   imports = [
-    (pkgs.importFromNixos "modules/installer/cd-dvd/iso-image.nix")
+    "${modulesPath}/installer/cd-dvd/iso-image.nix"
   ];
 
   # Custom label when identifying OS
   system.nixos.label = "${safeProductName}-${version}";
+
+  environment.etc."os-release".text = lib.mkForce ''
+    ID=${safeProductName}
+    ID_LIKE="nixos"
+    NAME="${fullProductName}"
+    PRETTY_NAME="${fullProductName} ${version} (NixOS ${config.system.nixos.release} ${config.system.nixos.codeName})"
+    VERSION="${version}"
+    VERSION_ID="${version}"
+    HOME_URL="https://github.com/dividat/playos"
+    BUG_REPORT_URL="https://github.com/dividat/playos/issues"
+  '';
+
 
   environment.systemPackages = [
     install-playos
@@ -33,7 +69,7 @@ with lib;
   # Allow the user to log in as root without a password.
   users.users.root.initialHashedPassword = "";
 
-  services.getty.greetingLine = greeting "${fullProductName} installer (${version})";
+  services.getty.greetingLine = greeting "${fullProductName} (${version})";
 
   environment.loginShellInit = ''
     install-playos --reboot
@@ -58,7 +94,7 @@ with lib;
   };
 
   networking = {
-    hostName = "${safeProductName}-installer";
+    hostName = "${safeProductName}";
 
     # enable wpa_supplicant
     wireless = {
@@ -67,7 +103,7 @@ with lib;
   };
 
   isoImage = {
-    isoName = "${safeProductName}-installer-${version}.iso";
+    isoName = "${safeProductName}-${version}.iso";
     volumeID = substring 0 11 "PLAYOS_ISO";
     makeEfiBootable = true;
     makeUsbBootable = true;
