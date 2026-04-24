@@ -39,7 +39,7 @@ stdenv.mkDerivation {
       --prefix PATH ":" ${dosfstools}/bin \
       --prefix PATH ":" ${grub2_efi}/bin \
       --prefix PATH ":" ${pv}/bin \
-      --set-default MKE2FS_CONFIG ${../../base/compatibility/mke2fs.conf}
+      --set-default MKE2FS_CONFIG ${../../../base/compatibility/mke2fs.conf}
 
   '';
 }

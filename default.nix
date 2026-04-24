@@ -80,14 +80,15 @@ let
     # USB live system
     live = callPackage ./live { application = application; };
 
-    # PlayOS skeleton: installer script and ISO
+    # PlayOS skeleton components
     skeleton = callPackage ./skeleton {};
+    inherit (skeleton) installer rescueSystem;
 
     # Script to deploy updates
     deploy-update = callPackage ./deployment/deploy-update {
       application = application;
       live = if buildLive then live else "";
-      installer = if buildInstaller then skeleton.isoImage else "";
+      installer = if buildInstaller then installer.isoImage else "";
     };
 
     # RAUC bundle
@@ -100,7 +101,10 @@ let
     # Disk image containing pre-installed system
     disk =
       if diskBuildEnabled then
-        callPackage ./testing/disk { inherit (skeleton) install-playos rescueSystem; }
+        callPackage ./testing/disk {
+          inherit rescueSystem;
+          inherit (installer) install-playos;
+        }
       else
         null;
 
@@ -133,7 +137,7 @@ let
   };
 
   releaseDisk = pkgs.callPackage ./testing/disk/release.nix {
-    install-playos = releaseValidationComponents.skeleton.install-playos;
+    install-playos = releaseValidationComponents.installer.install-playos;
   };
 in
 
@@ -143,7 +147,7 @@ with pkgs; stdenv.mkDerivation {
   buildInputs = [
     rauc
     (python3.withPackages(ps: with ps; [pyparted]))
-    components.skeleton.install-playos
+    components.installer.install-playos
   ];
 
   buildCommand = ''
@@ -170,7 +174,7 @@ with pkgs; stdenv.mkDerivation {
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
-    ln -s ${components.skeleton.isoImage}/iso/${components.skeleton.isoImage.isoName} $out/${components.safeProductName}-installer-${components.version}.iso
+    ln -s ${components.installer.isoImage}/iso/${components.installer.isoImage.isoName} $out/${components.safeProductName}-installer-${components.version}.iso
   ''
   # RAUC bundle
   + lib.optionalString buildBundle ''

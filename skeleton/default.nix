@@ -35,27 +35,12 @@ let
     inherit systemMetadata;
   };
 
-
-  # Installation script
-  install-playos = pkgs.callPackage ./install-playos {
-    grubCfg = ./bootloader/grub.cfg;
-    inherit rescueSystem;
-    inherit systemImage systemMetadata;
-  };
-
-  configuration = (import ./configuration.nix) {
-    inherit install-playos squashfsCompressionOpts;
-    inherit systemMetadata;
+  installer = pkgs.callPackage ./installer {
+    inherit rescueSystem systemImage systemMetadata squashfsCompressionOpts;
   };
 
 
-  isoImage = (pkgs.nixos {
-    configuration = {
-      imports = [ configuration ];
-    };
-    system = "x86_64-linux";
-  }).config.system.build.isoImage;
 in
 {
-  inherit install-playos isoImage rescueSystem;
+  inherit rescueSystem installer;
 }
