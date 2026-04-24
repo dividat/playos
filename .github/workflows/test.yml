@@ -11,7 +11,7 @@ jobs:
       integration_tests: ${{ steps.set-matrix-integration.outputs.integration_tests }}
       manual_tests: ${{ steps.set-matrix-manual.outputs.manual_tests }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
     - id: set-matrix-integration
       run: |
         FILES=$(find testing/integration -name '*.nix' -printf '"%p",')
@@ -31,7 +31,7 @@ jobs:
       matrix:
         file: ${{fromJson(needs.prepare-matrix.outputs.integration_tests)}}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
     - uses: ./.github/actions/prep-build-env
       with:
         NIX_CACHE_ACCOUNT_ID: ${{ secrets.NIX_CACHE_ACCOUNT_ID }}
@@ -49,7 +49,7 @@ jobs:
       matrix:
         file: ${{fromJson(needs.prepare-matrix.outputs.manual_tests)}}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
     - uses: ./.github/actions/prep-build-env
       with:
         NIX_CACHE_ACCOUNT_ID: ${{ secrets.NIX_CACHE_ACCOUNT_ID }}
@@ -62,7 +62,7 @@ jobs:
   kiosk-tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
     - uses: ./.github/actions/prep-build-env
       with:
         NIX_CACHE_ACCOUNT_ID: ${{ secrets.NIX_CACHE_ACCOUNT_ID }}
@@ -74,7 +74,7 @@ jobs:
   build-vm:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
     - uses: ./.github/actions/prep-build-env
       with:
         NIX_CACHE_ACCOUNT_ID: ${{ secrets.NIX_CACHE_ACCOUNT_ID }}
@@ -86,7 +86,7 @@ jobs:
   e2e-tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
     - uses: ./.github/actions/prep-build-env
       with:
         NIX_CACHE_ACCOUNT_ID: ${{ secrets.NIX_CACHE_ACCOUNT_ID }}
@@ -107,7 +107,7 @@ jobs:
   ocaml-tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
     - uses: ./.github/actions/prep-build-env
       with:
         NIX_CACHE_ACCOUNT_ID: ${{ secrets.NIX_CACHE_ACCOUNT_ID }}
