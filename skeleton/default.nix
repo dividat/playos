@@ -28,6 +28,8 @@ let
     inherit safeProductName fullProductName kioskUrl updateUrl version;
   };
 
+  grubCfg = ./bootloader/grub.cfg;
+
   # Rescue system
   rescueSystem = pkgs.callPackage ./bootloader/rescue {
     inherit (pkgs) nixos;
@@ -36,7 +38,7 @@ let
   };
 
   installer = pkgs.callPackage ./installer {
-    inherit rescueSystem systemImage systemMetadata squashfsCompressionOpts;
+    inherit grubCfg rescueSystem systemImage systemMetadata squashfsCompressionOpts;
   };
 
 

@@ -1,9 +1,8 @@
-{ pkgs, rescueSystem, systemMetadata, systemImage, squashfsCompressionOpts }:
+{ pkgs, grubCfg, rescueSystem, systemMetadata, systemImage, squashfsCompressionOpts }:
 let
   # Installation script
   install-playos = pkgs.callPackage ./install-playos {
-    grubCfg = ../bootloader/grub.cfg;
-    inherit rescueSystem;
+    inherit grubCfg rescueSystem;
     inherit systemImage systemMetadata;
   };
 
