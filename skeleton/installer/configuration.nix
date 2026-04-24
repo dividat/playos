@@ -69,7 +69,7 @@ in
   # Allow the user to log in as root without a password.
   users.users.root.initialHashedPassword = "";
 
-  services.getty.greetingLine = greeting "${fullProductName} installer (${version})";
+  services.getty.greetingLine = greeting "${fullProductName} (${version})";
 
   environment.loginShellInit = ''
     install-playos --reboot
