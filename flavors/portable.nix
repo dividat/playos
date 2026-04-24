@@ -57,5 +57,22 @@ in
           RemainAfterExit = true;
         };
       };
+
+      # Add bindings for media keys to allow volume control
+      environment.etc."sxhkd/sxhkdrc".text = ''
+        XF86AudioLowerVolume
+            ${pkgs.pulseaudio}/bin/pactl set-sink-volume @DEFAULT_SINK@ -5%
+
+        XF86AudioRaiseVolume
+            ${pkgs.pulseaudio}/bin/pactl set-sink-volume @DEFAULT_SINK@ +5%
+
+        XF86AudioMute
+            ${pkgs.pulseaudio}/bin/pactl set-sink-mute @DEFAULT_SINK@ toggle
+      '';
+
+      services.xserver.displayManager.sessionCommands = ''
+        # Provides media key bindings for volume control
+        ${pkgs.sxhkd}/bin/sxhkd -c /etc/sxhkd/sxhkdrc &
+      '';
     };
 }
