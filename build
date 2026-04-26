@@ -5,7 +5,7 @@ set -euo pipefail
 PRODUCTION_TARGETS="develop|validation|master|release-disk"
 
 # other targets used for development/testing/etc
-OTHER_TARGETS="vm|stuck|lab-key|shed-key|test-e2e|all"
+OTHER_TARGETS="vm|stuck|lab-key|shed-key|test-e2e|portable|all"
 
 ALL_TARGETS="$PRODUCTION_TARGETS|$OTHER_TARGETS"
 
@@ -108,6 +108,23 @@ elif [ "$TARGET" == "master" ]; then
     --arg updateCert ./pki/master/cert.pem \
     --arg updateUrl https://dist.dividat.com/releases/playos/master/ \
     --arg deployUrl s3://dist.dividat.ch/releases/playos/master/ \
+    --arg kioskUrl https://play.dividat.com/ \
+    --arg watchdogUrls '["https://play.dividat.com/" "https://api.dividat.com"]' \
+    --arg buildDisk false)
+
+  echo
+  echo "Run ./result/bin/deploy-update to deploy."
+
+elif [ "$TARGET" == "portable" ]; then
+
+  scripts/info-branch-commit
+  scripts/confirm-or-abort
+
+  (set -x; nix-build \
+    --arg applicationPath ./flavors/portable.nix \
+    --arg updateCert ./pki/master/cert.pem \
+    --arg updateUrl https://dist.dividat.com/releases/playos/portable/ \
+    --arg deployUrl s3://dist.dividat.ch/releases/playos/portable/ \
     --arg kioskUrl https://play.dividat.com/ \
     --arg watchdogUrls '["https://play.dividat.com/" "https://api.dividat.com"]' \
     --arg buildDisk false)
