@@ -11,6 +11,13 @@ in
         defaults.module
       ];
 
+      # we do not expect a stable/permanent network connection
+      playos.networking.watchdog.enable = lib.mkForce false;
+
+      # metrics are optimized for specific hardware and stable setup, probably
+      # not very useful for ad-hoc portable setups
+      playos.monitoring.enable = lib.mkForce false;
+
       # Do not hard-code HDMI as default
       hardware.pulseaudio = {
         extraConfig = lib.mkForce ''
@@ -47,14 +54,6 @@ in
           RemainAfterExit = true;
         };
       };
-
-      # we do not expect a stable/permanent network connection
-      playos.networking.watchdog.enable = lib.mkForce false;
-
-      # metrics are optimized for specific hardware and stable setup, probably
-      # not very useful for ad-hoc portable setups
-      playos.monitoring.enable = lib.mkForce false;
-
       # Add bindings for media keys to allow volume control
       environment.etc."sxhkd/sxhkdrc".text = ''
         XF86AudioLowerVolume
