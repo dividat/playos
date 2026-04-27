@@ -18,6 +18,9 @@ in
       # not very useful for ad-hoc portable setups
       playos.monitoring.enable = lib.mkForce false;
 
+      # use a lower download limit to ensure minimal interference
+      playos.controller.downloadLimit = "2M";
+
       # Do not hard-code HDMI as default
       hardware.pulseaudio = {
         extraConfig = lib.mkForce ''
