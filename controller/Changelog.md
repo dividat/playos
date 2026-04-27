@@ -3,6 +3,7 @@
 # Added
 
 - os: Added localization options for Danish and Turkish
+- kiosk: Show more detailed information on network error
 
 # Changed
 
