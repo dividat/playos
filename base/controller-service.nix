@@ -13,6 +13,12 @@ with lib;
         description = "DNS-SD service types to browse for and annotate networks with in controller UI"; 
         type = types.listOf types.str;
       };
+      downloadLimit = mkOption {
+        default = "10M";
+        example = "500K";
+        description = "curl --limit-rate value for update bundle downloads. If unset, no limit is applied.";
+        type = types.nullOr types.str;
+      };
     };
   };
 
@@ -58,6 +64,8 @@ with lib;
           environment = {
             PLAYOS_ANNOTATE_DISCOVERED_SERVICES =
               mkIf hasAnnotatedServices (concatStringsSep ";" cfg.annotateDiscoveredServices);
+            PLAYOS_UPDATE_DL_LIMIT =
+              mkIf (cfg.downloadLimit != null) cfg.downloadLimit;
           };
         };
       };

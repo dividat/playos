@@ -484,10 +484,11 @@ module StatusGui = struct
     in
     reboot ()
 
-  let get_status ~health_s ~(update_s : Update.state React.signal) ~rauc =
+  let get_status ~systemd ~health_s ~(update_s : Update.state React.signal)
+      ~rauc =
     let health_state = health_s |> Lwt_react.S.value in
     let update_state = update_s |> Lwt_react.S.value in
-    let%lwt watchdog_disabled = Network_watchdog.is_disabled () in
+    let%lwt watchdog_disabled = Network_watchdog.is_disabled systemd in
     let%lwt booted_slot = Rauc.get_booted_slot rauc in
     let%lwt rauc =
       match update_state.process_state with
@@ -532,7 +533,7 @@ module StatusGui = struct
            redirect' (Uri.of_string "/status")
        )
     |> get "/status" (fun _req ->
-           let%lwt status = get_status ~update_s ~health_s ~rauc in
+           let%lwt status = get_status ~systemd ~update_s ~health_s ~rauc in
            Lwt.return (page (Status_page.html status))
        )
 end
