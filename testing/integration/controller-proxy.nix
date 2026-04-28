@@ -77,6 +77,7 @@ pkgs.testers.runNixOSTest {
 
         services.connman = {
           enable = pkgs.lib.mkOverride 0 true; # disabled in runNixOSTest by default
+          networkInterfaceBlacklist = [ "eth1" ]; # the VLAN statically managed by runNixOSTest
         };
 
         playos.storage = {
@@ -124,8 +125,9 @@ with TestPrecondition("PlayOS is booted, RAUC and controller are started"):
     playos.wait_for_unit('playos-controller.service')
 
 with TestPrecondition("PlayOS can manually use proxy in sidekick VM"):
-    wait_until_passes(lambda: playos.succeed(f"curl -f --proxy {proxy_url} ${updateUrl}"),
-                      retries=120) # on CI, sidekick is not reachable for very long
+    sidekick.wait_for_unit("tinyproxy.service")
+    playos.succeed("ping -c 1 sidekick") # check that VMs can talk
+    playos.succeed(f"curl -f --proxy {proxy_url} ${updateUrl}")
     playos.succeed(f"curl -f --proxy {proxy_url} ${captivePortalUrl}")
 
 with TestPrecondition("Controller fails to reach captive portal without proxy"):
