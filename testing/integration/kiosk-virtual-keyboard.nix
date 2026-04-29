@@ -11,7 +11,7 @@ let
   hintIcon = ../../kiosk/images/vkb-activation-hint.png;
   inherit (builtins) toString;
 in
-pkgs.nixosTest {
+pkgs.testers.runNixOSTest {
   name = "Virtual keyboard tests";
 
   nodes.machine = { config, ... }: {

@@ -19,7 +19,7 @@ let
   };
   inherit (builtins) toString;
 in
-pkgs.nixosTest {
+pkgs.testers.runNixOSTest {
   name = "Kiosk's nuke-cache clears optional data";
 
   enableOCR = true;

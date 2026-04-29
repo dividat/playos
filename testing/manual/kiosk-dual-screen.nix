@@ -16,7 +16,7 @@ let
   sessionName = "kiosk-browser";
   inherit (builtins) toString;
 in
-pkgs.nixosTest {
+pkgs.testers.runNixOSTest {
   name = "Kiosk gracefully switches between output screens and modes";
 
   nodes.machine = { config, ... }: {

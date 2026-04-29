@@ -9,7 +9,7 @@ let
   };
   inherit (builtins) toString;
 in
-pkgs.nixosTest {
+pkgs.testers.runNixOSTest {
   name = "Kiosk responds to Play reload events";
 
   enableOCR = true;
