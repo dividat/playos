@@ -52,6 +52,7 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
@@ -61,7 +62,8 @@ let
     watchdogCfg = nodes.playos.playos.networking.watchdog;
 in
 ''
-${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import TestPrecondition, TestCheck, get_first_connman_service_name, wait_until_passes
+import time
 
 # ETH1 == connection to node1 via vlan1
 # ETH2 == connection to node2 via vlan2
@@ -144,7 +146,7 @@ with TestPrecondition("Wait until the secondary service receives a non-link-loca
 
 time.sleep(1)
 
-with TestCase("Confirm secondary service is now the default") as t:
+with TestCheck("Confirm secondary service is now the default") as t:
     new_default_service = get_first_connman_service_name(playos)
     t.assertEqual(
         new_default_service,
@@ -152,7 +154,7 @@ with TestCase("Confirm secondary service is now the default") as t:
         "Secondary service did not become the default!"
     )
 
-with TestCase("Confirm secondary device has the default route") as t:
+with TestCheck("Confirm secondary device has the default route") as t:
     default_route = playos.succeed("ip route | grep 'default via'").strip()
     t.assertEqual(
         default_route,

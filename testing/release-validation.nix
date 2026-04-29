@@ -203,6 +203,7 @@ pkgs.testers.runNixOSTest {
   ];
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
     ps.requests
@@ -213,8 +214,12 @@ pkgs.testers.runNixOSTest {
   ];
 
   testScript = {nodes}: ''
-${builtins.readFile ./helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import eprint, TestPrecondition, TestCheck, wait_for_logs, wait_until_passes
 ${builtins.readFile ./end-to-end/tests/base/proxy-and-update-helpers.py}
+import atexit
+import subprocess
+import tempfile
+import time
 import tesserocr # type: ignore
 import PIL.Image
 import PIL.ImageEnhance
@@ -472,7 +477,7 @@ with TestPrecondition("Navigate to System Status page") as t:
 ### Helpers re-used in both BASE->PRE and PRE->NEXT
 
 def check_update_is_downloaded_and_installed(stage):
-  with TestCase(f"{stage}: controller starts downloading the bundle") as t:
+  with TestCheck(f"{stage}: controller starts downloading the bundle") as t:
       def t_check():
           playos.send_key("ctrl-r")
           time.sleep(2)
@@ -482,7 +487,7 @@ def check_update_is_downloaded_and_installed(stage):
 
       wait_until_passes(t_check, retries=30, sleep=1)
 
-  with TestCase(f"{stage}: controller has downloaded and installed the bundle") as t:
+  with TestCheck(f"{stage}: controller has downloaded and installed the bundle") as t:
       # controller takes at least 2 minutes for the download
       # (1.2GB @ 10 MB/s), so allow up to 5 minutes for the download+install
       screen_text = wait_until_passes(
@@ -493,7 +498,7 @@ def check_update_is_downloaded_and_installed(stage):
 
 
 def check_system_boots_into_new_version(new_version, stage):
-    with TestCase(f"{stage}: kiosk is open with kiosk URL after reboot") as t:
+    with TestCheck(f"{stage}: kiosk is open with kiosk URL after reboot") as t:
         wait_until_passes(
             lambda: t.assertIn("Hello world", screenshot_and_ocr(playos)),
             retries=60,
@@ -502,7 +507,7 @@ def check_system_boots_into_new_version(new_version, stage):
 
     move_mouse_to_corner()
 
-    with TestCase(f"{stage}: controller GUI with new version is visible") as t:
+    with TestCheck(f"{stage}: controller GUI with new version is visible") as t:
         # switch to controller
         playos.send_key("ctrl-shift-f12")
         wait_until_passes(
@@ -510,7 +515,7 @@ def check_system_boots_into_new_version(new_version, stage):
             retries=10
         )
 
-    with TestCase(f"{stage}: The new booted version reaches a Good state") as t:
+    with TestCheck(f"{stage}: The new booted version reaches a Good state") as t:
         wait_until_passes(
             # UpdateError possible initially, because DHCP has not completed
             lambda: check_for_text_in_status_page("Good", ignore_errors=True),
@@ -539,7 +544,7 @@ reboot_via_tty()
 
 check_system_boots_into_new_version(next_version, "PRE->NEXT")
 
-with TestCase("Update state is UpToDate") as t:
+with TestCheck("Update state is UpToDate") as t:
     wait_until_passes(
         lambda: check_for_text_in_status_page("UpToDate", ignore_errors=True),
         retries=3, sleep=10)

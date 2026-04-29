@@ -40,6 +40,7 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
     ps.pyppeteer
@@ -48,9 +49,10 @@ pkgs.testers.runNixOSTest {
   ];
 
   testScript = ''
-${builtins.readFile ../../../helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import create_overlay, TestPrecondition, TestCheck, wait_for_logs, HTTPStubServer
 ${builtins.readFile ./kiosk-persistence-helpers.py}
 import json
+import time
 from enum import StrEnum, auto
 
 # ===== Test settings
@@ -153,11 +155,11 @@ with TestPrecondition("PlayOS is booted, controller is running"):
 with TestPrecondition("VM can reach HTTP stub server"):
     playos.succeed("curl --fail '${kioskUrl}'", timeout=3)
 
-with TestCase("xserver and kiosk are running"):
+with TestCheck("xserver and kiosk are running"):
     playos.wait_for_x()
     playos.succeed("pgrep --full kiosk-browser > /dev/null")
 
-with TestCase("Kiosk's debug port open, web storage is persisted") as t:
+with TestCheck("Kiosk's debug port open, web storage is persisted") as t:
     page = aio.run(connect_and_get_kiosk_page())
 
     aio.run(populate_web_storages(page))
@@ -193,7 +195,7 @@ with TestPrecondition("Booted into slot b") as t:
     playos.wait_for_unit("rauc.service")
     t.assertEqual(get_booted_slot(), "b")
 
-with TestCase("kiosk's web storage is restored") as t:
+with TestCheck("kiosk's web storage is restored") as t:
     playos.wait_for_x()
 
     page = aio.run(connect_and_get_kiosk_page())

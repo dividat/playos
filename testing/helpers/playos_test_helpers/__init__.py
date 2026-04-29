@@ -9,6 +9,18 @@ import tempfile
 import atexit
 import time
 
+__all__ = [
+    "create_overlay",
+    "eprint",
+    "TestPrecondition",
+    "TestCheck",
+    "wait_for_logs",
+    "get_first_connman_service_name",
+    "configure_proxy",
+    "HTTPStubServer",
+    "wait_until_passes",
+]
+
 
 # HACK: create writable cow disk overlay (same as in ./run-in-vm --disk)
 def create_overlay(disk, overlay_path):
@@ -55,9 +67,9 @@ class TestPrecondition(AbstractTestCheck):
     def __init__(self, test_descr):
         super().__init__("TestPrecondition", test_descr)
 
-class TestCase(AbstractTestCheck):
+class TestCheck(AbstractTestCheck):
     def __init__(self, test_descr):
-        super().__init__("TestCase", test_descr)
+        super().__init__("TestCheck", test_descr)
 
 # Wait until journactl contains a log entry with a message matching the `regex`
 # or time out. Can be optionally filtered by `since` and `unit, with the same

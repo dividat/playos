@@ -113,23 +113,24 @@ app.run(host="0.0.0.0", port=${toString serverPort})
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
 
   testScript = ''
-    ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+    from playos_test_helpers import TestPrecondition, TestCheck, wait_for_logs
     machine.start()
     machine.wait_for_unit("graphical.target")
 
     with TestPrecondition("kiosk loads the page"):
         wait_for_logs(machine, "PAGE: Page loaded, counter: 1", timeout=10)
 
-    with TestCase("kiosk handles beforereload and loads specified url"):
+    with TestCheck("kiosk handles beforereload and loads specified url"):
         wait_for_logs(machine, "PAGE: Page loaded, counter: 2", timeout=10)
         checkpoint = wait_for_logs(machine, "PAGE: Page loaded, counter: 3", timeout=10)
 
-    with TestCase("kiosk returns to main url on manual reload"):
+    with TestCheck("kiosk returns to main url on manual reload"):
         machine.send_key("ctrl-r")
         wait_for_logs(machine, "PAGE: Page loaded, counter: 1", since=checkpoint, timeout=10)
 '';

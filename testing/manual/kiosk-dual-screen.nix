@@ -78,6 +78,7 @@ pkgs.nixosTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
     ps.diffimg
@@ -86,7 +87,9 @@ pkgs.nixosTest {
   #enableOCR = true;
 
   testScript = ''
-    ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+    from playos_test_helpers import TestCheck
+    import tempfile
+    import time
     import diffimg # type: ignore
 
     def xrandr(output, params):
@@ -123,7 +126,7 @@ pkgs.nixosTest {
 
     original_kiosk_pid = get_kiosk_pid()
 
-    with TestCase("kiosk gracefully responds to screen and mode changes") as t,\
+    with TestCheck("kiosk gracefully responds to screen and mode changes") as t,\
             tempfile.TemporaryDirectory() as d:
         xrandr("Virtual-1", "--primary --mode 640x480")
         time.sleep(3) # give controller time to resize

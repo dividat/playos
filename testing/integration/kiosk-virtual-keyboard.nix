@@ -79,6 +79,7 @@ pkgs.nixosTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
     ps.pillow
@@ -86,7 +87,9 @@ pkgs.nixosTest {
   ];
 
   testScript = ''
-    ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+    from playos_test_helpers import TestPrecondition, TestCheck, wait_for_logs
+    import tempfile
+    import time
     from collections import Counter
     from PIL import Image, ImageChops, ImageEnhance
 
@@ -220,7 +223,7 @@ pkgs.nixosTest {
             "Screen is not mostly white, is the keyboard visible?"
         )
 
-    with TestCase("keyboard hint shows up when input field is focused") as t:
+    with TestCheck("keyboard hint shows up when input field is focused") as t:
         # focus first numeric input field
         machine.send_key("tab")
         time.sleep(1)
@@ -230,7 +233,7 @@ pkgs.nixosTest {
             "Could not find activation hint icon in screenshot - did it show up?")
 
 
-    with TestCase("keyboard (numeric) shows up when activated"):
+    with TestCheck("keyboard (numeric) shows up when activated"):
         # activate keyboard
         machine.send_key("ret")
         time.sleep(1)
@@ -244,7 +247,7 @@ pkgs.nixosTest {
         )
 
 
-    with TestCase("keyboard (numeric) accepts input"):
+    with TestCheck("keyboard (numeric) accepts input"):
         # spam a few random keys on the vkb
         machine.send_key("down")
         machine.send_key("ret")
@@ -258,7 +261,7 @@ pkgs.nixosTest {
         time.sleep(1) # wait for all keys to be processed
 
 
-    with TestCase("keyboard (numeric) is hidden/shown with escape/enter") as t:
+    with TestCheck("keyboard (numeric) is hidden/shown with escape/enter") as t:
         pre_close_screen = make_screenshot()
 
         # close vkb
@@ -276,7 +279,7 @@ pkgs.nixosTest {
             extra_msg="Virtual keyboard not visible after reactivation with Return?")
 
 
-    with TestCase("keyboard is hidden when input field is unfocused") as t:
+    with TestCheck("keyboard is hidden when input field is unfocused") as t:
         # focus on button, keyboard should hide, no hint visible
         machine.send_key("tab")
         time.sleep(1)
@@ -285,7 +288,7 @@ pkgs.nixosTest {
             extra_msg="Virtual keyboard did not hide on unfocus?")
 
 
-    with TestCase("keyboard (text) is activated on text field") as t:
+    with TestCheck("keyboard (text) is activated on text field") as t:
         # focus on text field
         machine.send_key("tab")
         time.sleep(1)
@@ -311,7 +314,7 @@ pkgs.nixosTest {
             "Screenshots too similar, virtual keyboard layout did not change?"
         )
 
-    with TestCase("keyboard (text) accepts input") as t:
+    with TestCheck("keyboard (text) accepts input") as t:
         machine.send_key("down")
         machine.send_key("ret")
         machine.send_key("right")
@@ -324,7 +327,7 @@ pkgs.nixosTest {
         time.sleep(1) # wait for all keys to be processed
 
 
-    with TestCase("keyboard (text) can be closed and reactivated") as t:
+    with TestCheck("keyboard (text) can be closed and reactivated") as t:
         pre_close_screen_text = make_screenshot()
 
         # esc button - keyboard should be gone

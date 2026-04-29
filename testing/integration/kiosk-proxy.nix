@@ -83,13 +83,14 @@ pkgs.nixosTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
 
 
   testScript = ''
-    ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+    from playos_test_helpers import TestPrecondition, TestCheck, wait_for_logs, get_first_connman_service_name
 
     def reset():
       theproxy.succeed('rm -f /var/log/request-counter')
@@ -126,7 +127,7 @@ pkgs.nixosTest {
     client.wait_for_x()
     client.wait_for_unit("connman.service")
 
-    with TestCase('kiosk-browser uses configured proxy') as t:
+    with TestCheck('kiosk-browser uses configured proxy') as t:
       service_name = get_first_connman_service_name(client)
       client.succeed(f"connmanctl config {service_name} proxy manual http://user:p4ssw0rd@theproxy:${toString proxyPort}")
 

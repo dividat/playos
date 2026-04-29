@@ -83,13 +83,14 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
 
   testScript = {nodes}:
 ''
-${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import TestPrecondition, TestCheck, wait_for_logs, wait_until_passes
 ## == Helpers
 
 def checkpoint_now():
@@ -118,7 +119,7 @@ with TestPrecondition("connman sees the wifi AP"):
 
 ## == Test cases
 
-with TestCase("connman ignores wifi signal strength changes") as t:
+with TestCheck("connman ignores wifi signal strength changes") as t:
     checkpoint = checkpoint_now()
     playos.succeed("iw dev wlan0 set txpower fixed 0")
     connman_scan_wifi()
@@ -126,7 +127,7 @@ with TestCase("connman ignores wifi signal strength changes") as t:
         unit='playos-network-watchdog.service',
         since=checkpoint, timeout=30)
 
-with TestCase("wifi AP temporarily disappearing does not cause watchdog setting updates") as t:
+with TestCheck("wifi AP temporarily disappearing does not cause watchdog setting updates") as t:
     checkpoint = checkpoint_now()
     playos.succeed("iw dev wlan0 ap stop")
     for _ in range(0, ${toString bssExpirationScanCount} - 1):
