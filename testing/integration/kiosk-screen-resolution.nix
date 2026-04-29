@@ -11,7 +11,7 @@ let
   };
   inherit (builtins) toString;
 in
-pkgs.nixosTest {
+pkgs.testers.runNixOSTest {
   name = "Kiosk gracefully switches between output modes";
 
   nodes.machine = { config, ... }: {

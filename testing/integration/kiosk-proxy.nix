@@ -10,7 +10,7 @@ let
   };
   toString = builtins.toString;
 in
-pkgs.nixosTest {
+pkgs.testers.runNixOSTest {
   name = "proxy-test";
 
   nodes = {

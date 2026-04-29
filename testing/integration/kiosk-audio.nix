@@ -13,7 +13,7 @@ let
   };
   inherit (builtins) toString;
 in
-pkgs.nixosTest {
+pkgs.testers.runNixOSTest {
   name = "Kiosk can play opus files";
 
   nodes.machine = { config, ... }: {
