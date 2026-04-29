@@ -87,9 +87,9 @@ module InfoGui = struct
   let build app =
     app
     |> get "/info" (fun _ ->
-           let%lwt server_info = Info.get () in
-           Lwt.return (page (Info_page.html server_info))
-       )
+        let%lwt server_info = Info.get () in
+        Lwt.return (page (Info_page.html server_info))
+    )
 end
 
 (** Localization GUI *)
@@ -229,16 +229,15 @@ module NetworkGui = struct
     in
     interfaces
     |> List.map (fun (interface : Network.Interface.t) ->
-           ( interface.name
-           , List.filter_map
-               (fun (s : Avahi.Service.t) ->
-                 if s.interface = interface.name then Some s.service_name
-                 else None
-               )
-               annotated_services
-             |> List.sort_uniq String.compare
-           )
-       )
+        ( interface.name
+        , List.filter_map
+            (fun (s : Avahi.Service.t) ->
+              if s.interface = interface.name then Some s.service_name else None
+            )
+            annotated_services
+          |> List.sort_uniq String.compare
+        )
+    )
     |> return
 
   let overview ~(connman : Manager.t) req =
@@ -524,38 +523,38 @@ module StatusGui = struct
           )
          )
     |> post "/watchdog/enable" (fun _req ->
-           let%lwt () = Network_watchdog.enable systemd in
-           redirect' (Uri.of_string "/status")
-       )
+        let%lwt () = Network_watchdog.enable systemd in
+        redirect' (Uri.of_string "/status")
+    )
     |> post "/watchdog/disable" (fun _req ->
-           let%lwt () = Network_watchdog.disable systemd in
-           redirect' (Uri.of_string "/status")
-       )
+        let%lwt () = Network_watchdog.disable systemd in
+        redirect' (Uri.of_string "/status")
+    )
     |> get "/status" (fun _req ->
-           let%lwt status = get_status ~update_s ~health_s ~rauc in
-           Lwt.return (page (Status_page.html status))
-       )
+        let%lwt status = get_status ~update_s ~health_s ~rauc in
+        Lwt.return (page (Status_page.html status))
+    )
 end
 
 module ChangelogGui = struct
   let build app =
     app
     |> get "/changelog" (fun _ ->
-           let%lwt changelog =
-             Util.read_from_file log_src
-               (Util.resource_path (Fpath.v "Changelog.html"))
-           in
-           Lwt.return (page (Changelog_page.html changelog))
-       )
+        let%lwt changelog =
+          Util.read_from_file log_src
+            (Util.resource_path (Fpath.v "Changelog.html"))
+        in
+        Lwt.return (page (Changelog_page.html changelog))
+    )
 end
 
 module LicensingGui = struct
   let build app =
     app
     |> get "/licensing" (fun _ ->
-           let%lwt p = Licensing_page.html in
-           Lwt.return (page p)
-       )
+        let%lwt p = Licensing_page.html in
+        Lwt.return (page p)
+    )
 end
 
 module RemoteMaintenanceGui = struct
@@ -570,26 +569,22 @@ module RemoteMaintenanceGui = struct
   let build ~systemd app =
     app
     |> post "/remote-maintenance/enable" (fun _ ->
-           let%lwt () =
-             Systemd.Manager.start_unit systemd "zerotierone.service"
-           in
-           with_timeout
-             { duration = 2.0
-             ; on_timeout =
-                 (fun () ->
-                   let msg = "Timeout starting remote maintenance service." in
-                   let%lwt () = Logs_lwt.err (fun m -> m "%s" msg) in
-                   fail_with msg
-                 )
-             }
-             wait_until_zerotier_is_on
-       )
+        let%lwt () = Systemd.Manager.start_unit systemd "zerotierone.service" in
+        with_timeout
+          { duration = 2.0
+          ; on_timeout =
+              (fun () ->
+                let msg = "Timeout starting remote maintenance service." in
+                let%lwt () = Logs_lwt.err (fun m -> m "%s" msg) in
+                fail_with msg
+              )
+          }
+          wait_until_zerotier_is_on
+    )
     |> post "/remote-maintenance/disable" (fun _ ->
-           let%lwt () =
-             Systemd.Manager.stop_unit systemd "zerotierone.service"
-           in
-           redirect' (Uri.of_string "/info")
-       )
+        let%lwt () = Systemd.Manager.stop_unit systemd "zerotierone.service" in
+        redirect' (Uri.of_string "/info")
+    )
 end
 
 let routes ~systemd ~health_s ~update_s ~rauc ~connman app =
