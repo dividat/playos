@@ -11,12 +11,15 @@ python3Packages.buildPythonPackage {
     build-system = with python3Packages; [ setuptools ];
 
     nativeCheckInputs = with python3Packages; [
+        ruff
         mypy
         types-colorama
     ];
 
     checkPhase = ''
         runHook preCheck
+
+        ruff check
 
         mypy \
             --no-color-output \
