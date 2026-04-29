@@ -178,6 +178,7 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.requests
     ps.types-requests
     ps.colorama
@@ -190,7 +191,7 @@ pkgs.testers.runNixOSTest {
     badSimulatedAPs = filter (strings.hasPrefix "bad-ap-") allSSIDs;
     goodSimulatedAPs = lists.subtractLists badSimulatedAPs allSSIDs;
   in ''
-${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import TestPrecondition, TestCheck
 import requests
 
 bad_simulated_aps = set("${toString badSimulatedAPs}".split())
@@ -257,7 +258,7 @@ with TestPrecondition("Test APs are setup and visible to connman"):
 
 wait_for_http()
 
-with TestCase("controller sees the wifi iface and APs") as t:
+with TestCheck("controller sees the wifi iface and APs") as t:
     headers = {'Accept': 'application/json'}
     r = requests.get("http://localhost:13333/network", headers=headers)
     r.raise_for_status()
@@ -276,7 +277,7 @@ PASSPHRASE_SERVICES = [s for s in GOOD_SERVICES if s['name'] != "test-ap-open"]
 
 EAP_SERVICE = find_service_by_name("bad-ap-eap", BAD_SERVICES)
 
-with TestCase("controller can connect to all good APs") as t:
+with TestCheck("controller can connect to all good APs") as t:
     for service in GOOD_SERVICES:
         passphrase = None if service['name'] == "test-ap-open" else 'reproducibility'
         r = connect_req(service, passphrase=passphrase, timeout=60)
@@ -287,7 +288,7 @@ with TestCase("controller can connect to all good APs") as t:
         t.assertIsNotNone(found)
         t.assertEqual("Ready", found['state'])
 
-with TestCase("controller can forget all APs") as t:
+with TestCheck("controller can forget all APs") as t:
     for service in GOOD_SERVICES:
         r = remove_req(service)
         r.raise_for_status()
@@ -297,21 +298,21 @@ with TestCase("controller can forget all APs") as t:
         t.assertIsNotNone(found)
         t.assertEqual("Idle", found['state'])
 
-with TestCase("controller produces clear errors when passphrase is incorrect") as t:
+with TestCheck("controller produces clear errors when passphrase is incorrect") as t:
     for service in PASSPHRASE_SERVICES:
         r = connect_req(service, passphrase='incorrectpass')
         t.assertRaises(requests.exceptions.HTTPError, r.raise_for_status)
         output = r.json()
         t.assertIn("Password is not valid", output['message'])
 
-with TestCase("controller produces clear errors when passphrase is missing") as t:
+with TestCheck("controller produces clear errors when passphrase is missing") as t:
     for service in PASSPHRASE_SERVICES:
         r = connect_req(service, passphrase=None)
         t.assertRaises(requests.exceptions.HTTPError, r.raise_for_status)
         output = r.json()
         t.assertIn("Password is required", output['message'])
 
-with TestCase("controller informs the user when auth protocol is unsupported") as t:
+with TestCheck("controller informs the user when auth protocol is unsupported") as t:
     r = connect_req(EAP_SERVICE, passphrase='whatever')
     t.assertRaises(requests.exceptions.HTTPError, r.raise_for_status)
     output = r.json()

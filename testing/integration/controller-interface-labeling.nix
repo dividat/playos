@@ -82,13 +82,14 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
 
   testScript =
 ''
-${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import TestPrecondition, TestCheck
 start_all()
 
 playos_with_avahi.wait_for_unit("playos-controller.service")
@@ -101,14 +102,14 @@ with TestPrecondition("avahi browse finds Senso service"):
     # Also publish a service with 'malicious' instance name
     senso.succeed("avahi-publish --service '<script>Inject</script>' _soundso._tcp 8080 >&2 &")
 
-with TestCase("System without avahi can list networks"):
+with TestCheck("System without avahi can list networks"):
     playos_no_avahi.succeed("curl --fail http://localhost:3333/network | grep Wired")
 
-with TestCase("Label is applied"):
+with TestCheck("Label is applied"):
     playos_with_avahi.wait_until_succeeds("curl http://localhost:3333/network | grep 'Davidat Soundso'")
     playos_with_avahi.wait_until_succeeds("curl http://localhost:3333/network | grep 'Yes Man'")
 
-with TestCase("Injectable label contents are escaped"):
+with TestCheck("Injectable label contents are escaped"):
     playos_with_avahi.wait_until_succeeds("curl http://localhost:3333/network | grep '&lt;script&gt;Inject&lt;/script&gt;'")
 '';
 

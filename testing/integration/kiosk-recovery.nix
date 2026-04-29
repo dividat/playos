@@ -82,12 +82,13 @@ pkgs.nixosTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
 
   testScript = ''
-    ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+    from playos_test_helpers import TestPrecondition, TestCheck, wait_for_logs
     machine.start()
     machine.wait_for_unit("graphical.target")
     machine.wait_for_unit("display-manager.service")
@@ -108,17 +109,17 @@ pkgs.nixosTest {
     out = machine.succeed("su - alice -c nuke-cache")
     print(out)
 
-    with TestCase("nuke-cache removed the expected cache / SW paths"):
+    with TestCheck("nuke-cache removed the expected cache / SW paths"):
       for path in PATHS_TO_NUKE:
         machine.fail(f"ls -l '{path}'")
 
-    with TestCase("kiosk is able to start after the removal"):
+    with TestCheck("kiosk is able to start after the removal"):
       machine.systemctl("start display-manager.service")
       machine.wait_for_unit("display-manager.service")
       machine.systemctl("is-active display-manager.service")
       machine.systemctl("is-active user-1000.session")
 
-    with TestCase("loading the page produced no unexpected errors from JS") as t:
+    with TestCheck("loading the page produced no unexpected errors from JS") as t:
       try:
         # these are produced in kiosk-recovery/index.html for unexpected paths,
         # so should not be present
@@ -128,7 +129,7 @@ pkgs.nixosTest {
         pass
 
     if EXPECTED_TEXT:
-      with TestCase(f"Page displays '{EXPECTED_TEXT}'"):
+      with TestCheck(f"Page displays '{EXPECTED_TEXT}'"):
         machine.wait_for_text(EXPECTED_TEXT, timeout=5)
 '';
 }

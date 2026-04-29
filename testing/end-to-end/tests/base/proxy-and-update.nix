@@ -121,6 +121,7 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
@@ -128,7 +129,7 @@ pkgs.testers.runNixOSTest {
 
   testScript = {nodes}:
   ''
-    ${builtins.readFile ../../../helpers/nixos-test-script-helpers.py}
+    from playos_test_helpers import create_overlay, TestPrecondition, TestCheck, wait_for_logs, configure_proxy
     ${builtins.readFile ./proxy-and-update-helpers.py}
     import json
 
@@ -147,7 +148,7 @@ pkgs.testers.runNixOSTest {
     playos.start(allow_reboot=True)
     sidekick.start()
 
-    with TestCase("Installer produced a disk without incompatible FS features") as t:
+    with TestCheck("Installer produced a disk without incompatible FS features") as t:
         playos.wait_for_unit("local-fs.target")
         features = playos.succeed('tune2fs -l "/dev/disk/by-label/system.a" | grep "Filesystem features"')
         for bad_opt in ["metadata_csum_seed", "orphan_file"]:
@@ -199,12 +200,12 @@ pkgs.testers.runNixOSTest {
 
     ### === Test scenario
 
-    with TestCase("Kiosk picks up the proxy"):
+    with TestCheck("Kiosk picks up the proxy"):
         proxy_host_port = proxy_url.replace("http://", "")
         expected_kiosk_logs = f"Set proxy to {proxy_host_port} in Qt application"
         wait_for_logs(playos, expected_kiosk_logs)
 
-    with TestCase("Controller is able to query the version"):
+    with TestCheck("Controller is able to query the version"):
         expected_states = [
             "GettingVersionInfo",
             "UpToDate",
@@ -217,7 +218,7 @@ pkgs.testers.runNixOSTest {
                 unit="playos-controller.service",
                 timeout=61)
 
-    with TestCase("Controller installs the new upstream version") as t:
+    with TestCheck("Controller installs the new upstream version") as t:
         next_version = "${nextVersion}"
 
         update_server.add_bundle(next_version, filepath="${nextVersionBundle}")
@@ -241,7 +242,7 @@ pkgs.testers.runNixOSTest {
                 # a 600 MB bundle will take at least 60s
                 timeout=75)
 
-    with TestCase("RAUC status confirms the installation") as t:
+    with TestCheck("RAUC status confirms the installation") as t:
         rauc_status = json.loads(playos.succeed(
             "rauc status --detailed --output-format=json"
         ))
@@ -259,12 +260,12 @@ pkgs.testers.runNixOSTest {
             "Installed bundle does not have correct version"
         )
 
-    with TestCase("No raucb files left post-install") as t:
+    with TestCheck("No raucb files left post-install") as t:
         playos.fail("ls /tmp/*.raucb")
 
     target_disk = "/dev/disk/by-label/system.b"
 
-    with TestCase("RAUC post-install hook ran and performed compatibility fixes") as t:
+    with TestCheck("RAUC post-install hook ran and performed compatibility fixes") as t:
         wait_for_logs(playos, "Checking if host system version requires compatibility fixes", unit="rauc.service")
         wait_for_logs(playos, "Detected host system version as ${version}", unit="rauc.service")
 
@@ -275,14 +276,14 @@ pkgs.testers.runNixOSTest {
             wait_for_logs(playos, "Host system does not require compatibility fixes", unit="rauc.service")
 
 
-    with TestCase("RAUC install produced a compatible filesystem") as t:
+    with TestCheck("RAUC install produced a compatible filesystem") as t:
         features = playos.succeed(
             f'tune2fs -l "{target_disk}" | grep "Filesystem features"')
         t.assertNotIn(bad_ext4_option, features,
                       f"ext4 was formatted with {bad_ext4_option}")
 
 
-    with TestCase("System boots into the new bundle") as t:
+    with TestCheck("System boots into the new bundle") as t:
         playos.shutdown()
         playos.start()
         playos.wait_for_unit('multi-user.target')

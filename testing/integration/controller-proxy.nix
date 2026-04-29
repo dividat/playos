@@ -92,13 +92,14 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
 
   testScript = {nodes}:
 ''
-${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import TestPrecondition, TestCheck, wait_for_logs, configure_proxy, wait_until_passes
 
 latest_version = "9.9.9-TEST"
 
@@ -139,10 +140,10 @@ configure_proxy(playos, proxy_url)
 
 ### === Test scenario
 
-with TestCase("Controller uses proxy for captive portal"):
+with TestCheck("Controller uses proxy for captive portal"):
    playos.succeed("curl -f http://localhost:3333/internet/status | grep TEST_CAPTIVE_RESPONSE") 
 
-with TestCase("Controller is able to query the version and initiate download"):
+with TestCheck("Controller is able to query the version and initiate download"):
     wait_for_logs(playos,
         f"Downloading.*{latest_version}",
         unit="playos-controller.service",

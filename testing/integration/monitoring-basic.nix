@@ -51,6 +51,7 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
@@ -62,8 +63,9 @@ pkgs.testers.runNixOSTest {
       dbName = monCfg.localDbName;
     in
     ''
-      ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+      from playos_test_helpers import TestCheck
       import csv
+      import time
 
       ## CONSTANTS
 
@@ -85,11 +87,11 @@ pkgs.testers.runNixOSTest {
 
       machine.start()
 
-      with TestCase("influxdb and telegraf are running"):
+      with TestCheck("influxdb and telegraf are running"):
         machine.wait_for_unit("influxdb.service", timeout=10)
         machine.wait_for_unit("telegraf.service", timeout=10)
 
-      with TestCase("Retention policy is setup") as t:
+      with TestCheck("Retention policy is setup") as t:
         results = list(run_query("SHOW RETENTION POLICIES"))
         t.assertEqual(len(results), 1,
           f"More than one retention policy found: {results}")
@@ -106,7 +108,7 @@ pkgs.testers.runNixOSTest {
       print("Restarting telegraf to force flush")
       machine.systemctl("restart telegraf.service")
 
-      with TestCase("Metrics are received") as t:
+      with TestCheck("Metrics are received") as t:
         results = list(run_query("SELECT * FROM mem LIMIT 2"))
         t.assertGreater(len(results), 1, "Expected at least 2 rows")
         first_result = results[0]
@@ -114,11 +116,11 @@ pkgs.testers.runNixOSTest {
         t.assertIn("free", first_result)
         t.assertIn("used", first_result)
 
-      with TestCase("Metrics are tagged with machine-id") as t:
+      with TestCheck("Metrics are tagged with machine-id") as t:
         machineId = machine.succeed("cat /etc/machine-id").strip()
         t.assertEqual(first_result['host'], f"playos-{machineId}")
 
-      with TestCase("Unnecessary tags are dropped") as t:
+      with TestCheck("Unnecessary tags are dropped") as t:
         cpu_row = list(run_query("SELECT * FROM cpu LIMIT 1"))[0]
         t.assertNotIn("time_guest_nice", cpu_row)
         t.assertNotIn("usage_guest_nice", cpu_row)

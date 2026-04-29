@@ -127,6 +127,7 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
@@ -134,9 +135,10 @@ pkgs.testers.runNixOSTest {
   testScript =
     { nodes }:
     ''
-      ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+      from playos_test_helpers import TestPrecondition, TestCheck
       import math
       import json
+      import time
 
       ## CONSTANTS
 
@@ -254,14 +256,14 @@ pkgs.testers.runNixOSTest {
       print(f"Collecting Telegraf stats for {sleep_duration} seconds...")
       time.sleep(sleep_duration)
 
-      with TestCase("Memory usage of Telegraf is reasonable") as t:
+      with TestCheck("Memory usage of Telegraf is reasonable") as t:
           telegraf_stats = get_and_print_memory_stats("telegraf.service")
           t.assertLess(telegraf_stats['memory_peak'], MAX_TELEGRAF_PEAK_MEMORY_MB)
 
       print("Stopping Telegraf to force data flush.")
       machine.systemctl("stop telegraf.service")
 
-      with TestCase("Memory usage of InfluxDB is reasonable") as t:
+      with TestCheck("Memory usage of InfluxDB is reasonable") as t:
           influxdb_stats = get_and_print_memory_stats("influxdb.service")
           t.assertLess(influxdb_stats['memory_peak'], MAX_INFLUXDB_PEAK_MEMORY_MB)
 
@@ -270,7 +272,7 @@ pkgs.testers.runNixOSTest {
       with TestPrecondition("Cardinality of data collected by Telegraf matches stress test setup") as t:
           check_cardinalities(t)
 
-      with TestCase(f"Generate {weeks} weeks of data (SLOW_MODE = ${lib.boolToString slowMode})"):
+      with TestCheck(f"Generate {weeks} weeks of data (SLOW_MODE = ${lib.boolToString slowMode})"):
           res = machine.succeed(
           f"""inch \
                   -no-setup \
@@ -292,7 +294,7 @@ pkgs.testers.runNixOSTest {
       # Note: memory limits enforced via MemoryMax, "realistic" memory only
       # checked at the end
 
-      with TestCase("Disk usage after stress test is within limits") as t:
+      with TestCheck("Disk usage after stress test is within limits") as t:
           check_stored_size(t)
 
 
@@ -303,7 +305,7 @@ pkgs.testers.runNixOSTest {
       print("====== STATS AFTER compaction ========")
       get_and_print_memory_stats("influxdb.service")
 
-      with TestCase("Disk usage after compaction is within limits") as t:
+      with TestCheck("Disk usage after compaction is within limits") as t:
           check_stored_size(t)
 
       print("====== STATS AFTER restarting ========")
@@ -312,10 +314,10 @@ pkgs.testers.runNixOSTest {
           time.sleep(10)
       stats = get_and_print_memory_stats("influxdb.service")
 
-      with TestCase("InfluxDB memory usage after restart is within limits") as t:
+      with TestCheck("InfluxDB memory usage after restart is within limits") as t:
           t.assertLess(stats['memory_peak'], MAX_INFLUXDB_PEAK_MEMORY_MB)
 
-      with TestCase("Disk usage after restart is within limits") as t:
+      with TestCheck("Disk usage after restart is within limits") as t:
           check_stored_size(t)
     '';
 }

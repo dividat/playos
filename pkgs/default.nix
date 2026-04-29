@@ -30,6 +30,7 @@ let
 
       python3Packages = super.python3Packages.overrideScope (self: super: {
         playos-proxy-utils = self.callPackage ../proxy-utils {};
+        playos-test-helpers = self.callPackage ../testing/helpers {};
       });
 
       qt6 = super.qt6.overrideScope (qtself: qtsuper: {
