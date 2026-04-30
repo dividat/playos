@@ -91,6 +91,7 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
@@ -100,7 +101,7 @@ let
     watchdogCfg = nodes.playos.playos.networking.watchdog;
 in
 ''
-${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import TestPrecondition, TestCheck, wait_for_logs, get_first_connman_service_name, HTTPStubServer, wait_until_passes
 import datetime
 
 ## == Config vars
@@ -214,7 +215,6 @@ with TestPrecondition("PlayOS is booted and services are running "):
     playos.wait_for_unit('playos-network-watchdog.service')
     playos.wait_for_unit('tinyproxy.service')
     playos.wait_for_unit('always-ok-http-service.service')
-    playos.wait_for_unit("network-online.target")
 
 with TestPrecondition("PlayOS can reach HTTPStubServer`s"):
     # assert we can reach the stub servers...
@@ -232,7 +232,7 @@ with TestPrecondition("Proxy and always-ok-http-service works") as t:
 
 ## == Test cases
 
-with TestCase("watchdog reaches ONCE_CONNECTED state") as t:
+with TestCheck("watchdog reaches ONCE_CONNECTED state") as t:
     wait_for_watchdog_state('ONCE_CONNECTED')
     expect_no_new_connman_restarts(t)
 
@@ -241,7 +241,7 @@ with TestCase("watchdog reaches ONCE_CONNECTED state") as t:
 
 stop_all_stubs()
 
-with TestCase("watchdog eventually reaches DISCONNECTED state and triggers restart") as t:
+with TestCheck("watchdog eventually reaches DISCONNECTED state and triggers restart") as t:
     wait_for_watchdog_state('DISCONNECTED')
     wait_for_connman_restart(t)
 
@@ -249,11 +249,11 @@ with TestCase("watchdog eventually reaches DISCONNECTED state and triggers resta
 
 STUB2.start()
 
-with TestCase("watchdog reaches ONCE_CONNECTED state with only secondary URL good"):
+with TestCheck("watchdog reaches ONCE_CONNECTED state with only secondary URL good"):
     wait_for_watchdog_state('ONCE_CONNECTED')
 
 
-with TestCase("watchdog goes into SETTING_CHANGE_DELAY after connman changes") as t:
+with TestCheck("watchdog goes into SETTING_CHANGE_DELAY after connman changes") as t:
     configure_connman("--domains whatever.local")
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     wait_for_watchdog_state('ONCE_CONNECTED')
@@ -263,7 +263,7 @@ with TestCase("watchdog goes into SETTING_CHANGE_DELAY after connman changes") a
 # Note: this test case is "here" in the sequence, because by we know connman is
 # done with configuration and there should be no more SETTING_CHANGE_DELAYs that
 # affect the test timing.
-with TestCase("watchdog retries with sleep according to config") as t:
+with TestCheck("watchdog retries with sleep according to config") as t:
     stop_all_stubs()
     # when stubs are stopped, all the requests will time out, therefore the time
     # it takes to transition to DISCONNECTED should be exactly max_state_change_time_without_delay
@@ -278,7 +278,7 @@ with TestCase("watchdog retries with sleep according to config") as t:
 
 # This test case is inspired by a real-world scenario, see:
 # https://www.notion.so/dividat/PlayOS-network-connectivity-debugging-1fc6ed7e60528050a268f84009197715?source=copy_link#1fc6ed7e60528091b282f3dbfaf7db98
-with TestCase("watchdog restarts connman to recover from external ip setting corruption") as t:
+with TestCheck("watchdog restarts connman to recover from external ip setting corruption") as t:
     playos.succeed("ip address flush dev eth0")
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     wait_for_watchdog_state('ONCE_CONNECTED')
@@ -287,7 +287,7 @@ with TestCase("watchdog restarts connman to recover from external ip setting cor
     wait_for_watchdog_state('ONCE_CONNECTED')
 
 
-with TestCase("watchdog recovers after ip route flush") as t:
+with TestCheck("watchdog recovers after ip route flush") as t:
     playos.succeed("ip route flush dev eth0")
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     wait_for_watchdog_state('ONCE_CONNECTED')
@@ -299,7 +299,7 @@ with TestCase("watchdog recovers after ip route flush") as t:
 
 stop_all_stubs()
 
-with TestCase("watchdog detects configured proxy and uses it") as t:
+with TestCheck("watchdog detects configured proxy and uses it") as t:
     wait_for_watchdog_state('DISCONNECTED')
     wait_for_connman_restart(t)
     wait_for_watchdog_state('NEVER_CONNECTED')
@@ -309,7 +309,7 @@ with TestCase("watchdog detects configured proxy and uses it") as t:
     # proxy redirects check URLs to always-ok-http-service, so it works
     wait_for_watchdog_state('ONCE_CONNECTED')
 
-with TestCase("watchdog responds to proxy removal") as t:
+with TestCheck("watchdog responds to proxy removal") as t:
     configure_connman("--proxy direct")
     wait_for_watchdog_state('SETTING_CHANGE_DELAY')
     # stubs are still stopped, so we get disconnected
@@ -321,7 +321,7 @@ with TestCase("watchdog responds to proxy removal") as t:
 
 
 # test case for false positives - a bit synthetic
-with TestCase("if connman gets misconfigured, watchdog remains disconnected after restarting connman") as t:
+with TestCheck("if connman gets misconfigured, watchdog remains disconnected after restarting connman") as t:
     service = get_first_connman_service_name(playos)
     # invalid static IP config, should make checkServerIP unreachable
     playos.succeed(f"connmanctl config {service} --ipv4 manual 172.33.33.33 255.255.255.0 172.33.33.1")

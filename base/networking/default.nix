@@ -48,6 +48,9 @@ in
     '';
   };
 
+  # connman runs a local caching DNS proxy and manages /etc/resolv.conf
+  networking.resolvconf.enable = false;
+
   networking = {
     hostName = hostName;
 

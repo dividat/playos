@@ -14,8 +14,7 @@ in
 stdenv.mkDerivation {
   name = "install-playos-${systemMetadata.version}";
 
-  src = substituteAll {
-    src = ./install-playos.py;
+  src = replaceVars ./install-playos.py {
     inherit grubCfg systemImage rescueSystem systemClosureInfo;
     inherit (systemMetadata) version kioskUrl updateUrl;
     inherit python;
@@ -34,7 +33,7 @@ stdenv.mkDerivation {
     patchShebangs $out/bin/install-playos
     # Add required tools to path
     wrapProgram $out/bin/install-playos \
-      --prefix PATH ":" ${utillinux}/bin \
+      --prefix PATH ":" ${util-linux}/bin \
       --prefix PATH ":" ${e2fsprogs}/bin \
       --prefix PATH ":" ${dosfstools}/bin \
       --prefix PATH ":" ${grub2_efi}/bin \

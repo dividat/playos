@@ -1,5 +1,5 @@
 { lib, fetchFromGitHub, buildDunePackage
-, ppxlib, ppx_tools_versioned, ocaml_lwt
+, ppxlib, ppx_tools_versioned, lwt
 , lwt_react, lwt_ppx, lwt_log, react, xmlm, menhir }:
 
 buildDunePackage rec {
@@ -23,7 +23,7 @@ buildDunePackage rec {
     lwt_log
     lwt_ppx
     lwt_react
-    ocaml_lwt
+    lwt
     ppxlib
     react
     xmlm

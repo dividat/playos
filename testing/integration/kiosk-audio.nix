@@ -13,7 +13,7 @@ let
   };
   inherit (builtins) toString;
 in
-pkgs.nixosTest {
+pkgs.testers.runNixOSTest {
   name = "Kiosk can play opus files";
 
   nodes.machine = { config, ... }: {
@@ -79,6 +79,7 @@ pkgs.nixosTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
     ps.pillow
@@ -86,7 +87,7 @@ pkgs.nixosTest {
   ];
 
   testScript = ''
-    ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+    from playos_test_helpers import TestPrecondition, TestCheck, wait_for_logs
 
     machine.start()
 
@@ -115,7 +116,7 @@ pkgs.nixosTest {
     with TestPrecondition("Chromium is producing logs"):
         wait_for_logs(machine, "Ready to play", timeout=40);
 
-    with TestCase("Audio playback was succesful"):
+    with TestCheck("Audio playback was succesful"):
         wait_for_logs(machine, "Audio was played", timeout=2);
 '';
 }
