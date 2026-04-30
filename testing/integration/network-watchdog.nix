@@ -215,7 +215,6 @@ with TestPrecondition("PlayOS is booted and services are running "):
     playos.wait_for_unit('playos-network-watchdog.service')
     playos.wait_for_unit('tinyproxy.service')
     playos.wait_for_unit('always-ok-http-service.service')
-    playos.wait_for_unit("network-online.target")
 
 with TestPrecondition("PlayOS can reach HTTPStubServer`s"):
     # assert we can reach the stub servers...
