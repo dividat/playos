@@ -68,6 +68,9 @@ python3Packages.buildPythonApplication rec {
 
       ;
 
+  dontWrapQtApps = true;
+  makeWrapperArgs = [ "\${qtWrapperArgs[@]}" ];
+
   postInstall = ''
     cp -r images/ $out/images
   '';
