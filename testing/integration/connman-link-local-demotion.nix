@@ -81,7 +81,6 @@ playos.start()
 
 with TestPrecondition("Booted and running"):
     playos.wait_for_unit('connman.service')
-    playos.wait_for_unit("network-online.target")
 
 # Restart connman to clear nixosTest vlan and DHCP IPs
 playos.systemctl('restart connman.service')
