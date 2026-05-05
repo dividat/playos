@@ -169,6 +169,7 @@ rec {
 
               # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-6/qtwebengine-debugging.html)
               export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
+              export VK_DRIVER_FILES=/nonexistent
 
               ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
                 --max-cache-size ${toString max-browser-cache-size} \
