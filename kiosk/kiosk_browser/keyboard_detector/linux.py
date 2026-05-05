@@ -86,11 +86,12 @@ def device_is_a_keyboard(device: evdev.InputDevice) -> bool:
     return len(relevant_ev_keys) > 60
 
 
-def find_keyboard_devices() -> evdev.InputDevice:
+def find_keyboard_devices() -> list[evdev.InputDevice]:
     devices = list(map(evdev.InputDevice, evdev.list_devices()))
     # even if nothing is plugged in, there should be at least a power button here!
     if len(devices) == 0:
         logging.error("No input devices found, is the current user in the `input` group?")
+        return []
 
     return [d for d in devices if device_is_a_keyboard(d) and not device_is_blacklisted(d)]
 
