@@ -92,7 +92,7 @@ pkgs.testers.runNixOSTest {
     machine.start()
 
     machine.wait_for_file("/tmp/www")
-    machine.succeed("ln -s '${opusFile}' /tmp/www/demo.opus")
+    machine.succeed("cp '${opusFile}' /tmp/www/demo.opus")
     machine.succeed("""cat << EOF > /tmp/www/index.html
     <html>
     <head>

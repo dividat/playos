@@ -33,11 +33,10 @@ pkgs.testers.runNixOSTest {
         "-enable-kvm"
       ];
 
-      environment.etc."www/index.html".text = builtins.readFile ./kiosk-recovery/index.html;
-      environment.etc."www/sw.js".text = builtins.readFile ./kiosk-recovery/sw.js;
       services.static-web-server.enable = true;
       services.static-web-server.listen = "[::]:8080";
-      services.static-web-server.root = "/etc/www";
+      # serves index.html and sw.js
+      services.static-web-server.root = "${./kiosk-recovery}";
 
       services.xserver = let sessionName = "kiosk-browser";
       in {
