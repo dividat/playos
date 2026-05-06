@@ -90,9 +90,12 @@ pkgs.testers.runNixOSTest {
         virtualisation.vlans = [ 1 ];
         networking.firewall.enable = false;
 
-        services.static-web-server.enable = true;
-        services.static-web-server.listen = "[::]:80";
-        services.static-web-server.root = "/tmp/bundle-store";
+        services.darkhttpd.enable = true;
+        services.darkhttpd.address = "::";
+        services.darkhttpd.port = 80;
+        services.darkhttpd.rootDir = "/run/darkhttpd";
+        systemd.services.darkhttpd.serviceConfig.RuntimeDirectory = "darkhttpd";
+        systemd.services.darkhttpd.serviceConfig.RuntimeDirectoryMode = "0777";
 
         # the proxy achieves two things:
         # - is used to test that proxy settings are honoured
@@ -108,10 +111,6 @@ pkgs.testers.runNixOSTest {
           Upstream = ''http 127.0.0.1:80 "${update_host_port}"'';
           LogLevel = "Critical"; # comment out to debug proxied reqs
         };
-
-        systemd.tmpfiles.rules = [
-            "d ${config.services.static-web-server.root} 0777 root root -"
-        ];
 
         virtualisation.qemu.options = [
             "-enable-kvm"
@@ -138,7 +137,7 @@ pkgs.testers.runNixOSTest {
     product_name = "${safeProductName}"
     current_version = "1.1.1-TESTMAGIC"
 
-    http_root = "${nodes.sidekick.services.static-web-server.root}"
+    http_root = "${nodes.sidekick.services.darkhttpd.rootDir}"
     http_local_url = "http://127.0.0.1"
 
     proxy_url = "http://${nodes.sidekick.networking.primaryIPAddress}:8888"

@@ -155,13 +155,12 @@ pkgs.testers.runNixOSTest {
         virtualisation.vlans = [ 1 ];
         networking.firewall.enable = false;
 
-        services.static-web-server.enable = true;
-        services.static-web-server.listen = "[::]:80";
-        services.static-web-server.root = "/tmp/www";
-
-        systemd.tmpfiles.rules = [
-            "d ${config.services.static-web-server.root} 0777 root root -"
-        ];
+        services.darkhttpd.enable = true;
+        services.darkhttpd.address = "::";
+        services.darkhttpd.port = 80;
+        services.darkhttpd.rootDir = "/run/darkhttpd";
+        systemd.services.darkhttpd.serviceConfig.RuntimeDirectory = "darkhttpd";
+        systemd.services.darkhttpd.serviceConfig.RuntimeDirectoryMode = "0777";
 
         services.dnsmasq.enable = true;
         services.dnsmasq.settings = {
@@ -233,7 +232,7 @@ product_name = "${safeProductName}"
 pre_version = "${preSystemVersion}"
 next_version = "${nextSystemVersion}"
 
-http_root = "${nodes.sidekick.services.static-web-server.root}"
+http_root = "${nodes.sidekick.services.darkhttpd.rootDir}"
 http_local_url = "http://127.0.0.1"
 
 ### Test helpers
