@@ -76,6 +76,15 @@ in
   };
   # Issue 1: Make sure connman starts after wpa_supplicant
   systemd.services."connman".after = wpaSupplicantServices;
+
+  # connman provides /etc/resolv.conf (via its built-in DNS proxy).
+  # Use the standard nss-lookup.target synchronization point so services
+  # that depend on name resolution can order themselves with After=.
+  systemd.services."connman".wants = [ "nss-lookup.target" ];
+  systemd.services."connman".before = [ "nss-lookup.target" ];
+
+  # avahi-daemon needs /etc/resolv.conf to be available before it starts
+  systemd.services."avahi-daemon".after = [ "nss-lookup.target" ];
   # Issue 2: Restart wpa_supplicant (and thereby connman) after rfkill unblock of wlan
   #          This addresses the problem of wpa_supplicant with connman not seeing any
   #          networks if wlan was initially soft blocked. (https://web.archive.org/web/20191211094135/https://01.org/jira/browse/CM-670)
