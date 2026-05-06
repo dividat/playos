@@ -73,6 +73,10 @@ pkgs.testers.runNixOSTest {
       ];
 
       config = {
+        # work-around to nixos broken network targets when connman is used.
+        # without this, network.target is never activated.
+        systemd.targets.network.wantedBy = [ "multi-user.target" ];
+
         networking.firewall.enable = false;
 
         services.connman = {

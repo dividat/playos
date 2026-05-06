@@ -21,6 +21,8 @@ in
     traceroute # for connectivity
   ];
 
+  systemd.targets.network.wantedBy = [ "multi-user.target" ];
+
   # Set up networking with ConnMan
   # We need to work around various issues in the interplay of connman and
   # wpa_supplicant for this to work.
