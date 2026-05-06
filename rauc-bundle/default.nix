@@ -1,4 +1,4 @@
-{ stdenv, perl, pixz, pathsFromGraph
+{ stdenv, perl, pixz
 , importFromNixos
 , rauc
 , version
