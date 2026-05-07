@@ -167,4 +167,7 @@ stdenv.mkDerivation {
       $out
   '';
 
+   # reduce build time by telling nix to not scan for dependencies
+   __structuredAttrs = true;
+   unsafeDiscardReferences.out = true;
 }
