@@ -83,6 +83,18 @@ jobs:
         NIX_BINARY_CACHE_PRIVATE_KEY: ${{ secrets.NIX_BINARY_CACHE_PRIVATE_KEY }}
     - run: NIXPKGS_ALLOW_UNFREE=1 ./build vm
 
+  build-vm-portable:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: ./.github/actions/prep-build-env
+      with:
+        NIX_CACHE_ACCOUNT_ID: ${{ secrets.NIX_CACHE_ACCOUNT_ID }}
+        NIX_CACHE_ACCESS_KEY_ID: ${{ secrets.NIX_CACHE_ACCESS_KEY_ID }}
+        NIX_CACHE_SECRET_ACCESS_KEY: ${{ secrets.NIX_CACHE_SECRET_ACCESS_KEY }}
+        NIX_BINARY_CACHE_PRIVATE_KEY: ${{ secrets.NIX_BINARY_CACHE_PRIVATE_KEY }}
+    - run: NIXPKGS_ALLOW_UNFREE=1 ./build vm-portable
+
   e2e-tests:
     runs-on: ubuntu-latest
     steps:
