@@ -210,7 +210,7 @@ View what has been added, changed and fixed with each version.
 
 ** Status screen
 
-A status screen providing a brief status report about various components of the system is available on ~tty8~. It can be accessed using the key combination ~Ctrl-Alt-F8~. To get back from the status screen to the graphical interface, use ~Ctrl-Alt-F7~.
+A status screen providing a brief status report about various components of the system is available on ~tty8~. It can be accessed using the key combination ~Ctrl-Alt-F8~. To get back from the status screen to the graphical interface, use ~Ctrl-Alt-F1~.
 
 ** Clearing kiosk browser cache
 

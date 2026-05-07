@@ -128,8 +128,8 @@ rec {
       };
 
       # Limit virtual terminals that can be switched to
-      # Virtual terminal 7 is the kiosk, 8 is the status screen
-      playos.xserver.activeVirtualTerminals = [ 7 8 ];
+      # Virtual terminal 1 is the kiosk, 8 is the status screen
+      playos.xserver.activeVirtualTerminals = [ 1 8 ];
 
       # System-wide packages
       environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme playos-diagnostics ];

@@ -37,8 +37,8 @@
 # The system images have a passwordless root account, so you can gain root
 # access from the QEMU GUI:
 #   - switch to QEMU monitor console (using ctrl-alt-2 or the menu)
-#   - execute "sendkey ctrl-shift-f8" (switch to status screen on TTY8)
-#   - execute "sendkey ctrl-shift-f1" (switch to TTY1)
+#   - execute "sendkey ctrl-alt-f8" (switch to status screen on TTY8)
+#   - execute "sendkey ctrl-alt-f3" (switch to TTY3)
 #   - login with "root"
 let
     # Note: we use HTTP instead of HTTPS, because pkgs.fetchurl fails
@@ -389,11 +389,11 @@ def check_for_text_in_status_page(text, ignore_errors=False):
 
     t.assertIn(text, screen_text)
 
-# Note: done via root shell on tty1, since a QEMU system_reset corrupts the
+# Note: done via root shell on tty, since a QEMU system_reset corrupts the
 # /boot/status.ini due to unclean unmount + FAT
 def reboot_via_tty():
-    playos.send_key("ctrl-alt-f8", delay=2) # direct switch to tty1 prevented by limit-vtes.nix
-    playos.send_key("ctrl-alt-f1", delay=2)
+    playos.send_key("ctrl-alt-f8", delay=2) # direct switch to tty prevented by limit-vtes.nix
+    playos.send_key("ctrl-alt-f3", delay=2)
     playos.send_chars("root\n")
     time.sleep(2)
     playos.send_chars("systemctl reboot\n")
