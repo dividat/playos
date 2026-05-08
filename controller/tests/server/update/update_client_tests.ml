@@ -60,7 +60,7 @@ let rec wait_for_mock_server ?(timeout = 0.2) ?(remaining_tries = 3) url =
         in
         Lwt.fail (Failure err_msg)
 
-let run_test_case ?(proxy = NoProxy) switch f =
+let run_test_case ?(proxy = NoProxy) ?download_limit switch f =
   let server = mock_server () in
   let server_url, server_task = server#run () in
   let%lwt () = wait_for_mock_server server_url in
@@ -78,8 +78,8 @@ let run_test_case ?(proxy = NoProxy) switch f =
   in
   let () = Sys.mkdir temp_dir 0o777 in
   let module DepsI =
-    ( val Update_client.make_deps ~download_dir_override:temp_dir get_proxy
-            base_url
+    ( val Update_client.make_deps ~download_dir_override:temp_dir
+            ?download_limit_override:download_limit get_proxy base_url
       )
   in
   let module UpdateC = Update_client.Make (DepsI) in
@@ -153,15 +153,31 @@ let test_invalid_proxy_fail _ (module Client : S) =
           ^ Printexc.to_string other_exn
       )
 
+let test_download_limit_honored server (module Client : S) =
+  let version = "1.0.0" in
+  let bundle = String.make (3 * 1024) 'x' in
+  let () = server#add_bundle version bundle in
+  let start = Unix.gettimeofday () in
+  let%lwt _bundle_path = Client.download version in
+  let elapsed = Unix.gettimeofday () -. start in
+  Alcotest.(check bool)
+    "Download took at least 2.0 seconds with 1K/s limit" true (elapsed >= 2.0) ;
+  Lwt.return ()
+
 let () =
   let () = setup_log () in
-  (* All tests cases are run with proxy setup and without to verify it works
+  (* Common test cases are run with proxy setup and without to verify it works
      always *)
   let test_cases =
     [ ("Get latest version", test_get_version_ok)
     ; ("Download bundle", test_download_bundle_ok)
     ; ("Resume download works", test_resume_bundle_download)
     ]
+  in
+  let download_limit_case =
+    Alcotest_lwt.test_case "Download rate is limited" `Slow (fun switch () ->
+        run_test_case ~download_limit:"1K" switch test_download_limit_honored
+    )
   in
   (* An extra case to check that proxy settings are honored in general *)
   let invalid_proxy_case =
@@ -173,13 +189,14 @@ let () =
   Lwt_main.run
   @@ Alcotest_lwt.run "Basic tests"
        [ ( "without-proxy"
-         , List.map
-             (fun (name, test_f) ->
-               Alcotest_lwt.test_case name `Quick (fun switch () ->
-                   run_test_case switch test_f
-               )
-             )
-             test_cases
+         , download_limit_case
+           :: List.map
+                (fun (name, test_f) ->
+                  Alcotest_lwt.test_case name `Quick (fun switch () ->
+                      run_test_case switch test_f
+                  )
+                )
+                test_cases
          )
        ; ( "with-proxy"
          , invalid_proxy_case

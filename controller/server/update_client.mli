@@ -14,11 +14,15 @@ module type UpdateClientDeps = sig
 
   val download_dir : string
 
+  (** If set, passed to curl as --limit-rate *)
+  val download_limit : string option
+
   val get_proxy : unit -> Uri.t option Lwt.t
 end
 
 val make_deps :
      ?download_dir_override:string
+  -> ?download_limit_override:string
   -> (unit -> Uri.t option Lwt.t)
   -> Uri.t
   -> (module UpdateClientDeps)

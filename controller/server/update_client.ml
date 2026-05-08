@@ -13,11 +13,13 @@ module type UpdateClientDeps = sig
 
   val download_dir : string
 
+  val download_limit : string option
+
   val get_proxy : unit -> Uri.t option Lwt.t
 end
 
-let make_deps ?download_dir_override get_proxy base_url :
-    (module UpdateClientDeps) =
+let make_deps ?download_dir_override ?download_limit_override get_proxy base_url
+    : (module UpdateClientDeps) =
   (module struct
     let base_url = base_url
 
@@ -29,6 +31,13 @@ let make_deps ?download_dir_override get_proxy base_url :
         Sys.getenv_opt "STATE_DIRECTORY" |> Option.value ~default:"/tmp"
       in
       download_dir_override |> Option.value ~default:default_download_dir
+
+    let download_limit =
+      match download_limit_override with
+      | Some _ ->
+          download_limit_override
+      | None ->
+          Sys.getenv_opt "PLAYOS_UPDATE_DL_LIMIT"
   end
 )
 
@@ -71,15 +80,16 @@ module UpdateClient (DepsI : UpdateClientDeps) = struct
     let bundle_path =
       Format.sprintf "%s/%s" download_dir (bundle_file_name version)
     in
-    let options =
-      [ "--continue-at"
-      ; "-" (* resume download *)
-      ; "--limit-rate"
-      ; "10M"
-      ; "--output"
-      ; bundle_path
-      ]
+    let limit_rate_opts =
+      match DepsI.download_limit with
+      | Some limit ->
+          [ "--limit-rate"; limit ]
+      | None ->
+          []
     in
+    let resume_opts = [ "--continue-at"; "-" ] in
+    let output_opts = [ "--output"; bundle_path ] in
+    let options = List.flatten [ limit_rate_opts; resume_opts; output_opts ] in
     let%lwt proxy = get_proxy () in
     match%lwt Curl.request ?proxy ~options url with
     | RequestSuccess _ ->

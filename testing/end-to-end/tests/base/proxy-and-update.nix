@@ -131,6 +131,7 @@ pkgs.testers.runNixOSTest {
     ${builtins.readFile ../../../helpers/nixos-test-script-helpers.py}
     ${builtins.readFile ./proxy-and-update-helpers.py}
     import json
+    import os
 
     product_name = "${safeProductName}"
     current_version = "1.1.1-TESTMAGIC"
@@ -142,6 +143,9 @@ pkgs.testers.runNixOSTest {
 
     is_legacy_mode = bool(${toString legacyMode}) # `toString false` returns ""
     bad_ext4_option = "metadata_csum_seed"
+
+    def wait_for_state(state, timeout):
+        return wait_for_logs(playos, state, unit="playos-controller", timeout=timeout)
 
     create_overlay("${disk}", "${overlayPath}")
     playos.start(allow_reboot=True)
@@ -212,10 +216,7 @@ pkgs.testers.runNixOSTest {
         ]
 
         for state in expected_states:
-            wait_for_logs(playos,
-                state,
-                unit="playos-controller.service",
-                timeout=61)
+            wait_for_state(state, timeout=61)
 
     with TestCase("Controller installs the new upstream version") as t:
         next_version = "${nextVersion}"
@@ -227,19 +228,26 @@ pkgs.testers.runNixOSTest {
         # TODO: override config to reduce check interval instead
         playos.systemctl("restart playos-controller.service")
 
-        expected_states = [
-            "Downloading",
-            f"Installing.*{update_server.bundle_filename(next_version)}",
-            "RebootRequired"
-        ]
+        start_time = time.time()
 
-        for state in expected_states:
-            wait_for_logs(playos,
-                state,
-                unit="playos-controller.service",
-                # curl is limited to 10MB/s in controller, so
-                # a 600 MB bundle will take at least 60s
-                timeout=75)
+        # expected state transitions: Downloading -> Installing -> RebootRequired
+
+        # -> Downloading
+        wait_for_state("Downloading", timeout=10)
+
+        # Downloading -> Installing
+        bundle_size = os.path.getsize("${nextVersionBundle}")
+        min_download_time = bundle_size / (10 * 1024 * 1024)  # 10 M/s default limit
+
+        wait_for_state(f"Installing.*{update_server.bundle_filename(next_version)}", timeout=min_download_time*2)
+
+        elapsed = time.time() - start_time
+        t.assertGreater(elapsed, min_download_time,
+            f"Downloaded bundle too fast ({elapsed:.1f}s), rate limiting not applied?")
+
+        # Installing -> RebootRequired
+        wait_for_state("RebootRequired", timeout=30)
+
 
     with TestCase("RAUC status confirms the installation") as t:
         rauc_status = json.loads(playos.succeed(

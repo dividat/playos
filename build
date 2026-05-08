@@ -5,7 +5,7 @@ set -euo pipefail
 PRODUCTION_TARGETS="develop|validation|master|release-disk"
 
 # other targets used for development/testing/etc
-OTHER_TARGETS="vm|stuck|lab-key|shed-key|test-e2e|all"
+OTHER_TARGETS="vm|stuck|lab-key|shed-key|test-e2e|portable|vm-portable|all"
 
 ALL_TARGETS="$PRODUCTION_TARGETS|$OTHER_TARGETS"
 
@@ -44,13 +44,22 @@ fi
 # See https://nixos.wiki/wiki/FAQ/How_can_I_install_a_proprietary_or_unfree_package%3F
 export NIXPKGS_ALLOW_UNFREE=1
 
-if [ "$TARGET" == "vm" ]; then
+if [[ "$TARGET" == "vm" ]] || [[ "$TARGET" == "vm-portable" ]] ; then
 
-  (set -x; nix-build \
-    --arg buildInstaller false \
-    --arg buildBundle false \
-    --arg buildLive false \
-    --arg buildDisk false)
+  build_args=(
+    --arg buildInstaller false
+    --arg buildBundle false
+    --arg buildLive false
+    --arg buildDisk false
+  )
+
+  if [ "$TARGET" == "vm-portable" ]; then
+    build_args+=(
+        --arg applicationPath ./flavors/portable.nix
+    )
+  fi
+
+  (set -x; nix-build "${build_args[@]}")
 
 echo -e "
 Run ./result/bin/run-in-vm to start a VM.
@@ -108,6 +117,23 @@ elif [ "$TARGET" == "master" ]; then
     --arg updateCert ./pki/master/cert.pem \
     --arg updateUrl https://dist.dividat.com/releases/playos/master/ \
     --arg deployUrl s3://dist.dividat.ch/releases/playos/master/ \
+    --arg kioskUrl https://play.dividat.com/ \
+    --arg watchdogUrls '["https://play.dividat.com/" "https://api.dividat.com"]' \
+    --arg buildDisk false)
+
+  echo
+  echo "Run ./result/bin/deploy-update to deploy."
+
+elif [ "$TARGET" == "portable" ]; then
+
+  scripts/info-branch-commit
+  scripts/confirm-or-abort
+
+  (set -x; nix-build \
+    --arg applicationPath ./flavors/portable.nix \
+    --arg updateCert ./pki/master/cert.pem \
+    --arg updateUrl https://dist.dividat.com/releases/playos/portable/ \
+    --arg deployUrl s3://dist.dividat.ch/releases/playos/portable/ \
     --arg kioskUrl https://play.dividat.com/ \
     --arg watchdogUrls '["https://play.dividat.com/" "https://api.dividat.com"]' \
     --arg buildDisk false)
