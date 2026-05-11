@@ -15,6 +15,8 @@ rec {
    <`-       (__< <           :
     (__        (_<_<          ;     ${label}
 -----`------------------------------------------------------ ----------- ------
+
+Press Ctrl+Alt+F1 to return to the graphical session.
     '';
 
     overlays = [
