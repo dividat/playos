@@ -70,6 +70,9 @@ pkgs.testers.runNixOSTest {
           };
         };
 
+        # work-around to nixos broken network targets when connman is used
+        systemd.targets.network.wantedBy = [ "multi-user.target" ];
+
         services.connman = {
           enable = pkgs.lib.mkOverride 0 true; # disabled in runNixOSTest by default
         };
@@ -215,11 +218,14 @@ with TestPrecondition("PlayOS is booted and services are running "):
     playos.wait_for_unit('playos-network-watchdog.service')
     playos.wait_for_unit('tinyproxy.service')
     playos.wait_for_unit('always-ok-http-service.service')
+    playos.wait_for_unit('multi-user.target')
 
 with TestPrecondition("PlayOS can reach HTTPStubServer`s"):
     # assert we can reach the stub servers...
-    playos.succeed("curl ${primaryCheckUrl}")
-    playos.succeed("curl ${secondaryCheckUrl}")
+    # wrapping in wait_until_passes, since curl hangs forever if port forwarding
+    # is broken
+    wait_until_passes(lambda: playos.succeed("curl ${primaryCheckUrl}", timeout=1))
+    wait_until_passes(lambda: playos.succeed("curl ${secondaryCheckUrl}", timeout=1))
     # ...but they return an HTTP status code >=400
     playos.fail("curl --fail ${primaryCheckUrl}")
     playos.fail("curl --fail ${secondaryCheckUrl}")
