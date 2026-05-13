@@ -1,4 +1,4 @@
-{ stdenv, perl, pixz, pathsFromGraph
+{ stdenv, perl, pixz
 , importFromNixos
 , rauc
 , version
@@ -167,4 +167,7 @@ stdenv.mkDerivation {
       $out
   '';
 
+   # reduce build time by telling nix to not scan for dependencies
+   __structuredAttrs = true;
+   unsafeDiscardReferences.out = true;
 }

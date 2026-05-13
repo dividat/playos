@@ -195,23 +195,25 @@ module Make (Deps : ServiceDeps) : UpdateService = struct
         let%lwt () = Lwt_unix.sleep duration in
         return { state with process_state = GettingVersionInfo }
     | Downloading version -> (
-        (* download latest version *)
-        match%lwt Lwt_result.catch (fun () -> ClientI.download version) with
-        | Ok bundle_path ->
-            return { state with process_state = Installing bundle_path }
-        | Error exn ->
-            let exn_str = Printexc.to_string exn in
-            let%lwt () =
-              Logs_lwt.err ~src:log_src (fun m ->
-                  m "failed to download RAUC bundle: %s" exn_str
-              )
-            in
-            return
-              { state with
-                process_state = Sleeping config.http_error_backoff_duration
-              ; system_status = UpdateError (ErrorDownloading exn_str)
-              }
-      )
+      (* download latest version *)
+      match%lwt
+        Lwt_result.catch (fun () -> ClientI.download version)
+      with
+      | Ok bundle_path ->
+          return { state with process_state = Installing bundle_path }
+      | Error exn ->
+          let exn_str = Printexc.to_string exn in
+          let%lwt () =
+            Logs_lwt.err ~src:log_src (fun m ->
+                m "failed to download RAUC bundle: %s" exn_str
+            )
+          in
+          return
+            { state with
+              process_state = Sleeping config.http_error_backoff_duration
+            ; system_status = UpdateError (ErrorDownloading exn_str)
+            }
+    )
     | Installing bundle_path ->
         Lwt.finalize
           (fun () ->

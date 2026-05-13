@@ -68,7 +68,7 @@ pkgs.testers.runNixOSTest {
         playos.wait_for_console_text("playos-network-watchdog.service: Deactivated successfully.")
         playos.fail("systemctl is-active playos-network-watchdog.service")
         playos.execute("systemctl restart playos-network-watchdog.service")
-        playos.wait_for_console_text("watchdog was skipped because of an unmet condition")
+        playos.wait_for_console_text("watchdog.*skipped.*unmet condition")
         playos.fail("systemctl is-active playos-network-watchdog.service")
 
     with subtest("Network watchdog enable works"):

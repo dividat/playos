@@ -289,6 +289,10 @@ class BrowserWidget(QtWidgets.QWidget):
     # Note: this assumes script injection rules are not changing, i.e.
     # we remain in the same dialog (cf. `BrowserWidget.load(..)`)
     def full_reload(self, url=""):
+        if self._is_full_reload:
+            logging.debug("Full reload already in progress, ignoring.")
+            return
+
         # Temporarily navigate to an empty page
         self._webview.setUrl(QUrl("about:none"))
 

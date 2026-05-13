@@ -9,7 +9,7 @@ let
   };
   inherit (builtins) toString;
 in
-pkgs.nixosTest {
+pkgs.testers.runNixOSTest {
   name = "Virtual keyboard tests";
 
   nodes.machine = { config, ... }: {
@@ -63,12 +63,13 @@ pkgs.nixosTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
 
   testScript = ''
-    ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+    from playos_test_helpers import TestCheck, wait_for_logs
 
     machine.start()
 
@@ -77,16 +78,16 @@ pkgs.nixosTest {
 
     checkpoint = None
 
-    with TestCase("kiosk detects no keyboard attached"):
+    with TestCheck("kiosk detects no keyboard attached"):
         checkpoint = wait_for_logs(machine, "enabling virtual keyboard", timeout=20)
 
-    with TestCase("new keyboard device -> disable virtual keyboard"):
+    with TestCheck("new keyboard device -> disable virtual keyboard"):
         machine.send_monitor_command("device_add usb-kbd,id=testkbd")
         wait_for_logs(machine, "New USB device found", since=checkpoint, timeout=5)
         checkpoint = wait_for_logs(machine, "Product: QEMU USB Keyboard", since=checkpoint, timeout=5)
         checkpoint = wait_for_logs(machine, "disabling virtual keyboard", since=checkpoint, timeout=5)
 
-    with TestCase("keyboard device unplugged -> enable virtual keyboard"):
+    with TestCheck("keyboard device unplugged -> enable virtual keyboard"):
         machine.send_monitor_command("device_del testkbd")
         checkpoint = wait_for_logs(machine, "enabling virtual keyboard", since=checkpoint, timeout=5)
 '';
