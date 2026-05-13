@@ -249,10 +249,17 @@ with TestPrecondition("Test APs are setup and visible to connman"):
     # Wait until connman sees all the APs
     # Note: due to the wpa_supplicant restarts (from the rfkill.hook), the
     # timing is kinda unpredictable.
-    # In particular the `bad-ap-blocked` seems to take an extra 10 seconds to
-    # appear.
+
+    # Wait until rfkill is unblocked and connman can actually perform the scan
+    playos.wait_until_succeeds(
+        # connmanctl exits 0 even when scan fails ("Error ...: No carrier"),
+        "! connmanctl scan wifi 2>&1 | grep -q Error",
+        timeout=30,
+    )
+
+    # Check that each AP is visible
     for ap in all_simulated_aps:
-        playos.wait_until_succeeds(f"connmanctl services | grep {ap}", timeout=60)
+        playos.wait_until_succeeds(f"connmanctl services | grep {ap}", timeout=90)
 
 # === sanity check
 
