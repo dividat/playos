@@ -154,10 +154,13 @@ class HTTPStubServer:
             f.write("Hello world\n")
 
         class Handler(http.server.SimpleHTTPRequestHandler):
+            # drop "dead" clients (e.g. when NAT is broken)
+            timeout = 2
+
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, directory=d.name, **kwargs)
 
-        self._server = http.server.HTTPServer(
+        self._server = http.server.ThreadingHTTPServer(
             ("", port),
             Handler
         )
