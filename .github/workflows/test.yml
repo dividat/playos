@@ -42,7 +42,9 @@ jobs:
         NIX_CACHE_ACCESS_KEY_ID: ${{ secrets.NIX_CACHE_ACCESS_KEY_ID }}
         NIX_CACHE_SECRET_ACCESS_KEY: ${{ secrets.NIX_CACHE_SECRET_ACCESS_KEY }}
         NIX_BINARY_CACHE_PRIVATE_KEY: ${{ secrets.NIX_BINARY_CACHE_PRIVATE_KEY }}
-    - run: NIXPKGS_ALLOW_UNFREE=1 nix-build ${{ matrix.file }}
+    - run: NIXPKGS_ALLOW_UNFREE=1 nix-build ${MATRIX_FILE}
+      env:
+        MATRIX_FILE: ${{ matrix.file }}
 
 
   manual-tests-build-only:
