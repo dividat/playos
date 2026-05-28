@@ -164,7 +164,7 @@ with pkgs; stdenv.mkDerivation {
     chmod +x $out/bin/run-in-vm
   ''
   + lib.optionalString buildLive ''
-    ln -s ${components.live}/iso/${components.safeProductName}-live-${components.version}.iso $out/${components.safeProductName}-live-${components.version}.iso
+    ln -s ${components.live}/iso/${components.live.isoName} $out/${components.safeProductName}-live-${components.version}.iso
   ''
   + lib.optionalString buildDisk ''
     ln -s ${components.disk} $out/${components.safeProductName}-disk-${components.version}.img
