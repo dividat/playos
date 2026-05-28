@@ -18,10 +18,10 @@ let nixos = pkgs.importFromNixos ""; in
 
     config = {
       # ISO image customization
+      image.baseName = lib.mkForce "${application.safeProductName}-live-${application.version}";
       isoImage = {
         makeEfiBootable = true;
         makeUsbBootable = true;
-        isoName = "${application.safeProductName}-live-${application.version}.iso";
         appendToMenuLabel = " Live System";
       } // lib.optionalAttrs (squashfsCompressionOpts != null) { squashfsCompression = squashfsCompressionOpts; };
 
