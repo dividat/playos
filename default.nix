@@ -153,10 +153,18 @@ with pkgs; stdenv.mkDerivation {
   buildCommand = ''
     mkdir -p $out
 
-    ln -s ${components.docs} $out/docs
+    ln_checked() {
+      if [[ ! -e "$1" ]]; then
+        echo "Build error: target file does not exist: $1" >&2
+        exit 1
+      fi
+      ln -s "$1" "$2"
+    }
+
+    ln_checked ${components.docs} $out/docs
 
     # Certificate used to verify update bundles
-    ln -s ${updateCert} $out/cert.pem
+    ln_checked ${updateCert} $out/cert.pem
   ''
   + lib.optionalString buildVm ''
     mkdir -p $out/bin
@@ -164,29 +172,29 @@ with pkgs; stdenv.mkDerivation {
     chmod +x $out/bin/run-in-vm
   ''
   + lib.optionalString buildLive ''
-    ln -s ${components.live}/iso/${components.live.isoName} $out/${components.safeProductName}-live-${components.version}.iso
+    ln_checked ${components.live}/iso/${components.live.isoName} $out/${components.safeProductName}-live-${components.version}.iso
   ''
   + lib.optionalString buildDisk ''
-    ln -s ${components.disk} $out/${components.safeProductName}-disk-${components.version}.img
+    ln_checked ${components.disk} $out/${components.safeProductName}-disk-${components.version}.img
   ''
   + lib.optionalString buildReleaseDisk ''
-    ln -s ${releaseDisk} $out/${components.safeProductName}-release-disk-${components.version}.img.zst
+    ln_checked ${releaseDisk} $out/${components.safeProductName}-release-disk-${components.version}.img.zst
   ''
   # Installer ISO image
   + lib.optionalString buildInstaller ''
-    ln -s ${components.installer.isoImage}/iso/${components.installer.isoImage.isoName} $out/${components.safeProductName}-installer-${components.version}.iso
+    ln_checked ${components.installer.isoImage}/iso/${components.installer.isoImage.isoName} $out/${components.safeProductName}-installer-${components.version}.iso
   ''
   # RAUC bundle
   + lib.optionalString buildBundle ''
-    ln -s ${components.unsignedRaucBundle} $out/${components.safeProductName}-${components.version}-UNSIGNED.raucb
+    ln_checked ${components.unsignedRaucBundle} $out/${components.safeProductName}-${components.version}-UNSIGNED.raucb
     cp ${components.deploy-update} $out/bin/deploy-update
     chmod +x $out/bin/deploy-update
   ''
   # Tests
   + lib.optionalString buildTest ''
     mkdir -p $out/tests
-    ln -s ${testComponents.tests.interactive} $out/tests/interactive
-    ln -s ${testComponents.tests.tests} $out/tests/tests
+    ln_checked ${testComponents.tests.interactive} $out/tests/interactive
+    ln_checked ${testComponents.tests.tests} $out/tests/tests
   '';
 
   passthru.tests = testComponents.tests.run;
