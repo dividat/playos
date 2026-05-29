@@ -36,6 +36,7 @@ with TestCase("Short press on power and sleep from regular keyboard are ignored"
 with TestCase("ACPI shutdown command invokes shutdown"):
     machine.send_monitor_command("system_powerdown")
     machine.wait_for_console_text("Stopped target Multi-User System")
+    machine.wait_for_shutdown()
 
 # Test script does not finish on its own after shutdown
 exit(0)
