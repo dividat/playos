@@ -49,9 +49,8 @@ in {
       polkit.addRule(function(action, subject) {
         if (subject.user == "${user}" &&
           subject.isInGroup("${group}") &&
-          action.id == "org.freedesktop.systemd1.manage-units" &&
-          action.lookup("unit") == "poweroff.target" &&
-          action.lookup("verb") == "start") {
+          (action.id == "org.freedesktop.login1.power-off" ||
+           action.id == "org.freedesktop.login1.power-off-multiple-sessions")) {
           return polkit.Result.YES;
         }
       })
