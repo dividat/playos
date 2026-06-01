@@ -16,7 +16,7 @@ def handle_device(device):
         for event in device.read_loop():
             if event.type == evdev.ecodes.EV_KEY and event.code == evdev.ecodes.KEY_POWER and event.value:
                 logging.info(f'KEY_POWER detected on {device.path}, shutting down')
-                subprocess.run(['systemctl', 'start', 'poweroff.target'], check=True)
+                subprocess.run(['systemctl', 'poweroff'], check=True)
     except Exception as e:
         logging.error(f'Error handling {device.path}: {e}')
 

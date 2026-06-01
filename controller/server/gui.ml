@@ -462,7 +462,7 @@ end
 module StatusGui = struct
   open Status_page
 
-  let shutdown () = Util.run_cmd_no_stdout [| "halt"; "--poweroff" |]
+  let shutdown () = Util.run_cmd_no_stdout [| "systemctl"; "poweroff" |]
 
   let reboot () = Util.run_cmd_no_stdout [| "reboot" |]
 
