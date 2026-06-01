@@ -15,6 +15,8 @@ rec {
    <`-       (__< <           :
     (__        (_<_<          ;     ${label}
 -----`------------------------------------------------------ ----------- ------
+
+Press Ctrl+Alt+F1 to return to the graphical session.
     '';
 
     overlays = [
@@ -128,8 +130,8 @@ rec {
       };
 
       # Limit virtual terminals that can be switched to
-      # Virtual terminal 7 is the kiosk, 8 is the status screen
-      playos.xserver.activeVirtualTerminals = [ 7 8 ];
+      # Virtual terminal 1 is the kiosk, 8 is the status screen
+      playos.xserver.activeVirtualTerminals = [ 1 8 ];
 
       # System-wide packages
       environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme playos-diagnostics ];
@@ -169,6 +171,7 @@ rec {
 
               # Enable Qt WebEngine Developer Tools (https://doc.qt.io/qt-6/qtwebengine-debugging.html)
               export QTWEBENGINE_REMOTE_DEBUGGING="127.0.0.1:3355"
+              export VK_DRIVER_FILES=/nonexistent
 
               ${pkgs.playos-kiosk-browser}/bin/kiosk-browser \
                 --max-cache-size ${toString max-browser-cache-size} \
@@ -309,7 +312,7 @@ rec {
       # Audio
       services.pipewire.enable = false;
 
-      hardware.pulseaudio = {
+      services.pulseaudio = {
         enable = true;
         extraConfig = ''
           # Use HDMI output
@@ -358,7 +361,9 @@ rec {
       '';
 
       # Set a low default timeout when stopping services, to prevent the Windows 95 shutdown experience
-      systemd.extraConfig = "DefaultTimeoutStopSec=15s";
+      systemd.settings.Manager = {
+        DefaultTimeoutStopSec = "15s";
+      };
 
       playos.hardening.enable = true;
 

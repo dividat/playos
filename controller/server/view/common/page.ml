@@ -106,8 +106,8 @@ let html ?current_page ?header content =
                ; Licensing
                ]
               |> List.concat_map (fun page ->
-                     [ menu_item current_page page; txt " " ]
-                 )
+                  [ menu_item current_page page; txt " " ]
+              )
               )
           ; form
               ~a:

@@ -145,13 +145,14 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
 
   testScript = {nodes}:
   ''
-${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import TestPrecondition, TestCheck, wait_for_logs
 playos.start()
 
 with TestPrecondition("Test APs are setup and visible to connman"):
@@ -163,7 +164,7 @@ with TestPrecondition("Test APs are setup and visible to connman"):
     playos.wait_until_succeeds("connmanctl services | grep test-ap-sae", timeout=60)
     print(playos.succeed("connmanctl services wifi_02deadbeef01_746573742d61702d736165_managed_psk"))
 
-with TestCase("connman applies retry mechanism after SAE auth failure") as t:
+with TestCheck("connman applies retry mechanism after SAE auth failure") as t:
     # We connect with an incorrect passphrase, which is our hack to make the
     # added retry mechanism for failed connects in ConnMan observable. We
     # expect the connection fails in this case, but want to see that ConnMan

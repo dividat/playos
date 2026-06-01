@@ -38,6 +38,10 @@ vmTools.runInLinuxVM (
         diskImage=$out/playos-disk.img.zst
       '';
       memSize = 1024;
+
+      # reduce build time by telling nix to not scan for dependencies
+      __structuredAttrs = true;
+      unsafeDiscardReferences.out = true;
     }
     ''
       # machine-id of development image is hardcoded.

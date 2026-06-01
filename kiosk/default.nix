@@ -18,6 +18,9 @@ python3Packages.buildPythonApplication rec {
       --replace "@focus_shift_path@" "${pkgs.focus-shift.main}" \
   '';
 
+  pyproject = true;
+  build-system = with python3Packages; [ setuptools ];
+
   buildInputs = [
     bashInteractive
     makeWrapper
@@ -33,7 +36,7 @@ python3Packages.buildPythonApplication rec {
 
   nativeBuildInputs = [
     qt6.wrapQtAppsHook
-    wrapGAppsHook
+    wrapGAppsHook3
   ];
 
   checkPhase = ''
@@ -64,6 +67,9 @@ python3Packages.buildPythonApplication rec {
       )
 
       ;
+
+  dontWrapQtApps = true;
+  makeWrapperArgs = [ "\${qtWrapperArgs[@]}" ];
 
   postInstall = ''
     cp -r images/ $out/images

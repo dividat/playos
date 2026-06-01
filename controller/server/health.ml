@@ -40,17 +40,17 @@ let rec run ~systemd ~rauc ~set_state =
           |> set
     )
   | MarkingAsGood -> (
-      (* Mark currently booted slot as "good" *)
-      match%lwt
-        Lwt_result.catch (fun () ->
-            Rauc.get_booted_slot rauc >>= Rauc.mark_good rauc
-        )
-      with
-      | Ok () ->
-          set Good
-      | Error exn ->
-          set (Bad ("Failed to mark system good: " ^ Printexc.to_string exn))
-    )
+    (* Mark currently booted slot as "good" *)
+    match%lwt
+      Lwt_result.catch (fun () ->
+          Rauc.get_booted_slot rauc >>= Rauc.mark_good rauc
+      )
+    with
+    | Ok () ->
+        set Good
+    | Error exn ->
+        set (Bad ("Failed to mark system good: " ^ Printexc.to_string exn))
+  )
   | Good ->
       (* this thread should not terminate, thus create a never ending task.
 

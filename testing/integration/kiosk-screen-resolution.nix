@@ -11,7 +11,7 @@ let
   };
   inherit (builtins) toString;
 in
-pkgs.nixosTest {
+pkgs.testers.runNixOSTest {
   name = "Kiosk gracefully switches between output modes";
 
   nodes.machine = { config, ... }: {
@@ -74,6 +74,7 @@ pkgs.nixosTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
     ps.pillow
@@ -81,7 +82,9 @@ pkgs.nixosTest {
   ];
 
   testScript = ''
-    ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+    from playos_test_helpers import TestCheck
+    import tempfile
+    import time
     from collections import Counter
     from PIL import Image, ImageChops
 
@@ -142,7 +145,7 @@ pkgs.nixosTest {
 
     original_kiosk_pid = get_kiosk_pid()
 
-    with TestCase("kiosk gracefully responds to screen and mode changes") as t,\
+    with TestCheck("kiosk gracefully responds to screen and mode changes") as t,\
             tempfile.TemporaryDirectory() as d:
         xrandr("--mode 640x480")
         time.sleep(3) # give kiosk time to resize

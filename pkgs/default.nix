@@ -3,9 +3,9 @@
 let
 
   nixpkgs = builtins.fetchTarball {
-    # release-24.11 2025-02-10
-    url = "https://github.com/NixOS/nixpkgs/archive/edd84e9bffdf1c0ceba05c0d868356f28a1eb7de.tar.gz";
-    sha256 = "1gb61gahkq74hqiw8kbr9j0qwf2wlwnsvhb7z68zhm8wa27grqr0";
+    # release-25.11 2026-04-30
+    url = "https://github.com/NixOS/nixpkgs/archive/5a9c58fc6ac2ec48bf9cf4c07de27f912b1ed1cc.tar.gz";
+    sha256 = "0s0r78hddzrb5hnc95l0qlg6lfk7lwp3sl49adj3fc96yjfr63va";
   };
 
   overlay =
@@ -30,6 +30,7 @@ let
 
       python3Packages = super.python3Packages.overrideScope (self: super: {
         playos-proxy-utils = self.callPackage ../proxy-utils {};
+        playos-test-helpers = self.callPackage ../testing/helpers {};
       });
 
       qt6 = super.qt6.overrideScope (qtself: qtsuper: {

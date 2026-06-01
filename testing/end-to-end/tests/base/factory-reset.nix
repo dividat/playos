@@ -12,12 +12,13 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
 
   testScript = ''
-${builtins.readFile ../../../helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import create_overlay, TestPrecondition, TestCheck
 create_overlay("${disk}", "${overlayPath}")
 
 # scenario is re-used in integration tests as well

@@ -37,8 +37,8 @@
 # The system images have a passwordless root account, so you can gain root
 # access from the QEMU GUI:
 #   - switch to QEMU monitor console (using ctrl-alt-2 or the menu)
-#   - execute "sendkey ctrl-shift-f8" (switch to status screen on TTY8)
-#   - execute "sendkey ctrl-shift-f1" (switch to TTY1)
+#   - execute "sendkey ctrl-alt-f8" (switch to status screen on TTY8)
+#   - execute "sendkey ctrl-alt-f3" (switch to TTY3)
 #   - login with "root"
 let
     # Note: we use HTTP instead of HTTPS, because pkgs.fetchurl fails
@@ -155,13 +155,12 @@ pkgs.testers.runNixOSTest {
         virtualisation.vlans = [ 1 ];
         networking.firewall.enable = false;
 
-        services.static-web-server.enable = true;
-        services.static-web-server.listen = "[::]:80";
-        services.static-web-server.root = "/tmp/www";
-
-        systemd.tmpfiles.rules = [
-            "d ${config.services.static-web-server.root} 0777 root root -"
-        ];
+        services.darkhttpd.enable = true;
+        services.darkhttpd.address = "::";
+        services.darkhttpd.port = 80;
+        services.darkhttpd.rootDir = "/run/darkhttpd";
+        systemd.services.darkhttpd.serviceConfig.RuntimeDirectory = "darkhttpd";
+        systemd.services.darkhttpd.serviceConfig.RuntimeDirectoryMode = "0777";
 
         services.dnsmasq.enable = true;
         services.dnsmasq.settings = {
@@ -203,6 +202,7 @@ pkgs.testers.runNixOSTest {
   ];
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
     ps.requests
@@ -213,8 +213,12 @@ pkgs.testers.runNixOSTest {
   ];
 
   testScript = {nodes}: ''
-${builtins.readFile ./helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import eprint, TestPrecondition, TestCheck, wait_for_logs, wait_until_passes
 ${builtins.readFile ./end-to-end/tests/base/proxy-and-update-helpers.py}
+import atexit
+import subprocess
+import tempfile
+import time
 import tesserocr # type: ignore
 import PIL.Image
 import PIL.ImageEnhance
@@ -228,7 +232,7 @@ product_name = "${safeProductName}"
 pre_version = "${preSystemVersion}"
 next_version = "${nextSystemVersion}"
 
-http_root = "${nodes.sidekick.services.static-web-server.root}"
+http_root = "${nodes.sidekick.services.darkhttpd.rootDir}"
 http_local_url = "http://127.0.0.1"
 
 ### Test helpers
@@ -389,11 +393,11 @@ def check_for_text_in_status_page(text, ignore_errors=False):
 
     t.assertIn(text, screen_text)
 
-# Note: done via root shell on tty1, since a QEMU system_reset corrupts the
+# Note: done via root shell on tty, since a QEMU system_reset corrupts the
 # /boot/status.ini due to unclean unmount + FAT
 def reboot_via_tty():
-    playos.send_key("ctrl-alt-f8", delay=2) # direct switch to tty1 prevented by limit-vtes.nix
-    playos.send_key("ctrl-alt-f1", delay=2)
+    playos.send_key("ctrl-alt-f8", delay=2) # direct switch to tty prevented by limit-vtes.nix
+    playos.send_key("ctrl-alt-f3", delay=2)
     playos.send_chars("root\n")
     time.sleep(2)
     playos.send_chars("systemctl reboot\n")
@@ -472,7 +476,7 @@ with TestPrecondition("Navigate to System Status page") as t:
 ### Helpers re-used in both BASE->PRE and PRE->NEXT
 
 def check_update_is_downloaded_and_installed(stage):
-  with TestCase(f"{stage}: controller starts downloading the bundle") as t:
+  with TestCheck(f"{stage}: controller starts downloading the bundle") as t:
       def t_check():
           playos.send_key("ctrl-r")
           time.sleep(2)
@@ -482,7 +486,7 @@ def check_update_is_downloaded_and_installed(stage):
 
       wait_until_passes(t_check, retries=30, sleep=1)
 
-  with TestCase(f"{stage}: controller has downloaded and installed the bundle") as t:
+  with TestCheck(f"{stage}: controller has downloaded and installed the bundle") as t:
       # controller takes at least 2 minutes for the download
       # (1.2GB @ 10 MB/s), so allow up to 5 minutes for the download+install
       screen_text = wait_until_passes(
@@ -493,7 +497,7 @@ def check_update_is_downloaded_and_installed(stage):
 
 
 def check_system_boots_into_new_version(new_version, stage):
-    with TestCase(f"{stage}: kiosk is open with kiosk URL after reboot") as t:
+    with TestCheck(f"{stage}: kiosk is open with kiosk URL after reboot") as t:
         wait_until_passes(
             lambda: t.assertIn("Hello world", screenshot_and_ocr(playos)),
             retries=60,
@@ -502,7 +506,7 @@ def check_system_boots_into_new_version(new_version, stage):
 
     move_mouse_to_corner()
 
-    with TestCase(f"{stage}: controller GUI with new version is visible") as t:
+    with TestCheck(f"{stage}: controller GUI with new version is visible") as t:
         # switch to controller
         playos.send_key("ctrl-shift-f12")
         wait_until_passes(
@@ -510,7 +514,7 @@ def check_system_boots_into_new_version(new_version, stage):
             retries=10
         )
 
-    with TestCase(f"{stage}: The new booted version reaches a Good state") as t:
+    with TestCheck(f"{stage}: The new booted version reaches a Good state") as t:
         wait_until_passes(
             # UpdateError possible initially, because DHCP has not completed
             lambda: check_for_text_in_status_page("Good", ignore_errors=True),
@@ -539,7 +543,7 @@ reboot_via_tty()
 
 check_system_boots_into_new_version(next_version, "PRE->NEXT")
 
-with TestCase("Update state is UpToDate") as t:
+with TestCheck("Update state is UpToDate") as t:
     wait_until_passes(
         lambda: check_for_text_in_status_page("UpToDate", ignore_errors=True),
         retries=3, sleep=10)

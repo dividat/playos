@@ -19,16 +19,18 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
 
   testScript =
 ''
-${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import TestCheck
 from contextlib import contextmanager
 from pathlib import Path
 import tarfile
+import tempfile
 from datetime import datetime
 import gzip
 import urllib.parse
@@ -91,7 +93,7 @@ def get_file_contents(archive_dir, glob_str, t=None):
 start_all()
 machine.wait_for_unit("multi-user.target")
 
-with TestCase("script outputs a valid gziped tar archive to stdout"):
+with TestCheck("script outputs a valid gziped tar archive to stdout"):
     run_diagnostic_script("> /tmp/diag.tar.gz")
     machine.succeed("mkdir -p /tmp/diag")
     machine.succeed("tar xvf /tmp/diag.tar.gz -C /tmp/")
@@ -99,7 +101,7 @@ with TestCase("script outputs a valid gziped tar archive to stdout"):
 
 ALL_DIAGNOSTIC_TYPES = [ t.lower() for t in run_diagnostic_script("--list-types")[1].split() ]
 
-with TestCase("archive contents contain expected structure") as t:
+with TestCheck("archive contents contain expected structure") as t:
     with diagnostic_output() as (_, tmpdir):
       top_level_items = list(tmpdir.iterdir())
 
@@ -128,7 +130,7 @@ with TestCase("archive contents contain expected structure") as t:
         t.assertGreater(len(list(dir.glob("*"))), 1)
 
 
-with TestCase("logs are collected according to --since limits") as t:
+with TestCheck("logs are collected according to --since limits") as t:
     machine.succeed('echo RECENT_TEST_LOG | systemd-cat -t TEST') # journald
     oldest_expected_date = datetime.fromisoformat(machine.succeed(
       'date --date="12 seconds ago" --rfc-3339=seconds | sed "s/ /T/"').strip())
@@ -144,7 +146,7 @@ with TestCase("logs are collected according to --since limits") as t:
             t.assertGreater(ts, oldest_expected_date,
                f"Logs contain entries with timestamps older than expected, line: {line}")
 
-with TestCase("proxy passwords are masked in connman output") as t:
+with TestCheck("proxy passwords are masked in connman output") as t:
     machine.wait_until_succeeds("connmanctl services | grep ethernet")
 
     ethernet_service_id = machine.succeed("connmanctl services | awk '/ethernet/ {print $NF}' | head -n 1").strip()
@@ -170,7 +172,7 @@ with TestCase("proxy passwords are masked in connman output") as t:
             f"The expected masked string '{expected_mask}' was not found.")
 
 
-with TestCase("--minimal flag excludes logs and metrics") as t:
+with TestCheck("--minimal flag excludes logs and metrics") as t:
     with diagnostic_output('--minimal') as (_, tmpdir):
         match = list(tmpdir.glob("playos-diagnostics-*/data/logs/"))
         t.assertEqual(match, [])
@@ -179,13 +181,13 @@ with TestCase("--minimal flag excludes logs and metrics") as t:
         t.assertEqual(match, [])
 
 
-with TestCase("--exclude excludes custom types") as t:
+with TestCheck("--exclude excludes custom types") as t:
     with diagnostic_output('--exclude NETWORK') as (_, tmpdir):
         match = list(tmpdir.glob("playos-diagnostics-*/data/network/"))
         t.assertEqual(match, [])
 
 
-with TestCase("command error exit codes are propagated up") as t:
+with TestCheck("command error exit codes are propagated up") as t:
     # create a faulty device and bind it to /etc/os-release to ensure all reads error out
     machine.succeed("echo '0 2048 error' | dmsetup create faulty_device")
     machine.succeed("mount --bind /dev/mapper/faulty_device /etc/os-release")
@@ -201,7 +203,7 @@ with TestCase("command error exit codes are propagated up") as t:
     machine.succeed("umount /etc/os-release")
 
 
-with TestCase("commands that hang are timed out") as t:
+with TestCheck("commands that hang are timed out") as t:
     # bind-mount /etc/os-release to an empty pipe to block reads forever
     machine.succeed("mkfifo /tmp/empty-pipe")
     machine.succeed("mount --bind /tmp/empty-pipe /etc/os-release")

@@ -26,12 +26,13 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
 
   testScript = ''
-    ${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+    from playos_test_helpers import TestCheck
     BAD_EXT4_FEATURES = ["metadata_csum_seed", "orphan_file"]
 
     def check_for_bad_features(part_file, t):
@@ -46,12 +47,12 @@ pkgs.testers.runNixOSTest {
 
     machine.wait_for_unit("local-fs.target")
 
-    with TestCase("compatibility options are honoured when running from a shell") as t:
+    with TestCheck("compatibility options are honoured when running from a shell") as t:
         machine.succeed("truncate -s 100M /tmp/partition-shell.img")
         machine.succeed("mkfs.ext4 /tmp/partition-shell.img")
         check_for_bad_features("/tmp/partition-shell.img", t)
 
-    with TestCase("compatibility options are honoured when running in a service") as t:
+    with TestCheck("compatibility options are honoured when running in a service") as t:
         machine.wait_for_unit("test-service.service")
         check_for_bad_features("/tmp/partition-service.img", t)
   '';

@@ -59,7 +59,7 @@ pkgs.testers.runNixOSTest {
     def manual_restart():
         playos.reboot()
         # needed to avoid using wait_for_unit during reboot
-        playos.wait_for_console_text("NixOS Stage 2")
+        playos.wait_for_console_text("Shutting down")
         wait_for_http()
         # produces the reboot/shutdown log messages used in `wait_for_console_text`
         playos.wait_for_unit("systemd-logind.service")

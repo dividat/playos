@@ -53,12 +53,14 @@ pkgs.testers.runNixOSTest {
   };
 
   extraPythonPackages = ps: [
+    ps.playos-test-helpers
     ps.colorama
     ps.types-colorama
   ];
 
   testScript = ''
-${builtins.readFile ../helpers/nixos-test-script-helpers.py}
+from playos_test_helpers import TestPrecondition, TestCheck
+import subprocess
 
 # ==== Setup: create disk images for /boot and /mnt/data
 

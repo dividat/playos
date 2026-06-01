@@ -1,4 +1,4 @@
-{stdenv, fetchurl, autoreconfHook, dbus, glib, curl, json-glib, pkg-config, makeWrapper, grub2, utillinux, squashfsTools, e2fsprogs, gnutar, xz, ...}:
+{stdenv, fetchurl, autoreconfHook, dbus, glib, curl, json-glib, pkg-config, makeWrapper, grub2, util-linux, squashfsTools, e2fsprogs, gnutar, xz, ...}:
 stdenv.mkDerivation rec {
   name = "rauc-${version}";
   version = "1.2";
@@ -23,7 +23,7 @@ stdenv.mkDerivation rec {
   postInstall = ''
     # Add required tools to path
     wrapProgram $out/bin/rauc \
-      --prefix PATH ":" ${utillinux}/bin \
+      --prefix PATH ":" ${util-linux}/bin \
       --prefix PATH ":" ${squashfsTools}/bin \
       --prefix PATH ":" ${e2fsprogs}/bin \
       --prefix PATH ":" ${grub2}/bin \

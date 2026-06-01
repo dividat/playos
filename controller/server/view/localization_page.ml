@@ -24,8 +24,8 @@ let select_form params options =
           ]
         ((params.placeholder
          |> Option.map (fun p ->
-                option ~a:[ a_disabled (); a_selected () ] (txt p)
-            )
+             option ~a:[ a_disabled (); a_selected () ] (txt p)
+         )
          |> Base.Option.to_list
          )
         @ options
@@ -85,12 +85,10 @@ let keyboard_form keymaps current_keymap =
 let scaling_form current_scaling =
   [ Screen_settings.Default; Screen_settings.FullHD; Screen_settings.Native ]
   |> List.map (fun s ->
-         select_option
-           (Some (Screen_settings.string_of_scaling current_scaling))
-           ( Screen_settings.string_of_scaling s
-           , Screen_settings.label_of_scaling s
-           )
-     )
+      select_option
+        (Some (Screen_settings.string_of_scaling current_scaling))
+        (Screen_settings.string_of_scaling s, Screen_settings.label_of_scaling s)
+  )
   |> select_form
        { action_url = "/localization/scaling"
        ; legend = "Display resolution"

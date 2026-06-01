@@ -29,10 +29,10 @@ let service_item interface_annotations ({ id; name; strength; ipv4 } as service)
                 (List.assoc_opt service.ethernet.interface interface_annotations
                 |> Option.value ~default:[]
                 |> List.map (fun label_text ->
-                       span
-                         ~a:[ a_class [ "d-NetworkList__Label" ] ]
-                         [ txt label_text ]
-                   )
+                    span
+                      ~a:[ a_class [ "d-NetworkList__Label" ] ]
+                      [ txt label_text ]
+                )
                 )
             ]
         ; ( match ipv4 with
@@ -86,13 +86,13 @@ let html { proxy; services; interfaces; interface_annotations } =
          )
        ; Definition.list
            (( match proxy with
-            | Some p ->
-                [ Definition.term [ txt "Proxy" ]
-                ; Definition.description [ txt p ]
-                ]
-            | None ->
-                []
-            )
+              | Some p ->
+                  [ Definition.term [ txt "Proxy" ]
+                  ; Definition.description [ txt p ]
+                  ]
+              | None ->
+                  []
+              )
            @ [ Definition.term [ txt "Internet" ]
              ; Definition.description
                  [ div

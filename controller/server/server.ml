@@ -52,13 +52,13 @@ let main debug port =
   let%lwt () =
     (* Initialize Network, parallel to starting server *)
     ( match%lwt Network.init ~connman with
-    | Ok () ->
-        return_unit
-    | Error exn ->
-        Logs_lwt.warn (fun m ->
-            m "network initialization failed: %s" (Printexc.to_string exn)
-        )
-    )
+      | Ok () ->
+          return_unit
+      | Error exn ->
+          Logs_lwt.warn (fun m ->
+              m "network initialization failed: %s" (Printexc.to_string exn)
+          )
+      )
     <&> Lwt.pick
           [ (* Make sure all threads run forever. *)
             gui_p (* GUI *)

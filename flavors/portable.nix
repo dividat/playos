@@ -22,7 +22,7 @@ in
       playos.monitoring.enable = lib.mkForce false;
 
       # Do not hard-code HDMI as default
-      hardware.pulseaudio = {
+      services.pulseaudio = {
         extraConfig = lib.mkForce ''
           # Respond to changes in connected outputs
           load-module module-switch-on-port-available

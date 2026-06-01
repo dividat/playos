@@ -5,7 +5,7 @@ class UpdateServer:
         self.http_root = http_root
 
     def wait_for_unit(self):
-        self.vm.wait_for_unit('static-web-server.service')
+        self.vm.wait_for_unit('darkhttpd.service')
 
     def set_latest_version(self, version):
         self.vm.succeed(f"echo -n '{version}' > {self.http_root}/latest")

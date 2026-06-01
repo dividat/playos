@@ -13,8 +13,8 @@ let enable_and_scan_wifi_devices ~connman =
        let%lwt () =
          technologies
          |> List.filter (fun (t : Technology.t) ->
-                t.type' = Technology.Wifi && not t.powered
-            )
+             t.type' = Technology.Wifi && not t.powered
+         )
          |> List.map Technology.enable
          |> Lwt.join
        in
