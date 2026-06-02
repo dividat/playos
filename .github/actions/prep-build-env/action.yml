@@ -61,17 +61,20 @@ runs:
     shell: bash
     if: ${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}
     run: |
-      sudo mkdir -p $(dirname "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}")
-      echo -n "${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}" | sudo tee "${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}"
+      sudo mkdir -p $(dirname "${INPUTS_NIX_STORE_PRIVATE_KEY_FILE}")
+      echo -n "${INPUTS_NIX_BINARY_CACHE_PRIVATE_KEY}" | sudo tee "${INPUTS_NIX_STORE_PRIVATE_KEY_FILE}"
+    env:
+      INPUTS_NIX_STORE_PRIVATE_KEY_FILE: ${{ inputs.NIX_STORE_PRIVATE_KEY_FILE }}
+      INPUTS_NIX_BINARY_CACHE_PRIVATE_KEY: ${{ inputs.NIX_BINARY_CACHE_PRIVATE_KEY }}
 
   - name: Create AWS credentials and config for profile
     shell: bash
     if: ${{ inputs.NIX_CACHE_ACCESS_KEY_ID && inputs.NIX_CACHE_SECRET_ACCESS_KEY }}
     run: |
-      sudo -i aws configure set endpoint_url https://${{ inputs.NIX_CACHE_ACCOUNT_ID }}.r2.cloudflarestorage.com/ --profile ${{ inputs.NIX_CACHE_S3_PROFILE}}
-      sudo -i aws configure set aws_access_key_id ${{ inputs.NIX_CACHE_ACCESS_KEY_ID }} --profile ${{ inputs.NIX_CACHE_S3_PROFILE}}
-      sudo -i aws configure set aws_secret_access_key ${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY }} --profile ${{ inputs.NIX_CACHE_S3_PROFILE}}
-      sudo -i aws configure set region ${{ inputs.NIX_CACHE_S3_REGION }} --profile ${{ inputs.NIX_CACHE_S3_PROFILE}}
+      sudo -i aws configure set endpoint_url https://${INPUTS_NIX_CACHE_ACCOUNT_ID}.r2.cloudflarestorage.com/ --profile ${INPUTS_NIX_CACHE_S3_PROFILE}
+      sudo -i aws configure set aws_access_key_id ${INPUTS_NIX_CACHE_ACCESS_KEY_ID} --profile ${INPUTS_NIX_CACHE_S3_PROFILE}
+      sudo -i aws configure set aws_secret_access_key ${INPUTS_NIX_CACHE_SECRET_ACCESS_KEY} --profile ${INPUTS_NIX_CACHE_S3_PROFILE}
+      sudo -i aws configure set region ${INPUTS_NIX_CACHE_S3_REGION} --profile ${INPUTS_NIX_CACHE_S3_PROFILE}
       # Allow any user to access the AWS credentials and provide it both for
       # current user and root, since it's tricky to ensure different nix
       # commands (nix-build, nix copy) read from the right locations, see:
@@ -79,6 +82,12 @@ runs:
       sudo chmod -R a+rx /root/.aws
       sudo chmod a+rx /root/
       cp -r /root/.aws ~/.aws
+    env:
+      INPUTS_NIX_CACHE_ACCOUNT_ID: ${{ inputs.NIX_CACHE_ACCOUNT_ID }}
+      INPUTS_NIX_CACHE_S3_PROFILE: ${{ inputs.NIX_CACHE_S3_PROFILE}}
+      INPUTS_NIX_CACHE_ACCESS_KEY_ID: ${{ inputs.NIX_CACHE_ACCESS_KEY_ID }}
+      INPUTS_NIX_CACHE_SECRET_ACCESS_KEY: ${{ inputs.NIX_CACHE_SECRET_ACCESS_KEY }}
+      INPUTS_NIX_CACHE_S3_REGION: ${{ inputs.NIX_CACHE_S3_REGION }}
 
   - name: Install post-run action
     uses: yfyf/run-and-post-run@d4c684a8c8f09138bed7a27adbf1a7f8dae845bf # main, 2025-07-23
