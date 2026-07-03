@@ -329,7 +329,13 @@ Press Ctrl+Alt+F1 to return to the graphical session.
       playos.controller.annotateDiscoveredServices = [ "_sensoControl._tcp" "_sensoUpdate._udp" ];
 
       # Enable pcscd for smart card identification
-      services.pcscd.enable = true;
+      services.pcscd = {
+        enable = true;
+
+        # Support newer ACS readers (ACS-maintained; https://github.com/acshk/acsccid)
+        plugins = [ pkgs.acsccid ];
+      };
+
       # Allow play user to access pcsc
       security.polkit.extraConfig = ''
         polkit.addRule(function(action, subject) {
