@@ -382,8 +382,8 @@ module NetworkGui = struct
     match form_data |> List.assoc_opt "static_ip_enabled" with
     | None ->
         let%lwt () =
-          Logs_lwt.err ~src:log_src (fun m ->
-              m "disabling static ip %s" (get_prop "static_ip_address")
+          Logs_lwt.info ~src:log_src (fun m ->
+              m "Disabling static IP, switching to DHCP"
           )
         in
         Connman.Service.set_dhcp_ipv4 service
