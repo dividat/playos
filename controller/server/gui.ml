@@ -407,6 +407,7 @@ module NetworkGui = struct
           get_prop "nameservers"
           |> String.split_on_char ','
           |> List.map String.trim
+          |> List.filter (fun s -> s <> "")
         in
         Connman.Service.set_nameservers service nameservers
 
