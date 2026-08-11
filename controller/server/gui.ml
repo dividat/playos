@@ -386,23 +386,29 @@ module NetworkGui = struct
               m "disabling static ip %s" (get_prop "static_ip_address")
           )
         in
-        let%lwt () = Connman.Service.set_dhcp_ipv4 service in
-        let%lwt () = Connman.Service.set_nameservers service [] in
-        return ()
+        Connman.Service.set_dhcp_ipv4 service
     | Some _ ->
         let address = get_prop "static_ip_address" in
         let netmask = get_prop "static_ip_netmask" in
         let gateway = get_prop "static_ip_gateway" in
+        Connman.Service.set_manual_ipv4 service ~address ~netmask ~gateway
+
+  (** Set custom nameservers on a service *)
+  let update_nameservers service form_data =
+    let get_prop s = form_data |> List.assoc s |> List.hd in
+    match form_data |> List.assoc_opt "nameservers_enabled" with
+    | None ->
+        let%lwt () =
+          Logs_lwt.info ~src:log_src (fun m -> m "Clearing custom nameservers")
+        in
+        Connman.Service.set_nameservers service []
+    | Some _ ->
         let nameservers =
-          get_prop "static_ip_nameservers"
+          get_prop "nameservers"
           |> String.split_on_char ','
           |> List.map String.trim
         in
-        let%lwt () =
-          Connman.Service.set_manual_ipv4 service ~address ~netmask ~gateway
-        in
-        let%lwt () = Connman.Service.set_nameservers service nameservers in
-        return ()
+        Connman.Service.set_nameservers service nameservers
 
   (** Connect to a service *)
   let connect ~(connman : Connman.Manager.t) req =
@@ -424,6 +430,8 @@ module NetworkGui = struct
     let%lwt service = with_service ~connman (param req "id") in
     (* Static IP *)
     let%lwt () = update_static_ip service form_data in
+    (* Custom Nameservers *)
+    let%lwt () = update_nameservers service form_data in
     (* Proxy *)
     let%lwt current_proxy = Manager.get_default_proxy connman in
     let%lwt () =
