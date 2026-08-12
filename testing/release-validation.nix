@@ -46,7 +46,7 @@ let
     # and also fails when __structuredAttrs is disabled (due to
     # https://github.com/NixOS/nixpkgs/issues/177660).
     # HTTP usage is fine since the output hash is fixed and verifies the download.
-    baseS3URL = "http://dividat-playos-test-disks.s3.amazonaws.com/by-tag";
+    baseS3URL = "http://playos-test-disks.dividump.xyz/by-tag";
     # Generated via ./build release-disk and .github/workflows/release-tag.yml
     # See https://github.com/dividat/playos/releases
     diskImageURLs = {
