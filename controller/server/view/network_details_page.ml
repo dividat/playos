@@ -177,22 +177,32 @@ let static_ip_form service =
             ~value:
               (ipv4_value (fun ipv4 -> ipv4.gateway |> Option.value ~default:""))
             ~pattern:ip_address_regex_pattern
-        @ ip_input ~name:"static_ip_nameservers" ~labelTxt:"Nameservers"
-            ~value:
-              ( if is_static service then String.concat ", " service.nameservers
-                else ""
-              )
-            ~pattern:multi_ip_address_regex_pattern
-        @ [ p
-              ~a:[ a_class [ "d-Note" ] ]
-              [ txt
-                  "To set multiple nameservers, use a comma separated list of \
-                   addresses."
-              ; br ()
-              ; txt "eg. 1.1.1.1, 9.9.9.9"
-              ]
-          ]
         )
+    ]
+
+let nameservers_form service =
+  let value = String.concat ", " service.nameservers in
+  div
+    [ label
+        ~a:[ a_class [ "d-Label" ] ]
+        [ txt "DNS Servers"
+        ; input
+            ~a:
+              [ a_value value
+              ; a_class [ "d-Input"; "d-Network__Input" ]
+              ; a_name "nameservers"
+              ; a_pattern multi_ip_address_regex_pattern
+              ]
+            ()
+        ]
+    ; p
+        ~a:[ a_class [ "d-Note" ] ]
+        [ txt
+            "To set multiple DNS nameservers, use a comma separated list of \
+             addresses."
+        ; br ()
+        ; txt "eg. 1.1.1.1, 9.9.9.9"
+        ]
     ]
 
 let checked_input cond attrs =
@@ -239,6 +249,10 @@ let connected_form service =
         ; toggle_group ~is_enabled:(is_static service) ~legend_text:"Static IP"
             ~toggle_field:"static_ip_enabled"
             [ static_ip_form service ]
+        ; toggle_group
+            ~is_enabled:(service.nameservers <> [])
+            ~legend_text:"Custom DNS" ~toggle_field:"nameservers_enabled"
+            [ nameservers_form service ]
         ; input
             ~a:
               [ a_input_type `Submit; a_class [ "d-Button" ]; a_value "Update" ]

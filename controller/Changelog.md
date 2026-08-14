@@ -8,6 +8,7 @@
 # Changed
 
 - os: Pin versions of permanent components produced by installer
+- controller: Allow configuring static IP and DNS servers separately
 
 # [2026.3.0] - 2026-04-22
 
