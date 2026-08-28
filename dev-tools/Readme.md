@@ -14,6 +14,12 @@ before starting kiosk or controller:
     export PLAYOS_CAPTIVE_CHECK_URL="http://localhost:8000"
 
 
+## Mock connman
+
+Simulates (some of) connman's D-BUS APIs, useful for testing controller's UI.
+
+See docs in [mock-connman.py](mock-connman.py) for more details.
+
 ## Metric plotting in Grafana
 
 See Readme in [grafana](grafana/Readme.md).

@@ -166,6 +166,9 @@ module Service : sig
   (** Helper to decide if service is connected *)
   val is_connected : t -> bool
 
+  (** Helper to decide if connection is link-local *)
+  val is_link_local : t -> bool
+
   val set_direct_proxy : t -> unit Lwt.t
 
   val set_manual_proxy : t -> Proxy.t -> unit Lwt.t

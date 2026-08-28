@@ -104,35 +104,37 @@ Items:
 
 <<network>>The network section can be used to view and configure Ethernet and WiFi network connections.
 
-The page shows a list of available wireless networks. Information about the system's network interfaces and MAC addresses may be found at the bottom of the page.
+The page shows the status of all network interfaces and the list of available
+wireless networks.
 
-#+CAPTION: Network list while not connected
-#+NAME: fig:controller-network-not-connected
+#+CAPTION: Network
+#+NAME: fig:controller-network-list
 #+attr_html: :width 800px
-[[../screenshots/controller-network-not-connected.png]]
+[[../screenshots/controller-network-list.png]]
 
-Wired connections will be displayed if an active Ethernet cable is plugged in.
+- The _Internet_ indicator shows whether the internet connection is functional.
+- The ~Interfaces~ section provides an overview of each network interface's
+  status.
+- Each interface is marked as connected (✔) or disconnected (✖).
+- If an interface is connected, the connected network is indicated as /Wired/
+  (for Ethernet interfaces) or using the wireless network name (for Wireless
+  interfaces).
+- Interfaces might also receive additional annotations via mDNS, which are
+  also displayed in ~Connected networks~ (e.g. /Dividat Senso/ in the
+  screenshot, annotating a link-local device connection).
 
-#+CAPTION: An active wired connection is shown
-#+NAME: fig:controller-network-wired-connected
-#+attr_html: :width 800px
-[[../screenshots/controller-network-wired-connected.png]]
+Note: the page does not automatically refresh, you must manually press /Refresh/
+to obtain up to date information.
 
-Connected network services and the Internet connection status are displayed at the top of the page.
-
-#+CAPTION: Internet connected
-#+NAME: fig:controller-network-connected
-#+attr_html: :width 800px
-[[../screenshots/controller-network-connected.png]]
-
-To connect to a wireless network, select it from the list of available services and enter the password, if any:
+To connect to a wireless network, select it from the list of available networks
+and enter the password, if any:
 
 #+CAPTION: Connect with a service
 #+NAME: fig:controller-network-connect
 #+attr_html: :width 800px
 [[../screenshots/controller-network-connect.png]]
 
-A connected wireless or wired service may be selected for additional configuration. Optional proxy servers and static IP addresses may be configured:
+A connected interface or wireless service may be selected for additional configuration. Optional proxy servers and static IP addresses may be configured:
 
 #+CAPTION: Configuring a connected service
 #+NAME: fig:controller-network-proxy

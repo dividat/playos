@@ -4,6 +4,7 @@
 
 - os: Added localization options for Danish and Turkish
 - kiosk: Show more detailed information on network error
+- controller: Display details for each interface in Network page
 
 # Changed
 
