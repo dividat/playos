@@ -11,7 +11,7 @@ jobs:
       integration_tests: ${{ steps.set-matrix-integration.outputs.integration_tests }}
       manual_tests: ${{ steps.set-matrix-manual.outputs.manual_tests }}
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       with:
         persist-credentials: false
     - id: set-matrix-integration
@@ -33,7 +33,7 @@ jobs:
       matrix:
         file: ${{fromJson(needs.prepare-matrix.outputs.integration_tests)}}
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       with:
         persist-credentials: false
     - uses: ./.github/actions/prep-build-env
@@ -55,7 +55,7 @@ jobs:
       matrix:
         file: ${{fromJson(needs.prepare-matrix.outputs.manual_tests)}}
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       with:
         persist-credentials: false
     - uses: ./.github/actions/prep-build-env
@@ -72,7 +72,7 @@ jobs:
   kiosk-tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       with:
         persist-credentials: false
     - uses: ./.github/actions/prep-build-env
@@ -86,7 +86,7 @@ jobs:
   build-vm:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       with:
         persist-credentials: false
     - uses: ./.github/actions/prep-build-env
@@ -100,7 +100,7 @@ jobs:
   build-vm-portable:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       with:
         persist-credentials: false
     - uses: ./.github/actions/prep-build-env
@@ -114,7 +114,7 @@ jobs:
   e2e-tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       with:
         persist-credentials: false
     - uses: ./.github/actions/prep-build-env
@@ -137,7 +137,7 @@ jobs:
   ocaml-tests:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       with:
         persist-credentials: false
     - uses: ./.github/actions/prep-build-env
