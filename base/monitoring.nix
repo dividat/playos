@@ -42,6 +42,20 @@ in
         type = types.str;
       };
 
+      remoteUrl = mkOption {
+        default = null;
+        example = "https://metrics.example.com:8086/;";
+        description = "Remote InfluxDB URL for centralized metric collection.";
+        type = types.nullOr types.str;
+      };
+
+      remoteDb = mkOption {
+        default = null;
+        example = "playos";
+        description = "Remote InfluxDB DB for centralized metric collection.";
+        type = types.nullOr types.str;
+      };
+
       collectionIntervalSeconds = mkOption {
         default = 60;
         description = "Interval at which to collect metrics (in seconds)";
@@ -271,12 +285,25 @@ in
           metric_buffer_limit = 100;
         };
 
-        outputs.influxdb = {
-          urls = [ "unix:///var/run/influxdb/influxdb.sock" ];
-          database = "${localDatabase}";
-          content_encoding = "identity"; # don't compress
-          skip_database_creation = true; # we set up the DB manually
-        };
+        outputs.influxdb = [
+          {
+            urls = [ "unix:///var/run/influxdb/influxdb.sock" ];
+            database = "${localDatabase}";
+            content_encoding = "identity"; # don't compress
+            skip_database_creation = true; # we set up the DB manually
+          }
+        ] ++ lib.lists.optional
+          ((cfg.remoteUrl != null) && (cfg.remoteDb != null))
+          {
+              urls = [ cfg.remoteUrl ];
+              database = cfg.remoteDb;
+              skip_database_creation = true;
+              # TODO: add config+build params for credentials
+              username = "playos";
+              password = "playos123";
+          }
+        ;
+
 
         ## INPUTS: collected metrics
 
