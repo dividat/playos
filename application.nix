@@ -334,16 +334,11 @@ Press Ctrl+Alt+F1 to return to the graphical session.
 
         # Support newer ACS readers (ACS-maintained; https://github.com/acshk/acsccid)
         plugins = [ pkgs.acsccid ];
-      };
 
-      # Allow play user to access pcsc
-      security.polkit.extraConfig = ''
-        polkit.addRule(function(action, subject) {
-          if (subject.user == "play" && (action.id == "org.debian.pcsc-lite.access_pcsc" || action.id == "org.debian.pcsc-lite.access_card")) {
-            return polkit.Result.YES;
-          }
-        });
-      '';
+        # Disable polkit to avoid pcscd<->polkit memory leaks, which seem to be
+        # a common issue. This implies all users are allowed to access the card readers.
+        extraArgs = [ "--disable-polkit" ];
+      };
 
       playos.remoteMaintenance = {
         enable = true;
