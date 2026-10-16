@@ -6,6 +6,7 @@
 - kiosk: Show more detailed information on network error
 - controller: Display details for each interface in Network page
 - os: Fix memory leak in pcscd
+- kiosk: Add new remote control to known device list
 
 # Changed
 
