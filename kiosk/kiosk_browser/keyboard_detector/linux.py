@@ -37,7 +37,13 @@ REMOTE_CONTROLS = frozenset({
     RemoteControlDevice(name = '000001 KbMouse System Control',                  vendor = 9354,  product = 5774),
     # ???????, prototype with keyboard at the back.
     # Name is also 'MemsArt MA144 RF Controller Consumer Control', same IDs
-    RemoteControlDevice(name = 'MemsArt MA144 RF Controller',                    vendor = 3141,  product = 20737)
+    RemoteControlDevice(name = 'MemsArt MA144 RF Controller',                    vendor = 3141,  product = 20737),
+
+    # New RC from new vendor (2026-10-12)
+    # Real name is very generic ('USB Composite Device'), so we prefix with the
+    # vendor name ('WHF') to avoid matching other generic USB devices that might
+    # be actual keyboards
+    RemoteControlDevice(name = 'WHF USB Composite Device',                       vendor = 2320,  product = 4103),
 })
 
 
