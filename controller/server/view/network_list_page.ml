@@ -135,7 +135,7 @@ let interface_item { display_name; interface; annotations; service } =
     [ maybe_wrap_in_link
         [ span
             ~a:[ a_class [ "d-InterfaceList__Marker" ] ]
-            [ txt (if is_connected then "✔" else "✖") ]
+            [ txt (if is_connected then "✔" else "―") ]
         ; div ~a:[ a_class [ "d-InterfaceList__Icon" ] ] [ icon ]
         ; span [ txt display_name ]
         ; div
