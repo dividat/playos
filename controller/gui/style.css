@@ -4,6 +4,7 @@
     /* Colors */
     --color-hint: #404040;
     --color-body-text: #000;
+    --color-faded-text: #686868;
     --color-background: #f5f5f5;
     --color-background-hover: #b1b4ce;
     --color-border: #e0e0e0;
@@ -198,6 +199,10 @@ html {
   padding-bottom: 0.5rem;
   padding-top: 0.5rem;
   position: relative;
+}
+
+.d-InterfaceList__Item--Disconnected {
+  color: var(--color-faded-text);
 }
 
 .d-InterfaceList__Item {

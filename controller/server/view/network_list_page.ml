@@ -123,7 +123,12 @@ let interface_item { display_name; interface; annotations; service } =
     |> Option.value ~default:[ "N/A" ]
     |> List.map (fun v -> div [ txt v ])
   in
-  let classes = [ "d-InterfaceList__Item" ] in
+  let classes =
+    [ ("d-InterfaceList__Item", true)
+    ; ("d-InterfaceList__Item--Disconnected", not is_connected)
+    ]
+    |> List.filter_map (fun (cls, active) -> if active then Some cls else None)
+  in
   let maybe_wrap_in_link body =
     match service with
     | Some service ->
@@ -135,7 +140,7 @@ let interface_item { display_name; interface; annotations; service } =
     [ maybe_wrap_in_link
         [ span
             ~a:[ a_class [ "d-InterfaceList__Marker" ] ]
-            [ txt (if is_connected then "✔" else "―") ]
+            [ txt (if is_connected then "✔" else "") ]
         ; div ~a:[ a_class [ "d-InterfaceList__Icon" ] ] [ icon ]
         ; span [ txt display_name ]
         ; div
