@@ -198,7 +198,7 @@ let render_interface_section (interface_entries : interface_entry list) =
              [ span [] (* marker *)
              ; span [] (* icon *)
              ; span [ txt "Interface" ]
-             ; span [ txt "Connected networks" ]
+             ; span [ txt "Connected with" ]
              ; span [ txt "MAC" ]
              ; span [ txt "IP address" ]
              ; span [] (* chevron *)
