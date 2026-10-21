@@ -218,9 +218,11 @@ let render_wifi_section services =
     )
   in
   section
-    [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Available wireless networks" ]
+    [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Available Wi-Fi networks" ]
     ; ( if List.is_empty wireless_services then
-          p ~a:[ a_class [ "d-Paragraph" ] ] [ txt "No networks available" ]
+          p
+            ~a:[ a_class [ "d-Paragraph" ] ]
+            [ txt "No Wi-Fi networks available" ]
         else
           ul
             ~a:[ a_class [ "d-WifiList" ]; a_role [ "list" ] ]
