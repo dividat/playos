@@ -187,7 +187,7 @@ let render_status_section proxy =
 
 let render_interface_section (interface_entries : interface_entry list) =
   section
-    [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Interfaces" ]
+    [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Network interfaces" ]
     ; ul
         ~a:[ a_class [ "d-InterfaceList" ]; a_role [ "list" ] ]
         ([ li
