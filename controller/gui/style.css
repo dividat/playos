@@ -228,7 +228,11 @@ html {
     background: #E0CB52;
 }
 
-.d-InterfaceList__Item--Header:hover, .d-InterfaceList__Item--Header:focus {
+.d-InterfaceList__Item--Header:hover,
+.d-InterfaceList__Item--Header:focus,
+.d-InterfaceList__Item--Disconnected:hover,
+.d-InterfaceList__Item--Disconnected:focus
+{
     outline: unset;
     background: unset;
 }
