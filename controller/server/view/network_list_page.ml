@@ -52,10 +52,17 @@ let build_interface_entries services interfaces interface_annotations :
     let same_kind_ifaces =
       interface_kinds |> List.filter (fun (_, k) -> k = kind)
     in
-    let kind_str =
-      Network.sexp_of_interface_kind kind |> Sexplib.Sexp.to_string
+    let kind_str, requires_index =
+      match kind with
+      | Other ->
+          (* List unexpected interface kinds with actual iface name for identification *)
+          (iface.name, false)
+      | _ ->
+          ( Network.sexp_of_interface_kind kind |> Sexplib.Sexp.to_string
+          , List.length same_kind_ifaces > 1
+          )
     in
-    if List.length same_kind_ifaces > 1 then
+    if requires_index then
       let index =
         same_kind_ifaces
         |> List.find_index (fun (n, _) -> n = iface.name)
