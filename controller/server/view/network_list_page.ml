@@ -32,6 +32,7 @@ type interface_entry =
   ; interface : Network.Interface.t
   ; annotations : string list
   ; service : Connman.Service.t option
+  ; has_default_service : bool
   }
 
 let build_interface_entries services interfaces interface_annotations :
@@ -72,15 +73,20 @@ let build_interface_entries services interfaces interface_annotations :
   in
   List.map
     (fun (iface : Network.Interface.t) ->
+      let connected_service =
+        List.find_opt
+          (fun service -> service.ethernet.interface = iface.name)
+          connected_services
+      in
       { display_name = resolve_interface_display_name iface
       ; interface = iface
       ; annotations =
           List.assoc_opt iface.name interface_annotations
           |> Option.value ~default:[]
-      ; service =
-          List.find_opt
-            (fun service -> service.ethernet.interface = iface.name)
-            connected_services
+      ; service = connected_service
+      ; has_default_service =
+          Option.is_some connected_service
+          && connected_service = List.nth_opt services 0
       }
     )
     non_loopback_ifaces
@@ -186,6 +192,11 @@ let render_status_section proxy =
     ]
 
 let render_interface_section (interface_entries : interface_entry list) =
+  let connectedness_level item =
+    if item.has_default_service then 1 (* has possible Internet gateway *)
+    else if Option.is_some item.service then 2 (* has any connected service *)
+    else 3
+  in
   section
     [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Network interfaces" ]
     ; ul
@@ -204,7 +215,14 @@ let render_interface_section (interface_entries : interface_entry list) =
              ; span [] (* chevron *)
              ]
          ]
-        @ List.map interface_item interface_entries
+        @ List.map interface_item
+            (sort_by_fun
+               (fun item ->
+                 (* "more" connected items first, then alphanumeric *)
+                 (connectedness_level item, item.display_name)
+               )
+               interface_entries
+            )
         )
     ]
 
