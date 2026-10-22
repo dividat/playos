@@ -12,6 +12,19 @@ in
   # Enable non-free firmware
   hardware.enableRedistributableFirmware = true;
 
+  # Disable leaked/guessed eMudhra certs; should be able to remove after updating to 26.05 or newer
+  # This corresponds to the upstream fix in NixOS 26.05 (https://github.com/NixOS/nixpkgs/pull/576401)
+  # https://github.com/NixOS/nixpkgs/issues/576485
+  security.pki.caCertificateBlacklist = [
+    # CVE-2026-111943
+    "Comodo AAA Services root"
+    # https://hg-edge.mozilla.org/projects/nss/rev/26d38a0c3fb81e7fb2acedbaf4c42dd21dce0517
+    "emSign ECC Root CA - G3"
+    # https://hg-edge.mozilla.org/projects/nss/rev/8159223c48ceeb1273a1915bca95a517294ab0e0
+    "emSign Root CA - C1"
+    "emSign ECC Root CA - C3"
+  ];
+
   # Tools for basic network troubleshooting
   # We purposefully omit more powerful tools such as tcpdump and nmap, which
   # sysadmins may not want to be present in their networks.
