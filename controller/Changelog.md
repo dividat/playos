@@ -13,6 +13,14 @@
 - os: Pin versions of permanent components produced by installer
 - controller: Allow configuring static IP and DNS servers separately
 
+# [2026.3.1] - 2026-10-23
+
+# [2026.3.1-VALIDATION] - 2026-10-23
+
+## Fixed
+
+- os: Blacklist leaked eMudhra CA certificates
+
 # [2026.3.0] - 2026-04-22
 
 # [2026.3.0-VALIDATION.1] - 2026-03-12
