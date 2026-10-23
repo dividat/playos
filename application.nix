@@ -47,6 +47,7 @@ Press Ctrl+Alt+F1 to return to the graphical session.
         ./application/power-management/default.nix
         ./application/limit-vtes.nix
         ./application/trim.nix
+        ./application/raw-f13-f23.nix
       ];
 
       assertions = with lib; [
