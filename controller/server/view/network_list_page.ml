@@ -120,7 +120,7 @@ let interface_item { display_name; interface; annotations; service } =
     service
     |> Option.map service_ip_addresses
     |> option_filter (fun s -> not (List.is_empty s))
-    |> Option.value ~default:[ "N/A" ]
+    |> Option.value ~default:[ "—" ]
     |> List.map (fun v -> div [ txt v ])
   in
   let classes =
