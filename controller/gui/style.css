@@ -4,7 +4,6 @@
     /* Colors */
     --color-hint: #404040;
     --color-body-text: #000;
-    --color-faded-text: #686868;
     --color-background: #f5f5f5;
     --color-background-hover: #b1b4ce;
     --color-border: #e0e0e0;
@@ -201,10 +200,6 @@ html {
   position: relative;
 }
 
-.d-InterfaceList__Item--Disconnected {
-  color: var(--color-faded-text);
-}
-
 .d-InterfaceList__Item {
   grid-template-columns: 20px 40px 100px auto 150px 280px 20px;
 }
@@ -266,6 +261,10 @@ html {
     justify-self: center;
     width: 2rem;
     height: 2rem;
+}
+
+.d-InterfaceList__Item--Disconnected .d-InterfaceList__Icon {
+  color: #999;
 }
 
 .d-InterfaceList__Icon > svg, .d-WifiList__Icon > svg {
