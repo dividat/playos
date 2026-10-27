@@ -13,6 +13,10 @@
 - os: Pin versions of permanent components produced by installer
 - controller: Allow configuring static IP and DNS servers separately
 
+## Fixed
+
+- os: Resolve minor keyboard and RC shortcut issues
+
 # [2026.3.1] - 2026-10-23
 
 # [2026.3.1-VALIDATION] - 2026-10-23
