@@ -32,6 +32,7 @@ type interface_entry =
   ; interface : Network.Interface.t
   ; annotations : string list
   ; service : Connman.Service.t option
+  ; has_default_service : bool
   }
 
 let build_interface_entries services interfaces interface_annotations :
@@ -51,10 +52,17 @@ let build_interface_entries services interfaces interface_annotations :
     let same_kind_ifaces =
       interface_kinds |> List.filter (fun (_, k) -> k = kind)
     in
-    let kind_str =
-      Network.sexp_of_interface_kind kind |> Sexplib.Sexp.to_string
+    let kind_str, requires_index =
+      match kind with
+      | Other ->
+          (* List unexpected interface kinds with actual iface name for identification *)
+          (iface.name, false)
+      | _ ->
+          ( Network.sexp_of_interface_kind kind |> Sexplib.Sexp.to_string
+          , List.length same_kind_ifaces > 1
+          )
     in
-    if List.length same_kind_ifaces > 1 then
+    if requires_index then
       let index =
         same_kind_ifaces
         |> List.find_index (fun (n, _) -> n = iface.name)
@@ -72,15 +80,20 @@ let build_interface_entries services interfaces interface_annotations :
   in
   List.map
     (fun (iface : Network.Interface.t) ->
+      let connected_service =
+        List.find_opt
+          (fun service -> service.ethernet.interface = iface.name)
+          connected_services
+      in
       { display_name = resolve_interface_display_name iface
       ; interface = iface
       ; annotations =
           List.assoc_opt iface.name interface_annotations
           |> Option.value ~default:[]
-      ; service =
-          List.find_opt
-            (fun service -> service.ethernet.interface = iface.name)
-            connected_services
+      ; service = connected_service
+      ; has_default_service =
+          Option.is_some connected_service
+          && connected_service = List.nth_opt services 0
       }
     )
     non_loopback_ifaces
@@ -107,10 +120,15 @@ let interface_item { display_name; interface; annotations; service } =
     service
     |> Option.map service_ip_addresses
     |> option_filter (fun s -> not (List.is_empty s))
-    |> Option.value ~default:[ "N/A" ]
+    |> Option.value ~default:[ "—" ]
     |> List.map (fun v -> div [ txt v ])
   in
-  let classes = [ "d-InterfaceList__Item" ] in
+  let classes =
+    [ ("d-InterfaceList__Item", true)
+    ; ("d-InterfaceList__Item--Disconnected", not is_connected)
+    ]
+    |> List.filter_map (fun (cls, active) -> if active then Some cls else None)
+  in
   let maybe_wrap_in_link body =
     match service with
     | Some service ->
@@ -122,7 +140,7 @@ let interface_item { display_name; interface; annotations; service } =
     [ maybe_wrap_in_link
         [ span
             ~a:[ a_class [ "d-InterfaceList__Marker" ] ]
-            [ txt (if is_connected then "✔" else "✖") ]
+            [ txt (if is_connected then "✔" else "") ]
         ; div ~a:[ a_class [ "d-InterfaceList__Icon" ] ] [ icon ]
         ; span [ txt display_name ]
         ; div
@@ -186,8 +204,13 @@ let render_status_section proxy =
     ]
 
 let render_interface_section (interface_entries : interface_entry list) =
+  let connectedness_level item =
+    if item.has_default_service then 1 (* has possible Internet gateway *)
+    else if Option.is_some item.service then 2 (* has any connected service *)
+    else 3
+  in
   section
-    [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Interfaces" ]
+    [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Network interfaces" ]
     ; ul
         ~a:[ a_class [ "d-InterfaceList" ]; a_role [ "list" ] ]
         ([ li
@@ -198,13 +221,20 @@ let render_interface_section (interface_entries : interface_entry list) =
              [ span [] (* marker *)
              ; span [] (* icon *)
              ; span [ txt "Interface" ]
-             ; span [ txt "Connected networks" ]
+             ; span [ txt "Connected with" ]
              ; span [ txt "MAC" ]
              ; span [ txt "IP address" ]
              ; span [] (* chevron *)
              ]
          ]
-        @ List.map interface_item interface_entries
+        @ List.map interface_item
+            (sort_by_fun
+               (fun item ->
+                 (* "more" connected items first, then alphanumeric *)
+                 (connectedness_level item, item.display_name)
+               )
+               interface_entries
+            )
         )
     ]
 
@@ -218,9 +248,11 @@ let render_wifi_section services =
     )
   in
   section
-    [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Available wireless networks" ]
+    [ h2 ~a:[ a_class [ "d-Title" ] ] [ txt "Available Wi-Fi networks" ]
     ; ( if List.is_empty wireless_services then
-          p ~a:[ a_class [ "d-Paragraph" ] ] [ txt "No networks available" ]
+          p
+            ~a:[ a_class [ "d-Paragraph" ] ]
+            [ txt "No Wi-Fi networks available" ]
         else
           ul
             ~a:[ a_class [ "d-WifiList" ]; a_role [ "list" ] ]
