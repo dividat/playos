@@ -115,12 +115,14 @@ wireless networks.
 - The _Internet_ indicator shows whether the internet connection is functional.
 - The ~Interfaces~ section provides an overview of each network interface's
   status.
-- Each interface is marked as connected (✔) or disconnected (✖).
+- Each connected network interface is marked with a checkmark (✔).
+- The first connected interface in the list is used as the system's Internet
+  gateway.
 - If an interface is connected, the connected network is indicated as /Wired/
   (for Ethernet interfaces) or using the wireless network name (for Wireless
   interfaces).
 - Interfaces might also receive additional annotations via mDNS, which are
-  also displayed in ~Connected networks~ (e.g. /Dividat Senso/ in the
+  also displayed in ~Connected with~ (e.g. /Dividat Senso/ in the
   screenshot, annotating a link-local device connection).
 
 Note: the page does not automatically refresh, you must manually press /Refresh/
