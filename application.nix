@@ -133,6 +133,12 @@ Press Ctrl+Alt+F1 to return to the graphical session.
       # Virtual terminal 1 is the kiosk, 8 is the status screen
       playos.xserver.activeVirtualTerminals = [ 1 8 ];
 
+      # By default, Xorg keyboard layouts map F13-F23 keys to various multimedia keys.
+      #
+      # Since we wish to use these as "special" shortcut keys in kiosk, we
+      # restore the "basic" F13-F23 keys.
+      services.xserver.xkb.options = "fkeys:basic_13-24";
+
       # System-wide packages
       environment.systemPackages = with pkgs; [ breeze-contrast-cursor-theme playos-diagnostics ];
 

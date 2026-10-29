@@ -1,9 +1,36 @@
+# Prevent users switching from the Xsession to VTEs.
+#
+# Works by overriding the xkbdir of xserver and passing patched layouts.
 { pkgs, config, lib, ... }:
 let
-    inherit (lib.lists) range subtractLists;
+    inherit (lib) range subtractLists mkOption mkIf types;
+
     allVTEs = range 1 12;
     activeVTEs = config.playos.xserver.activeVirtualTerminals;
     disabledVTEs = (subtractLists activeVTEs allVTEs);
+
+    # Created a patched copy of xkeyboard_config, disabling unwanted VTs.
+    customXkbDir = pkgs.runCommand "playos-xkb-dir" {
+      nativeBuildInputs = [ pkgs.xorg.lndir ];
+    } ''
+      mkdir -p $out
+
+      # Shadow the original directory structure with symlinks
+      lndir ${pkgs.xkeyboard_config}/etc/X11/xkb $out
+
+      rm $out/symbols/srvr_ctrl
+      cp ${pkgs.xkeyboard_config}/etc/X11/xkb/symbols/srvr_ctrl $out/symbols/srvr_ctrl
+      chmod u+w $out/symbols/srvr_ctrl
+
+      for i in ${toString disabledVTEs}; do
+        if ! grep -qE "XF86_?Switch_VT_$i" $out/symbols/srvr_ctrl; then
+          echo "Error: Pattern 'XF86_?Switch_VT_$i' not found. Upstream srvr_ctrl may have changed." >&2
+          exit 1
+        fi
+
+        sed -i -E "s/XF86_?Switch_VT_$i/NoSymbol/g" $out/symbols/srvr_ctrl
+      done
+    '';
 in
 {
     options = {
@@ -29,25 +56,7 @@ in
       };
     };
 
-    config = lib.mkIf (disabledVTEs != []) {
-        environment.systemPackages = [ pkgs.xorg.xmodmap pkgs.gnugrep pkgs.gnused ];
-
-        # This works by finding the keycodes that map to F1...F12 and
-        # replacing any combinations in them that map to XF86Switch_VT_{N} to
-        # F{N} for all the disabled VTEs.
-        services.xserver.displayManager.sessionCommands = ''
-            MODS=$(mktemp --tmpdir xmodmap-XXXX)
-            for i in ${toString disabledVTEs}; do
-                xmodmap -pke |
-                    sed -E 's/[ ]+/ /g' | \
-                    grep -E "keycode [0-9]+ = F$i .*XF86Switch_VT_$i" | \
-                    sed "s/XF86Switch_VT_$i/F$i/g" \
-                    >> $MODS
-            done
-            # sanity check
-            test "$(wc -l < $MODS)" -eq "${toString (builtins.length disabledVTEs)}"
-            xmodmap $MODS
-            rm $MODS
-        '';
+    config = mkIf (disabledVTEs != []) {
+      services.xserver.xkb.dir = customXkbDir;
     };
 }
