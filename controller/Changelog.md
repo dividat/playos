@@ -2,11 +2,10 @@
 
 # Added
 
-- os: Added localization options for Danish and Turkish
-- kiosk: Show more detailed information on network error
 - controller: Display details for each interface in Network page
-- os: Fix memory leak in pcscd
+- kiosk: Show more detailed information on network error
 - kiosk: Add new remote control to known device list
+- os: Added localization options for Danish and Turkish
 
 # Changed
 
@@ -16,6 +15,7 @@
 ## Fixed
 
 - os: Resolve minor keyboard and RC shortcut issues
+- os: Fix memory leak in pcscd
 
 # [2026.3.1] - 2026-10-23
 
