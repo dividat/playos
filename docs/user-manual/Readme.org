@@ -143,7 +143,7 @@ A connected interface or wireless service may be selected for additional configu
 #+attr_html: :width 800px
 [[../screenshots/controller-network-proxy.png]]
 
-A wireless service that is connected may be forgotten (disconnecting and resetting configuration) by expanding the service information and clicking the *Forget* button.
+A wireless service that has been previously connected may be forgotten (disconnecting and resetting configuration) by expanding the service information and clicking the *Forget* button.
 
 #+CAPTION: Forgetting a wireless network
 #+NAME: fig:controller-network-remove
