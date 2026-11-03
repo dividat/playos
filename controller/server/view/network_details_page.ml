@@ -286,7 +286,7 @@ let html service =
     (* wired connections have this *)
   in
   let is_disconnectable =
-    is_service_connected && service.type' = Connman.Technology.Wifi
+    service.favorite && service.type' = Connman.Technology.Wifi
   in
   let icon =
     match service.strength with

@@ -1,3 +1,9 @@
+# [UNRELEASED]
+
+# Changed
+
+- controller: Allow forgetting WiFi networks while not connected to them
+
 # [2026.11.0-VALIDATION] - 2026-10-30
 
 # Added
