@@ -138,10 +138,17 @@ and enter the password, if any:
 
 A connected interface or wireless service may be selected for additional configuration. Optional proxy servers and static IP addresses may be configured:
 
-#+CAPTION: Configuring a connected service
+#+CAPTION: Configuring a connected service's proxy
 #+NAME: fig:controller-network-proxy
 #+attr_html: :width 800px
 [[../screenshots/controller-network-proxy.png]]
+
+When DNS is not automatically configured or the automatically assigned nameservers do not work as expected, custom DNS servers may be set:
+
+#+CAPTION: Configuring a connected service's nameservers
+#+NAME: fig:controller-network-nameserver
+#+attr_html: :width 800px
+[[../screenshots/controller-network-nameserver.png]]
 
 A wireless service that is connected may be forgotten (disconnecting and resetting configuration) by expanding the service information and clicking the *Forget* button.
 
