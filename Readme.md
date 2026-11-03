@@ -216,6 +216,8 @@ To release an update to the `develop` channel:
 
 To publish ISOs, raucb and manual without marking them as the latest version, `--skip-latest` can be used.
 
+The standard way to prepare a release build is using the helper in `scripts/prep-release`.
+
 ### Key switch
 
 When switching key pairs on a channel, the new certficiate must be built into the bundle, which must then be signed with the old key. For this purpose, the `--override-cert` option of the deploy script is needed to provide RAUC with a certificate matching the new key.
