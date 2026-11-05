@@ -56,6 +56,8 @@ PREVIOUS_VERSION=${PREVIOUS_VERSION:-$(get_playos_nix_version)}
 GIT_UPSTREAM=${GIT_UPSTREAM:-$(git remote -v | awk '/dividat\/playos/ {print $1; exit}')}
 GIT_UPSTREAM_URL=$(git remote get-url "$GIT_UPSTREAM")
 
+INITIAL_BRANCH=$(git branch --show-current)
+
 echo "========================================"
 echo " Preparing Release"
 echo "========================================"
@@ -67,21 +69,22 @@ echo " Channel:          $CHANNEL"
 echo "========================================"
 echo ""
 
+if ! [[ "$INITIAL_BRANCH" == "main" ]] && ! [[ "$INITIAL_BRANCH" == "$RELEASE_BRANCH" ]]; then
+    echo "Warning: script is being run from '$INITIAL_BRANCH' branch, which is neither 'main' nor '$RELEASE_BRANCH'"
+fi
+echo ""
+
 scripts/yes-no-question "Continue?"
 
 # ----------- Sync branches -----------
 
 print_status "Syncing local branches to upstream..."
 
-current_branch=$(git branch --show-current)
-
-git checkout main
-git pull --ff-only "$GIT_UPSTREAM" main
-
 git checkout "$RELEASE_BRANCH"
 git pull --ff-only "$GIT_UPSTREAM" "$RELEASE_BRANCH"
 
-git checkout "$current_branch"
+git checkout main
+git pull --ff-only "$GIT_UPSTREAM" main
 
 # ----------- setup worktree -----------
 print_status "Setting up fresh git worktree..."
@@ -92,9 +95,9 @@ on_error() {
     local exit_code=$?
     echo "Build failed (exit code $exit_code), running cleanup..."
 
-    echo "$BUILD_DIR"
     # make sure we are back in the toplevel
     cd "$(git rev-parse --git-common-dir)/.."
+    git checkout "$INITIAL_BRANCH"
 
     if [[ -d "$BUILD_DIR" ]]; then
         if scripts/yes-no-question "Delete local worktree $BUILD_DIR?"; then
