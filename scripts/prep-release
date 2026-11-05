@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+CHANNEL=${CHANNEL:-$1}
+RELEASE_VERSION=${RELEASE_VERSION:-$2}
+
+usage() {
+    echo "$0 [CHANNEL] [RELEASE_VERSION]"
+    echo ""
+    echo "Build a release for the given channel and version"
+    echo "The script only creates the necessary git commits/tags and builds the release."
+    echo "It does NOT push to the upstream git repo or trigger a deployment."
+
+    echo "Example: $0 validation 2074.11.0-VALIDATION"
+    echo "The variables can also be specified via env vars."
+    echo "Additional overridable env variables:"
+    echo "   RELEASE_BRANCH, resolved from RELEASE_VERSION by default"
+    echo "   GIT_UPSTREAM, resolved via matching 'dividat' in 'git remote' by default"
+    echo "   PREVIOUS_VERSION, resolved from application.nix"
+}
+
+if [[ -z "$CHANNEL" || -z "$RELEASE_VERSION" ]]; then
+    usage
+    exit 1
+fi
+
+
+set -u
+
+# ----------- Helpers --------------
+
+get_playos_nix_version() {
+    nix eval --raw -f application.nix version
+}
+
+C_RED='\033[0;31m'
+C_GREEN='\033[1;32m'
+C_RESET='\033[0m'
+
+print_status() {
+    echo -e "=== ${C_GREEN}$1${C_RESET}"
+}
+
+exit_with_err() {
+    echo -e "=== ${C_RED}[ERROR] $1${C_RESET}"
+    exit 1
+}
+
+
+# ----------- Ask to cofirm vars ---------
+
+RELEASE_BRANCH=${RELEASE_BRANCH:-"release/${RELEASE_VERSION%.*}.x"}
+
+PREVIOUS_VERSION=${PREVIOUS_VERSION:-$(get_playos_nix_version)}
+
+GIT_UPSTREAM=${GIT_UPSTREAM:-$(git remote -v | awk '/dividat\/playos/ {print $1; exit}')}
+GIT_UPSTREAM_URL=$(git remote get-url "$GIT_UPSTREAM")
+
+INITIAL_BRANCH=$(git branch --show-current)
+
+echo "========================================"
+echo " Preparing Release"
+echo "========================================"
+echo " Upstream Remote:  $GIT_UPSTREAM ($GIT_UPSTREAM_URL)"
+echo " Previous Version: $PREVIOUS_VERSION"
+echo " Target Version:   $RELEASE_VERSION"
+echo " Release Branch:   $RELEASE_BRANCH"
+echo " Channel:          $CHANNEL"
+echo "========================================"
+echo ""
+
+if ! [[ "$INITIAL_BRANCH" == "main" ]] && ! [[ "$INITIAL_BRANCH" == "$RELEASE_BRANCH" ]]; then
+    echo "Warning: script is being run from '$INITIAL_BRANCH' branch, which is neither 'main' nor '$RELEASE_BRANCH'"
+fi
+echo ""
+
+scripts/yes-no-question "Continue?"
+
+# ----------- Sync branches -----------
+
+print_status "Syncing local branches to upstream..."
+
+git checkout "$RELEASE_BRANCH"
+git pull --ff-only "$GIT_UPSTREAM" "$RELEASE_BRANCH"
+
+git checkout main
+git pull --ff-only "$GIT_UPSTREAM" main
+
+# ----------- setup worktree -----------
+print_status "Setting up fresh git worktree..."
+
+BUILD_DIR=$(realpath "$(mktemp -d playos-release-XXXXXX)")
+
+on_error() {
+    local exit_code=$?
+    echo "Build failed (exit code $exit_code), running cleanup..."
+
+    # make sure we are back in the toplevel
+    cd "$(git rev-parse --git-common-dir)/.."
+    git checkout "$INITIAL_BRANCH"
+
+    if [[ -d "$BUILD_DIR" ]]; then
+        if scripts/yes-no-question "Delete local worktree $BUILD_DIR?"; then
+            git worktree remove --force "$BUILD_DIR"
+        fi
+    fi
+
+    if git show-ref --verify --quiet "refs/heads/$RELEASE_BRANCH"; then
+        if scripts/yes-no-question "Delete local branch $RELEASE_BRANCH?"; then
+            git branch -D "$RELEASE_BRANCH"
+        fi
+    fi
+
+    if git show-ref --verify --quiet "refs/tags/$RELEASE_VERSION"; then
+        if scripts/yes-no-question "Delete local tag $RELEASE_VERSION?"; then
+            git tag -d "$RELEASE_VERSION"
+        fi
+    fi
+}
+trap on_error ERR SIGINT
+
+git worktree add "$BUILD_DIR" "$RELEASE_BRANCH"
+
+cd "$BUILD_DIR"
+
+# ----------- Update versions -----------
+
+print_status "Updating versions in application.nix and Changelog..."
+
+sed -i "s/version = \"$PREVIOUS_VERSION\"/version = \"$RELEASE_VERSION\"/g" application.nix
+
+if ! [[ "$(get_playos_nix_version)" == "$RELEASE_VERSION" ]]; then
+    exit_with_err "Failed to update version in application.nix!"
+fi
+
+TODAY=$(date +%Y-%m-%d)
+CHANGELOG_VERSION_HEADER="\[$RELEASE_VERSION\] - $TODAY"
+
+if head -1 Changelog.md | grep -q '\[UNRELEASED\]'; then
+    # replace header line if UNRELEASED
+    sed -i "s/\[UNRELEASED\]/$CHANGELOG_VERSION_HEADER/" "$(realpath Changelog.md)"
+elif head -1 Changelog.md | grep -q "\[$PREVIOUS_VERSION\]"; then
+    # prepend header line if PREVIOUS_VERSION
+    sed -i "1s/^/# $CHANGELOG_VERSION_HEADER\n\n/" $(realpath Changelog.md)
+else
+    exit_with_err "Changelog does not begin with [UNRELEASED] or [$PREVIOUS_VERSION] header"
+fi
+
+git -P diff
+scripts/yes-no-question "Version updates look correct?"
+
+
+# ----------- Review changelog -----------
+
+echo "Changes since last release:"
+# Use sed to print all lines between the new version and the previous version
+sed -n "/\[$RELEASE_VERSION\]/,/\[$PREVIOUS_VERSION\]/p" Changelog.md
+scripts/yes-no-question "Are all of these changes reflected in the user manual?"
+
+
+# ----------- Commit and create tag ------
+
+git add application.nix "$(realpath Changelog.md)"
+
+if ! git diff --quiet; then
+    git diff || true
+    exit_with_err "Unexpected changes in git diff"
+fi
+
+print_status "Creating commit"
+git commit -m "$RELEASE_VERSION"
+
+print_status "Creating tag"
+git tag -a "$RELEASE_VERSION" -m "$RELEASE_VERSION"
+
+# ----------- Build -----------------------
+
+print_status "Building"
+./build "$CHANNEL"
+
+print_status "Build complete!"
+echo "Release worktree is at: $BUILD_DIR"
