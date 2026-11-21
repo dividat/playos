@@ -1,5 +1,5 @@
 # Build an installable system image assuming a disk layout of a full A/B installation
-{pkgs, lib, updateCert, kioskUrl, watchdogUrls, playos-controller, application, extraModules ? [ ] }:
+{pkgs, lib, updateCert, kioskUrl, watchdogUrls, monitoringUrl, playos-controller, application, extraModules ? [ ] }:
 with lib;
 let nixos = pkgs.importFromNixos ""; in
 (nixos {
@@ -40,6 +40,9 @@ let nixos = pkgs.importFromNixos ""; in
       enable = true;
       updateCert = updateCert;
     };
+
+    playos.monitoring.remoteUrl = monitoringUrl;
+    playos.monitoring.remoteDb = "playos";
 
     # As we control which state can be persisted past a reboot, we always set the stateVersion the system was built with.
     system.stateVersion = lib.trivial.release;
