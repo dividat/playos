@@ -188,7 +188,7 @@ recommended or available user actions, which include:
 - ~Switch to older version and reboot~: displayed when running the latest
   version, inverse of above action.
 - ~Switch to other slot and reboot~: displayed when running a faulty
-  installation and system versions cannot be determined.
+  installation or when the update status cannot be determined.
 
 All of the actions above will trigger a system reboot.
 
