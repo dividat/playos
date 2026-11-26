@@ -31,7 +31,7 @@ You can perform all common build variants using the `build` script. Run `./build
 
 ### Full build
 
-Running `./build all` (equivalently `nix-build`) creates all of the following (in `result/`):
+Running `./build all` creates all of the following (in `result/`):
 
 - `bin/`: Tools
 - `playos-VERSION-UNSIGNED.raucb`: RAUC bundle that can be used to update systems. Note that it is signed with a dummy development key. Real deployments would resign the bundle with `rauc resign`.
@@ -42,14 +42,16 @@ Note that a full build takes a long time.
 
 ### Choose what to build
 
-The following arguments may be used to control the build outputs:
+The following arguments (all defaulting to `false`) may be used to control the build outputs:
 
+- `buildDocs`: Should the documentation be built.
+- `buildVm`: Should the test VM be built.
 - `buildInstaller`: Should the installer ISO image be built.
 - `buildBundle`: Should the RAUC bundle be built.
 - `buildDisk`: Should the preinstalled disk image be built.
 - `buildLive`: Should the PlayOS live system image be built.
 
-For example: `nix build --arg buildInstaller false --arg buildBundle false` will only build the system toplevels and the preinstalled disk image.
+For example: `nix-build --arg buildDisk true` will only build the system toplevels and the preinstalled disk image.
 
 You can set the env variable `QUICK_BUILD=1` or append `--arg quickBuild true` to the nix-build argument list for a faster development build (lower compression).
 
@@ -98,13 +100,13 @@ Changes such as NixOS upgrades, or to anything else that directly interacts with
 To build only a live system:
 
 ```bash
-nix-build --arg buildInstaller false --arg buildBundle false --arg buildDisk false
+nix-build --arg buildLive true
 ```
 
 To build only an installer:
 
 ```bash
-nix-build --arg buildLive false --arg buildBundle false --arg buildDisk false
+nix-build --arg buildInstaller true
 ```
 
 Flash the ISO in `./result/` to a USB stick and boot or install PlayOS.

@@ -19,15 +19,16 @@ in
 
 , applicationPath ? ./application.nix
 
-  ##### Allow disabling the build of unused artifacts when developing/testing #####
-, buildDocs ? true
-, buildVm ? true
-, buildInstaller ? true
-, buildBundle ? true
-, buildDisk ? true
+  ##### Args to control which build artifacts to produce #####
+, buildDocs ? false
+, buildVm ? false
+, buildInstaller ? false
+, buildBundle ? false
+, buildDisk ? false
 , buildReleaseDisk ? false
-, buildLive ? true
+, buildLive ? false
 , buildTest ? false
+
 , quickBuild ? (builtins.getEnv "QUICK_BUILD") == "1"
 }:
 

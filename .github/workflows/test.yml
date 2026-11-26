@@ -83,6 +83,20 @@ jobs:
         NIX_BINARY_CACHE_PRIVATE_KEY: ${{ secrets.NIX_BINARY_CACHE_PRIVATE_KEY }}
     - run: nix-build -A kiosk kiosk/shell.nix
 
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      with:
+        persist-credentials: false
+    - uses: ./.github/actions/prep-build-env
+      with:
+        NIX_CACHE_ACCOUNT_ID: ${{ secrets.NIX_CACHE_ACCOUNT_ID }}
+        NIX_CACHE_ACCESS_KEY_ID: ${{ secrets.NIX_CACHE_ACCESS_KEY_ID }}
+        NIX_CACHE_SECRET_ACCESS_KEY: ${{ secrets.NIX_CACHE_SECRET_ACCESS_KEY }}
+        NIX_BINARY_CACHE_PRIVATE_KEY: ${{ secrets.NIX_BINARY_CACHE_PRIVATE_KEY }}
+    - run: ./build docs
+
   build-vm:
     runs-on: ubuntu-latest
     steps:
