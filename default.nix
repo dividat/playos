@@ -19,14 +19,16 @@ in
 
 , applicationPath ? ./application.nix
 
-  ##### Allow disabling the build of unused artifacts when developing/testing #####
-, buildVm ? true
-, buildInstaller ? true
-, buildBundle ? true
-, buildDisk ? true
+  ##### Args to control which build artifacts to produce #####
+, buildDocs ? false
+, buildVm ? false
+, buildInstaller ? false
+, buildBundle ? false
+, buildDisk ? false
 , buildReleaseDisk ? false
-, buildLive ? true
+, buildLive ? false
 , buildTest ? false
+
 , quickBuild ? (builtins.getEnv "QUICK_BUILD") == "1"
 }:
 
@@ -160,11 +162,9 @@ with pkgs; stdenv.mkDerivation {
       fi
       ln -s "$1" "$2"
     }
-
+  ''
+  + lib.optionalString buildDocs ''
     ln_checked ${components.docs} $out/docs
-
-    # Certificate used to verify update bundles
-    ln_checked ${updateCert} $out/cert.pem
   ''
   + lib.optionalString buildVm ''
     mkdir -p $out/bin
