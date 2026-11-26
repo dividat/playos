@@ -162,9 +162,6 @@ with pkgs; stdenv.mkDerivation {
     }
 
     ln_checked ${components.docs} $out/docs
-
-    # Certificate used to verify update bundles
-    ln_checked ${updateCert} $out/cert.pem
   ''
   + lib.optionalString buildVm ''
     mkdir -p $out/bin
