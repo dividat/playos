@@ -20,6 +20,7 @@ in
 , applicationPath ? ./application.nix
 
   ##### Allow disabling the build of unused artifacts when developing/testing #####
+, buildDocs ? true
 , buildVm ? true
 , buildInstaller ? true
 , buildBundle ? true
@@ -160,7 +161,8 @@ with pkgs; stdenv.mkDerivation {
       fi
       ln -s "$1" "$2"
     }
-
+  ''
+  + lib.optionalString buildDocs ''
     ln_checked ${components.docs} $out/docs
   ''
   + lib.optionalString buildVm ''
