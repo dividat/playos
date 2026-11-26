@@ -33,10 +33,12 @@ You can perform all common build variants using the `build` script. Run `./build
 
 Running `./build all` creates all of the following (in `result/`):
 
+- `docs/`: The user manual
 - `bin/`: Tools
 - `playos-VERSION-UNSIGNED.raucb`: RAUC bundle that can be used to update systems. Note that it is signed with a dummy development key. Real deployments would resign the bundle with `rauc resign`.
 - `playos-installer-VERSION.iso`: Bootable ISO image that can install the system.
-- `disk.img`: Preinstalled disk with bootloader, system partitions A/B and data partitions for testing (but without test instrumentation).
+- `playos-live-VERSION.iso`: Bootable ISO image of a live PlayOS system.
+- `playos-disk-VERSION.img`: Preinstalled disk with bootloader, system partitions A/B and data partitions for testing (but without test instrumentation).
 
 Note that a full build takes a long time.
 
