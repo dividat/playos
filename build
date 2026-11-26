@@ -82,13 +82,16 @@ elif [ "$TARGET" == "develop" ]; then
   scripts/info-branch-commit
   scripts/confirm-or-abort
 
-  (set -x; nix-build \
-    --arg updateCert ./pki/develop/cert.pem \
-    --arg updateUrl https://dist.dividat.com/releases/playos/develop/ \
-    --arg deployUrl s3://dist.dividat.ch/releases/playos/develop/ \
-    --arg kioskUrl https://dev-play.dividat.com/ \
-    --arg watchdogUrls '["https://dev-play.dividat.com/" "https://dev-api.dividat.com"]' \
-    --arg buildDisk false)
+  build_args=(
+    --arg updateCert ./pki/develop/cert.pem
+    --arg updateUrl https://dist.dividat.com/releases/playos/develop/
+    --arg deployUrl s3://dist.dividat.ch/releases/playos/develop/
+    --arg kioskUrl https://dev-play.dividat.com/
+    --arg watchdogUrls '["https://dev-play.dividat.com/" "https://dev-api.dividat.com"]'
+    --arg buildDisk false
+  )
+
+  (set -x; nix-build "${build_args[@]}")
 
   echo
   echo "Run ./result/bin/deploy-update to deploy."
@@ -98,13 +101,16 @@ elif [ "$TARGET" == "validation" ]; then
   scripts/info-branch-commit
   scripts/confirm-or-abort
 
-  (set -x; nix-build \
-    --arg updateCert ./pki/validation/cert.pem \
-    --arg updateUrl https://dist.dividat.com/releases/playos/validation/ \
-    --arg deployUrl s3://dist.dividat.ch/releases/playos/validation/ \
-    --arg kioskUrl https://val-play.dividat.com/ \
-    --arg watchdogUrls '["https://val-play.dividat.com/" "https://val-api.dividat.com"]' \
-    --arg buildDisk false)
+  build_args=(
+    --arg updateCert ./pki/validation/cert.pem
+    --arg updateUrl https://dist.dividat.com/releases/playos/validation/
+    --arg deployUrl s3://dist.dividat.ch/releases/playos/validation/
+    --arg kioskUrl https://val-play.dividat.com/
+    --arg watchdogUrls '["https://val-play.dividat.com/" "https://val-api.dividat.com"]'
+    --arg buildDisk false
+  )
+
+  (set -x; nix-build "${build_args[@]}")
 
   echo
   echo "Run ./result/bin/deploy-update to deploy."
@@ -114,13 +120,16 @@ elif [ "$TARGET" == "master" ]; then
   scripts/info-branch-commit
   scripts/confirm-or-abort
 
-  (set -x; nix-build \
-    --arg updateCert ./pki/master/cert.pem \
-    --arg updateUrl https://dist.dividat.com/releases/playos/master/ \
-    --arg deployUrl s3://dist.dividat.ch/releases/playos/master/ \
-    --arg kioskUrl https://play.dividat.com/ \
-    --arg watchdogUrls '["https://play.dividat.com/" "https://api.dividat.com"]' \
-    --arg buildDisk false)
+  build_args=(
+    --arg updateCert ./pki/master/cert.pem
+    --arg updateUrl https://dist.dividat.com/releases/playos/master/
+    --arg deployUrl s3://dist.dividat.ch/releases/playos/master/
+    --arg kioskUrl https://play.dividat.com/
+    --arg watchdogUrls '["https://play.dividat.com/" "https://api.dividat.com"]'
+    --arg buildDisk false
+  )
+
+  (set -x; nix-build "${build_args[@]}")
 
   echo
   echo "Run ./result/bin/deploy-update to deploy."
@@ -130,14 +139,17 @@ elif [ "$TARGET" == "portable" ]; then
   scripts/info-branch-commit
   scripts/confirm-or-abort
 
-  (set -x; nix-build \
-    --arg applicationPath ./flavors/portable.nix \
-    --arg updateCert ./pki/master/cert.pem \
-    --arg updateUrl https://dist.dividat.com/releases/playos/portable/ \
-    --arg deployUrl s3://dist.dividat.ch/releases/playos/portable/ \
-    --arg kioskUrl https://play.dividat.com/ \
-    --arg watchdogUrls '["https://play.dividat.com/" "https://api.dividat.com"]' \
-    --arg buildDisk false)
+  build_args=(
+    --arg applicationPath ./flavors/portable.nix
+    --arg updateCert ./pki/master/cert.pem
+    --arg updateUrl https://dist.dividat.com/releases/playos/portable/
+    --arg deployUrl s3://dist.dividat.ch/releases/playos/portable/
+    --arg kioskUrl https://play.dividat.com/
+    --arg watchdogUrls '["https://play.dividat.com/" "https://api.dividat.com"]'
+    --arg buildDisk false
+  )
+
+  (set -x; nix-build "${build_args[@]}")
 
   echo
   echo "Run ./result/bin/deploy-update to deploy."
@@ -152,43 +164,52 @@ elif [ "$TARGET" == "stuck" ]; then
 
   KIOSK_URL=$(echo "$KIOSK_URL" | xargs) # Trim
 
-  (set -x; nix-build \
-    --arg kioskUrl "$KIOSK_URL" \
-    --arg buildBundle false \
-    --arg buildDisk false)
+  build_args=(
+    --arg kioskUrl "$KIOSK_URL"
+    --arg buildBundle false
+    --arg buildDisk false
+  )
+
+  (set -x; nix-build "${build_args[@]}")
 
 elif [ "$TARGET" == "lab-key" ]; then
 
-  (set -x; nix-build \
-    --arg kioskUrl https://lab.dividat.com/ \
-    --arg buildInstaller false \
-    --arg buildBundle false \
-    --arg buildDisk false)
+  build_args=(
+    --arg kioskUrl https://lab.dividat.com/
+    --arg buildInstaller false
+    --arg buildBundle false
+    --arg buildDisk false
+  )
+
+  (set -x; nix-build "${build_args[@]}")
 
 elif [ "$TARGET" == "shed-key" ]; then
 
-  (set -x; nix-build \
-    --arg kioskUrl https://shed.dividat.com/ \
-    --arg buildInstaller false \
-    --arg buildBundle false \
-    --arg buildDisk false)
+  build_args=(
+    --arg kioskUrl https://shed.dividat.com/
+    --arg buildInstaller false
+    --arg buildBundle false
+    --arg buildDisk false
+  )
+
+  (set -x; nix-build "${build_args[@]}")
 
 elif [ "$TARGET" == "test-e2e" ]; then
 
-  test_flags="
-    --arg kioskUrl http://10.0.2.99:8989/ \
-    --arg updateUrl http://update-server.local/ \
-    --arg buildVm false \
-    --arg buildInstaller false \
-    --arg buildBundle false \
-    --arg buildLive false \
-    --arg buildDisk false \
+  test_flags=(
+    --arg kioskUrl http://10.0.2.99:8989/
+    --arg updateUrl http://update-server.local/
+    --arg buildVm false
+    --arg buildInstaller false
+    --arg buildBundle false
+    --arg buildLive false
+    --arg buildDisk false
     --arg buildTest true
-  "
+  )
   echo "Building e2e test runners."
-  (set -x; nix-build $test_flags)
+  (set -x; nix-build "${test_flags[@]}")
   echo "Running e2e tests..."
-  (set -x; nix-build $test_flags -A tests -o test-output)
+  (set -x; nix-build "${test_flags[@]}" -A tests -o test-output)
   exit $(cat test-output/status)
 
 # builds a disk to be used as a base image in ./testing/release-validation.nix
@@ -201,16 +222,18 @@ Note: requires around 30GiB of free space for storing the intermediate disk
 images. The final compressed disk image is much smaller (~4 GiB).
 "
 
-  (set -x; nix-build \
-      --arg kioskUrl "http://kiosk-server.local/" \
-      --arg updateUrl "http://update-server.local/" \
-      --arg buildVm false \
-      --arg buildInstaller false \
-      --arg buildBundle false \
-      --arg buildLive false \
-      --arg buildDisk false \
-      --arg buildReleaseDisk true
+  build_args=(
+    --arg kioskUrl "http://kiosk-server.local/"
+    --arg updateUrl "http://update-server.local/"
+    --arg buildVm false
+    --arg buildInstaller false
+    --arg buildBundle false
+    --arg buildLive false
+    --arg buildDisk false
+    --arg buildReleaseDisk true
   )
+
+  (set -x; nix-build "${build_args[@]}")
 
 elif [ "$TARGET" == "all" ]; then
 
