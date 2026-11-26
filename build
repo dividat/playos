@@ -236,6 +236,12 @@ images. The final compressed disk image is much smaller (~4 GiB).
 
 elif [ "$TARGET" == "all" ]; then
 
+  echo -e "
+Warning: Building 'all' from scratch will take significant time (~1-3 hours)
+and disk storage.
+"
+  scripts/confirm-or-abort
+
   build_args=(
     --arg buildDocs true
     --arg buildVm true
