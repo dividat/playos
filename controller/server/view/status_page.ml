@@ -86,6 +86,15 @@ let reinstall_call target_slot =
       "Switch to other slot and reboot"
   ]
 
+let switch_to_other_slot_on_err target_slot =
+  [ note
+      "Failed to determine update state. If this persists, you can attempt \
+       switching to another system slot (requires a reboot)."
+  ; action_form
+      ("/system/switch/" ^ slot_fmt target_slot)
+      "Switch to other slot and reboot"
+  ]
+
 let factory_reset_call =
   let confirm_msg =
     "This will wipe all configuration and login data. Proceed?"
@@ -105,22 +114,32 @@ let other_slot =
 let suggested_action_of_state (update : Update.state) (rauc : rauc_state)
     booted_slot =
   let target_slot = other_slot booted_slot in
-  match (update.system_status, rauc) with
-  | RebootRequired, _ ->
+  let slots_have_same_versions =
+    Option.map
+      (fun ({ booted; inactive; _ } : Update.version_info) -> booted = inactive)
+      update.version_info
+  in
+  match (update.system_status, rauc, slots_have_same_versions) with
+  | RebootRequired, _, _ ->
       Some (Definition.description reboot_call)
-  | OutOfDateVersionSelected, Status _ ->
+  | OutOfDateVersionSelected, Status _, _ ->
       Some (Definition.description (switch_to_newer_system_call target_slot))
-  | ReinstallRequired, _ ->
+  | ReinstallRequired, _, _ ->
       Some (Definition.description (reinstall_call target_slot))
-  | UpToDate, Status _ ->
-      Option.bind update.version_info (fun { booted; inactive; _ } ->
-          if booted <> inactive then
-            Some
-              (Definition.description (switch_to_older_system_call target_slot))
-          else None
-      )
-  | _ ->
+  | UpToDate, Status _, Some false ->
+      (* other slot being newer is covered by OutOfDateVersionSelected above *)
+      Some (Definition.description (switch_to_older_system_call target_slot))
+  | NeedsUpdate, _, _ ->
+      (* wait for a failed or succesful attempted update, don't offer switch option *)
       None
+  | UpToDate, _, Some true ->
+      (* don't offer to switch if both slots have same version *)
+      None
+  | _, Installing, _ ->
+      (*  don't offer to switch if RAUC reports installing (should not be reachable) *)
+      None
+  | _ ->
+      Some (Definition.description (switch_to_other_slot_on_err target_slot))
 
 let watchdog_controls watchdog_disabled =
   let explanation =

@@ -3,6 +3,7 @@
 # Changed
 
 - controller: Allow forgetting WiFi networks while not connected to them
+- controller: Offer to switch slots when update state is bad
 
 # [2026.11.0-VALIDATION] - 2026-10-30
 
