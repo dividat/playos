@@ -146,7 +146,7 @@ if head -1 Changelog.md | grep -q '\[UNRELEASED\]'; then
     sed -i "s/\[UNRELEASED\]/$CHANGELOG_VERSION_HEADER/" "$(realpath Changelog.md)"
 elif head -1 Changelog.md | grep -q "\[$PREVIOUS_VERSION\]"; then
     # prepend header line if PREVIOUS_VERSION
-    sed -i "1s/^/# $CHANGELOG_VERSION_HEADER\n\n/" $(realpath Changelog.md)
+    sed -i "1s/^/# $CHANGELOG_VERSION_HEADER\n\n/" "$(realpath Changelog.md)"
 else
     exit_with_err "Changelog does not begin with [UNRELEASED] or [$PREVIOUS_VERSION] header"
 fi
