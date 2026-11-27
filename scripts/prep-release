@@ -84,6 +84,7 @@ BUILD_DIR=$(realpath "$(mktemp -d playos-release-XXXXXX)")
 
 on_error() {
     local exit_code=$?
+    trap - ERR SIGINT
     echo "Build failed (exit code $exit_code), running cleanup..."
 
     # make sure we are back in the toplevel
@@ -107,6 +108,8 @@ on_error() {
             git tag -d "$RELEASE_VERSION"
         fi
     fi
+
+    exit "$exit_code"
 }
 trap on_error ERR SIGINT
 
