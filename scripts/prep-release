@@ -78,19 +78,6 @@ echo ""
 
 scripts/yes-no-question "Continue?"
 
-# ----------- Sync branches -----------
-
-print_status "Syncing local branches to upstream..."
-
-git checkout "$RELEASE_BRANCH"
-git pull --ff-only "$GIT_UPSTREAM" "$RELEASE_BRANCH"
-
-git checkout main
-git pull --ff-only "$GIT_UPSTREAM" main
-
-# ----------- setup worktree -----------
-print_status "Setting up fresh git worktree..."
-
 BUILD_DIR=$(realpath "$(mktemp -d playos-release-XXXXXX)")
 
 on_error() {
@@ -103,7 +90,7 @@ on_error() {
 
     if [[ -d "$BUILD_DIR" ]]; then
         if scripts/yes-no-question "Delete local worktree $BUILD_DIR?"; then
-            git worktree remove --force "$BUILD_DIR"
+            git worktree remove --force "$BUILD_DIR" || rm -r "$BUILD_DIR"
         fi
     fi
 
@@ -120,6 +107,19 @@ on_error() {
     fi
 }
 trap on_error ERR SIGINT
+
+# ----------- Sync branches -----------
+
+print_status "Syncing local branches to upstream..."
+
+git checkout "$RELEASE_BRANCH"
+git pull --ff-only "$GIT_UPSTREAM" "$RELEASE_BRANCH"
+
+git checkout main
+git pull --ff-only "$GIT_UPSTREAM" main
+
+# ----------- setup worktree -----------
+print_status "Setting up fresh git worktree..."
 
 git worktree add "$BUILD_DIR" "$RELEASE_BRANCH"
 
