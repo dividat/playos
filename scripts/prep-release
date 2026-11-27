@@ -27,6 +27,8 @@ fi
 
 set -u
 
+cd "$(dirname "$0")/.."
+
 # ----------- Helpers --------------
 
 get_playos_nix_version() {
