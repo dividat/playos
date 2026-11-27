@@ -114,11 +114,12 @@ trap on_error ERR SIGINT
 
 print_status "Syncing local branches to upstream..."
 
+git fetch "$GIT_UPSTREAM" "$RELEASE_BRANCH" main
 git checkout "$RELEASE_BRANCH"
-git pull --ff-only "$GIT_UPSTREAM" "$RELEASE_BRANCH"
+git merge --ff-only "$GIT_UPSTREAM/$RELEASE_BRANCH"
 
 git checkout main
-git pull --ff-only "$GIT_UPSTREAM" main
+git merge --ff-only "$GIT_UPSTREAM/main"
 
 # ----------- setup worktree -----------
 print_status "Setting up fresh git worktree..."
