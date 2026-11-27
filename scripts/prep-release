@@ -58,7 +58,7 @@ PREVIOUS_VERSION=${PREVIOUS_VERSION:-$(get_playos_nix_version)}
 GIT_UPSTREAM=${GIT_UPSTREAM:-$(git remote -v | awk '/dividat\/playos/ {print $1; exit}')}
 GIT_UPSTREAM_URL=$(git remote get-url "$GIT_UPSTREAM")
 
-INITIAL_BRANCH=$(git branch --show-current)
+INITIAL_REF=$(git symbolic-ref --short -q HEAD || git rev-parse HEAD)
 
 echo "========================================"
 echo " Preparing Release"
@@ -71,8 +71,8 @@ echo " Channel:          $CHANNEL"
 echo "========================================"
 echo ""
 
-if ! [[ "$INITIAL_BRANCH" == "main" ]] && ! [[ "$INITIAL_BRANCH" == "$RELEASE_BRANCH" ]]; then
-    echo "Warning: script is being run from '$INITIAL_BRANCH' branch, which is neither 'main' nor '$RELEASE_BRANCH'"
+if [[ "$INITIAL_REF" != "main" && "$INITIAL_REF" != "$RELEASE_BRANCH" ]]; then
+    echo "Warning: script is being run from '$INITIAL_REF', which is neither 'main' nor '$RELEASE_BRANCH'"
 fi
 echo ""
 
@@ -99,7 +99,7 @@ on_error() {
 
     # make sure we are back in the toplevel
     cd "$(git rev-parse --git-common-dir)/.."
-    git checkout "$INITIAL_BRANCH"
+    git checkout "$INITIAL_REF"
 
     if [[ -d "$BUILD_DIR" ]]; then
         if scripts/yes-no-question "Delete local worktree $BUILD_DIR?"; then
